@@ -18,7 +18,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-private fun vpnOptions(enable: Boolean = true, stack: String = "gvisor") = VpnOptions(
+private fun vpnOptions(enable: Boolean = true) = VpnOptions(
     enable = enable,
     port = 7890,
     ipv6 = false,
@@ -32,7 +32,6 @@ private fun vpnOptions(enable: Boolean = true, stack: String = "gvisor") = VpnOp
     allowBypass = false,
     systemProxy = true,
     bypassDomain = emptyList(),
-    stack = stack,
     routeAddress = emptyList(),
 )
 
@@ -95,7 +94,6 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
     var setupResult: Result<String> = Result.success("")
     var startSucceeds = true
     var vpnPermissionGranted = true
-    var localNetworkPermissionGranted = true
     var runsAsVpn: Boolean? = null
     var tile: TileGateway? = null
     var app: AppGateway? = null
@@ -133,8 +131,6 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
     override fun loadSharedState(): SharedState = storedSharedState
 
     override fun isVpnPermissionGranted(): Boolean = vpnPermissionGranted
-
-    override fun isLocalNetworkPermissionGranted(): Boolean = localNetworkPermissionGranted
 
     override fun tile(): TileGateway? = tile
 
@@ -174,10 +170,10 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
 class ServiceStateMachineTest {
 
     @Test
-    fun `initParams spells the keys the Go wrapper expects`() {
+    fun `initParams spells the keys of core init`() {
         val json = ServiceStateMachine.initParams("/files", 34)
 
-        assertEquals("""{"home-dir":"/files","version":34}""", json)
+        assertEquals("""{"home":"/files","sdkInt":34}""", json)
     }
 
     @Test
@@ -372,55 +368,17 @@ class ServiceStateMachineTest {
         assertEquals(1, host.startCalls)
     }
 
-    /** Android 17 drops the kernel hop system/mixed rely on until the permission is granted. */
-    @Test
-    fun `a denied local network permission falls back to the gvisor stack`() = runTest {
-        val host = FakeHost(backgroundScope)
-        host.localNetworkPermissionGranted = false
-        val machine = ServiceStateMachine(host)
-        machine.syncSharedState(configuredState(stack = "system"))
-
-        assertTrue(machine.requestStart().await())
-        assertEquals("gvisor", host.lastStartOptions?.stack)
-        assertTrue(host.toasts.contains(configuredState().localNetworkTip))
-    }
-
-    @Test
-    fun `a granted local network permission keeps the chosen stack`() = runTest {
-        val host = FakeHost(backgroundScope)
-        val machine = ServiceStateMachine(host)
-        machine.syncSharedState(configuredState(stack = "mixed"))
-
-        assertTrue(machine.requestStart().await())
-        assertEquals("mixed", host.lastStartOptions?.stack)
-        assertFalse(host.toasts.contains(configuredState().localNetworkTip))
-    }
-
-    @Test
-    fun `a proxy-only start keeps its stack without the local network permission`() = runTest {
-        val host = FakeHost(backgroundScope)
-        host.localNetworkPermissionGranted = false
-        val machine = ServiceStateMachine(host)
-        machine.syncSharedState(configuredState(enable = false, stack = "system"))
-
-        assertTrue(machine.requestStart().await())
-        assertEquals("system", host.lastStartOptions?.stack)
-        assertFalse(host.toasts.contains(configuredState().localNetworkTip))
-    }
-
     @Test
     fun `the local network prompt is asked once and never blocks the start`() = runTest {
         val host = FakeHost(backgroundScope)
         val app = FakeApp(localNetworkGranted = false)
         host.app = app
-        host.localNetworkPermissionGranted = false
         val machine = ServiceStateMachine(host)
-        machine.syncSharedState(configuredState(stack = "system"))
+        machine.syncSharedState(configuredState())
 
         assertTrue(machine.requestStart().await())
         assertEquals(1, app.localNetworkRequests)
         assertEquals(1, host.startCalls)
-        assertEquals("gvisor", host.lastStartOptions?.stack)
     }
 
     @Test

@@ -1,5 +1,5 @@
 name: setup
-description: FlClash Go core and Rust helper build harness (Dart build hook).
+description: FlClash Concord core and Rust helper build harness (Dart build hook).
 version: 0.0.1
 publish_to: none
 

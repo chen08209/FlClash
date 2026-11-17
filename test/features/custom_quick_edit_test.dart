@@ -1,6 +1,4 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart' hide FileInfo;
@@ -20,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 import 'package:prism_ui/prism_ui.dart';
@@ -53,8 +52,6 @@ class _RecordingCustomProxies extends CustomProxies {
   @override
   void setAll(List<CustomProxy> proxies) => replaced.add(proxies);
 }
-
-class _MockCore extends Mock implements CoreHandlerInterface {}
 
 class _IdleClashProvidersAction extends ClashProvidersAction {
   @override
@@ -240,15 +237,17 @@ void main() {
   });
 
   group('custom proxies', () {
-    late _MockCore core;
+    late CoreMocks mocks;
 
     setUp(() {
-      core = _MockCore();
-      when(() => core.validateProxies(any())).thenAnswer((_) async => const {});
+      mocks = coreMocks();
+      when(
+        () => mocks.api.validateProxies(any()),
+      ).thenAnswer((_) async => const {});
     });
 
     void decodesTo(Map<String, List<Map<String, dynamic>>> proxiesByLink) {
-      when(() => core.decodeShareLinks(any())).thenAnswer(
+      when(() => mocks.api.decodeLinks(any())).thenAnswer(
         (invocation) async => [
           for (final link in invocation.positionalArguments.first as List)
             proxiesByLink[link] ?? const [],
@@ -264,7 +263,7 @@ void main() {
       final proxies = _RecordingCustomProxies(initial);
       final container = ProviderContainer(
         overrides: [
-          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
           customGroupNamesProvider.overrideWith(
             (_) => Stream.value(const <String>{}),
           ),
@@ -324,7 +323,7 @@ void main() {
         definition: {'name': 'WG', 'type': 'wireguard'},
       );
       when(
-        () => core.encodeShareLinks(any()),
+        () => mocks.api.encodeLinks(any()),
       ).thenAnswer((_) async => ['ss://home#Home', '']);
       decodesTo({
         'vless://new#New': [
@@ -346,7 +345,7 @@ void main() {
       final next = proxies.replaced.single;
       expect(next.map((proxy) => proxy.name), ['Home', 'WG', 'New']);
       expect(next.take(2), [home, wireGuard]);
-      verify(() => core.decodeShareLinks(['vless://new#New'])).called(1);
+      verify(() => mocks.api.decodeLinks(['vless://new#New'])).called(1);
 
       await _unmount(tester);
     });
@@ -359,7 +358,7 @@ void main() {
         definition: {'name': 'Home', 'type': 'ss', 'server': 'a.example'},
       );
       when(
-        () => core.encodeShareLinks(any()),
+        () => mocks.api.encodeLinks(any()),
       ).thenAnswer((_) async => ['ss://home#Home']);
       decodesTo({
         'ss://home#Away': [
@@ -399,7 +398,7 @@ void main() {
     testWidgets('a line the core cannot read is named and nothing is stored', (
       tester,
     ) async {
-      when(() => core.encodeShareLinks(any())).thenAnswer((_) async => []);
+      when(() => mocks.api.encodeLinks(any())).thenAnswer((_) async => []);
       decodesTo({});
       final proxies = await pumpProxies(tester, const []);
       final (:editor, :context) = await _openListEditor(tester);
@@ -432,7 +431,7 @@ void main() {
     testWidgets('a new proxy fills its form from a link in quick edit', (
       tester,
     ) async {
-      when(() => core.encodeShareLinks(any())).thenAnswer((_) async => ['']);
+      when(() => mocks.api.encodeLinks(any())).thenAnswer((_) async => ['']);
       decodesTo({
         'vless://u-1@b.example:443': [
           {
@@ -499,7 +498,7 @@ void main() {
         },
       );
       when(
-        () => core.encodeShareLinks(any()),
+        () => mocks.api.encodeLinks(any()),
       ).thenAnswer((_) async => ['socks5://a.example:1080#Mine']);
       decodesTo({
         'trojan://pw@c.example:443': [
@@ -526,7 +525,7 @@ void main() {
 
       expect(find.byType(AlertDialog), findsNothing);
       expect(readForm(tester), mine);
-      verifyNever(() => core.decodeShareLinks(any()));
+      verifyNever(() => mocks.api.decodeLinks(any()));
 
       await tester.tap(formQuickEdit());
       await tester.pumpAndSettle();
@@ -812,7 +811,7 @@ void main() {
       }
 
       when(
-        () => core.encodeShareLinks(any()),
+        () => mocks.api.encodeLinks(any()),
       ).thenAnswer((_) async => ['trojan://pw@a.example:443#Gate']);
       decodesTo({
         'trojan://pw@b.example:443#Gate': [

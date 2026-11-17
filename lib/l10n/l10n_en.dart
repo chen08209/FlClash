@@ -407,17 +407,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get desc =>
-      'A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.';
+      'A multi-platform proxy client based on the Concord core, simple and easy to use, open-source and ad-free.';
 
   @override
   String get startVpn => 'Starting VPN…';
 
   @override
   String get stopVpn => 'Stopping VPN…';
-
-  @override
-  String get localNetworkDeniedTip =>
-      'Local network permission denied: using the gvisor stack, LAN is unreachable.';
 
   @override
   String get compatible => 'Compatibility mode';
@@ -511,6 +507,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get externalControllerSecret => 'External controller secret';
 
   @override
+  String get externalControllerCors => 'Allow cross-origin access';
+
+  @override
+  String get externalControllerCorsDesc =>
+      'Web dashboards can connect from other sites.';
+
+  @override
   String get ipv6Desc => 'IPv6 traffic is received only while IPv6 is on.';
 
   @override
@@ -536,9 +539,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP concurrent';
-
-  @override
-  String get geodataLoader => 'Geo low-memory mode';
 
   @override
   String get requests => 'Requests';
@@ -949,7 +949,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      'The Software is an open-source network proxy client built on the Clash.Meta (mihomo) core. It only provides local tooling such as configuration management, rule-based routing, and traffic forwarding.';
+      'The Software is an open-source network proxy client built on the Concord core. It only provides local tooling such as configuration management, rule-based routing, and traffic forwarding.';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -1002,7 +1002,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      'The Software is open source under the GPL-3.0 license. Under that license you may run, study, modify, and distribute it; when you distribute the Software or a modified version, you must provide its source code under GPL-3.0 as well and keep the original copyright notices.\n\nThird-party components in the Software, including the Clash.Meta core, follow their own licenses. The original authors are not responsible for any problem arising from versions modified or distributed by others.';
+      'The Software is open source under the GPL-3.0 license. Under that license you may run, study, modify, and distribute it; when you distribute the Software or a modified version, you must provide its source code under GPL-3.0 as well and keep the original copyright notices.\n\nThird-party components in the Software, including the Concord core, follow their own licenses. The original authors are not responsible for any problem arising from versions modified or distributed by others.';
 
   @override
   String get disclaimerChangesTitle => 'Changes to this statement';
@@ -1104,9 +1104,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => 'Hide timed-out proxies';
-
-  @override
-  String get stackMode => 'Stack mode';
 
   @override
   String get network => 'Network';
@@ -1937,7 +1934,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tunAuthorizationFailed =>
-      'TUN could not be authorized, so it was turned off.';
+      'TUN could not be authorized, so it is not used in this run.';
 
   @override
   String get sudoPasswordTitle => 'Enter your password for sudo';
@@ -2744,10 +2741,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get congestionController => 'TCP congestion control';
 
   @override
-  String get congestionControllerDesc =>
-      'TCP congestion control works only with the mips stack.';
-
-  @override
   String get routeExcludeAddress => 'Route exclude addresses';
 
   @override
@@ -2821,8 +2814,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get udpTimeout => 'UDP timeout';
 
   @override
-  String get udpTimeoutDesc =>
-      'The UDP timeout is in seconds and works only with the gvisor, system and mixed stacks.';
+  String get udpTimeoutDesc => 'The UDP timeout is in seconds.';
 
   @override
   String get dnsHijackDesc =>
@@ -3951,9 +3943,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forceRestartCore => 'Force restart';
 
   @override
+  String get configWarnings => 'Config warnings';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count warnings from loading the config',
+      one: '1 warning from loading the config',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'HTTP port';
+
+  @override
+  String get dnsServer => 'DNS server';
+
+  @override
+  String get serviceFaults => 'Services not started';
+
+  @override
+  String get faultAddressInUse => 'The address is already in use.';
+
+  @override
+  String get faultAddressNotAvailable =>
+      'The address is not available on this device.';
+
+  @override
+  String get faultPermissionDenied => 'Permission denied.';
+
+  @override
+  String get tunStartFailed =>
+      'TUN could not start and will not be tried again in this run.';
+
+  @override
   String get vpnPermissionNotGranted =>
       'VPN permission was not granted, so the VPN did not start. An always-on VPN set for another app also blocks it.';
 
   @override
   String get vpnServiceStartFailed => 'The VPN service could not start.';
+
+  @override
+  String get rootTun => 'Root mode';
+
+  @override
+  String get rootTunDesc => 'Uses root instead of the system VPN.';
+
+  @override
+  String get rootTunUnavailable => 'No root found on this device';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root is unavailable ($reason), so this run uses the system VPN.';
+  }
 }

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/api/core_api.dart';
+import 'package:fl_clash/core/api/mapping.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:prism_ui/prism_ui.dart';
@@ -16,12 +18,16 @@ T roundTrip<T>(
   return fromJson(decoded);
 }
 
+ConfigPatch _patchOf(
+  PatchClashConfig config, [
+  CoreOptions options = const CoreOptions(testUrl: ''),
+]) => configPatchOf(config, authentication: const [], options: options);
+
 void main() {
   group('GeoResource JSON', () {
     test('exposes mihomo raw config keys', () {
       expect(GeoResource.MMDB.configKey, 'mmdb');
       expect(GeoResource.ASN.configKey, 'asn');
-      expect(GeoResource.GEOIP.configKey, 'geoip');
       expect(GeoResource.GEOSITE.configKey, 'geosite');
     });
 
@@ -30,7 +36,6 @@ void main() {
         'geox-url': {
           'mmdb': 'https://example.com/mmdb',
           'asn': 'https://example.com/asn.mmdb',
-          'geoip': 'https://example.com/geoip.dat',
           'geosite': 'https://example.com/geosite.dat',
         },
       });
@@ -38,23 +43,30 @@ void main() {
       expect(config.geoXUrl, {
         GeoResource.MMDB: 'https://example.com/mmdb',
         GeoResource.ASN: 'https://example.com/asn.mmdb',
-        GeoResource.GEOIP: 'https://example.com/geoip.dat',
         GeoResource.GEOSITE: 'https://example.com/geosite.dat',
       });
     });
 
     test('parses hyphenated GeoResource keys from config JSON', () {
       final config = PatchClashConfig.fromJson({
-        'geox-url': {
-          'geo-ip': 'https://example.com/legacy-geoip.dat',
-          'geo-site': 'https://example.com/legacy-geosite.dat',
-        },
+        'geox-url': {'geo-site': 'https://example.com/legacy-geosite.dat'},
       });
 
       expect(config.geoXUrl, {
-        GeoResource.GEOIP: 'https://example.com/legacy-geoip.dat',
         GeoResource.GEOSITE: 'https://example.com/legacy-geosite.dat',
       });
+    });
+
+    test('drops the GeoIP.dat urls saved configs still hold', () {
+      final config = PatchClashConfig.fromJson({
+        'geox-url': {
+          'geoip': 'https://example.com/geoip.dat',
+          'geo-ip': 'https://example.com/legacy-geoip.dat',
+          'mmdb': 'https://example.com/mmdb',
+        },
+      });
+
+      expect(config.geoXUrl, {GeoResource.MMDB: 'https://example.com/mmdb'});
     });
 
     test('GeoXUrl defaults use GeoResource keys', () {
@@ -63,10 +75,10 @@ void main() {
 
     test('PatchClashConfig serializes geoXUrl map with lowercase keys', () {
       final json = const PatchClashConfig(
-        geoXUrl: {GeoResource.GEOIP: 'https://example.com/geoip.dat'},
+        geoXUrl: {GeoResource.GEOSITE: 'https://example.com/geosite.dat'},
       ).toJson();
 
-      expect(json['geox-url'], {'geoip': 'https://example.com/geoip.dat'});
+      expect(json['geox-url'], {'geosite': 'https://example.com/geosite.dat'});
     });
 
     test('converts geoXUrl map to raw config map', () {
@@ -89,42 +101,53 @@ void main() {
       expect(config.geoXUrl, {GeoResource.MMDB: 'https://example.com/mmdb'});
     });
 
-    test('toUpdateParams sends geoXUrl to the Core under geox-url', () {
-      final params =
-          const PatchClashConfig(
-            geoXUrl: {
-              GeoResource.MMDB: 'https://example.com/geoip.metadb',
-              GeoResource.GEOSITE: 'https://example.com/geosite.dat',
-            },
-          ).toUpdateParams(
-            authentication: const [],
-            options: const CoreOptions(testUrl: ''),
-          );
-
-      final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
-      expect(json['geox-url'], {
+    test('configPatchOf sends geoXUrl to the Core under geoxUrl', () {
+      final json = _patchOf(
+        const PatchClashConfig(
+          geoXUrl: {
+            GeoResource.MMDB: 'https://example.com/geoip.metadb',
+            GeoResource.GEOSITE: 'https://example.com/geosite.dat',
+          },
+        ),
+      ).toJson();
+      expect(json['geoxUrl'], {
         'mmdb': 'https://example.com/geoip.metadb',
         'geosite': 'https://example.com/geosite.dat',
       });
     });
 
-    test('toUpdateParams sends the Core options under options', () {
-      final params = const PatchClashConfig().toUpdateParams(
-        authentication: const [],
-        options: const CoreOptions(
+    test('configPatchOf lets other sites reach the controller unless the '
+        'user turns it off, and sends the refusal too', () {
+      expect(
+        _patchOf(const PatchClashConfig()).toJson()['externalControllerCors'],
+        {
+          'allowOrigins': ['*'],
+          'allowPrivateNetwork': true,
+        },
+      );
+      expect(
+        _patchOf(
+          const PatchClashConfig(externalControllerCors: false),
+        ).toJson()['externalControllerCors'],
+        {'allowOrigins': <String>[], 'allowPrivateNetwork': false},
+      );
+    });
+
+    test('configPatchOf sends the Core options under options', () {
+      final json = _patchOf(
+        const PatchClashConfig(),
+        const CoreOptions(
           testUrl: 'http://t',
           skipCertVerify: true,
           delayTestTimeout: 5000,
           mitmCapture: true,
         ),
-      );
-
-      final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
+      ).toJson();
       expect(json['options'], {
-        'test-url': 'http://t',
-        'skip-cert-verify': true,
-        'delay-test-timeout': 5000,
-        'mitm-capture': true,
+        'testUrl': 'http://t',
+        'skipCertVerify': true,
+        'delayTestTimeout': 5000,
+        'mitmCapture': true,
       });
       expect(json, isNot(contains('mitm')));
     });
@@ -584,7 +607,6 @@ void main() {
       expect(config.allowLan, false);
       expect(config.mode, Mode.rule);
       expect(config.externalController, ExternalControllerStatus.close);
-      expect(config.geodataLoader, GeodataLoader.memconservative);
       expect(config.interfaceNameMode, InterfaceNameMode.clear);
       expect(config.interfaceName, '');
       expect(config.geoAutoUpdate, isTrue);
@@ -605,22 +627,6 @@ void main() {
       },
     );
 
-    test(
-      'live update params default geo auto-update on and preserve false',
-      () {
-        final params = const PatchClashConfig().toUpdateParams(
-          authentication: const [],
-          options: const CoreOptions(testUrl: ''),
-        );
-        final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
-        expect(json.remove('geo-auto-update'), isTrue);
-        expect(UpdateParams.fromJson(json).geoAutoUpdate, isTrue);
-        expect(UpdateParams.fromJson(json).geoUpdateInterval, 24);
-        json['geo-auto-update'] = false;
-        expect(UpdateParams.fromJson(json).geoAutoUpdate, isFalse);
-      },
-    );
-
     test('custom values survive round-trip', () {
       const config = PatchClashConfig(
         mixedPort: 7890,
@@ -628,7 +634,6 @@ void main() {
         mode: Mode.rule,
         logLevel: LogLevel.debug,
         externalController: ExternalControllerStatus.open,
-        geodataLoader: GeodataLoader.memconservative,
         interfaceNameMode: InterfaceNameMode.custom,
         interfaceName: 'eth0',
       );
@@ -643,7 +648,6 @@ void main() {
       expect(restored.mode, Mode.rule);
       expect(restored.logLevel, LogLevel.debug);
       expect(restored.externalController, ExternalControllerStatus.open);
-      expect(restored.geodataLoader, GeodataLoader.memconservative);
       expect(restored.interfaceNameMode, InterfaceNameMode.custom);
       expect(restored.interfaceName, 'eth0');
     });
@@ -752,16 +756,11 @@ void main() {
       },
     );
 
-    test('reaches the Core through the update params', () {
-      final params = open
-          .copyWith(secret: 'abc')
-          .toUpdateParams(
-            authentication: const [],
-            options: const CoreOptions(testUrl: ''),
-          );
+    test('reaches the Core through the config patch', () {
+      final patch = _patchOf(open.copyWith(secret: 'abc'));
 
-      expect(params.secret, 'abc');
-      expect(params.toJson()['secret'], 'abc');
+      expect(patch.secret, 'abc');
+      expect(patch.toJson()['secret'], 'abc');
     });
   });
 
@@ -783,7 +782,6 @@ void main() {
         GeneralOverrideKey.unifiedDelay,
         GeneralOverrideKey.tcpConcurrent,
         GeneralOverrideKey.ipv6,
-        GeneralOverrideKey.geodataLoader,
       });
       expect(config.tcpConcurrent, false);
       expect(config.ipv6, false);
@@ -799,22 +797,36 @@ void main() {
       expect(config.generalOverrideKeys, {GeneralOverrideKey.unifiedDelay});
     });
 
-    test('only picked keys reach the Core live', () {
-      final json = defaultClashConfig
-          .copyWith(
-            ipv6: true,
-            tcpConcurrent: false,
-            generalOverrideKeys: {GeneralOverrideKey.ipv6},
-          )
-          .toUpdateParams(
-            authentication: const [],
-            options: const CoreOptions(testUrl: ''),
-          )
-          .toJson();
+    test('the Go core settings a saved config carries are dropped', () {
+      final config = PatchClashConfig.fromJson({
+        ...savedBefore({'geodata-loader': 'standard'}),
+        'general-override-keys': ['geodata-loader', 'ipv6'],
+        'tun': {'enable': true, 'stack': 'gvisor', 'mtu': 1400},
+        'tun-override': {'gso': true, 'mtu': 1400},
+        'tun-override-keys': ['gso', 'mtu'],
+      });
 
-      expect(json['ipv6'], true);
-      expect(json['tcp-concurrent'], isNull);
-      expect(json['unified-delay'], isNull);
+      expect(config.generalOverrideKeys, {GeneralOverrideKey.ipv6});
+      expect(config.tunOverrideKeys, {TunOverrideKey.mtu});
+      expect(config.tun.enable, isTrue);
+      expect(config.tunOverride.mtu, 1400);
+      expect(config.toJson(), isNot(contains('geodata-loader')));
+      expect(config.tun.toJson(), isNot(contains('stack')));
+      expect(config.tunOverride.toJson(), isNot(contains('gso')));
+    });
+
+    test('only picked keys reach the Core live', () {
+      final patch = _patchOf(
+        defaultClashConfig.copyWith(
+          ipv6: true,
+          tcpConcurrent: false,
+          generalOverrideKeys: {GeneralOverrideKey.ipv6},
+        ),
+      ).toJson();
+
+      expect(patch['ipv6'], true);
+      expect(patch['tcpConcurrent'], isNull);
+      expect(patch['unifiedDelay'], isNull);
     });
 
     test('picking a key reloads the profile', () {
@@ -827,14 +839,9 @@ void main() {
   });
 
   group('PatchClashConfig.setupOnly', () {
-    UpdateParams liveParams(PatchClashConfig config) => config.toUpdateParams(
-      authentication: const [],
-      options: const CoreOptions(testUrl: ''),
-    );
-
     test('drops every field the update params patch live', () {
       final live = defaultClashConfig.copyWith(
-        tun: const Tun(enable: true, stack: TunStack.gvisor, mtu: 1500),
+        tun: const Tun(enable: true, mtu: 1500),
         mixedPort: 8899,
         allowLan: true,
         findProcessMode: FindProcessMode.always,
@@ -844,6 +851,7 @@ void main() {
         tcpConcurrent: false,
         externalController: ExternalControllerStatus.open,
         secret: 'secret',
+        externalControllerCors: false,
         unifiedDelay: false,
         geoAutoUpdate: false,
         geoUpdateInterval: 6,
@@ -852,9 +860,16 @@ void main() {
       );
 
       final defaults = defaultClashConfig.toJson();
-      final liveKeys = liveParams(
-        defaultClashConfig,
-      ).toJson().keys.where(defaults.containsKey);
+      final liveKeys = _patchOf(defaultClashConfig)
+          .toJson()
+          .keys
+          .map(
+            (key) => key.replaceAllMapped(
+              RegExp('[A-Z]'),
+              (match) => '-${match[0]!.toLowerCase()}',
+            ),
+          )
+          .where(defaults.containsKey);
       expect(liveKeys, isNotEmpty);
       for (final key in liveKeys) {
         expect(live.toJson()[key], isNot(defaults[key]), reason: key);
@@ -873,12 +888,13 @@ void main() {
         defaultClashConfig.copyWith(globalUa: 'ua'),
         defaultClashConfig.copyWith(hosts: const {'a.test': '1.1.1.1'}),
         defaultClashConfig.copyWith(dns: defaultDns.copyWith(ipv6: true)),
-        defaultClashConfig.copyWith(tunOverrideKeys: {TunOverrideKey.gso}),
-        defaultClashConfig.copyWith(geodataLoader: GeodataLoader.standard),
+        defaultClashConfig.copyWith(
+          tunOverrideKeys: {TunOverrideKey.strictRoute},
+        ),
       ];
 
       for (final config in setupOnlyChanges) {
-        expect(liveParams(config), liveParams(defaultClashConfig));
+        expect(_patchOf(config), _patchOf(defaultClashConfig));
         expect(config.setupOnly, isNot(defaultClashConfig.setupOnly));
       }
     });
@@ -1255,7 +1271,6 @@ void main() {
       expect(config.patchClashConfig.mixedPort, 7891);
       expect(config.patchClashConfig.mode, Mode.rule);
       expect(config.patchClashConfig.tun.enable, true);
-      expect(config.patchClashConfig.tun.stack, TunStack.mips);
       expect(config.hotKeyActions, [
         const HotKeyAction(action: HotAction.mode, key: 1),
       ]);

@@ -25,6 +25,7 @@ Read these only when the task touches their area:
   `.agents/skills/`, and worktree hygiene.
 - [.agents/flutter-upgrade.md](.agents/flutter-upgrade.md): SDK-pinned workarounds to recheck before changing the
   Flutter version.
+- [concord/AGENTS.md](concord/AGENTS.md): the Rust core's own rules, for any change inside `concord/`.
 
 ## Highest Priority Rules
 
@@ -54,8 +55,8 @@ Read these only when the task touches their area:
 - Follow `lint_options.yaml`: single quotes, trailing commas, `child:` last, no `print()`, const/final, declared return
   types.
 - Before reporting done, run `flutter pub get`, `flutter analyze --no-fatal-infos`, and the covering `flutter test`
-  suites. Say which check was skipped when a toolchain the build hook needs (Go, and on Linux and Windows `cargo`) is
-  missing.
+  suites. Say which check was skipped when a toolchain the build hook needs (`cargo`, the toolchain in
+  `concord/rust-toolchain.toml`) is missing.
 
 ## Repo Skills
 

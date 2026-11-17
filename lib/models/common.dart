@@ -116,7 +116,7 @@ abstract class Metadata with _$Metadata {
 @freezed
 abstract class TrackerInfo with _$TrackerInfo {
   const factory TrackerInfo({
-    required String id,
+    required int id,
     @Default(0) int upload,
     @Default(0) int download,
     required DateTime start,
@@ -130,18 +130,6 @@ abstract class TrackerInfo with _$TrackerInfo {
 
   factory TrackerInfo.fromJson(Map<String, Object?> json) =>
       _$TrackerInfoFromJson(json);
-}
-
-/// Reads the Core's `getConnections` answer.
-List<TrackerInfo> trackerInfosOf(Object? data) {
-  final connections = data is Map ? data['connections'] : null;
-  if (connections is! List) {
-    return const [];
-  }
-  return [
-    for (final item in connections.whereType<Map>())
-      TrackerInfo.fromJson(Map<String, Object?>.from(item)),
-  ];
 }
 
 typedef RequestTraffic = ({int upload, int download});

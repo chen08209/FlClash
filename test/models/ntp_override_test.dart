@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
+
+import '../helpers/concord_config.dart';
 
 ProfileOverrides _decode(Map<String, Object?> json) {
   return ProfileOverrides.fromJson(
@@ -13,30 +14,20 @@ ProfileOverrides _decode(Map<String, Object?> json) {
 
 void main() {
   test('NtpOverrideKey names every key of the core NTP section', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
-    final body = RegExp(
-      'type RawNTP struct {([^}]*)}',
-    ).firstMatch(source)!.group(1)!;
-
-    expect(NtpOverrideKey.values.map((key) => key.path).toSet(), {
-      for (final match in RegExp(r'yaml:"([^",]+)').allMatches(body))
-        match.group(1)!,
-    });
+    expect(
+      NtpOverrideKey.values.map((key) => key.path).toSet(),
+      concordKeys('ntp'),
+    );
   });
 
   test('the model defaults match the core\'s', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
-    final body = RegExp(
-      r'NTP: RawNTP\{([^}]*)\}',
-    ).firstMatch(source)!.group(1)!;
-    String valueOf(String field) =>
-        RegExp('$field:\\s*(.+),').firstMatch(body)!.group(1)!.trim();
+    final core = concordDefaults('ntp');
 
-    expect(valueOf('Server'), '"${defaultNtp.server}"');
-    expect(valueOf('Port'), '${defaultNtp.port}');
-    expect(valueOf('Interval'), '${defaultNtp.interval}');
-    expect(valueOf('Enable'), '${defaultNtp.enable}');
-    expect(valueOf('WriteToSystem'), '${defaultNtp.writeToSystem}');
+    expect(core['server'], defaultNtp.server);
+    expect(core['port'], defaultNtp.port);
+    expect(core['interval'], defaultNtp.interval);
+    expect(core['enable'], defaultNtp.enable);
+    expect(core['write-to-system'], defaultNtp.writeToSystem);
   });
 
   group('Ntp.overrideJson', () {

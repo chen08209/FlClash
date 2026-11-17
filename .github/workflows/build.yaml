@@ -17,8 +17,10 @@ env:
   # See CI Caches in .agents/commands.md.
   BRANCH_CACHE: ${{ !startsWith(github.ref, 'refs/tags/') }}
   FLUTTER_VERSION: '3.50.0'
-  GO_VERSION: '1.27.1'
   NDK_VERSION: r28c
+  # Pinned by hash, so a new bundle from https://curl.se/docs/caextract.html is a reviewed bump.
+  CA_BUNDLE: cacert-2026-09-25.pem
+  CA_BUNDLE_SHA256: a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505
 
 jobs:
   dart:
@@ -68,7 +70,7 @@ jobs:
       - name: Analyze with the rsFeature checks stripped
         run: bash tool/strip_check.sh
 
-      - name: Skip the Go core build hook
+      - name: Skip the Core build hook
         run: |
           yq -i '.hooks.user_defines.setup.build_assets = false' pubspec.yaml
 
@@ -129,13 +131,13 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: |
-            core/go.sum
-            plugins/setup/setup_hooks/lib/src/go_builder.dart
+      - &fetch-ca
+        name: Fetch CA certificates
+        shell: bash
+        run: |
+          bundle=concord/assets/ca-certificates.crt
+          curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
+          echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
@@ -177,49 +179,6 @@ jobs:
       - name: Build debug bundle
         run: flutter build ${{ matrix.platform }} --debug
 
-  go:
-    name: Go core
-    if: *checks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: ${{ env.BRANCH_CACHE }}
-          cache-dependency-path: core/go.sum
-
-      - name: Validate Go core wrapper
-        working-directory: core
-        env:
-          CGO_ENABLED: 0
-        run: |
-          if ! compgen -G '*_test.go' > /dev/null; then
-            echo 'No Go tests found in core/; the test step would pass vacuously.' >&2
-            exit 1
-          fi
-          test -z "$(gofmt -l ./*.go ./cmd ./mobile ./platform ./timezone ./tun)" || {
-            gofmt -l ./*.go ./cmd ./mobile ./platform ./timezone ./tun >&2
-            exit 1
-          }
-          go test -count=1 .
-          go vet . ./cmd/...
-          GOOS=linux go vet ./platform
-
-      - name: Validate the Android core library
-        working-directory: core
-        env:
-          CGO_ENABLED: 0
-        run: |
-          tags="$(sed -n 's/^tags: *//p' ../build_config.yaml)"
-          test -n "$tags" || { echo 'Could not read tags from build_config.yaml' >&2; exit 1; }
-          GOOS=android GOARCH=arm64 go vet "-tags=$tags" . ./mobile ./tun ./platform
-
   android:
     name: Android unit tests
     if: *checks
@@ -230,14 +189,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: ${{ env.BRANCH_CACHE }}
-          cache-dependency-path: |
-            core/go.sum
-            android/core/build.gradle.kts
+      - *fetch-ca
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -280,8 +232,7 @@ jobs:
           test -d "$wrapper" || flutter precache
           cp -R "$wrapper/." .
           chmod +x gradlew
-          # No JVM unit test loads the Core or the Flutter build, but `:core` compiles against
-          # the gomobile AAR, so one ABI of it is built.
+          # `:core` builds the Rust library, so one ABI of it is built.
           ./gradlew :common:testDebugUnitTest :service:testDebugUnitTest :app:testDebugUnitTest \
             -Ptarget-platform=android-arm64 \
             -x :app:compileFlutterBuildDebug -x :app:copyFlutterAssetsDebug
@@ -311,11 +262,78 @@ jobs:
         run: |
           cargo fmt --manifest-path services/helper/Cargo.toml -- --check
           cargo fmt --manifest-path plugins/rust_api/rust/Cargo.toml -- --check
+          cargo fmt --manifest-path android/core/jni/Cargo.toml -- --check
 
       - name: Run tests
         run: |
           cargo test --manifest-path services/helper/Cargo.toml
           cargo test --manifest-path plugins/rust_api/rust/Cargo.toml
+
+  rust-core:
+    name: Rust core
+    if: *checks
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+      # The release budget in bytes for the desktop Core.
+      CORE_MAX_BYTES: 30000000
+      CONCORD_REQUIRE_APP_TREE: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: concord
+          save-if: ${{ env.BRANCH_CACHE }}
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny@0.20.2
+
+      - *fetch-ca
+
+      - name: Check format
+        working-directory: concord
+        run: cargo fmt --check
+
+      - name: Clippy
+        working-directory: concord
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Run tests
+        working-directory: concord
+        run: cargo test --workspace
+
+      - name: Check crate layers
+        working-directory: concord
+        run: cargo run -p xtask -- check-layers
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Check the config the app sends
+        run: dart tool/check_sent_config.dart
+
+      - name: Check generated schema
+        working-directory: concord
+        run: cargo run -p xtask -- schema --check
+
+      - name: Check dependencies
+        working-directory: concord
+        run: cargo deny check
+
+      - name: Build release core
+        working-directory: concord
+        run: cargo build --release -p concord-desktop
+
+      - name: Check binary size
+        working-directory: concord
+        run: cargo run -p xtask -- check-size target/release/concord "$CORE_MAX_BYTES"
 
   windows-helper-test:
     name: Windows helper test
@@ -433,13 +451,6 @@ jobs:
             echo "keyPassword=${{ secrets.KEY_PASSWORD }}"
           } >> android/local.properties
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: ${{ env.BRANCH_CACHE }}
-          cache-dependency-path: core/go.sum
-
       - name: Setup Gradle
         if: startsWith(matrix.platform,'android')
         uses: gradle/actions/setup-gradle@v6
@@ -477,17 +488,7 @@ jobs:
           flutter --version
           flutter pub get
 
-      # The core embeds this bundle and FlClashHttpOverrides.trustCoreRoots loads it for Dart.
-      # Pinned by hash, so a new bundle from https://curl.se/docs/caextract.html is a reviewed bump.
-      - name: Fetch CA certificates
-        shell: bash
-        env:
-          CA_BUNDLE: cacert-2026-09-25.pem
-          CA_BUNDLE_SHA256: a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505
-        run: |
-          bundle=core/Clash.Meta/component/ca/ca-certificates.crt
-          curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
-          echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
+      - *fetch-ca
 
       - name: Setup
         env:
@@ -507,7 +508,7 @@ jobs:
   upload:
     permissions:
       contents: write
-    needs: [ version, build, dart, plugins, go, android, rust, windows-helper-test ]
+    needs: [ version, build, dart, plugins, android, rust, windows-helper-test ]
     runs-on: ubuntu-latest
     services:
       telegram-bot-api:

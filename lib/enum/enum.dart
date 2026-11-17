@@ -171,8 +171,6 @@ enum NavigationItemMode { mobile, desktop, more, moreFull }
 
 enum ProxiesSortType { none, delay, name }
 
-enum TunStack { gvisor, system, mixed, mips }
-
 enum AccessControlMode { acceptSelected, rejectSelected }
 
 enum AccessSortType { none, name, time }
@@ -184,19 +182,6 @@ enum ResultType {
   success,
   @JsonValue(-1)
   error,
-}
-
-enum CoreEventType {
-  log,
-  delay,
-  request,
-  requestTraffic,
-  dns,
-  loaded,
-  crash,
-  geoUpdate,
-  routeChanged,
-  dialerLoop,
 }
 
 enum FindProcessMode { always, strict }
@@ -346,7 +331,6 @@ enum TunOverrideKey with OverrideKey {
   dnsHijack('dns-hijack'),
   udpTimeout('udp-timeout'),
   disableIcmpForwarding('disable-icmp-forwarding'),
-  gso('gso'),
   includeInterface('include-interface'),
   excludeInterface('exclude-interface'),
   includeUid('include-uid'),
@@ -367,8 +351,7 @@ enum GeneralOverrideKey with OverrideKey {
   testUrl('test-url'),
   unifiedDelay('unified-delay'),
   tcpConcurrent('tcp-concurrent'),
-  ipv6('ipv6'),
-  geodataLoader('geodata-loader');
+  ipv6('ipv6');
 
   const GeneralOverrideKey(this.path);
 
@@ -490,15 +473,11 @@ enum IpQualitySource {
 
 enum IpQualitySourceStatus { noType, timeout, rateLimited, failed, ipMismatch }
 
-enum GeodataLoader { standard, memconservative }
-
 enum GeoResource {
   @JsonValue('mmdb')
   MMDB,
   @JsonValue('asn')
   ASN,
-  @JsonValue('geoip')
-  GEOIP,
   @JsonValue('geosite')
   GEOSITE;
 
@@ -506,7 +485,6 @@ enum GeoResource {
     return switch (value) {
       'mmdb' => GeoResource.MMDB,
       'asn' => GeoResource.ASN,
-      'geo-ip' || 'geoip' => GeoResource.GEOIP,
       'geo-site' || 'geosite' => GeoResource.GEOSITE,
       _ => throw ArgumentError.value(value, 'value', 'Invalid geo resource'),
     };
@@ -518,7 +496,6 @@ extension GeoResourceExt on GeoResource {
     return switch (this) {
       GeoResource.MMDB => 'mmdb',
       GeoResource.ASN => 'asn',
-      GeoResource.GEOIP => 'geoip',
       GeoResource.GEOSITE => 'geosite',
     };
   }

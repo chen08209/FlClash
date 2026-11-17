@@ -1,7 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -14,11 +12,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 const _tableSize = Size(1400, 1000);
 const _listSize = Size(600, 1000);
@@ -52,14 +49,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late ProviderContainer container;
-  late _MockCoreHandlerInterface core;
+  late CoreMocks mocks;
 
   setUp(() {
-    core = _MockCoreHandlerInterface();
+    mocks = coreMocks();
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
       ],
     );
     globalState.container = container;
@@ -74,7 +71,7 @@ void main() {
     final notifier = container.read(dnsQueriesProvider.notifier);
     notifier.value = FixedList<DnsQuery>(500);
     for (final dnsQuery in dnsQueries) {
-      notifier.addQuery(dnsQuery);
+      notifier.addQueries([dnsQuery]);
     }
   }
 
@@ -270,9 +267,9 @@ void main() {
     await pumpDnsQueries(tester);
     expect(find.text('gamma.test'), findsNothing);
 
-    container
-        .read(dnsQueriesProvider.notifier)
-        .addQuery(_dnsQuery('gamma.test'));
+    container.read(dnsQueriesProvider.notifier).addQueries([
+      _dnsQuery('gamma.test'),
+    ]);
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     await tester.pump();
@@ -414,13 +411,13 @@ void main() {
   });
 
   testWidgets('the broom clears the DNS cache and says so', (tester) async {
-    when(core.clearDnsCache).thenAnswer((_) async => true);
+    when(mocks.api.clearDnsCache).thenAnswer((_) async {});
     await pumpDnsQueries(tester);
 
     await tester.tap(find.byGlyph(AppGlyphs.broom));
     await tester.pumpAndSettle();
 
-    verify(core.clearDnsCache).called(1);
+    verify(mocks.api.clearDnsCache).called(1);
     expect(find.text('DNS cache cleared'), findsOneWidget);
 
     await teardownView(tester);
@@ -429,7 +426,7 @@ void main() {
   testWidgets('a Core that cannot clear the DNS cache reports it', (
     tester,
   ) async {
-    when(core.clearDnsCache).thenThrow(
+    when(mocks.api.clearDnsCache).thenThrow(
       const CoreMethodException(
         code: 'transport_disconnected',
         message: 'Core is not running',
@@ -464,9 +461,9 @@ void main() {
         }
       };
       addTearDown(() => debugOnRebuildDirtyWidget = null);
-      container
-          .read(dnsQueriesProvider.notifier)
-          .addQuery(_dnsQuery('new.test'));
+      container.read(dnsQueriesProvider.notifier).addQueries([
+        _dnsQuery('new.test'),
+      ]);
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump();
       debugOnRebuildDirtyWidget = null;

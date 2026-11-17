@@ -3,8 +3,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -20,9 +19,8 @@ import 'package:riverpod/riverpod.dart';
 import 'package:yaml/yaml.dart';
 
 import '../helpers/app_paths.dart';
+import '../helpers/core_mocks.dart';
 import '../helpers/test_profiles.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 CustomImportApp _app({
   Map<String, String> profiles = const {},
@@ -798,21 +796,20 @@ tun:
         ).toCompanion(),
       );
       compiledUrls = [];
-      final core = _MockCoreHandlerInterface();
-      when(() => core.validateConfig(any())).thenAnswer((_) async => null);
-      when(() => core.compileRuleSet(any(), url: any(named: 'url'))).thenAnswer(
-        (invocation) async {
-          compiledUrls.add(invocation.namedArguments[#url] as String);
-          return (
-            behavior: RuleProviderBehavior.classical,
-            format: RuleProviderFormat.text,
-          );
-        },
-      );
+      final mocks = coreMocks();
+      when(
+        () => mocks.api.validateConfig(any()),
+      ).thenAnswer((_) async => const []);
+      when(
+        () => mocks.api.compileRuleSet(any(), url: any(named: 'url')),
+      ).thenAnswer((invocation) async {
+        compiledUrls.add(invocation.namedArguments[#url] as String? ?? '');
+        return const RuleSetInfoDto(behavior: 'classical', format: 'text');
+      });
       container = ProviderContainer(
         overrides: [
           profilesProvider.overrideWith(() => TestProfiles([custom])),
-          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
         ],
       );
       globalState.container = container;

@@ -14,7 +14,7 @@ use std::future::pending;
     target_os = "linux"
 )))]
 use std::future::Future;
-use std::io::{BufRead, Error, Read};
+use std::io::{BufRead, Error, Read, Write};
 #[cfg(windows)]
 use std::os::windows::fs::OpenOptionsExt;
 #[cfg(windows)]
@@ -45,14 +45,12 @@ const LISTEN_PORT: u16 = 47890;
 #[cfg(not(target_os = "linux"))]
 const CORE_PIPE_PREFIX: &str = r"\\.\pipe\FlClashCore_";
 #[cfg(target_os = "linux")]
-const CORE_SOCKET_PREFIX: &str = "/tmp/FlClashSocket_";
-#[cfg(target_os = "linux")]
 const CORE_SOCKET_SUFFIX: &str = ".sock";
 const PROTOCOL_VERSION_HEADER: &str = "x-flclash-helper-protocol";
 #[cfg(windows)]
-const PROTOCOL_VERSION: &str = "8";
+const PROTOCOL_VERSION: &str = "9";
 #[cfg(not(windows))]
-const PROTOCOL_VERSION: &str = "6";
+const PROTOCOL_VERSION: &str = "7";
 const EXPECTED_CORE_SHA256: &str = env!("CORE_SHA256");
 const LOG_CAPACITY: usize = 100;
 const MAX_REQUEST_BODY_BYTES: u64 = 4096;
@@ -235,16 +233,32 @@ impl VerifiedCore {
         })
     }
 
-    fn spawn(&self, address: &str) -> Result<Child, Error> {
+    fn spawn(&self, address: &str, session_id: &str) -> Result<Child, Error> {
         let mut command = Command::new(&self.path);
         command
             .current_dir(&self.directory)
+            .stdin(Stdio::piped())
             .stderr(Stdio::piped())
             .arg(address);
         #[cfg(target_os = "linux")]
         adopt_core_owner(&mut command)?;
-        command.spawn()
+        let mut child = command.spawn()?;
+        if let Err(error) = hand_over_session(&mut child, session_id) {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(error);
+        }
+        Ok(child)
     }
+}
+
+/// The session ID is the Core's IPC token: one line on its standard input, which
+/// is then closed, so it never appears in the argument list or the environment.
+fn hand_over_session(child: &mut Child, session_id: &str) -> Result<(), Error> {
+    let Some(mut stdin) = child.stdin.take() else {
+        return Err(Error::other("Core has no standard input"));
+    };
+    writeln!(stdin, "{session_id}")
 }
 
 /// The Core hands files back to its real UID only when that differs from its
@@ -325,13 +339,29 @@ fn is_allowed_core_address(address: &str) -> bool {
 
 #[cfg(target_os = "linux")]
 fn is_allowed_core_address(address: &str) -> bool {
-    let Some(suffix) = address.strip_prefix(CORE_SOCKET_PREFIX) else {
+    let Some(name) = address.strip_suffix(CORE_SOCKET_SUFFIX) else {
         return false;
     };
-    let Some(digits) = suffix.strip_suffix(CORE_SOCKET_SUFFIX) else {
+    let Some((directory, id)) = name.rsplit_once('/') else {
         return false;
     };
-    !digits.is_empty() && digits.len() <= 10 && digits.bytes().all(|byte| byte.is_ascii_digit())
+    is_valid_session_id(id) && is_core_socket_directory(directory)
+}
+
+/// The app's private runtime directory, or the temp directory it falls back to
+/// without one; `ensure_owner_socket` checks who owns what it finds there.
+#[cfg(target_os = "linux")]
+fn is_core_socket_directory(directory: &str) -> bool {
+    if directory == "/tmp/FlClash" {
+        return true;
+    }
+    let Some(user) = directory
+        .strip_prefix("/run/user/")
+        .and_then(|rest| rest.strip_suffix("/FlClash"))
+    else {
+        return false;
+    };
+    !user.is_empty() && user.len() <= 10 && user.bytes().all(|byte| byte.is_ascii_digit())
 }
 
 fn is_valid_session_id(value: &str) -> bool {
@@ -479,7 +509,7 @@ fn launch(start_params: StartParams) -> warp::reply::Response {
         }
     };
 
-    match core.spawn(&start_params.address) {
+    match core.spawn(&start_params.address, &start_params.session_id) {
         Ok(mut child) => {
             let process_id = child.id();
             if let Some(stderr) = child.stderr.take() {
@@ -875,7 +905,8 @@ mod tests {
     #[cfg(not(target_os = "linux"))]
     const ALLOWED_CORE_ADDRESS: &str = r"\\.\pipe\FlClashCore_0123456789abcdef0123456789abcdef";
     #[cfg(target_os = "linux")]
-    const ALLOWED_CORE_ADDRESS: &str = "/tmp/FlClashSocket_4821.sock";
+    const ALLOWED_CORE_ADDRESS: &str =
+        "/run/user/1000/FlClash/0123456789abcdef0123456789abcdef.sock";
 
     fn spawn_placeholder_core() -> Child {
         #[cfg(windows)]
@@ -920,7 +951,7 @@ mod tests {
 
     #[test]
     fn protocol_uses_lowercase_session_ownership() {
-        assert_eq!(PROTOCOL_VERSION, if cfg!(windows) { "8" } else { "6" });
+        assert_eq!(PROTOCOL_VERSION, if cfg!(windows) { "9" } else { "7" });
         assert!(is_valid_session_id("0123456789abcdef0123456789abcdef"));
         assert!(!is_valid_session_id("ABCDEF0123456789abcdef0123456789"));
         assert!(!is_valid_session_id("0123456789abcdef"));
@@ -1496,14 +1527,64 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn only_accepts_random_core_socket_namespace() {
-        assert!(is_allowed_core_address("/tmp/FlClashSocket_4821.sock"));
-        assert!(!is_allowed_core_address("/tmp/FlClashSocket_.sock"));
-        assert!(!is_allowed_core_address("/tmp/FlClashSocket_4821"));
-        assert!(!is_allowed_core_address("/tmp/Other_4821.sock"));
-        assert!(!is_allowed_core_address("/tmp/FlClashSocket_../x.sock"));
+        let id = "0123456789abcdef0123456789abcdef";
+        assert!(is_allowed_core_address(&format!(
+            "/run/user/1000/FlClash/{id}.sock"
+        )));
+        assert!(is_allowed_core_address(&format!("/tmp/FlClash/{id}.sock")));
+        assert!(!is_allowed_core_address("/tmp/FlClashSocket_4821.sock"));
+        assert!(!is_allowed_core_address(&format!("/tmp/{id}.sock")));
+        assert!(!is_allowed_core_address(&format!("/tmp/FlClash/{id}")));
+        assert!(!is_allowed_core_address(&format!(
+            "/run/user//FlClash/{id}.sock"
+        )));
+        assert!(!is_allowed_core_address(&format!(
+            "/run/user/1000/../FlClash/{id}.sock"
+        )));
+        assert!(!is_allowed_core_address(&format!(
+            "/run/user/1000/FlClash/x/{id}.sock"
+        )));
+        assert!(!is_allowed_core_address(&format!(
+            "/run/user/1000/Other/{id}.sock"
+        )));
         assert!(!is_allowed_core_address(
-            "/tmp/FlClashSocket_12345678901.sock"
+            "/run/user/1000/FlClash/0123456789abcdef.sock"
         ));
+        assert!(!is_allowed_core_address(
+            "/run/user/1000/FlClash/ABCDEF0123456789abcdef0123456789.sock"
+        ));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn the_session_reaches_the_core_on_standard_input_only() {
+        let session = "0123456789abcdef0123456789abcdef";
+        let mut child = Command::new("sh")
+            .args(["-c", r#"IFS= read -r line; printf '%s|%s' "$line" "$#""#])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("spawn shell core");
+
+        hand_over_session(&mut child, session).unwrap();
+
+        let mut output = String::new();
+        child
+            .stdout
+            .take()
+            .unwrap()
+            .read_to_string(&mut output)
+            .unwrap();
+        child.wait().unwrap();
+        assert_eq!(output, format!("{session}|0"));
+    }
+
+    #[test]
+    fn a_core_without_standard_input_is_not_given_the_session() {
+        let mut child = spawn_placeholder_core();
+
+        assert!(hand_over_session(&mut child, "0123456789abcdef0123456789abcdef").is_err());
+        child.wait().unwrap();
     }
 
     #[test]

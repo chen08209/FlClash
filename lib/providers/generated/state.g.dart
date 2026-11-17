@@ -13,8 +13,8 @@ part of '../state.dart';
 final updateParamsProvider = UpdateParamsProvider._();
 
 final class UpdateParamsProvider
-    extends $FunctionalProvider<UpdateParams, UpdateParams, UpdateParams>
-    with $Provider<UpdateParams> {
+    extends $FunctionalProvider<ConfigPatch, ConfigPatch, ConfigPatch>
+    with $Provider<ConfigPatch> {
   UpdateParamsProvider._()
     : super(
         from: null,
@@ -31,24 +31,24 @@ final class UpdateParamsProvider
 
   @$internal
   @override
-  $ProviderElement<UpdateParams> $createElement($ProviderPointer pointer) =>
+  $ProviderElement<ConfigPatch> $createElement($ProviderPointer pointer) =>
       $ProviderElement(pointer);
 
   @override
-  UpdateParams create(Ref ref) {
+  ConfigPatch create(Ref ref) {
     return updateParams(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(UpdateParams value) {
+  Override overrideWithValue(ConfigPatch value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<UpdateParams>(value),
+      providerOverride: $SyncValueProvider<ConfigPatch>(value),
     );
   }
 }
 
-String _$updateParamsHash() => r'1613b6a3bfcd12d659c60d1fa8289ea257d662b4';
+String _$updateParamsHash() => r'33ff114f768d5113413f8f7deb93a0177fc52d72';
 
 @ProviderFor(coreOptions)
 final coreOptionsProvider = CoreOptionsProvider._();
@@ -89,7 +89,7 @@ final class CoreOptionsProvider
   }
 }
 
-String _$coreOptionsHash() => r'eda5c10501a808d6b6cc575e0841155d88dfc2ba';
+String _$coreOptionsHash() => r'ef7cb84b1c8ad89180f56c91cf863376c1ff9db5';
 
 @ProviderFor(setupPatch)
 final setupPatchProvider = SetupPatchProvider._();
@@ -436,7 +436,7 @@ final class SharedStateProvider
   }
 }
 
-String _$sharedStateHash() => r'bad20df240acfd1b384cad3655a58987a992a4ca';
+String _$sharedStateHash() => r'01242beabaf290f6dde0e2b2c639b6931db37f54';
 
 @ProviderFor(vpnRouteAddress)
 final vpnRouteAddressProvider = VpnRouteAddressProvider._();
@@ -513,7 +513,7 @@ final class VpnOptionsProvider
   }
 }
 
-String _$vpnOptionsHash() => r'8572d43f4359f7089aa0aae9adee755ee224b06b';
+String _$vpnOptionsHash() => r'cb60357f2706d545ce4b78b38c2af2f8f1ad9f32';
 
 @ProviderFor(AccessControlState)
 final accessControlStateProvider = AccessControlStateProvider._();
@@ -3848,7 +3848,7 @@ final class SetupStateProvider
   }
 }
 
-String _$setupStateHash() => r'c3e1a96ff46caa5697b540385eb576098af89318';
+String _$setupStateHash() => r'ea2026faab4f89458df501968b673cfbebf6878b';
 
 final class SetupStateFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<SetupState>, int?> {

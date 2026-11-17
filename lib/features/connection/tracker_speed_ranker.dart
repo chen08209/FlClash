@@ -17,7 +17,7 @@ const _stride = 5;
 /// What [rankTrackerInfos] keeps of a poll, in ranked order: only ids and typed
 /// data, so sending it to the isolate that decodes the next poll stays cheap.
 final class TrackerRanking {
-  final List<String> ids;
+  final List<int> ids;
   final Int64List samples;
   final Float64List rankSpeeds;
 
@@ -46,7 +46,7 @@ RankedTrackerInfos rankTrackerInfos(
   DateTime now,
 ) {
   final nowMicros = now.microsecondsSinceEpoch;
-  final previousIndex = <String, int>{
+  final previousIndex = <int, int>{
     for (final (index, id) in previous.ids.indexed) id: index,
   };
   final rankings = <_Ranking>[];
@@ -74,7 +74,7 @@ RankedTrackerInfos rankTrackerInfos(
   rankings.sort(_Ranking.compare);
 
   final ranked = <TrackerInfo>[];
-  final ids = <String>[];
+  final ids = <int>[];
   final samples = Int64List(rankings.length * _stride);
   final rankSpeeds = Float64List(rankings.length);
   for (final (index, ranking) in rankings.indexed) {

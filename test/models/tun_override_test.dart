@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
+
+import '../helpers/concord_config.dart';
 
 ProfileOverrides _decode(Map<String, Object?> json) {
   return ProfileOverrides.fromJson(
@@ -13,16 +14,10 @@ ProfileOverrides _decode(Map<String, Object?> json) {
 
 void main() {
   test('every TunOverrideKey is a key of the core TUN section', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
-    final body = RegExp(
-      'type RawTun struct {([^}]*)}',
-    ).firstMatch(source)!.group(1)!;
-    final coreKeys = {
-      for (final match in RegExp(r'yaml:"([^",]+)').allMatches(body))
-        match.group(1)!,
-    };
-
-    expect(coreKeys, containsAll(TunOverrideKey.values.map((key) => key.path)));
+    expect(
+      concordKeys('tun'),
+      containsAll(TunOverrideKey.values.map((key) => key.path)),
+    );
   });
 
   test('no TunOverrideKey is one the network settings write', () {
@@ -70,7 +65,7 @@ void main() {
 
   test('a custom profile picks its own TUN keys over the app-wide ones', () {
     const custom = ProfileOverrides(
-      tun: ProfileTun(mtu: 1400, gso: true),
+      tun: ProfileTun(mtu: 1400, strictRoute: true),
       tunOverrideKeys: {TunOverrideKey.mtu},
     );
     final merged = custom.overAppTun(

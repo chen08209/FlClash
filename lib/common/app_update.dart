@@ -12,7 +12,12 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:path/path.dart';
 
-const appReleaseLine = ReleaseLine.dev;
+const appReleaseLine = ReleaseLine.rs;
+
+/// GitHub's latest release is the Go build, so checking for updates and
+/// self-updating stay off. Turn this on once the rs line publishes its own
+/// releases there and the check reads only rs tags and asset names.
+const rsReleasesOnGitHub = false;
 
 sealed class UpdateDownload {
   const UpdateDownload(this.tag);
@@ -43,10 +48,12 @@ typedef SelfUpdateAsset = ({
 });
 
 @visibleForTesting
-SelfUpdateAsset? Function() resolveSelfUpdateAsset = () => selfUpdateAssetFor(
-  Abi.current(),
-  windowsInstalled: system.isWindows && isInstalledWindowsBuild,
-);
+SelfUpdateAsset? Function() resolveSelfUpdateAsset = () => rsReleasesOnGitHub
+    ? selfUpdateAssetFor(
+        Abi.current(),
+        windowsInstalled: system.isWindows && isInstalledWindowsBuild,
+      )
+    : null;
 
 SelfUpdateAsset? get selfUpdateAsset => resolveSelfUpdateAsset();
 

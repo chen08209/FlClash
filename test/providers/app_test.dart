@@ -269,25 +269,23 @@ void main() {
       );
       addTearDown(subscription.close);
 
-      container
-          .read(requestsProvider.notifier)
-          .addRequest(
-            TrackerInfo(
-              id: '1',
-              start: DateTime.utc(2026),
-              metadata: const Metadata(network: 'tcp', host: 'example.com'),
-              chains: const ['Proxy'],
-              rule: 'DOMAIN',
-              rulePayload: 'example.com',
-            ),
-          );
+      container.read(requestsProvider.notifier).addRequests([
+        TrackerInfo(
+          id: 1,
+          start: DateTime.utc(2026),
+          metadata: const Metadata(network: 'tcp', host: 'example.com'),
+          chains: const ['Proxy'],
+          rule: 'DOMAIN',
+          rulePayload: 'example.com',
+        ),
+      ]);
 
       expect(notifications, 1);
       expect(container.read(requestsProvider).length, 1);
     });
 
     test('Requests.updateTraffic updates the requests it names', () {
-      TrackerInfo request(String id) => TrackerInfo(
+      TrackerInfo request(int id) => TrackerInfo(
         id: id,
         upload: 460,
         start: DateTime.utc(2026),
@@ -298,8 +296,8 @@ void main() {
       );
       final notifier = container.read(requestsProvider.notifier);
       notifier.value = FixedList(3);
-      notifier.addRequest(request('a'));
-      notifier.addRequest(request('b'));
+      notifier.addRequests([request(1)]);
+      notifier.addRequests([request(2)]);
       var notifications = 0;
       final subscription = container.listen(
         requestsProvider.select((state) => state.revision),
@@ -307,12 +305,12 @@ void main() {
       );
       addTearDown(subscription.close);
 
-      notifier.updateTraffic({'gone': (upload: 1, download: 1)});
+      notifier.updateTraffic({99: (upload: 1, download: 1)});
       expect(notifications, 0);
 
       notifier.updateTraffic({
-        'a': (upload: 520, download: 257835),
-        'gone': (upload: 1, download: 1),
+        1: (upload: 520, download: 257835),
+        99: (upload: 1, download: 1),
       });
 
       expect(notifications, 1);
@@ -321,7 +319,7 @@ void main() {
             .read(requestsProvider)
             .list
             .map((request) => (request.id, request.upload, request.download)),
-        [('a', 520, 257835), ('b', 460, 0)],
+        [(1, 520, 257835), (2, 460, 0)],
       );
     });
 

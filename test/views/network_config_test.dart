@@ -122,19 +122,6 @@ void main() {
   });
 
   group('option pickers', () {
-    testWidgets('the stack picker writes the chosen tun stack', (tester) async {
-      await pumpItem(tester, const TunStackItem());
-      final initial = container.read(patchClashConfigProvider).tun.stack;
-      final target = TunStack.values.firstWhere((item) => item != initial);
-
-      await tester.tap(find.byType(ListRow).first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(target.name).last);
-      await tester.pumpAndSettle();
-
-      expect(container.read(patchClashConfigProvider).tun.stack, target);
-    });
-
     testWidgets('the interface name mode picker writes the chosen mode', (
       tester,
     ) async {

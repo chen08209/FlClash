@@ -65,14 +65,16 @@ class _PortFormState extends ConsumerState<_PortForm> {
         controller: _socksPortController,
         label: (appLocalizations) => appLocalizations.socksPort,
       ),
-      _PortField(
-        controller: _redirPortController,
-        label: (appLocalizations) => appLocalizations.redirPort,
-      ),
-      _PortField(
-        controller: _tProxyPortController,
-        label: (appLocalizations) => appLocalizations.tproxyPort,
-      ),
+      if (transparentPorts.redir)
+        _PortField(
+          controller: _redirPortController,
+          label: (appLocalizations) => appLocalizations.redirPort,
+        ),
+      if (transparentPorts.tproxy)
+        _PortField(
+          controller: _tProxyPortController,
+          label: (appLocalizations) => appLocalizations.tproxyPort,
+        ),
     ];
   }
 

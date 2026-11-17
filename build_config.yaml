@@ -1,8 +1,7 @@
-tags: with_gvisor
-go_ldflags: "-w -s"
-core_version: v1.19.34
-core_dir: core
+concord_dir: concord
 core_name: FlClashCore
+core_bundle_id: com.follow.clash.rs.core
+product_name: FlClash
 output_dir: libclash
 helper_dir: services/helper
 helper_name: FlClashHelperService

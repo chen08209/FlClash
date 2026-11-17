@@ -18,7 +18,7 @@ TrackerInfo _tracker({
   bool mitmRefused = false,
 }) {
   return TrackerInfo(
-    id: 'id',
+    id: 1,
     upload: 0,
     download: 0,
     start: DateTime.utc(2026),

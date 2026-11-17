@@ -366,17 +366,11 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
     private fun isCurrent(request: RunRequest): Boolean = arbiter.isCurrent(request)
 
     internal companion object {
-        val KERNEL_TCP_STACKS = setOf("system", "mixed")
-        const val FALLBACK_STACK = "gvisor"
-
-        /**
-         * The Core init payload. The key spelling is a cross-language contract with the Go wrapper,
-         * not an implementation detail.
-         */
+        /** The `core.init` params of the Core protocol; the key spelling is its contract. */
         fun initParams(homeDirPath: String, sdkInt: Int): String = Gson().toJson(
             mapOf(
-                "home-dir" to homeDirPath,
-                "version" to sdkInt,
+                "home" to homeDirPath,
+                "sdkInt" to sdkInt,
             ),
         )
 

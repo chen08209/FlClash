@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -102,7 +102,7 @@ class _DnsQueriesViewState extends ConsumerState<DnsQueriesView>
     final appLocalizations = context.appLocalizations;
     var cleared = false;
     try {
-      await ref.read(coreHandlerProvider).clearDnsCache();
+      await ref.read(coreHandlerProvider).api.clearDnsCache();
       cleared = true;
     } catch (error) {
       commonPrint.log(

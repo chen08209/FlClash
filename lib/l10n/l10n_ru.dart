@@ -406,17 +406,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get desc =>
-      'Многоплатформенный прокси-клиент на основе ClashMeta: простой и удобный, с открытым исходным кодом и без рекламы.';
+      'Многоплатформенный прокси-клиент на основе ядра Concord: простой и удобный, с открытым исходным кодом и без рекламы.';
 
   @override
   String get startVpn => 'Запуск VPN…';
 
   @override
   String get stopVpn => 'Остановка VPN…';
-
-  @override
-  String get localNetworkDeniedTip =>
-      'Доступ к локальной сети запрещён: используется стек gvisor, локальная сеть недоступна.';
 
   @override
   String get compatible => 'Режим совместимости';
@@ -510,6 +506,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get externalControllerSecret => 'Секрет внешнего контроллера';
 
   @override
+  String get externalControllerCors => 'Разрешить кросс-доменный доступ';
+
+  @override
+  String get externalControllerCorsDesc =>
+      'Веб-панели смогут подключаться с других сайтов.';
+
+  @override
   String get ipv6Desc => 'Трафик IPv6 принимается, только когда IPv6 включён.';
 
   @override
@@ -535,9 +538,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'Параллельный TCP';
-
-  @override
-  String get geodataLoader => 'Geo: экономия памяти';
 
   @override
   String get requests => 'Запросы';
@@ -948,7 +948,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      'Программа — это клиент сетевого прокси с открытым исходным кодом на основе ядра Clash.Meta (mihomo). Она предоставляет только локальные инструменты: управление конфигурациями, маршрутизацию по правилам и пересылку трафика.';
+      'Программа — это клиент сетевого прокси с открытым исходным кодом на основе ядра Concord. Она предоставляет только локальные инструменты: управление конфигурациями, маршрутизацию по правилам и пересылку трафика.';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -1001,7 +1001,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      'Программа распространяется с открытым исходным кодом по лицензии GPL-3.0. По этой лицензии вы можете запускать, изучать, изменять и распространять её; распространяя Программу или её изменённую версию, вы должны также предоставить исходный код по GPL-3.0 и сохранить исходные уведомления об авторских правах.\n\nСторонние компоненты Программы, включая ядро Clash.Meta, распространяются по своим лицензиям. Исходные авторы не отвечают за проблемы версий, изменённых или распространяемых другими.';
+      'Программа распространяется с открытым исходным кодом по лицензии GPL-3.0. По этой лицензии вы можете запускать, изучать, изменять и распространять её; распространяя Программу или её изменённую версию, вы должны также предоставить исходный код по GPL-3.0 и сохранить исходные уведомления об авторских правах.\n\nСторонние компоненты Программы, включая ядро Concord, распространяются по своим лицензиям. Исходные авторы не отвечают за проблемы версий, изменённых или распространяемых другими.';
 
   @override
   String get disclaimerChangesTitle => 'Изменения заявления';
@@ -1103,9 +1103,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => 'Скрывать прокси с таймаутом';
-
-  @override
-  String get stackMode => 'Режим стека';
 
   @override
   String get network => 'Сеть';
@@ -1933,7 +1930,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tunAuthorizationFailed =>
-      'Не удалось получить права для TUN, поэтому он выключен.';
+      'Не удалось авторизовать TUN, в этом запуске он не используется.';
 
   @override
   String get sudoPasswordTitle => 'Введите пароль для sudo';
@@ -2755,10 +2752,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get congestionController => 'Управление перегрузкой TCP';
 
   @override
-  String get congestionControllerDesc =>
-      'Управление перегрузкой TCP действует только со стеком mips.';
-
-  @override
   String get routeExcludeAddress => 'Исключённые адреса маршрутов';
 
   @override
@@ -2832,8 +2825,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get udpTimeout => 'Тайм-аут UDP';
 
   @override
-  String get udpTimeoutDesc =>
-      'Тайм-аут UDP задаётся в секундах и действует только со стеками gvisor, system и mixed.';
+  String get udpTimeoutDesc => 'Тайм-аут UDP задаётся в секундах.';
 
   @override
   String get dnsHijackDesc =>
@@ -3945,9 +3937,60 @@ class AppLocalizationsRu extends AppLocalizations {
   String get forceRestartCore => 'Принудительный перезапуск';
 
   @override
+  String get configWarnings => 'Предупреждения конфигурации';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count предупреждений при загрузке конфигурации',
+      few: '$count предупреждения при загрузке конфигурации',
+      one: '$count предупреждение при загрузке конфигурации',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'HTTP-порт';
+
+  @override
+  String get dnsServer => 'DNS-сервер';
+
+  @override
+  String get serviceFaults => 'Службы не запущены';
+
+  @override
+  String get faultAddressInUse => 'Адрес уже используется.';
+
+  @override
+  String get faultAddressNotAvailable => 'Этого адреса нет на устройстве.';
+
+  @override
+  String get faultPermissionDenied => 'Нет разрешения.';
+
+  @override
+  String get tunStartFailed =>
+      'Не удалось запустить TUN, в этом запуске попыток больше не будет.';
+
+  @override
   String get vpnPermissionNotGranted =>
       'Разрешение на VPN не выдано, поэтому VPN не запущен. Постоянная VPN, заданная для другого приложения, тоже мешает запуску.';
 
   @override
   String get vpnServiceStartFailed => 'Не удалось запустить службу VPN.';
+
+  @override
+  String get rootTun => 'Режим root';
+
+  @override
+  String get rootTunDesc => 'Использует root вместо системного VPN.';
+
+  @override
+  String get rootTunUnavailable => 'Root на устройстве не найден';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root недоступен ($reason), поэтому сейчас используется системный VPN.';
+  }
 }

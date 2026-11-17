@@ -861,7 +861,7 @@ abstract class AppLocalizations {
   /// No description provided for @desc.
   ///
   /// In en, this message translates to:
-  /// **'A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.'**
+  /// **'A multi-platform proxy client based on the Concord core, simple and easy to use, open-source and ad-free.'**
   String get desc;
 
   /// No description provided for @startVpn.
@@ -875,12 +875,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stopping VPN…'**
   String get stopVpn;
-
-  /// No description provided for @localNetworkDeniedTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Local network permission denied: using the gvisor stack, LAN is unreachable.'**
-  String get localNetworkDeniedTip;
 
   /// No description provided for @compatible.
   ///
@@ -1056,6 +1050,18 @@ abstract class AppLocalizations {
   /// **'External controller secret'**
   String get externalControllerSecret;
 
+  /// No description provided for @externalControllerCors.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow cross-origin access'**
+  String get externalControllerCors;
+
+  /// No description provided for @externalControllerCorsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Web dashboards can connect from other sites.'**
+  String get externalControllerCorsDesc;
+
   /// No description provided for @ipv6Desc.
   ///
   /// In en, this message translates to:
@@ -1109,12 +1115,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'TCP concurrent'**
   String get tcpConcurrent;
-
-  /// No description provided for @geodataLoader.
-  ///
-  /// In en, this message translates to:
-  /// **'Geo low-memory mode'**
-  String get geodataLoader;
 
   /// No description provided for @requests.
   ///
@@ -1911,7 +1911,7 @@ abstract class AppLocalizations {
   /// No description provided for @disclaimerSoftwareContent.
   ///
   /// In en, this message translates to:
-  /// **'The Software is an open-source network proxy client built on the Clash.Meta (mihomo) core. It only provides local tooling such as configuration management, rule-based routing, and traffic forwarding.'**
+  /// **'The Software is an open-source network proxy client built on the Concord core. It only provides local tooling such as configuration management, rule-based routing, and traffic forwarding.'**
   String get disclaimerSoftwareContent;
 
   /// No description provided for @disclaimerNoServiceStatement.
@@ -2001,7 +2001,7 @@ abstract class AppLocalizations {
   /// No description provided for @disclaimerLicenseContent.
   ///
   /// In en, this message translates to:
-  /// **'The Software is open source under the GPL-3.0 license. Under that license you may run, study, modify, and distribute it; when you distribute the Software or a modified version, you must provide its source code under GPL-3.0 as well and keep the original copyright notices.\n\nThird-party components in the Software, including the Clash.Meta core, follow their own licenses. The original authors are not responsible for any problem arising from versions modified or distributed by others.'**
+  /// **'The Software is open source under the GPL-3.0 license. Under that license you may run, study, modify, and distribute it; when you distribute the Software or a modified version, you must provide its source code under GPL-3.0 as well and keep the original copyright notices.\n\nThird-party components in the Software, including the Concord core, follow their own licenses. The original authors are not responsible for any problem arising from versions modified or distributed by others.'**
   String get disclaimerLicenseContent;
 
   /// No description provided for @disclaimerChangesTitle.
@@ -2183,12 +2183,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hide timed-out proxies'**
   String get hideTimeoutProxies;
-
-  /// No description provided for @stackMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Stack mode'**
-  String get stackMode;
 
   /// No description provided for @network.
   ///
@@ -3579,7 +3573,7 @@ abstract class AppLocalizations {
   /// No description provided for @tunAuthorizationFailed.
   ///
   /// In en, this message translates to:
-  /// **'TUN could not be authorized, so it was turned off.'**
+  /// **'TUN could not be authorized, so it is not used in this run.'**
   String get tunAuthorizationFailed;
 
   /// No description provided for @sudoPasswordTitle.
@@ -4956,12 +4950,6 @@ abstract class AppLocalizations {
   /// **'TCP congestion control'**
   String get congestionController;
 
-  /// No description provided for @congestionControllerDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'TCP congestion control works only with the mips stack.'**
-  String get congestionControllerDesc;
-
   /// No description provided for @routeExcludeAddress.
   ///
   /// In en, this message translates to:
@@ -5097,7 +5085,7 @@ abstract class AppLocalizations {
   /// No description provided for @udpTimeoutDesc.
   ///
   /// In en, this message translates to:
-  /// **'The UDP timeout is in seconds and works only with the gvisor, system and mixed stacks.'**
+  /// **'The UDP timeout is in seconds.'**
   String get udpTimeoutDesc;
 
   /// No description provided for @dnsHijackDesc.
@@ -6930,6 +6918,60 @@ abstract class AppLocalizations {
   /// **'Force restart'**
   String get forceRestartCore;
 
+  /// No description provided for @configWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Config warnings'**
+  String get configWarnings;
+
+  /// No description provided for @configWarningsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 warning from loading the config} other{{count} warnings from loading the config}}'**
+  String configWarningsCount(num count);
+
+  /// No description provided for @httpPort.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTP port'**
+  String get httpPort;
+
+  /// No description provided for @dnsServer.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS server'**
+  String get dnsServer;
+
+  /// No description provided for @serviceFaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Services not started'**
+  String get serviceFaults;
+
+  /// No description provided for @faultAddressInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'The address is already in use.'**
+  String get faultAddressInUse;
+
+  /// No description provided for @faultAddressNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The address is not available on this device.'**
+  String get faultAddressNotAvailable;
+
+  /// No description provided for @faultPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission denied.'**
+  String get faultPermissionDenied;
+
+  /// No description provided for @tunStartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'TUN could not start and will not be tried again in this run.'**
+  String get tunStartFailed;
+
   /// No description provided for @vpnPermissionNotGranted.
   ///
   /// In en, this message translates to:
@@ -6941,6 +6983,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The VPN service could not start.'**
   String get vpnServiceStartFailed;
+
+  /// No description provided for @rootTun.
+  ///
+  /// In en, this message translates to:
+  /// **'Root mode'**
+  String get rootTun;
+
+  /// No description provided for @rootTunDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses root instead of the system VPN.'**
+  String get rootTunDesc;
+
+  /// No description provided for @rootTunUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No root found on this device'**
+  String get rootTunUnavailable;
+
+  /// No description provided for @rootTunFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Root is unavailable ({reason}), so this run uses the system VPN.'**
+  String rootTunFallback(Object reason);
 }
 
 class _AppLocalizationsDelegate

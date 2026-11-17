@@ -414,17 +414,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get desc =>
-      'Un client proxy multiplateforme basé sur ClashMeta, simple d’utilisation, open source et sans publicité.';
+      'Un client proxy multiplateforme basé sur le cœur Concord, simple d’utilisation, open source et sans publicité.';
 
   @override
   String get startVpn => 'Démarrage du VPN…';
 
   @override
   String get stopVpn => 'Arrêt du VPN…';
-
-  @override
-  String get localNetworkDeniedTip =>
-      'Autorisation du réseau local refusée : la pile gvisor est utilisée, le LAN est inaccessible.';
 
   @override
   String get compatible => 'Mode de compatibilité';
@@ -519,6 +515,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get externalControllerSecret => 'Secret du contrôleur externe';
 
   @override
+  String get externalControllerCors => 'Autoriser l’accès cross-origin';
+
+  @override
+  String get externalControllerCorsDesc =>
+      'Les tableaux de bord web peuvent se connecter depuis d’autres sites.';
+
+  @override
   String get ipv6Desc => 'Le trafic IPv6 n’est reçu que si IPv6 est activé.';
 
   @override
@@ -544,9 +547,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP simultané';
-
-  @override
-  String get geodataLoader => 'Mode Geo à faible mémoire';
 
   @override
   String get requests => 'Requêtes';
@@ -961,7 +961,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      'Le Logiciel est un client proxy réseau open source construit sur le cœur Clash.Meta (mihomo). Il se limite à fournir des outils locaux tels que la gestion de la configuration, le routage par règles et le transfert du trafic.';
+      'Le Logiciel est un client proxy réseau open source construit sur le cœur Concord. Il se limite à fournir des outils locaux tels que la gestion de la configuration, le routage par règles et le transfert du trafic.';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -1014,7 +1014,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      'Le Logiciel est open source sous licence GPL-3.0. Selon cette licence, vous pouvez l\'exécuter, l\'étudier, le modifier et le distribuer ; lorsque vous distribuez le Logiciel ou une version modifiée, vous devez également en fournir le code source sous GPL-3.0 et conserver les mentions de droits d\'auteur d\'origine.\n\nLes composants tiers du Logiciel, y compris le noyau Clash.Meta, suivent leurs propres licences. Les auteurs d\'origine ne sont pas responsables des problèmes liés aux versions modifiées ou distribuées par d\'autres.';
+      'Le Logiciel est open source sous licence GPL-3.0. Selon cette licence, vous pouvez l\'exécuter, l\'étudier, le modifier et le distribuer ; lorsque vous distribuez le Logiciel ou une version modifiée, vous devez également en fournir le code source sous GPL-3.0 et conserver les mentions de droits d\'auteur d\'origine.\n\nLes composants tiers du Logiciel, y compris le noyau Concord, suivent leurs propres licences. Les auteurs d\'origine ne sont pas responsables des problèmes liés aux versions modifiées ou distribuées par d\'autres.';
 
   @override
   String get disclaimerChangesTitle => 'Modifications de cette déclaration';
@@ -1116,9 +1116,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => 'Masquer les proxys expirés';
-
-  @override
-  String get stackMode => 'Mode de pile';
 
   @override
   String get network => 'Réseau';
@@ -1956,7 +1953,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tunAuthorizationFailed =>
-      'TUN n’a pas pu être autorisé et a donc été désactivé.';
+      'Le TUN n\'a pas pu être autorisé, il n\'est pas utilisé pendant cette exécution.';
 
   @override
   String get sudoPasswordTitle => 'Saisissez votre mot de passe pour sudo';
@@ -2778,10 +2775,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get congestionController => 'Contrôle de congestion TCP';
 
   @override
-  String get congestionControllerDesc =>
-      'Le contrôle de congestion TCP ne fonctionne qu’avec la pile mips.';
-
-  @override
   String get routeExcludeAddress => 'Adresses de route exclues';
 
   @override
@@ -2855,8 +2848,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get udpTimeout => 'Délai UDP';
 
   @override
-  String get udpTimeoutDesc =>
-      'Le délai UDP est en secondes et ne fonctionne qu’avec les piles gvisor, system et mixed.';
+  String get udpTimeoutDesc => 'Le délai UDP est en secondes.';
 
   @override
   String get dnsHijackDesc =>
@@ -3998,9 +3990,60 @@ class AppLocalizationsFr extends AppLocalizations {
   String get forceRestartCore => 'Forcer le redémarrage';
 
   @override
+  String get configWarnings => 'Avertissements de configuration';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count avertissements au chargement de la configuration',
+      one: '1 avertissement au chargement de la configuration',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'Port HTTP';
+
+  @override
+  String get dnsServer => 'Serveur DNS';
+
+  @override
+  String get serviceFaults => 'Services non démarrés';
+
+  @override
+  String get faultAddressInUse => 'L\'adresse est déjà utilisée.';
+
+  @override
+  String get faultAddressNotAvailable =>
+      'L\'adresse n\'existe pas sur cet appareil.';
+
+  @override
+  String get faultPermissionDenied => 'Autorisation refusée.';
+
+  @override
+  String get tunStartFailed =>
+      'Le TUN n\'a pas pu démarrer et ne sera plus essayé pendant cette exécution.';
+
+  @override
   String get vpnPermissionNotGranted =>
       'L\'autorisation VPN n\'a pas été accordée, le VPN n\'a donc pas démarré. Un VPN permanent défini pour une autre application l\'empêche aussi.';
 
   @override
   String get vpnServiceStartFailed => 'Le service VPN n\'a pas pu démarrer.';
+
+  @override
+  String get rootTun => 'Mode root';
+
+  @override
+  String get rootTunDesc => 'Utilise root au lieu du VPN système.';
+
+  @override
+  String get rootTunUnavailable => 'Aucun root détecté sur cet appareil';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root n\'est pas disponible ($reason) : cette session utilise le VPN système.';
+  }
 }

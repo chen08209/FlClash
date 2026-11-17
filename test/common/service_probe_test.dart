@@ -2,26 +2,20 @@ import 'dart:convert';
 
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/service_probe.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
-class _MockCore extends Mock implements CoreHandlerInterface {}
+import '../helpers/core_mocks.dart';
+import '../helpers/probe_dtos.dart';
 
 void main() {
-  setUpAll(() {
-    registerFallbackValue(const ServiceCheckParams(timeout: 0));
-    registerFallbackValue(const OutboundIpParams(timeout: 0));
-  });
-
-  late _MockCore core;
+  late CoreMocks mocks;
   late CoreController controller;
 
   setUp(() {
-    core = _MockCore();
-    controller = CoreController.scoped(core);
+    mocks = coreMocks();
+    controller = mocks.controller;
   });
 
   group('ServiceProbeStatus', () {
@@ -119,12 +113,12 @@ void main() {
     test(
       'asks the Core for the named targets and keys the answers back',
       () async {
-        late ServiceCheckParams sent;
-        when(() => core.serviceCheck(any())).thenAnswer((invocation) async {
-          sent = invocation.positionalArguments.single as ServiceCheckParams;
-          return const [
-            ServiceCheckItem(name: 'claude', status: 'available', delay: 40),
-            ServiceCheckItem(name: 'gemini', status: 'unsupported-region'),
+        late ServiceSweep sent;
+        stubCheckServices(mocks.api, (sweep) async {
+          sent = sweep;
+          return [
+            serviceItem('claude', delay: 40),
+            serviceItem('gemini', status: 'unsupported-region'),
           ];
         });
 
@@ -134,7 +128,7 @@ void main() {
           targets: const [ServiceTarget.claude, ServiceTarget.gemini],
         );
 
-        expect(sent.proxyName, 'HK-01');
+        expect(sent.proxy, 'HK-01');
         expect(sent.names, ['claude', 'gemini']);
         expect(sent.timeout, probeTimeoutDuration.inMilliseconds);
         expect(
@@ -149,24 +143,22 @@ void main() {
     );
 
     test('an empty target list asks for every service', () async {
-      late ServiceCheckParams sent;
-      when(() => core.serviceCheck(any())).thenAnswer((invocation) async {
-        sent = invocation.positionalArguments.single as ServiceCheckParams;
+      late ServiceSweep sent;
+      stubCheckServices(mocks.api, (sweep) async {
+        sent = sweep;
         return const [];
       });
 
       await checkServices(controller);
 
       expect(sent.names, isEmpty);
-      expect(sent.proxyName, isEmpty);
+      expect(sent.proxy, isEmpty);
     });
 
     test('skips a name this build does not know', () async {
-      when(() => core.serviceCheck(any())).thenAnswer(
-        (_) async => const [
-          ServiceCheckItem(name: 'someday-tv', status: 'available'),
-          ServiceCheckItem(name: 'spotify', status: 'available'),
-        ],
+      stubCheckServices(
+        mocks.api,
+        (_) async => [serviceItem('someday-tv'), serviceItem('spotify')],
       );
 
       final checks = await checkServices(controller);
@@ -177,10 +169,10 @@ void main() {
 
   group('lookupOutboundIp', () {
     test('hands the Core every source and parses the one that won', () async {
-      late OutboundIpParams sent;
-      when(() => core.outboundIp(any())).thenAnswer((invocation) async {
-        sent = invocation.positionalArguments.single as OutboundIpParams;
-        return const OutboundIpResult(
+      late OutboundAsk sent;
+      stubOutboundIp(mocks.api, (ask) async {
+        sent = ask;
+        return outboundIpOf(
           url: 'https://www.cloudflare.com/cdn-cgi/trace',
           body: 'fl=1\nip=203.0.113.7\nloc=US\n',
         );
@@ -191,14 +183,15 @@ void main() {
       );
 
       expect(sent.urls, ipInfoSources.keys.toList());
-      expect(sent.proxyName, 'HK-01');
+      expect(sent.proxy, 'HK-01');
       expect(sent.timeout, outboundIpTimeoutDuration.inMilliseconds);
       expect(ipInfo, const IpInfo(ip: '203.0.113.7', countryCode: 'US'));
     });
 
     test('parses whichever source answered, not just the first', () async {
-      when(() => core.outboundIp(any())).thenAnswer(
-        (_) async => OutboundIpResult(
+      stubOutboundIp(
+        mocks.api,
+        (_) async => outboundIpOf(
           url: 'https://api.country.is',
           body: jsonEncode({'ip': '198.51.100.4', 'country': 'DE'}),
         ),
@@ -212,18 +205,13 @@ void main() {
     });
 
     test('gives up on an error, an empty body or an unparseable one', () async {
-      final answers = <OutboundIpResult>[
-        const OutboundIpResult(error: 'timeout'),
-        const OutboundIpResult(url: 'https://api.country.is'),
-        const OutboundIpResult(url: 'https://api.country.is', body: 'garbage'),
-        const OutboundIpResult(
-          url: 'https://unknown.example',
-          body: 'ip=1.2.3.4',
-        ),
+      final answers = <OutboundIp>[
+        outboundIpOf(error: 'timeout'),
+        outboundIpOf(url: 'https://api.country.is'),
+        outboundIpOf(url: 'https://api.country.is', body: 'garbage'),
+        outboundIpOf(url: 'https://unknown.example', body: 'ip=1.2.3.4'),
       ];
-      when(
-        () => core.outboundIp(any()),
-      ).thenAnswer((_) async => answers.removeAt(0));
+      stubOutboundIp(mocks.api, (_) async => answers.removeAt(0));
 
       for (var attempt = 0; attempt < 4; attempt++) {
         expect(

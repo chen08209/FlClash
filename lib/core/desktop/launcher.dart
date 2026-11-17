@@ -44,7 +44,19 @@ final class DirectCoreLauncher implements CoreProcessLauncher {
         commonPrint.log(error, logLevel: LogLevel.warning);
       }
     });
+    await _handSessionToken(process, sessionId);
     return DirectCoreLease(sessionId: sessionId, process: process);
+  }
+}
+
+Future<void> _handSessionToken(Process process, String sessionId) async {
+  final stdin = process.stdin;
+  unawaited(stdin.done.catchError((Object _) {}));
+  try {
+    stdin.writeln(sessionId);
+    await stdin.close();
+  } catch (_) {
+    // A Core that exited before reading it is reported by its exit.
   }
 }
 

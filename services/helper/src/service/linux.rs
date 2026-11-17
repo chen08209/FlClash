@@ -76,7 +76,25 @@ pub(super) fn ensure_owner_socket(address: &str) -> Result<(), Error> {
             "Core address is not a socket owned by the Helper owner",
         ));
     }
+    let directory = Path::new(address)
+        .parent()
+        .ok_or_else(|| Error::other("Core address has no directory"))?;
+    let directory = fs::symlink_metadata(directory)?;
+    if !is_private_directory(
+        directory.is_dir(),
+        directory.uid(),
+        directory.mode(),
+        owner.uid,
+    ) {
+        return Err(Error::other(
+            "Core socket directory is not private to the Helper owner",
+        ));
+    }
     Ok(())
+}
+
+fn is_private_directory(is_directory: bool, uid: u32, mode: u32, owner: u32) -> bool {
+    is_directory && uid == owner && mode & 0o077 == 0
 }
 
 fn owner_from_env() -> Result<Owner> {
@@ -351,6 +369,15 @@ impl Stream for AuthorizedIncoming {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_core_socket_directory_is_the_owners_and_closed_to_others() {
+        assert!(is_private_directory(true, 1000, 0o040_700, 1000));
+        assert!(!is_private_directory(true, 1000, 0o040_755, 1000));
+        assert!(!is_private_directory(true, 1000, 0o041_777, 1000));
+        assert!(!is_private_directory(true, 1001, 0o040_700, 1000));
+        assert!(!is_private_directory(false, 1000, 0o120_700, 1000));
+    }
 
     #[test]
     fn parses_service_commands() {

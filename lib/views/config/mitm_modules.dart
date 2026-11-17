@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:fl_clash/core/core.dart';
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
@@ -75,7 +76,7 @@ Future<void> _runScript(WidgetRef ref, String name) async {
   final MitmScriptOutput? output;
   try {
     output = await globalState.safeRun(
-      () => ref.read(coreHandlerProvider).runMitmScript(name),
+      () => ref.read(coreHandlerProvider).api.runMitmModule(name),
       title: name,
       silence: false,
     );

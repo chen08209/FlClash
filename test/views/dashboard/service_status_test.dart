@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/service_probe.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -26,11 +25,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/core_mocks.dart';
 import '../../helpers/glyph_finders.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/host_scaffold.dart';
 
-class _MockCore extends Mock implements CoreHandlerInterface {}
+RouteHitDto _hitDto(RouteHit hit) =>
+    RouteHitDto(host: hit.host, proxy: hit.proxy, exit: hit.exit);
+
+ServiceItem _serviceItemDto(ServiceCheckItem item) => ServiceItem(
+  name: item.name,
+  status: item.status,
+  region: item.region,
+  delay: item.delay,
+  chains: item.chains,
+  checkedAt: item.checkedAt,
+  stamp: RouteStampDto(epoch: item.coreEpoch, version: item.routeVersion),
+  hits: item.hits.map(_hitDto).toList(),
+);
+
+OutboundIp _outboundIpDto(OutboundIpResult result) => OutboundIp(
+  url: result.url,
+  body: result.body,
+  delay: result.delay,
+  chains: result.chains,
+  error: result.error,
+  stamp: RouteStampDto(epoch: result.coreEpoch, version: result.routeVersion),
+  hits: result.hits.map(_hitDto).toList(),
+  nodeHits: result.nodeHits.map(_hitDto).toList(),
+);
 
 ServiceCheckItem _item(
   String name,
@@ -58,22 +81,30 @@ OutboundIpResult _address(String ip, String country) => OutboundIpResult(
 );
 
 void main() {
-  setUpAll(() {
-    registerFallbackValue(const ServiceCheckParams(timeout: 0));
-    registerFallbackValue(const OutboundIpParams(timeout: 0));
-  });
+  late CoreMocks mocks;
 
-  late _MockCore core;
-
-  setUp(() => core = _MockCore());
+  setUp(() => mocks = coreMocks());
 
   void answer(
     FutureOr<List<ServiceCheckItem>> Function(ServiceCheckParams params) check,
   ) {
-    when(() => core.serviceCheck(any())).thenAnswer(
-      (invocation) async =>
-          check(invocation.positionalArguments.single as ServiceCheckParams),
-    );
+    when(
+      () => mocks.api.checkServices(
+        any(),
+        any(),
+        timeout: any(named: 'timeout'),
+        guard: any(named: 'guard'),
+      ),
+    ).thenAnswer((invocation) async {
+      final items = await check(
+        ServiceCheckParams(
+          proxyName: invocation.positionalArguments[0] as String,
+          names: invocation.positionalArguments[1] as List<String>,
+          timeout: invocation.namedArguments[#timeout] as int,
+        ),
+      );
+      return items.map(_serviceItemDto).toList();
+    });
   }
 
   Widget app({
@@ -86,10 +117,23 @@ void main() {
     Widget body = const ServiceStatusCard(),
     IpQuality? ipQuality,
   }) {
-    when(() => core.outboundIp(any())).thenAnswer((invocation) async {
-      if (outboundIp == null) return Completer<OutboundIpResult>().future;
-      return outboundIp(
-        invocation.positionalArguments.single as OutboundIpParams,
+    when(
+      () => mocks.api.outboundIp(
+        any(),
+        any(),
+        timeout: any(named: 'timeout'),
+        guard: any(named: 'guard'),
+      ),
+    ).thenAnswer((invocation) async {
+      if (outboundIp == null) return Completer<OutboundIp>().future;
+      return _outboundIpDto(
+        await outboundIp(
+          OutboundIpParams(
+            proxyName: invocation.positionalArguments[0] as String,
+            urls: invocation.positionalArguments[1] as List<String>,
+            timeout: invocation.namedArguments[#timeout] as int,
+          ),
+        ),
       );
     });
     return TestApp(
@@ -108,7 +152,7 @@ void main() {
             live: true,
           ),
         ),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
         ipQualityProvider.overrideWith(
           (_, _) => ipQuality != null
               ? Future.value(ipQuality)

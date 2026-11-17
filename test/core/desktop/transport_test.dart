@@ -2,9 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:fl_clash/core/desktop/ipc_auth.dart';
 import 'package:fl_clash/core/desktop/transport.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rust_api/rust_api.dart';
+
+import 'ipc_peer.dart';
+
+const _token = '0123456789abcdef0123456789abcdef';
 
 final class _FakeIpcServer implements IpcServer {
   final StreamController<IpcEvent> _events = StreamController<IpcEvent>();
@@ -19,6 +24,9 @@ final class _FakeIpcServer implements IpcServer {
     List<int> payload = const [],
     String? error,
   }) {
+    if (_events.isClosed) {
+      return;
+    }
     _events.add(
       IpcEvent(
         kind: kind,
@@ -72,6 +80,31 @@ final class _FakeIpcServer implements IpcServer {
   bool get isDisposed => false;
 }
 
+Future<void> _authenticate(
+  DesktopCoreTransport transport,
+  _FakeIpcServer server, {
+  int? pid,
+  String token = _token,
+}) async {
+  transport.expectSession(_token);
+  server.connect(pid);
+  final core = CoreHandshakePeer(token);
+  server.message(core.opening());
+  await pumpEventQueue();
+  if (transport.state == DesktopTransportState.failed) {
+    return;
+  }
+  final reply = server.sent.removeLast();
+  Uint8List proof;
+  try {
+    proof = core.answer(reply);
+  } on StateError {
+    proof = Uint8List(32);
+  }
+  server.message(proof);
+  await pumpEventQueue();
+}
+
 void main() {
   group('IpcCoreTransport', () {
     late _FakeIpcServer server;
@@ -103,8 +136,8 @@ void main() {
         expect(boundAddresses, ['test-address']);
         expect(transport.state, DesktopTransportState.ready);
 
+        await _authenticate(transport, server, pid: 1234);
         final frame = transport.frames.first;
-        server.connect(1234);
         server.message(utf8.encode('payload'));
         expect(await frame, utf8.encode('payload'));
         expect(transport.state, DesktopTransportState.connected);
@@ -135,7 +168,7 @@ void main() {
       final connected = transport.waitUntilConnected(
         const Duration(seconds: 1),
       );
-      server.connect(4321);
+      await _authenticate(transport, server, pid: 4321);
 
       expect((await connected).pid, 4321);
       expect(transport.state, DesktopTransportState.connected);
@@ -225,7 +258,7 @@ void main() {
           .cast<TransportDisconnected>()
           .first;
 
-      server.connect();
+      await _authenticate(transport, server);
       server.disconnect('frame exceeds the limit');
 
       expect((await disconnected).error.toString(), contains('exceeds'));
@@ -241,14 +274,152 @@ void main() {
         }
       });
 
-      server.connect();
+      await _authenticate(transport, server);
       server.disconnect();
-      server.connect(4321);
+      await _authenticate(transport, server, pid: 4321);
       await pumpEventQueue();
 
       expect(connections.map((event) => event.generation), [1, 2]);
       expect(connections.last.pid, 4321);
       await subscription.cancel();
+    });
+
+    group('authentication', () {
+      Future<List<DesktopTransportEvent>> record(
+        Future<void> Function() act,
+      ) async {
+        final events = <DesktopTransportEvent>[];
+        final subscription = transport.events.listen(events.add);
+        await act();
+        await pumpEventQueue();
+        await subscription.cancel();
+        return events;
+      }
+
+      test(
+        'a Core with the wrong token is refused and the server closed',
+        () async {
+          await transport.open();
+          final frames = <Uint8List>[];
+          final framesSubscription = transport.frames.listen(frames.add);
+
+          final events = await record(() async {
+            await _authenticate(
+              transport,
+              server,
+              token: 'fedcba9876543210fedcba9876543210',
+            );
+            server.message(utf8.encode('{"method":"core.hello"}'));
+          });
+
+          expect(events.whereType<TransportConnected>(), isEmpty);
+          expect(
+            events.whereType<TransportFailed>().single.error,
+            isA<IpcAuthException>(),
+          );
+          expect(transport.state, DesktopTransportState.failed);
+          expect(server.closeCount, 1);
+          expect(frames, isEmpty);
+          await framesSubscription.cancel();
+        },
+      );
+
+      test(
+        'nothing but the handshake reply is ever sent to a refused peer',
+        () async {
+          await transport.open();
+          transport.expectSession(_token);
+
+          server.connect();
+          server.message(utf8.encode('{"method":"core.hello"}'));
+          await pumpEventQueue();
+
+          expect(server.sent, isEmpty);
+          expect(transport.state, DesktopTransportState.failed);
+        },
+      );
+
+      test(
+        'a peer that connects when no session expects it is refused',
+        () async {
+          await transport.open();
+
+          final events = await record(() async {
+            server.connect(4321);
+            server.message(CoreHandshakePeer(_token).opening());
+          });
+
+          expect(events.whereType<TransportConnected>(), isEmpty);
+          expect(events.whereType<TransportFailed>(), hasLength(1));
+          expect(server.sent, isEmpty);
+          expect(server.closeCount, 1);
+        },
+      );
+
+      test('the token of a finished handshake cannot be used again', () async {
+        await transport.open();
+        await _authenticate(transport, server);
+        server.disconnect();
+        await pumpEventQueue();
+        expect(transport.state, DesktopTransportState.ready);
+
+        server.connect();
+        server.message(CoreHandshakePeer(_token).opening());
+        await pumpEventQueue();
+
+        expect(transport.state, DesktopTransportState.failed);
+      });
+
+      test('a peer that never answers fails the transport', () async {
+        final impatient = IpcCoreTransport(
+          address: 'test-address',
+          bind: (_) async => server,
+          handshakeTimeout: const Duration(milliseconds: 30),
+        );
+        await impatient.open();
+        impatient.expectSession(_token);
+        final failure = impatient.events
+            .where((event) => event is TransportFailed)
+            .cast<TransportFailed>()
+            .first;
+
+        server.connect();
+
+        expect((await failure).error.toString(), contains('did not answer'));
+        expect(server.closeCount, 1);
+        await impatient.close();
+      });
+
+      test(
+        'a peer that leaves mid-handshake is not reported as connected',
+        () async {
+          await transport.open();
+          transport.expectSession(_token);
+          final events = await record(() async {
+            server.connect();
+            server.message(CoreHandshakePeer(_token).opening());
+            server.disconnect();
+          });
+
+          expect(events, isEmpty);
+          expect(transport.state, DesktopTransportState.ready);
+        },
+      );
+
+      test(
+        'the token is not in anything the transport sends or logs',
+        () async {
+          await transport.open();
+          await _authenticate(transport, server);
+          transport.send(utf8.encode('{"id":1}'));
+
+          final sent = server.sent.expand((frame) => frame).toList();
+          expect(
+            utf8.decode(sent, allowMalformed: true),
+            isNot(contains(_token)),
+          );
+        },
+      );
     });
 
     test('close is idempotent', () async {
@@ -319,8 +490,7 @@ void main() {
       'a server failure drops the server and the next open rebinds',
       () async {
         await transport.open();
-        servers.single.connect();
-        await pumpEventQueue();
+        await _authenticate(transport, servers.single);
         final events = <DesktopTransportEvent>[];
         final subscription = transport.events.listen(events.add);
 
@@ -337,8 +507,7 @@ void main() {
         expect(() => transport.send(const [1]), throwsStateError);
 
         await transport.open();
-        servers.last.connect(77);
-        await pumpEventQueue();
+        await _authenticate(transport, servers.last, pid: 77);
 
         expect(servers, hasLength(2));
         expect(transport.state, DesktopTransportState.connected);
@@ -352,8 +521,7 @@ void main() {
       final events = <DesktopTransportEvent>[];
       final subscription = transport.events.listen(events.add);
       await transport.open();
-      servers.single.connect(1234);
-      await pumpEventQueue();
+      await _authenticate(transport, servers.single, pid: 1234);
 
       await transport.reset();
 
@@ -366,8 +534,7 @@ void main() {
       expect(events.whereType<TransportFailed>(), isEmpty);
 
       await transport.open();
-      servers.last.connect(5678);
-      await pumpEventQueue();
+      await _authenticate(transport, servers.last, pid: 5678);
       transport.send(utf8.encode('hello'));
 
       expect(servers, hasLength(2));

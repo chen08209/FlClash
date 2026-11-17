@@ -1,0 +1,190 @@
+proxies:
+  - name: "a"
+    type: "direct"
+proxy-groups:
+  - name: "g"
+    type: "select"
+    proxies:
+      - "a"
+      - "DIRECT"
+proxy-providers:
+  p:
+    type: "http"
+    url: "https://a.test/p.yaml"
+    path: "/profiles/providers/1/proxies/675c3fdb3a867c27e1daad5a6d6257cb"
+rule-providers:
+  r:
+    type: "http"
+    behavior: "domain"
+    url: "https://a.test/r"
+    path: "/profiles/providers/1/rules/f2883703f28fbffc5f3df767ddb1f0bd"
+rules:
+  - "DOMAIN,a.test,g"
+  - "MATCH,DIRECT"
+external-controller: ""
+secret: ""
+external-controller-tls: ""
+external-controller-unix: ""
+external-controller-pipe: ""
+external-ui: ""
+interface-name: "en9"
+external-ui-url: ""
+unified-delay: false
+tcp-concurrent: false
+ipv6: true
+log-level: "debug"
+keep-alive-interval: 20
+keep-alive-idle: 25
+disable-keep-alive: true
+routing-mark: 6666
+mixed-port: 7899
+port: 7892
+socks-port: 7891
+redir-port: 0
+tproxy-port: 0
+allow-lan: true
+authentication:
+  - "user:pass"
+skip-auth-prefixes: []
+find-process-mode: "always"
+mode: "global"
+tun:
+  dns-hijack:
+    - "any:53"
+    - "tcp://any:53"
+  mtu: 1400
+  congestion-controller: "reno"
+  strict-route: true
+  route-address:
+    - "10.0.0.0/8"
+  route-exclude-address:
+    - "10.1.0.0/16"
+    - "0.0.0.0/8"
+    - "10.0.0.0/8"
+    - "127.0.0.0/8"
+    - "169.254.0.0/16"
+    - "172.16.0.0/12"
+    - "192.168.0.0/16"
+    - "224.0.0.0/4"
+    - "255.255.255.255/32"
+    - "fc00::/7"
+    - "fe80::/10"
+    - "ff00::/8"
+  udp-timeout: 60
+  disable-icmp-forwarding: true
+  include-interface:
+    - "eth1"
+  exclude-interface:
+    - "docker0"
+  include-uid:
+    - 1000
+  exclude-uid:
+    - 1001
+  exclude-src-port:
+    - 5000
+  exclude-dst-port:
+    - 5001
+  enable: true
+  device: "utun9"
+  auto-route: true
+  auto-detect-interface: true
+geo-auto-update: true
+geo-update-interval: 48
+sniffer:
+  enable: true
+  override-destination: true
+  force-dns-mapping: true
+  parse-pure-ip: true
+  force-domain:
+    - "+.a.test"
+  skip-domain: []
+  skip-src-address: []
+  skip-dst-address: []
+  sniff:
+    HTTP:
+      ports: []
+    TLS:
+      ports: []
+    QUIC:
+      ports: []
+mitm:
+  enable: true
+  skip-server-cert-verify: false
+  auto-quic-block: true
+  h2: true
+  hostname:
+    - "a.test"
+  url-rewrite: []
+  header-rewrite: []
+  body-rewrite: []
+  map-local: []
+  request-body-mock: []
+  client-source-address: []
+  skip-server-cert-verify-hostname: []
+  script: []
+  decrypt-tls: false
+  ca-fingerprint: ""
+  limits:
+    max-body-size: 4194304
+    body-buffer: 33554432
+    certificate-cache: 1024
+    script-concurrency: 4
+    script-memory: 268435456
+    capture-entries: 2000
+    capture-bytes: 67108864
+profile:
+  store-selected: false
+geox-url:
+  mmdb: "https://a.test/geoip.metadb"
+  asn: "https://a.test/asn.mmdb"
+  geosite: "https://a.test/geosite.dat"
+global-ua: "sample/1.0"
+hosts:
+  a.test: "10.0.0.1"
+dns:
+  enable: true
+  enhanced-mode: "redir-host"
+  nameserver:
+    - "https://1.1.1.1/dns-query"
+    - "system://"
+  listen: "127.0.0.1:1053"
+  listen-routing-mark: 0
+  use-hosts: true
+  use-system-hosts: true
+  ipv6: true
+  ipv6-timeout: 100
+  respect-rules: true
+  prefer-h3: true
+  cache-algorithm: "lru"
+  cache-max-size: 4096
+  fake-ip-range: "198.18.0.1/16"
+  fake-ip-range6: ""
+  fake-ip-filter:
+    - "+.lan"
+  fake-ip-filter-mode: "blacklist"
+  fake-ip-ttl: 1
+  default-nameserver:
+    - "9.9.9.9"
+  nameserver-policy: {}
+  fallback:
+    - "8.8.4.4"
+  fallback-lazy-query: false
+  proxy-server-nameserver:
+    - "8.8.8.8"
+  proxy-server-nameserver-policy: {}
+  direct-nameserver:
+    - "223.5.5.5"
+  direct-nameserver-follow-policy: false
+  fallback-filter:
+    geoip: false
+    geoip-code: ""
+    geosite: []
+    ipcidr: []
+    domain: []
+ntp:
+  enable: true
+  server: "ntp.a.test"
+  port: 123
+  interval: 30
+  dialer-proxy: ""
+  write-to-system: true

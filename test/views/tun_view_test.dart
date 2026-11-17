@@ -127,6 +127,19 @@ void main() {
     expect(find.text(l.excludeDstPort), findsNothing);
   });
 
+  testWidgets('offers no GSO on Linux, which Concord does not apply', (
+    tester,
+  ) async {
+    await pumpView(tester, isLinux: true);
+    final l = currentAppLocalizations;
+
+    await tester.tap(find.text(l.addSettingEntry));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l.excludeInterface), findsOneWidget);
+    expect(find.text('GSO'), findsNothing);
+  });
+
   testWidgets('offers strict route where sing-tun enforces it', (tester) async {
     await pumpView(tester, isLinux: false, isWindows: true);
     final l = currentAppLocalizations;

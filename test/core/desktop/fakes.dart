@@ -123,6 +123,11 @@ final class FakeDesktopCoreTransport implements DesktopCoreTransport {
     _eventController.add(_failure!);
   }
 
+  final List<String> expectedSessions = [];
+
+  @override
+  void expectSession(String sessionId) => expectedSessions.add(sessionId);
+
   @override
   Future<TransportConnected> waitUntilConnected(Duration timeout) {
     final connection = _connection;

@@ -3,11 +3,19 @@ part of '../action.dart';
 @Riverpod(keepAlive: true)
 class CommonAction extends _$CommonAction {
   CoreController get _core => ref.read(coreHandlerProvider);
-  bool _isUpdatingTraffic = false;
+  StreamSubscription<TrafficSample>? _trafficSubscription;
+  bool _trafficWanted = false;
   CancelToken? _updateCancelToken;
 
   @override
-  void build() {}
+  void build() {
+    ref.onDispose(() => _trafficSubscription?.cancel());
+    ref.listen(coreStatusProvider, (_, _) => _syncTrafficFeed());
+    ref.listen(
+      appSettingProvider.select((state) => state.onlyStatisticsProxy),
+      (_, _) => _syncTrafficFeed(),
+    );
+  }
 
   void toggleRunning() {
     final running = !ref.read(isStartProvider);
@@ -54,40 +62,43 @@ class CommonAction extends _$CommonAction {
     });
   }
 
-  Future<void> updateTraffic() async {
-    if (_isUpdatingTraffic) {
+  /// The Core pushes a sample a second while this is on; the subscription ends
+  /// with it, so a hidden window costs the Core nothing.
+  void setTrafficFeed(bool wanted) {
+    if (_trafficWanted == wanted) {
       return;
     }
-    _isUpdatingTraffic = true;
-    try {
-      final onlyStatisticsProxy = ref.read(
-        appSettingProvider.select((state) => state.onlyStatisticsProxy),
-      );
-      final [traffic, totalTraffic] = await Future.wait([
-        _readTraffic(() => _core.getTraffic(onlyStatisticsProxy)),
-        _readTraffic(() => _core.getTotalTraffic(onlyStatisticsProxy)),
-      ]);
-      if (traffic != null) {
-        ref.read(trafficsProvider.notifier).addTraffic(traffic);
-      }
-      if (totalTraffic != null) {
-        ref.read(totalTrafficProvider.notifier).value = totalTraffic;
-      }
-    } finally {
-      _isUpdatingTraffic = false;
-    }
+    _trafficWanted = wanted;
+    _syncTrafficFeed();
   }
 
-  Future<Traffic?> _readTraffic(Future<Traffic> Function() request) async {
-    try {
-      return await request();
-    } catch (error) {
-      commonPrint.log(
-        'updateTraffic error: $error',
-        logLevel: coreFailureLogLevel(error),
-      );
-      return null;
+  void _syncTrafficFeed() {
+    unawaited(_trafficSubscription?.cancel());
+    _trafficSubscription = null;
+    if (!_trafficWanted ||
+        ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return;
     }
+    final onlyProxy = ref.read(
+      appSettingProvider.select((state) => state.onlyStatisticsProxy),
+    );
+    _trafficSubscription = _core.api
+        .watchTraffic(intervalMs: 1000, onlyProxy: onlyProxy)
+        .listen(
+          (sample) {
+            ref
+                .read(trafficsProvider.notifier)
+                .addTraffic(trafficOf(sample.up, sample.down));
+            ref.read(totalTrafficProvider.notifier).value = trafficOf(
+              sample.totalUp,
+              sample.totalDown,
+            );
+          },
+          onError: (Object error) => commonPrint.log(
+            'traffic feed error: ${compactError(error)}',
+            logLevel: coreFailureLogLevel(error),
+          ),
+        );
   }
 
   Future<bool> autoCheckUpdate() async {

@@ -221,7 +221,7 @@ class TrackerInfoGroupedList extends ConsumerStatefulWidget {
 
 class _TrackerInfoGroupedListState
     extends ConsumerState<TrackerInfoGroupedList> {
-  Map<String, TrackerInfo>? _byId;
+  Map<int, TrackerInfo>? _byId;
   final _leadings = <String, Widget>{};
 
   @override

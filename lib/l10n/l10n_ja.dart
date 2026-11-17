@@ -394,17 +394,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get desc =>
-      'ClashMetaベースのマルチプラットフォーム対応プロキシクライアント。シンプルで使いやすく、オープンソースで広告もありません。';
+      'Concord コアベースのマルチプラットフォーム対応プロキシクライアント。シンプルで使いやすく、オープンソースで広告もありません。';
 
   @override
   String get startVpn => 'VPNを起動しています…';
 
   @override
   String get stopVpn => 'VPNを停止しています…';
-
-  @override
-  String get localNetworkDeniedTip =>
-      'ローカルネットワークの権限が拒否されたため gvisor スタックを使用します。LAN にはアクセスできません。';
 
   @override
   String get compatible => '互換モード';
@@ -494,6 +490,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get externalControllerSecret => '外部コントローラーのシークレット';
 
   @override
+  String get externalControllerCors => 'クロスオリジンアクセスを許可';
+
+  @override
+  String get externalControllerCorsDesc => 'Web パネルが他のサイトから接続できるようにします。';
+
+  @override
   String get ipv6Desc => 'IPv6 トラフィックは IPv6 が有効なときだけ受信します。';
 
   @override
@@ -519,9 +521,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP同時接続';
-
-  @override
-  String get geodataLoader => 'Geo低メモリモード';
 
   @override
   String get requests => 'リクエスト';
@@ -926,7 +925,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      '本ソフトウェアは Clash.Meta（mihomo）コアをベースとしたオープンソースのネットワークプロキシクライアントであり、設定管理、ルールによる振り分け、トラフィック転送などのローカルツール機能のみを提供します。';
+      '本ソフトウェアは Concord コアをベースとしたオープンソースのネットワークプロキシクライアントであり、設定管理、ルールによる振り分け、トラフィック転送などのローカルツール機能のみを提供します。';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -979,7 +978,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      '本ソフトウェアは GPL-3.0 ライセンスのもとで公開されたオープンソースソフトウェアです。同ライセンスに従って実行、研究、改変、配布することができます。本ソフトウェアまたはその改変版を配布する場合は、同じく GPL-3.0 のもとでソースコードを提供し、元の著作権表示を保持する必要があります。\n\n本ソフトウェアに含まれるサードパーティコンポーネント（Clash.Meta コアを含む）は、それぞれのライセンスに従います。他者が改変または配布したバージョンにより生じた問題について、原作者は責任を負いません。';
+      '本ソフトウェアは GPL-3.0 ライセンスのもとで公開されたオープンソースソフトウェアです。同ライセンスに従って実行、研究、改変、配布することができます。本ソフトウェアまたはその改変版を配布する場合は、同じく GPL-3.0 のもとでソースコードを提供し、元の著作権表示を保持する必要があります。\n\n本ソフトウェアに含まれるサードパーティコンポーネント（Concord コアを含む）は、それぞれのライセンスに従います。他者が改変または配布したバージョンにより生じた問題について、原作者は責任を負いません。';
 
   @override
   String get disclaimerChangesTitle => '本声明の変更';
@@ -1079,9 +1078,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => 'タイムアウトしたプロキシを隠す';
-
-  @override
-  String get stackMode => 'スタックモード';
 
   @override
   String get network => 'ネットワーク';
@@ -1847,7 +1843,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'Helper サービスが利用できないため、TUN モードを有効にできません。FlClash を再インストールしてください。';
 
   @override
-  String get tunAuthorizationFailed => 'TUN の権限を取得できなかったため、オフにしました。';
+  String get tunAuthorizationFailed => 'TUN を承認できなかったため、今回の実行では TUN を使用しません。';
 
   @override
   String get sudoPasswordTitle => 'sudo のパスワードを入力';
@@ -2631,9 +2627,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get congestionController => 'TCP 輻輳制御';
 
   @override
-  String get congestionControllerDesc => 'TCP 輻輳制御は mips スタックでのみ有効です。';
-
-  @override
   String get routeExcludeAddress => 'ルート除外アドレス';
 
   @override
@@ -2707,8 +2700,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get udpTimeout => 'UDP タイムアウト';
 
   @override
-  String get udpTimeoutDesc =>
-      'UDP タイムアウトは秒単位で、gvisor・system・mixed スタックでのみ有効です。';
+  String get udpTimeoutDesc => 'UDP タイムアウトは秒単位です。';
 
   @override
   String get dnsHijackDesc =>
@@ -3772,9 +3764,57 @@ class AppLocalizationsJa extends AppLocalizations {
   String get forceRestartCore => '強制再起動';
 
   @override
+  String get configWarnings => '設定の警告';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '設定の読み込みで $count 件の警告',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'HTTPポート';
+
+  @override
+  String get dnsServer => 'DNS サーバー';
+
+  @override
+  String get serviceFaults => '起動できなかったサービス';
+
+  @override
+  String get faultAddressInUse => 'アドレスはすでに使用されています。';
+
+  @override
+  String get faultAddressNotAvailable => 'このデバイスにそのアドレスはありません。';
+
+  @override
+  String get faultPermissionDenied => '権限がありません。';
+
+  @override
+  String get tunStartFailed => 'TUN を起動できませんでした。今回の実行では再試行しません。';
+
+  @override
   String get vpnPermissionNotGranted =>
       'VPN の権限が許可されなかったため、VPN は起動しませんでした。ほかのアプリが常時接続 VPN に設定されている場合も起動できません。';
 
   @override
   String get vpnServiceStartFailed => 'VPN サービスを起動できませんでした。';
+
+  @override
+  String get rootTun => 'Root モード';
+
+  @override
+  String get rootTunDesc => 'システム VPN の代わりに root を使います。';
+
+  @override
+  String get rootTunUnavailable => 'この端末に root が見つかりません';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root が使えないため（$reason）、今回はシステム VPN を使います。';
+  }
 }

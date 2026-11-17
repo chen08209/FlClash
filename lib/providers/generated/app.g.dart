@@ -128,6 +128,44 @@ final class RootAccessProvider
 
 String _$rootAccessHash() => r'59f43852dbede9ebe3301b885d63cd0a3961126d';
 
+/// Android: an su binary is installed, whether or not it grants FlClash.
+
+@ProviderFor(suInstalled)
+final suInstalledProvider = SuInstalledProvider._();
+
+/// Android: an su binary is installed, whether or not it grants FlClash.
+
+final class SuInstalledProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Android: an su binary is installed, whether or not it grants FlClash.
+  SuInstalledProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'suInstalledProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$suInstalledHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    return suInstalled(ref);
+  }
+}
+
+String _$suInstalledHash() => r'fc80f277bdf74e629f164e8a9e23ab0ceb1bcd49';
+
 @ProviderFor(AuthorizedTunEnable)
 final authorizedTunEnableProvider = AuthorizedTunEnableProvider._();
 
@@ -174,6 +212,65 @@ abstract class _$AuthorizedTunEnable extends $Notifier<TunAuthorizationState> {
             as $ClassProviderElement<
               AnyNotifier<TunAuthorizationState, TunAuthorizationState>,
               TunAuthorizationState,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// Never saved, so the next launch tries TUN again.
+
+@ProviderFor(TunDisabledThisRun)
+final tunDisabledThisRunProvider = TunDisabledThisRunProvider._();
+
+/// Never saved, so the next launch tries TUN again.
+final class TunDisabledThisRunProvider
+    extends $NotifierProvider<TunDisabledThisRun, bool> {
+  /// Never saved, so the next launch tries TUN again.
+  TunDisabledThisRunProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'tunDisabledThisRunProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$tunDisabledThisRunHash();
+
+  @$internal
+  @override
+  TunDisabledThisRun create() => TunDisabledThisRun();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$tunDisabledThisRunHash() =>
+    r'01edfcc68ce3a00ec133ce8be8f7e2bafd381517';
+
+/// Never saved, so the next launch tries TUN again.
+
+abstract class _$TunDisabledThisRun extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
               Object?,
               Object?
             >;
@@ -289,13 +386,68 @@ abstract class _$CoreCapabilitiesState extends $Notifier<CoreCapabilities> {
 
 /// The warnings of the config the Core last set up; they end with the Core.
 
+@ProviderFor(ConfigWarningsState)
+final configWarningsStateProvider = ConfigWarningsStateProvider._();
+
+/// The warnings of the config the Core last set up; they end with the Core.
+final class ConfigWarningsStateProvider
+    extends $NotifierProvider<ConfigWarningsState, List<ConfigWarning>> {
+  /// The warnings of the config the Core last set up; they end with the Core.
+  ConfigWarningsStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'configWarningsStateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$configWarningsStateHash();
+
+  @$internal
+  @override
+  ConfigWarningsState create() => ConfigWarningsState();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<ConfigWarning> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<ConfigWarning>>(value),
+    );
+  }
+}
+
+String _$configWarningsStateHash() =>
+    r'c954a8794505785fafe8fc172442513f612fef30';
+
+/// The warnings of the config the Core last set up; they end with the Core.
+
+abstract class _$ConfigWarningsState extends $Notifier<List<ConfigWarning>> {
+  List<ConfigWarning> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<ConfigWarning>, List<ConfigWarning>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<ConfigWarning>, List<ConfigWarning>>,
+              List<ConfigWarning>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(CoreStopReason)
 final coreStopReasonProvider = CoreStopReasonProvider._();
 
-/// The warnings of the config the Core last set up; they end with the Core.
 final class CoreStopReasonProvider
     extends $NotifierProvider<CoreStopReason, String?> {
-  /// The warnings of the config the Core last set up; they end with the Core.
   CoreStopReasonProvider._()
     : super(
         from: null,
@@ -325,8 +477,6 @@ final class CoreStopReasonProvider
 
 String _$coreStopReasonHash() => r'ba8ddb362ef3e025c5f052a68e896a0e728f9458';
 
-/// The warnings of the config the Core last set up; they end with the Core.
-
 abstract class _$CoreStopReason extends $Notifier<String?> {
   String? build();
   @$mustCallSuper
@@ -338,6 +488,58 @@ abstract class _$CoreStopReason extends $Notifier<String?> {
             as $ClassProviderElement<
               AnyNotifier<String?, String?>,
               String?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ServiceFaults)
+final serviceFaultsProvider = ServiceFaultsProvider._();
+
+final class ServiceFaultsProvider
+    extends $NotifierProvider<ServiceFaults, List<ServiceFault>> {
+  ServiceFaultsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'serviceFaultsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$serviceFaultsHash();
+
+  @$internal
+  @override
+  ServiceFaults create() => ServiceFaults();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<ServiceFault> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<ServiceFault>>(value),
+    );
+  }
+}
+
+String _$serviceFaultsHash() => r'f3bfde60557832a2b90a9143918291aec143e210';
+
+abstract class _$ServiceFaults extends $Notifier<List<ServiceFault>> {
+  List<ServiceFault> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<List<ServiceFault>, List<ServiceFault>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<ServiceFault>, List<ServiceFault>>,
+              List<ServiceFault>,
               Object?,
               Object?
             >;
@@ -428,7 +630,7 @@ final class RequestsProvider
   }
 }
 
-String _$requestsHash() => r'fe172892ec899bd6fd53dcbfebf65cd9e856efa7';
+String _$requestsHash() => r'ed2ef77771baef02dc9e4ead91b9a28b50f7e5d5';
 
 abstract class _$Requests extends $Notifier<FixedList<TrackerInfo>> {
   FixedList<TrackerInfo> build();
@@ -481,7 +683,7 @@ final class DnsQueriesProvider
   }
 }
 
-String _$dnsQueriesHash() => r'b6073d067db4fd19cc5724c5b79ecff2b0909796';
+String _$dnsQueriesHash() => r'9281a2f1772916403823d5dc13f742e26ddbd2ae';
 
 abstract class _$DnsQueries extends $Notifier<FixedList<DnsQuery>> {
   FixedList<DnsQuery> build();
@@ -636,7 +838,7 @@ final class ProvidersProvider
   }
 }
 
-String _$providersHash() => r'51d9bc898e1af8a7179c1c53145705b57d9a5996';
+String _$providersHash() => r'2bb0ac3c01a0954f89217c8dd54af35f3e0054f4';
 
 abstract class _$Providers extends $Notifier<List<ExternalProvider>> {
   List<ExternalProvider> build();

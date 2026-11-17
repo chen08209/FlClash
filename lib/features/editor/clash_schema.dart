@@ -1,3 +1,5 @@
+import 'generated/concord_tiers.dart';
+
 enum YamlKind { scalar, map, list }
 
 /// Where a scalar's completions come from besides [YamlSchema.values].
@@ -14,49 +16,110 @@ enum YamlScalar {
   subRule,
 }
 
-/// The part of the mihomo configuration the editor completes against. A map
+const _appliedTiers = {ConcordTier.t0, ConcordTier.t1};
+
+bool _concordApplies(String section, String name) =>
+    _appliedTiers.contains(concordKeyTiers[section]![name]);
+
+final _offered = Expando<Object>();
+
+/// The part of the Clash configuration the editor completes against. A map
 /// lists its [fields], plus [variants] keyed by the value of its `type`; a map
 /// with free keys and a list both describe their members with [entry].
+///
+/// A node naming a [concordSection] offers only what Concord applies of its
+/// variants, or else of its fields or values.
 class YamlSchema {
   final YamlKind kind;
-  final Map<String, YamlSchema> fields;
-  final Map<String, Map<String, YamlSchema>> variants;
+  final Map<String, YamlSchema> _fields;
+  final Map<String, Map<String, YamlSchema>> _variants;
   final YamlSchema? entry;
-  final List<String> values;
+  final List<String> _values;
   final YamlScalar scalar;
+  final String? concordSection;
 
-  const YamlSchema.scalar([this.values = const []])
+  const YamlSchema.scalar([List<String> values = const []])
+    : this.of(YamlScalar.plain, values);
+
+  const YamlSchema.of(this.scalar, [List<String> values = const []])
     : kind = YamlKind.scalar,
-      fields = const {},
-      variants = const {},
+      _fields = const {},
+      _variants = const {},
       entry = null,
+      _values = values,
+      concordSection = null;
+
+  const YamlSchema.concordValues(
+    String this.concordSection,
+    List<String> values,
+  ) : kind = YamlKind.scalar,
+      _fields = const {},
+      _variants = const {},
+      entry = null,
+      _values = values,
       scalar = YamlScalar.plain;
 
-  const YamlSchema.of(this.scalar, [this.values = const []])
-    : kind = YamlKind.scalar,
-      fields = const {},
-      variants = const {},
-      entry = null;
-
-  const YamlSchema.map(this.fields, {this.variants = const {}})
-    : kind = YamlKind.map,
-      entry = null,
-      values = const [],
-      scalar = YamlScalar.plain;
+  const YamlSchema.map(
+    Map<String, YamlSchema> fields, {
+    Map<String, Map<String, YamlSchema>> variants = const {},
+    this.concordSection,
+  }) : kind = YamlKind.map,
+       _fields = fields,
+       _variants = variants,
+       entry = null,
+       _values = const [],
+       scalar = YamlScalar.plain;
 
   const YamlSchema.dict(YamlSchema this.entry)
     : kind = YamlKind.map,
-      fields = const {},
-      variants = const {},
-      values = const [],
-      scalar = YamlScalar.plain;
+      _fields = const {},
+      _variants = const {},
+      _values = const [],
+      scalar = YamlScalar.plain,
+      concordSection = null;
 
   const YamlSchema.list(YamlSchema this.entry)
     : kind = YamlKind.list,
-      fields = const {},
-      variants = const {},
-      values = const [],
-      scalar = YamlScalar.plain;
+      _fields = const {},
+      _variants = const {},
+      _values = const [],
+      scalar = YamlScalar.plain,
+      concordSection = null;
+
+  T _applied<T extends Object>(T all, T Function(String section) pick) {
+    final section = concordSection;
+    if (section == null) {
+      return all;
+    }
+    return (_offered[this] ??= pick(section)) as T;
+  }
+
+  Map<String, YamlSchema> get fields =>
+      kind == YamlKind.map && _variants.isEmpty
+      ? _applied(_fields, (section) => _appliedOf(section, _fields))
+      : _fields;
+
+  Map<String, Map<String, YamlSchema>> get variants => _variants.isEmpty
+      ? _variants
+      : _applied(_variants, (section) => _appliedOf(section, _variants));
+
+  List<String> get values => kind == YamlKind.scalar
+      ? _applied(
+          _values,
+          (section) => [
+            for (final value in _values)
+              if (_concordApplies(section, value)) value,
+          ],
+        )
+      : _values;
+
+  /// Every field this map describes, Concord's tiers aside.
+  Iterable<String> get listedFields => _fields.keys;
+
+  static Map<String, V> _appliedOf<V>(String section, Map<String, V> all) => {
+    for (final MapEntry(:key, :value) in all.entries)
+      if (_concordApplies(section, key)) key: value,
+  };
 
   String get hint => switch (kind) {
     YamlKind.map => '{…}',
@@ -109,7 +172,7 @@ const _policy = YamlSchema.of(YamlScalar.policy);
 const _outbound = YamlSchema.of(YamlScalar.outbound);
 const _headers = YamlSchema.dict(_strList);
 
-const ruleTypes = {
+const _ruleExamples = {
   'DOMAIN': 'example.com',
   'DOMAIN-SUFFIX': 'example.com',
   'DOMAIN-KEYWORD': 'example',
@@ -147,6 +210,11 @@ const ruleTypes = {
   'OR': '((DOMAIN,…),(NETWORK,udp))',
   'NOT': '((DOMAIN,…))',
   'MATCH': '',
+};
+
+final ruleTypes = {
+  for (final MapEntry(:key, :value) in _ruleExamples.entries)
+    if (_concordApplies('rule-types', key)) key: value,
 };
 
 /// Rules that take the options after their policy.
@@ -354,7 +422,10 @@ const _proxyTypes = [
   'rematch',
 ];
 
-const _proxyCommon = {'name': _str, 'type': YamlSchema.scalar(_proxyTypes)};
+const _proxyCommon = {
+  'name': _str,
+  'type': YamlSchema.concordValues('proxy-types', _proxyTypes),
+};
 
 const _server = {'server': _str, 'port': _str};
 
@@ -391,13 +462,15 @@ const _sniTls = {'sni': _str, ..._tls};
 
 const _tlsLayers = {
   'shadow-tls-opts': YamlSchema.map({
+    'host': _str,
     'password': _str,
     'version': YamlSchema.scalar(['1', '2', '3']),
-  }),
-  'restls-opts': YamlSchema.map({
-    'password': _str,
-    'version-hint': YamlSchema.scalar(['tls12', 'tls13']),
-    'restls-script': _str,
+    'fingerprint': _str,
+    'skip-cert-verify': _bool,
+    'alpn': YamlSchema.list(YamlSchema.scalar(['h2', 'http/1.1', 'h3'])),
+    'certificate': _str,
+    'private-key': _str,
+    'name-cert-verify': _str,
   }),
   'jls-opts': YamlSchema.map({'username': _str, 'password': _str}),
 };
@@ -436,8 +509,6 @@ const _grpcOpts = YamlSchema.map({
   'max-streams': _str,
 });
 
-const _mkcpOpts = YamlSchema.map(_mkcpFields);
-
 const _mkcpFields = {
   'mtu': _str,
   'tti': _str,
@@ -458,32 +529,11 @@ const _mkcpFields = {
 };
 
 const _vmessTransport = {
-  'network': YamlSchema.scalar([
-    'tcp',
-    'ws',
-    'http',
-    'h2',
-    'grpc',
-    'mekya',
-    'mkcp',
-  ]),
+  'network': YamlSchema.scalar(['tcp', 'ws', 'http', 'h2', 'grpc']),
   'ws-opts': _wsOpts,
   'http-opts': _httpOpts,
   'h2-opts': _h2Opts,
   'grpc-opts': _grpcOpts,
-  'mkcp-opts': _mkcpOpts,
-  'mekya-opts': YamlSchema.map({
-    'url': _str,
-    'h2-pool-size': _str,
-    'max-write-delay': _str,
-    'max-request-size': _str,
-    'polling-interval-initial': _str,
-    'max-write-size': _str,
-    'max-write-duration-ms': _str,
-    'max-simultaneous-write-connection': _str,
-    'packet-writing-buffer': _str,
-    'kcp': _mkcpOpts,
-  }),
   'smux': _smux,
 };
 
@@ -662,8 +712,6 @@ const _tlsLayerOpts = {
   'password': _str,
   'version': YamlSchema.scalar(['1', '2', '3']),
   'fingerprint': _str,
-  'version-hint': YamlSchema.scalar(['tls12', 'tls13']),
-  'restls-script': _str,
 };
 
 const _proxyVariants = <String, Map<String, YamlSchema>>{
@@ -681,21 +729,10 @@ const _proxyVariants = <String, Map<String, YamlSchema>>{
       'v2ray-plugin',
       'gost-plugin',
       'shadow-tls',
-      'restls',
       'jls',
-      'kcptun',
     ]),
     'plugin-opts': YamlSchema.map({
-      'mode': YamlSchema.scalar([
-        'http',
-        'tls',
-        'websocket',
-        'normal',
-        'fast',
-        'fast2',
-        'fast3',
-        'manual',
-      ]),
+      'mode': YamlSchema.scalar(['http', 'tls', 'websocket']),
       'host': _str,
       'path': _str,
       'tls': _bool,
@@ -707,7 +744,6 @@ const _proxyVariants = <String, Map<String, YamlSchema>>{
       'ech-opts': _ech,
       ..._pluginTls,
       ..._tlsLayerOpts,
-      ..._kcptunFields,
     }),
     'smux': _smux,
   },
@@ -756,37 +792,6 @@ const _proxyVariants = <String, Map<String, YamlSchema>>{
     ..._optionalTls,
     ..._tlsLayers,
     ..._reality,
-    'tlsmirror-opts': YamlSchema.map({
-      'primary-key': _str,
-      'explicit-nonce-ciphersuites': _strList,
-      'defer-instance-derived-write-time': _tlsMirrorTime,
-      'transport-layer-padding': YamlSchema.map({'enabled': _bool}),
-      'connection-enrolment': YamlSchema.map({
-        'primary-ingress-outbound': _str,
-        'primary-egress-outbound': _str,
-      }),
-      'embedded-traffic-generator': YamlSchema.map({
-        'steps': YamlSchema.list(
-          YamlSchema.map({
-            'name': _str,
-            'host': _str,
-            'path': _str,
-            'method': _str,
-            'headers': YamlSchema.list(
-              YamlSchema.map({'name': _str, 'value': _str, 'values': _strList}),
-            ),
-            'next-step': YamlSchema.list(
-              YamlSchema.map({'weight': _str, 'goto-location': _str}),
-            ),
-            'connection-ready': _bool,
-            'connection-recall-exit': _bool,
-            'wait-time': _tlsMirrorTime,
-            'h2-do-not-wait-for-download-finish': _bool,
-          }),
-        ),
-      }),
-      'sequence-watermarking-enabled': _bool,
-    }),
     ..._vmessTransport,
   },
   'vless': {
@@ -999,10 +1004,11 @@ const _proxyVariants = <String, Map<String, YamlSchema>>{
     'psk': _str,
     'version': YamlSchema.scalar(['1', '2', '3', '4', '5', '6']),
     'mode': _snellV6Mode,
+    'userkey': _str,
     'reuse': _bool,
     'client-fingerprint': _clientFingerprint,
     'obfs-opts': YamlSchema.map({
-      'mode': YamlSchema.scalar(['http', 'tls', 'shadow-tls', 'restls', 'jls']),
+      'mode': YamlSchema.scalar(['http', 'tls', 'shadow-tls', 'jls']),
       'host': _str,
       'alpn': _strList,
       ..._pluginTls,
@@ -1272,7 +1278,11 @@ const _proxyVariants = <String, Map<String, YamlSchema>>{
   },
 };
 
-const _proxy = YamlSchema.map(_proxyCommon, variants: _proxyVariants);
+const _proxy = YamlSchema.map(
+  _proxyCommon,
+  variants: _proxyVariants,
+  concordSection: 'proxy-types',
+);
 
 const _healthCheck = YamlSchema.map({
   'enable': _bool,
@@ -1285,7 +1295,12 @@ const _healthCheck = YamlSchema.map({
 
 const _proxyGroupFields = {
   'name': _str,
-  'type': YamlSchema.scalar(['select', 'url-test', 'fallback', 'load-balance']),
+  'type': YamlSchema.concordValues('group-types', [
+    'select',
+    'url-test',
+    'fallback',
+    'load-balance',
+  ]),
   'proxies': YamlSchema.list(_policy),
   'use': YamlSchema.list(YamlSchema.of(YamlScalar.proxyProvider)),
   'use-position': YamlSchema.dict(_str),
@@ -1317,16 +1332,21 @@ const _proxyGroupVariants = {
   },
 };
 
-const _proxyGroup = YamlSchema.map({
-  ..._proxyGroupFields,
-  'include-all': _bool,
-  'include-all-proxies': _bool,
-  'include-all-providers': _bool,
-}, variants: _proxyGroupVariants);
+const _proxyGroup = YamlSchema.map(
+  {
+    ..._proxyGroupFields,
+    'include-all': _bool,
+    'include-all-proxies': _bool,
+    'include-all-providers': _bool,
+  },
+  variants: _proxyGroupVariants,
+  concordSection: 'group-types',
+);
 
 const _customProxyGroup = YamlSchema.map(
   _proxyGroupFields,
   variants: _proxyGroupVariants,
+  concordSection: 'group-types',
 );
 
 const _providerType = YamlSchema.scalar(['http', 'file', 'inline']);
@@ -1417,8 +1437,8 @@ const _dns = YamlSchema.map({
     'geosite': _strList,
     'ipcidr': _strList,
     'domain': _strList,
-  }),
-});
+  }, concordSection: 'dns.fallback-filter'),
+}, concordSection: 'dns');
 
 const _ntp = YamlSchema.map({
   'enable': _bool,
@@ -1427,12 +1447,15 @@ const _ntp = YamlSchema.map({
   'port': _str,
   'interval': _str,
   'dialer-proxy': _outbound,
-});
+}, concordSection: 'ntp');
 
-const _tun = YamlSchema.map({'enable': _bool, ..._tunFields});
+const _tun = YamlSchema.map({
+  'enable': _bool,
+  ..._tunFields,
+}, concordSection: 'tun');
 
 const _tunFields = {
-  'stack': YamlSchema.scalar(['mixed', 'system', 'gvisor', 'mips']),
+  'stack': YamlSchema.scalar(['gvisor', 'mips']),
   'device': _str,
   'dns-hijack': YamlSchema.list(YamlSchema.scalar(['any:53', 'tcp://any:53'])),
   'auto-route': _bool,
@@ -1503,7 +1526,7 @@ const _sniffer = YamlSchema.map({
   'skip-domain': _strList,
   'skip-src-address': _strList,
   'skip-dst-address': _strList,
-});
+}, concordSection: 'sniffer');
 
 const _serverTls = {
   'certificate': _str,
@@ -1944,7 +1967,10 @@ const clashConfigSchema = YamlSchema.map({
   'external-ui-name': _str,
   'external-ui-url': _str,
   'external-doh-server': _str,
-  'profile': YamlSchema.map({'store-selected': _bool, 'store-fake-ip': _bool}),
+  'profile': YamlSchema.map({
+    'store-selected': _bool,
+    'store-fake-ip': _bool,
+  }, concordSection: 'profile'),
   'geodata-mode': _bool,
   'geodata-loader': YamlSchema.scalar(['memconservative', 'standard']),
   'geosite-matcher': YamlSchema.scalar(['succinct', 'mph']),
@@ -1955,14 +1981,10 @@ const clashConfigSchema = YamlSchema.map({
     'geosite': _str,
     'mmdb': _str,
     'asn': _str,
-  }),
+  }, concordSection: 'geox-url'),
   'hosts': YamlSchema.dict(_str),
-  'tls': YamlSchema.map({..._serverTls, 'custom-certifactes': _strList}),
-  'experimental': YamlSchema.map({
-    'quic-go-disable-gso': _bool,
-    'quic-go-disable-ecn': _bool,
-    'dialer-ip4p-convert': _bool,
-  }),
+  'tls': YamlSchema.map({'custom-certifactes': _strList}),
+  'experimental': YamlSchema.map({'dialer-ip4p-convert': _bool}),
   'dns': _dns,
   'tun': _tun,
   'sniffer': _sniffer,
@@ -2002,7 +2024,7 @@ const clashConfigSchema = YamlSchema.map({
   'rule-providers': YamlSchema.dict(_ruleProvider),
   'rules': _rules,
   'sub-rules': YamlSchema.dict(_rules),
-});
+}, concordSection: 'keys');
 
 const _providerFile = YamlSchema.map({
   'proxies': YamlSchema.list(_proxy),

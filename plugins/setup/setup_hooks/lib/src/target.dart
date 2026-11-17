@@ -51,6 +51,7 @@ class Target {
     return switch (goos) {
       'windows' => '$arch-pc-windows-msvc',
       'linux' => '$arch-unknown-linux-gnu',
+      'darwin' => '$arch-apple-darwin',
       _ => throw BuildException('No Rust target for $this'),
     };
   }

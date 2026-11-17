@@ -2,33 +2,38 @@
 
 ## Core Integration
 
-The Go proxy core in `core/` operates in two modes.
+The Core is Concord, the Rust core in the `concord/` submodule (see Concord Core below).
 
 Android lib mode:
 
-- `gomobile bind` builds `core/mobile` into an AAR: a native library per ABI, shipped as `libclash.so`, and the Java
-  classes gobind generates in `com.follow.clash.core.mobile`. The `:core` Gradle module builds it and takes in its
-  classes and libraries (see Android Core Build).
-- The Android `:core` module owns the binding: `Core.kt` is the only caller of the generated `Mobile` class. Flutter
-  crosses MethodChannels through `lib/plugins/service.dart` and Android's `ServicePlugin` rather than calling the Core
-  directly: `${packageName}/service` for lifecycle commands and Core events, `${packageName}/core` for Core method
-  calls.
+- `cargoCore` in the `:core` Gradle module builds Concord's `libconcord.so`, which speaks only C, and FlClash's
+  JNI glue `libcore_jni.so` (`android/core/jni`) over it, per ABI. The JNI surface is the five entries of `Mobile`
+  (`android/core/src/main/java/com/follow/clash/core/mobile/Mobile.kt`: `openSession`, `sendFrame`, `closeSession`,
+  `setPlatformHost`, `adoptFd`). `NativeCore` is its only caller, and
+  `CoreClient` and `Core.kt` speak the typed JSON-RPC session over it.
+- Dart reaches the session through `FfiFrameChannel` by default or `MethodChannelFrameChannel` (`CORE_FRAMES=method`),
+  and lifecycle commands cross MethodChannels through `lib/plugins/service.dart` and Android's `ServicePlugin`:
+  `${packageName}/service` for lifecycle commands, `${packageName}/core` for frames on the MethodChannel path.
 - Flutter runs the UI isolate on Android's main thread (3.47 merges the two and ignores the opt-out in release), so
   main-thread work anywhere in the process, the Core's included, costs frames. Only sending to Dart needs that thread;
   a `MethodChannel.Result` may be answered from any thread. `${packageName}/core` is handled on a serial background
-  task queue and answered from the Core's goroutine, an event batch is encoded on the Core's thread and only sent on
-  the main one, `ForceGC` (called from `onLowMemory`/`onTrimMemory`) collects on its own goroutine, and
-  `NetworkObserver` refreshes DNS on its own looper.
-- `lib/core/lib.dart` (`CoreLib`) implements the shared Core interface, gates method calls on its connection completer,
-  initializes and synchronizes Android shared state, and closes the native service path exactly once.
+  task queue, an event batch is encoded on the Core's thread and only sent on the main one, `Core.forceGC` (called from
+  `onLowMemory`/`onTrimMemory`) sends `core.releaseMemory` on its own call, and `NetworkObserver` refreshes DNS on its
+  own looper.
+- `lib/core/lib.dart` (`CoreLib`) implements the shared Core interface, initializes and synchronizes Android shared
+  state, and closes the native service path exactly once. Method calls wait for the session in `CoreClient.ready`, and a
+  session that ends under a connected Core reaches `CoreManager` through `crashes`, as a desktop disconnect does.
 - Because Core is in the application process on Android, application RSS already includes Core memory.
 
 Desktop core mode:
 
-- Go core runs as a separate process with `CGO_ENABLED=0`.
+- The Concord core (`FlClashCore`) runs as a separate process.
 - `rust_api`'s `ipc` module provides the native local-IPC primitives: a Unix domain socket on macOS/Linux and a named pipe
   on Windows, served by an `IpcServer` handle. Dart owns the transport state, RPC correlation, process ownership, and
-  lifecycle convergence above those primitives.
+  lifecycle convergence above those primitives. The server is a byte pipe: the mutual HMAC that proves both ends hold
+  the session token (`lib/core/desktop/ipc_auth.dart`, `IpcHandshake`) runs in Dart before `TransportConnected`, and the
+  Core side is `concord_ipc::initiate`. Unix sockets live in `<base>/FlClash/<128-bit hex>.sock`, where `<base>` is `$XDG_RUNTIME_DIR` on Linux only if it is `/run/user/<uid>` (otherwise `/tmp`, which the Helper's strict namespace requires) and `$XDG_RUNTIME_DIR` or the system temp directory on macOS;
+  `ipc/access.rs` creates that directory `0700` and refuses one that is not the app user's alone.
 - `lib/core/service.dart` (`CoreService`) is the composition root. It wires the IPC transport, launcher selection,
   lifecycle controller, RPC client, and crash-event bridge, and holds no lifecycle logic of its own.
 - `lib/core/desktop/transport.dart` binds an `IpcServer` and turns its events into ready, connected, disconnected, and
@@ -37,28 +42,18 @@ Desktop core mode:
   a failure binds a new server, and `reset()` drops the server and with it the connected peer, which the server cannot
   drop on its own. Subscribers therefore never resubscribe, and a connection generation is never reused.
   `connection` is the single answer to "which peer is connected now".
-- `lib/core/desktop/rpc_client.dart` owns request IDs and pending completers, waits up to 10 seconds for a connection,
-  applies a three-minute default method timeout, unwraps `CoreMethodResponse`, and fails all pending calls when transport
-  disconnects or closes.
+- `lib/core/api/core_client.dart` owns request IDs, pending completers, subscriptions with credit and the cancel frame
+  (`$/cancel`); it waits for a connection, applies per-call timeouts and fails all pending calls when the channel closes.
+  `RpcCoreApi` maps it to the typed `CoreApi`; a frame channel is `SocketFrameChannel` (desktop) or, on Android,
+  `FfiFrameChannel` (`dart:ffi` calls in, `ReceivePort` messages out) or `MethodChannelFrameChannel` (JNI `sendFrame` in,
+  MethodChannel `event` out); `--dart-define=CORE_FRAMES=ffi|method` picks one (`channels/android_frames.dart`).
 - `lib/core/desktop/lifecycle.dart` serializes process intents and owns the authoritative desktop state machine.
 - `lib/core/desktop/launcher.dart` abstracts direct child-process and privileged Helper ownership through idempotent process
   leases. `lib/core/desktop/helper_client.dart` is the typed local HTTP client for the privileged Helper.
 
-`lib/core/controller.dart` (`CoreController`) selects the implementation based on platform. `lib/core/interface.dart` defines the shared `CoreHandlerInterface`.
+`lib/core/controller.dart` (`CoreController`) selects the implementation based on platform. `lib/core/backend.dart` defines `CoreBackend`, which carries a `CoreApi` (`lib/core/api/core_api.dart`) plus lifecycle and crash reports.
 
-Key Go core files:
-
-- `core/protocol.go`: method names, event types, and the parameter and result shapes shared with Dart.
-- `core/method.go`: MethodChannel-style method-call dispatch, the handler table, and response envelopes.
-- `core/lifecycle.go`, `config.go`, `proxy.go`, `delay.go`, `provider.go`, `geo.go`, `connection.go`, `log.go`: the
-  handler functions, one file per area. `core/hooks.go` wires mihomo's hooks to them.
-- `core/message.go`: non-blocking state/priority/bulk event queues and bounded message batching.
-- `core/lib.go`: the Android library API: TUN callbacks, the event listener, and the entry points `core/mobile` binds.
-- `core/mobile/`: the package gomobile binds. gobind generates Java for its exported API, so it speaks only `int32`,
-  `bool`, `string`, `[]byte` and its own interfaces; a Go `int` would become a Java `long`.
-- `core/cmd/core/`: the desktop entry point. `core/` itself is the library package `core`, because gomobile cannot bind
-  a `main` package.
-- `core/server.go`: desktop socket/named-pipe client and framed message forwarding.
+The Core's methods, events and crate layout are in Concord Core below.
 
 ## DNS, NTP and Sniffer Overrides
 
@@ -71,7 +66,7 @@ stored as JSON in the `profiles.overrides` column, with every key available, and
 `_makeRealProfileTask` merges whatever it is handed; there is no on/off toggle, a picked key is the override.
 
 Each `*OverrideKey` names one Clash key, with `parent.field` paths for nested maps, and covers every yaml key of the
-matching mihomo raw struct; `test/models/{dns,ntp,sniffer}_override_test.dart` read `core/Clash.Meta/config/config.go`
+matching Concord section; `test/models/{dns,ntp,sniffer}_override_test.dart` read `concord/schema/config-schema.json`
 and fail when a core bump adds or drops one. `overrideJson` builds the fragment in model order and writes every picked
 key as it is, empty included, for every profile type: an emptied entry clears the profile's value, and a key the core
 refuses empty, such as `nameserver`, or `proxy-server-nameserver` under `respect-rules`, fails the config in the core.
@@ -95,7 +90,7 @@ mihomo upper-cases sniff protocol names and ignores the deprecated `sniffing` li
 `mergeSnifferOverride` drops the profile's entry for an overridden protocol in any case and first carries `sniffing`
 into `sniff`. A `rule-set:` key of a custom profile's DNS policy counts as a use of that rule provider, so
 `_resolveInjectedProviders` injects it like one a rule names. Safe mode forces `write-to-system` off on whatever `ntp`
-section reaches the core, because setting the system clock is a host change; `loadConfig` in the Go wrapper also drops
+section reaches the core, because setting the system clock is a host change; the Concord engine also drops
 it on Android, where the seccomp policy kills the process for `settimeofday`.
 
 TUN is the exception to covering the raw struct. The network settings own only `Tun.coreJson` (`enable`, `device`,
@@ -109,11 +104,11 @@ carries values changed from their defaults into picked keys. `bypassPrivateRoute
 appends the private ranges to whatever `route-exclude-address` results. `dns-hijack` is a key too: the task writes
 `any:53` beneath the overrides, so a profile's own value never applies, a picked key replaces it, and the key starts at
 that value. A key sing-tun reads on some platforms only is listed only there
-(`_isRead` in `lib/views/config/tun.dart`): strict route on Linux and Windows, GSO and the interface, user ID and port
-filters on Linux. `udp-timeout` reaches only the gvisor and system stacks and congestion control only mips, which their
-descriptions say. Route address sets are left out: sing-tun applies them only through `auto-redirect`.
-`test/models/tun_override_test.dart` fails if a key comes to overlap `Tun.coreJson`. Android starts its VPN from
-`core/tun` without the section, so TUN is listed on desktop only. Being a part of the section, the page has no quick
+(`_isRead` in `lib/views/config/tun.dart`): strict route on Linux and Windows, the interface, user ID and port filters
+on Linux. Concord runs one userspace stack, takes Linux offload whenever it can and loads no geodata files, so
+FlClash offers no TUN stack, GSO or `geodata-loader` and drops them from a saved config. Route address sets are left out: sing-tun applies them only through `auto-redirect`.
+`test/models/tun_override_test.dart` fails if a key comes to overlap `Tun.coreJson`. Android starts its VPN without
+the section, so TUN is listed on desktop only. Being a part of the section, the page has no quick
 edit; see Quick Edit.
 
 A custom profile's overview keeps rows for rules, providers and DNS, which every custom profile runs on, and puts the
@@ -141,11 +136,14 @@ listener can change routing independently of the app's TUN toggle. These network
 boundary; they are not treated as arbitrary filesystem modification. The task disables `iptables` when its
 `inbound-interface` contains a space, because mihomo interpolates it into commands and splits their arguments on spaces.
 Safe mode clears these extra inbounds and iptables, closes DNS listening and disables NTP system time writes even after
-local overrides. The editor omits disabled alternate controllers and keeps listener completion.
+local overrides. The editor completes a key, proxy type, group type or rule type only where Concord applies it (T0 or
+T1): `lib/features/editor/generated/concord_tiers.dart` carries the tiers of `concord/schema/config-schema.json`, and
+after a Concord bump `dart run tool/generate_concord_tiers.dart` rewrites it, which `test/features/clash_schema_test.dart`
+checks. Fields the schema has no tiers for, inside proxies and listeners, are listed by hand.
 
 An open external controller always has a secret, because mihomo serves a controller with an empty one to every local
 user and, through CORS, to any page the user visits. `PatchClashConfig.secret` is that secret and it belongs to FlClash,
-as the address does: the task writes it over whatever the profile carries, and `UpdateParams.secret` hands the same value
+as the address does: the task writes it over whatever the profile carries, and `ConfigPatch.secret` hands the same value
 to a running Core, which restarts the controller when it changes. `ensureControllerSecret` keeps the pair consistent
 (an open controller gets a generated secret, a closed one drops it, so every opening rotates it) and runs where a
 config enters the app: the settings toggle, startup, and `writeConfig` for a restored backup. `_effectivePatchConfig`
@@ -158,7 +156,7 @@ every external local consumer a proxy client exists for. The binding only guaran
 it does not isolate programs already running there, so on Android any app holding `INTERNET` can use the proxy and learn
 the outbound IP. The opt-in answer is the local authentication setting (`NetworkProps.authentication`), which spans
 four paths that must stay in sync: `_makeRealProfileTask` writes the credentials into `authentication` and force-clears
-`skip-auth-prefixes` so a profile cannot silently exempt loopback; `UpdateParams.authentication` applies the same list
+`skip-auth-prefixes` so a profile cannot silently exempt loopback; `ConfigPatch.authentication` applies the same list
 to a running core; `FlClashHttpOverrides` sends the credentials with the app's own proxied requests; and `sharedState`
 withholds the Android VPN system proxy declaration because `ProxyInfo` cannot carry credentials (TUN still captures that
 traffic). Desktop system proxy is deliberately not gated — dropping it would leak traffic direct, so the setting's
@@ -195,17 +193,16 @@ privileged filesystem operations available to the host. Changes must not widen a
 
 The same task also writes `interface-name` per `PatchClashConfig.interfaceNameMode`: `clear` (default) forces it empty so a
 subscription's value cannot survive into the generated profile, `follow` leaves whatever the profile YAML already has, and
-`custom` writes the user's `interfaceName`. mihomo ignores `interface-name` on Android whenever `dialer.DefaultSocketHook`
-is installed (`core/lib.go` `installHooks`, vendored `dialer.go`), so `NetworkListView` in `lib/views/config/network.dart`
+`custom` writes the user's `interfaceName`. The Core ignores `interface-name` on Android, so `NetworkListView` in `lib/views/config/network.dart`
 shows the mode picker and text field only on desktop.
 
 ### Network Settings
 
 `Tun` holds what Android's VPN service starts from: the switch, device and stack, `mtu`, the mips stack's
 `congestion-controller` and the route lists. The desktop TUN takes only `Tun.coreJson` from it, written over the
-profile's `tun` section and patched on every update through `tunSchema`; MTU, congestion control, strict route and the
+profile's `tun` section; MTU, congestion control, strict route and the
 route lists reach it as TUN override keys (see DNS, NTP and Sniffer Overrides). `test/models/tun_test.dart` keeps every
-`Tun` key within mihomo's `RawTun` and `coreJson` equal to the keys of `tunSchema`.
+`Tun` key a key of the Core's `tun` section (`concordKeys('tun')`) and pins what `coreJson` sends.
 
 `NetworkProps.bypassPrivateRoute` adds `privateRouteAddress` to the excluded routes, through `TunExt.excludedRoutes` on
 Android and `_makeRealProfileTask` on desktop. VpnService can only add routes before Android 13, so
@@ -213,8 +210,8 @@ Android and `_makeRealProfileTask` on desktop. VpnService can only add routes be
 `VpnService.addRoutes` routes everything only for an empty list. A config saved with the old `routeMode` keeps its
 choice: `bypassPrivate`, which ignored the route list, loads with the flag on and the list cleared, and `config` with
 the flag off. No stack in the vendored sing-tun reads `endpoint-independent-nat`, so it is not offered. Android builds
-its TUN from the VpnService descriptor in `core/tun/tun.go`, so only MTU and the congestion controller reach it,
-through `VpnOptions` and the `options` argument of `startTun`; the VpnService builder takes the same MTU.
+its TUN from the VpnService descriptor, so only MTU and the congestion controller reach it,
+through `VpnOptions` and the `mtu` and `congestionController` of `tun.start`; the VpnService builder takes the same MTU.
 
 The TUN fields start at mihomo's own defaults, and a saved zero MTU or empty congestion controller, which mihomo reads
 as those defaults, decodes to them. The outbound rows are plain settings written over every profile, and changing one
@@ -222,17 +219,20 @@ re-applies the profile; keep-alive is forced off on Android, and only Linux hono
 
 ## HTTPS Decryption
 
-The bundled core has no MITM: it stays private, on `feature/mitm` in FlClash-internal and `feature/mitm-latest` in
-Clash.Meta-internal, with the architecture notes of that version. The core keeps the `mitm.*` method names and answers
-them `not_implemented`, and `SetMitmPressure` does nothing. The app keeps its pages, modules and trust stores behind
-`rsFeature`, a const that is false here and that the rs line strips instead of turning on, so it closes every entry
-and sends the core no modules or capture. Tests that need MITM on run inside `if (rsFeature) { ... }`.
+MITM is implemented in `concord/crates/mitm`, a config section like `sniffer`, so every inbound is decrypted. It decrypts what its hostname list names: the domain of the connection, or the one fake-ip or redir-host
+gave its address out for, or for an address alone on 443, the server name in the ClientHello. Its upstream
+connections are matched by the rules and tracked like any other. It reaches the server before it answers the client's
+handshake: a server the rules reject, or one that cannot be reached or verified, leaves the connection to the tunnel as
+if its host were not listed. Servers are offered HTTP/2 on every connection but one an upgrade needs, which the
+transport learns from the request context it dials with; clients are offered it only with `h2` on, as in Surge, and a
+client that offers nothing the engine speaks is relayed as is. gRPC bodies are never rewritten, so their framing and
+trailers pass through.
 
-Consent to a module's scripts covers `mitmScriptScope`: every line declaring a script, as written, and every line run
-now, which names its script by a hash of the content. An update that adds to that scope turns the module off until the
-user accepts again, whether it comes by hand, which asks at once, or by auto update, which says so in a banner. None of
-this has met users: settle its interaction, listed in the MITM section of the core integration notes
-(`docs/rust-core/integration.md`, local only), before turning the flag on.
+Turning a module on asks first when it declares scripts FlClash runs (`declaredScriptLines`) or when `asksConsent`
+holds: it changes network settings, skips certificate verification for some hosts, or sets client source addresses
+(`acceptMitmModule` in `lib/features/mitm/module_editor.dart`). A module added with either starts off; an update
+keeps whether it is on. None of this has met users: settle its interaction, listed in the MITM section of the core
+integration notes (`docs/rust-core/integration.md`, local only), before the rs build ships.
 
 ## Lifecycle Ownership And Convergence
 
@@ -264,7 +264,7 @@ caller, and uses a three-second watchdog as an emergency application-exit path. 
 
 ### Applying Setting Changes
 
-A changed setting is patched live through `UpdateParams`, re-applied with the profile, or, for the Android VPN, left
+A changed setting is patched live through `ConfigPatch`, re-applied with the profile, or, for the Android VPN, left
 to a restart the user confirms. [setting-changes.md](setting-changes.md) says which path each setting takes and how to
 choose one for a new setting.
 
@@ -282,10 +282,11 @@ choose one for a new setting.
 - A completed command reports `applied`, `coalesced`, or `superseded`, allowing callers and tests to distinguish a command
   that won from one satisfied or replaced by a newer compatible intent.
 - Startup resets a transport that still holds a peer nobody owns, opens it, resolves a launcher, generates a 128-bit
-  lowercase hexadecimal session ID, launches Core, and accepts the peer the transport holds once the launcher has
-  returned. The connection timeout starts there, so a slow launch does not use it up, and a Core that connected and
-  died during the launch is never accepted. Windows additionally verifies that the named-pipe peer PID equals the
-  process PID returned by the Helper lease.
+  lowercase hexadecimal session ID, hands it to the transport (`expectSession`, one use), launches Core with it on the
+  child's standard input, and accepts the authenticated peer the transport holds once the launcher has returned. The
+  connection timeout starts there, so a slow launch does not use it up, and a Core that connected and died during the
+  launch is never accepted. Windows additionally verifies that the named-pipe peer PID equals the process PID returned
+  by the Helper lease.
 - Each running session retains its process owner, lease, PID, session ID, and transport connection generation. Stop
   needs the process exit confirmed; if the transport still holds a peer one event-loop turn later, the lifecycle resets
   the transport rather than wait for a disconnect that may never come.
@@ -363,74 +364,67 @@ Quick Settings, notification, revoke, and Always-on VPN paths converge on the sa
   watchdog calls `PendingResult.finish()` exactly once; the watchdog releases Android's broadcast lease and does not
   cancel or redefine the underlying lifecycle intent.
 
+### Concord Core
+
+`concord/` is the Rust core: its own git repository (remote `chen08209/concord`), checked out in the FlClash root and not
+tracked by it. It reads Clash YAML and speaks JSON-RPC 2.0 on every platform. `concord_dir` in `build_config.yaml` names
+the workspace (default `concord`). On desktop `plugins/setup/setup_hooks/lib/src/concord_builder.dart` runs
+`cargo build --release -p concord-desktop` and installs the built `concord` as `core_name` (`FlClashCore`); on Android
+the `:core` module's `cargoCore` task builds `concord-android` into `libconcord.so` and the JNI glue in
+`android/core/jni` over its C ABI. Both builds set `CONCORD_PRODUCT_NAME` from `product_name`, the name Concord gives the MITM CA and the
+Android TUN device. `concord-api` (`concord/crates/api`) is the typed service crate over `concord-rpc`.
+
+The Dart side speaks one protocol, JSON-RPC 2.0 with subscriptions, described by `concord/schema/api.json`
+(`cargo run -p xtask -- schema` regenerates it, `schema --check` fails when it is stale). `test/core/api/contract_test.dart`
+checks every `CoreApi` call's parameters and every DTO's reads against that file, so a method added on the Rust side must be
+called there or listed as not called by Dart.
+
+The behaviors Dart depends on without the method signatures showing them are listed with their tests in
+`concord/.agents/behaviour-checklist.md`. Concord's internals (crate layers, data path, performance standard, benchmarks,
+known gaps against Go) are documented in the Concord repository itself, from `concord/AGENTS.md`; this file keeps only
+how FlClash builds, hosts and talks to it.
+
 ## Core Protocol And Event Delivery
 
-The shared protocol uses `CoreMethodCall(id, method, arguments)` and `CoreMethodResponse(id, result, error)` in both
-directions. The envelope is the only JSON serialization layer: keep arguments, results, and event data as structured JSON
-values rather than embedding pre-encoded JSON strings. Plain domain strings, such as country codes or provider contents,
-remain strings.
+A method's wire name is `area.verb`, declared once in the `concord-api` method table; arguments are a JSON object in
+camelCase. `CoreApi` returns the decoded result or throws a `CoreMethodException` (`lib/core/api/errors.dart`): `code` is
+the error's `kind`, or its `reason` when the Core gives one (`rule_set_*` arrive as `rejected` with a `reason`). A Core out of
+reach is `core_unavailable` or `transport_*`, and `isUnansweredCoreError` tells a Core that never answered from one that
+refused. A response over 50 KB is decoded in an isolate; events are decoded on the UI isolate and stay under 64 KiB.
+Streams (`traffic`, `connection`, `log`, `dns`, `route`, `events`, `proxy`) replace polling;
+`CoreManager` opens them when the Core is connected and `ConnectionBook` folds `connection.watch` into the open set.
+Keep arguments, results and event data as structured JSON values rather than pre-encoded JSON strings; plain domain
+strings, such as country codes or provider contents, remain strings.
 
-A method's wire name is `area.verb`, declared once in `core/protocol.go`; `CoreMethod.wireName` mirrors the list, and
-`test/core/protocol_contract_test.dart` fails when the two differ. Arguments are a JSON object with kebab-case keys,
-never a bare value. A command answers `null`, a query its value, and a lookup `null` for nothing found. A failure
-travels only in `error`, never as a message in `result`, and a list validation answers `[{index, message}]` for just
-the entries it refuses. `CoreHandlerInterface` returns the decoded result or throws: a `CoreMethodException` for what
-the Core reports, for a Core out of reach (`core_unavailable`, `transport_*`, `no_response`) or for a query that
-answered nothing (`empty_result`), and a `TimeoutException` for no answer in time; `isUnansweredCoreError` tells a Core
-that never answered from one that refused. `config.setup` on a profile the Core cannot load applies the default config
-and answers `config_rejected`, which `SetupAction` reports as that profile's error.
-
-A response over 1 MiB goes to a file under `<home>/responses/`, and the envelope carries only its `file`
-(`core/spill.go`). Sent inline, Android copies it into the Java heap three times (the gomobile `byte[]`, the codec and a
-direct buffer), and desktop IPC drops a frame above `maxIPCFrameSize`. `lib/core/spill.dart` reads a spilled file only
-from that directory, decodes it in an isolate and deletes it; `core.init` clears what an earlier run left.
-
-A transport decodes a response of 50 KiB or more in an isolate and runs the result model there too:
-`coreResultModelOf` for the method, or one the caller passes. `getConnectionsWith` passes the caller's function, so
-the connections page ranks a poll and the dashboard sorts one in the isolate that decoded it, and the ranking state
-sent along is ids and typed data, which copies at the cost of its buffers. Such a function must be top level or
-built by a top-level function, since a closure made inside an instance method can capture what an isolate cannot
-receive.
-
-A profile file's proxies, groups and rules never cross the bridge. `profile.base` returns the config without
+A profile file's proxies, groups and rules never cross the bridge. `profile.inspect` returns the config without
 `proxies`, `proxy-groups`, `sub-rules` and `rules`, with their counts, the profile's MATCH rules and a sha256 digest.
-`SetupAction.getProfile` patches it as before and sends the result as `SetupParams.base.overlay`. `core/profile_base.go`
-puts the profile's bulk sections into the overlay, appends the profile's rules after the overlay's, writes `config.yaml`
-for the Android service and the controller's reload, and parses it. `config.yaml` is encoded a slice at a time, because on a
-profile of 100k proxies and 2M rules one `Encode` call doubles the peak heap. The preview reads the YAML `profile.build`
-merges into the spill directory, and the extend page only the names
-and types `profile.outbounds` lists; a script extension still needs the whole config from `config.read`.
+`SetupAction.getProfile` patches it as before and sends the result as `SetupParams.base.overlay`. The Core puts the
+profile's bulk sections into the overlay, appends the profile's rules after the overlay's, writes `config.yaml` for the
+Android service and the controller's reload, and parses it. The preview reads the YAML `profile.build` returns, and the
+extend page only the names and types `profile.outbounds` lists; a script extension still needs the whole config from
+`config.read`. A method that can return tens of megabytes (`profile.build`, `config.read`) takes `output: {file}` naming
+a file inside the Core's home; a result above the message limit is `payload_too_large`.
 
-Go event delivery is intentionally non-blocking:
+Event delivery is intentionally non-blocking. Each stream declares one policy (`latest`, `drop_oldest` or `resync`),
+the consumer grants credit, and a batch closes at `maxBatchMs` or `maxBatchBytes`:
 
-- Loaded-provider, geo-update, and route-changed events use a state queue that never evicts; the rules for it are under
-  Core API Safety in `.agents/rules.md`. Every other event except the bulk kinds, delay included, uses a 256-entry
-  priority queue. Desktop process crashes are generated locally by `CoreService` from lifecycle failures rather than
-  sent through the Go queue.
-- High-volume log, request/connection, and DNS query events use a separate 256-entry bulk queue, so bulk floods cannot
-  evict state.
-- A full priority or bulk queue evicts only its own oldest event and retries the newest; DNS events never evict. Core
-  work never blocks on event delivery.
-- The batcher flushes at 32 messages or every 16 milliseconds. Priority events are preferred, but one bulk opportunity is
-  guaranteed after eight priority messages to prevent starvation.
-- `sendMessage` drops an event before it is queued when `hasEventListener` is false. That only happens on Android, after
-  the Flutter engine detaches while the service keeps the Core running; request and DNS events would otherwise be
-  encoded per connection and per query for nobody.
+- `events` is a `resync` stream: an overflow ends it with a resync and never drops an event silently. Desktop process
+  crashes are generated locally by `CoreService` from lifecycle failures rather than sent by the Core. The rules for it
+  are under Core API Safety in `.agents/rules.md`.
+- A slow consumer of `drop_oldest` streams (log, connection, DNS) loses its oldest events and is told how many; a
+  `latest` stream keeps only the newest value. Core work never blocks on event delivery.
+- A stream with no credit is not polled at all, so after the Flutter engine detaches on Android while the service keeps
+  the Core running, nothing is produced for the closed streams.
 
-DNS query events come from the Clash.Meta fork's `dns/patch.go` and are raised where mihomo writes its `[DNS]` debug
-log, so the DNS page lists the same resolutions: one event per cache hit, and one per upstream exchange however many
-callers singleflight merged into it, carrying the upstream whose answer was used. Fake-IP and hosts answers never reach
-a resolver and are not recorded. Queries from apps arrive with the `DNSContext` that `Service.ServeMsg` created and
-report `app`; other initiators come from `resolver.WithInitiator` at the call site (rule matching, DIRECT, proxy
-server dialing), and unlabeled queries report `other`.
+DNS query events (`concord/crates/dns/src/record.rs`) are one record per resolution that reaches the resolver, cache hits
+included (`cached`), carrying the upstream that answered and the `initiator` (`app`, `rule`, `direct`, `proxy` or
+`other`). Fake-IP and hosts answers never reach a resolver and are not recorded.
 
-Dialer-loop events come from the fork's `component/proxydialer/patch.go`. mihomo follows a `dialer-proxy` that leads
-back to its own proxy until the stack overflows, so a dial that asks the same `dialer-proxy` for an address it is
-already dialing through it fails with `ErrDialerLoop`. `core/hooks.go` reports each looping name at most once every
-three seconds as a priority event, which the app shows as an error notice whether or not logs are captured. The custom
-profile pages flag only the loops FlClash can follow on its own, through a group's own list or an `include-all-proxies`
-that no filter, exclude filter or exclude type narrows; what filters and providers pick, including provider proxies
-that carry their own `dialer-proxy`, is left to this guard.
+A dial that asks for the same `dialer-proxy` it is already dialing through would loop, so the resolver's tunnel refuses
+it with `DialerLoop` and the Core raises a `dialerLoop` event, which the app shows as an error notice whether or not logs
+are captured. The custom profile pages flag only the loops FlClash can follow on its own, through a group's own list or
+an `include-all-proxies` that no filter, exclude filter or exclude type narrows; what filters and providers pick,
+including provider proxies that carry their own `dialer-proxy`, is left to this guard.
 
 `ProxyGroup.fromJson` reads `include-all` as both `include-all-proxies` and `include-all-providers`, as the core does, so
 import and quick edit keep it. They take in only what the config declares, which is what some group of the profile
@@ -478,39 +472,35 @@ are up, and a failure that came back before its deadline stays checking until a 
 A probe result on the dashboard — the exit IP, a node's exit IP, a service check — either describes the route in
 force or is being asked again. The mechanism has three parts.
 
-- The Core is the source of truth for the route. `core/route.go` keeps two counters. The epoch is a reset, which
-  no answer outlives: a config apply, an IPv6 switch, a start and a stop (the listeners, and on Android the TUN
-  with them), and a new network, whose report on Android closes every connection. The epoch moves once that work
-  is done, so a probe that left while the listeners or the TUN were changing, or over the network just left,
-  carries the older epoch and its failure goes with it. The route version is a move, which may send a host to another exit: a Selector, URLTest or Fallback
-  pick changing, a proxy provider whose version changed, a rule set that loaded new content, a GeoIP or GeoSite
-  update, and a mode switch. `handleChangeProxy` re-reads the picks under `selectMu` and answers
-  `ChangeProxyResult{changed}`, so the connection reset only runs when the pick moved. A health check moving a
-  URLTest pick has no mihomo hook, so the picks are polled every second while the host watches (`watchRoute(true)`)
-  and the listeners are up; the same poll notices a provider or rule set that updated in the background, which in
-  this fork includes every provider an apply loads, since `loadProvider` returns before they finish. Every probe answer
-  carries the counters it started under and its hits: each host it dialed, the proxy it was pinned to, and the exit
-  it left through, read off the tracked chain or, for a connection that never reached the tracker, matched again.
-  An exit is the last hop with its server address, or a load balancer, which spreads connections without the route
-  moving. `checkRoutes` matches those hosts again through `tunnel.ResolveRoute`, a fork patch that runs the rules
-  without dialing, and reports per answer whether every exit held. `routeChanged` publishes the counters whenever
-  they differ from the last read, and with them `running`: whether the listeners were up as of the last reset. It
-  is read only as the epoch moves, so the host never pairs it with an epoch from before a start or a stop
-  finished. Outbound IP lookups are cancelled by the first lookup
-  under a newer epoch, which frees their probe slots; lookups under one epoch are left alone, since the routed
-  target while stopped and a pinned `DIRECT` send the same request.
-- `routeTrackerProvider` in `lib/providers/route_state.dart` merges that with the host's side: a host epoch that
-  a connectivity event moves, and `synced`, which is false until `watchRoute` has returned a snapshot and again
-  after a Core disconnect. `proxied`, which decides whether the routed target is asked through the rules or pinned
-  to `DIRECT`, is the Core's `running` and not `isStartProvider`: that flips at the tap, before the Core is told,
-  and an Android start acknowledges before the VPN exists, so probes sent on it left ahead of the route they were
-  meant to describe. Only safe mode, which never starts the listeners, follows the run the app shows. Nothing is
-  fresh while unsynced, so a cache never judges
+- The Core is the source of truth for the route. `RouteCounters` (`concord/crates/engine/src/route.rs`) keeps two
+  counters. The epoch is a reset, which no answer outlives: a config apply, an IPv6 switch, a start and a stop (the
+  listeners, and on Android the TUN with them), and a network change the host reports with `interfaceChanged`, which
+  closes every connection. The epoch moves once that work is done, so a probe that left while the listeners or the
+  TUN were changing, or over the network just left, carries the older epoch and its failure goes with it. The route
+  version is a move, which may send a host to another exit: a Selector, URLTest or Fallback pick changing, a proxy
+  provider that updated, a rule set that loaded new content, a GeoIP or GeoSite update, and a mode switch. The groups
+  move the version themselves, a health check's pick included, so nothing is polled. `proxy.select` answers `changed`,
+  so the connection reset only runs when the pick moved. `route.watch` returns the current counters and, while the
+  host holds the watch, every later advance arrives as a `routeChanged` event; both carry `running`, whether the
+  listeners were up as of the last reset. It is read only as the epoch moves, so the host never pairs it with an
+  epoch from before a start or a stop finished. Every probe answer carries the counters it started under and its
+  hits: each host it dialed, the proxy it was pinned to, and the exit it left through. An exit is the last hop with
+  its server address, or a load balancer, which spreads connections without the route moving. `route.check` resolves
+  those hosts again without dialing and reports per answer whether every exit held. Outbound IP lookups are cancelled
+  by the first lookup under a newer epoch, which frees their probe slots; lookups under one epoch are left alone,
+  since the routed target while stopped and a pinned `DIRECT` send the same request.
+- `routeTrackerProvider` in `lib/providers/route_state.dart` merges that with the host's side: a host epoch that a
+  connectivity event moves, and `synced`, which is false until `route.watch` has returned a snapshot and again after
+  a Core disconnect. `proxied`, which decides whether the routed target is asked through the rules or pinned to
+  `DIRECT`, is the Core's `running` and not `isStartProvider`: that flips at the tap, before the Core is told, and an
+  Android start acknowledges before the VPN exists, so probes sent on it left ahead of the route they were meant to
+  describe. Only safe mode, which never starts the listeners, follows the run the app shows. Nothing is fresh while
+  unsynced, so a cache never judges
   answers against counters it made up. The tracker subscribes when the first target is watched and releases the Core
   when the last one goes; an answer newer than the state means an event was evicted, and the cache asks for a resync.
   It also releases the Core while the app is hidden and reads it again on return, keeping `synced`: the Core and its
   counters are the same ones, so the fresh snapshot invalidates only what moved. On Android the Core drops the watch
-  itself when the event listener is cleared, because an engine that goes away never sends `watchRoute(false)`.
+  itself when the event listener is cleared, because an engine that goes away never releases the watch.
 - `RoutedProbe` in `lib/providers/routed_probe.dart` is the one cache both `OutboundIpProbe` and `ServiceStatus` mix
   in. A widget `watch`es the target it shows and `unwatch`es on the way out; only watched targets are probed, one
   request in flight per target. An answer is stamped with the Core's counters, its hits and the host state at
@@ -1373,8 +1363,7 @@ every file that imports the barrel for a string helper. Import the specific modu
 barrel never re-exports one of those four modules, nothing under `lib/common`,
 `lib/enum` or `lib/models` other than those four imports a desktop platform
 package, and `lib/common` never imports the `lib/manager/manager.dart` barrel
-(import the single manager needed, as `common/context.dart` does with
-`manager/status_manager.dart`). The fourth walks the barrel's whole transitive
+(import the single manager needed, not the barrel). The fourth walks the barrel's whole transitive
 closure and fails if *any* file in it imports one of those packages. That one is
 the real invariant — the local rules only stop the shortest path, and every leak
 found so far arrived through a longer one.
@@ -1580,7 +1569,12 @@ updating both this diagram and that test.
 
 ## Core Controller and Actions
 
-`lib/core/controller.dart` (`CoreController`) is a singleton facade over `CoreHandlerInterface`. Public methods delegate to the platform-specific interface, either the Android service channel (`CoreLib`) or the desktop socket. It has an `@visibleForTesting` constructor and `resetInstance()` for test injection.
+`lib/core/controller.dart` (`CoreController`) is a singleton facade over `CoreBackend`. Public methods delegate to its `CoreApi`, over the Android service channel (`CoreLib`) or the desktop socket (`CoreService`). It has an `@visibleForTesting` constructor and `resetInstance()` for test injection.
+
+Wire types become app models only through the functions of `lib/core/api/mapping.dart` (`ModelApi` and `CoreController`
+call them and define none), and app models become wire arguments there too (`configPatchOf`, `coreOptionsArgOf`);
+the rest of `lib/core/api` stays free of app models. Android sends the same arguments from `Gson().toJson(sharedState.setupParams)`,
+and `test/models/core_options_keys_test.dart` pins the two spellings.
 
 `lib/providers/action.dart` is the public library entry point for action
 providers. The Riverpod notifier implementations are split by responsibility
@@ -1666,18 +1660,18 @@ that asks the OS for a permission, a global shortcut or a registration, must con
 `tool/package.dart` is the release build orchestrator (see Packaging below): it writes `env.json` (`APP_ENV`), runs
 `flutter build`, and leaves the Core artifacts to the build hook.
 
-The desktop Go core and the Rust helper are built by a Dart build hook; Android's Core is built by Gradle (see Android
+The desktop Concord core and the Rust helper are built by a Dart build hook; Android's Core is built by Gradle (see Android
 Core Build). `plugins/setup/hook/build.dart` only constructs
 `CoreBuilder`, a `package:hooks` `Builder` in `plugins/setup/setup_hooks/`, the same shape `rust_api` uses. Flutter
 runs it for every platform build and for `flutter test`, once per target architecture. `CoreBuilder` turns the hook
 input into a `BuildRequest` (repository root, `Target`) and hands it to `buildPlatform`. It lives in
 `setup_hooks` so `dart test` there can cover it; a test run of `plugins/setup` itself would execute the hook. Failures
-reach the runner as `BuildError` (Go or Cargo failed, no Core for the architecture) or `InfraError` (a toolchain could
+reach the runner as `BuildError` (Cargo failed, no Core for the architecture) or `InfraError` (a toolchain could
 not start, the package is not at `plugins/setup`).
 
 What the hook protocol forces:
 
-- `PATH` arrives unextended, so `runCommand` appends the Homebrew, Go and rustup locations that Xcode's and Gradle's
+- `PATH` arrives unextended, so `runCommand` appends the Homebrew and `~/.cargo/bin` locations that Xcode's and Gradle's
   stripped `PATH` hides.
 - The hook does not know the build mode: the protocol carries none and `linkingEnabled` only says whether link hooks
   run, so nothing in the hook branches on debug versus release. It cannot tell `flutter test` from a build either; the
@@ -1692,8 +1686,8 @@ What the hook protocol forces:
 
 Platform projects copy the artifacts out of `libclash/`; application code must not import `plugins/setup`:
 
-- Android: nothing. The hook returns without building, because it runs once per architecture while gomobile packs
-  every ABI and one set of Java classes into a single AAR.
+- Android: nothing. The hook returns without building, because the `:core` Gradle module builds every ABI of
+  `libconcord.so` and `libcore_jni.so` in one `cargoCore` task.
 - macOS: a standalone `FlClashCore`. `Release.xcconfig` pins release and profile `ARCHS` to the host because
   flutter_tools otherwise builds a universal binary and every artifact ships one slice; the hook skips a non-host slice
   for the same reason. The `Stage Core` phase copies the Core after the hook may have rewritten it and fails when it is
@@ -1706,11 +1700,11 @@ Platform projects copy the artifacts out of `libclash/`; application code must n
   configuration is known, and a Release install never stops a registered service. The step matches the process by
   executable path rather than image name, so a Helper registered from an installed release keeps running.
 
-Setup keeps its own cache under `.dart_tool/setup_build_cache/v1/` because it builds a Go core and, on Windows and
+Setup keeps its own cache under `.dart_tool/setup_build_cache/v1/` because it builds the Rust core and, on Windows and
 Linux, a Rust helper:
 
-- Go fingerprints cover the target-specific `go list -deps` inputs in `core/` and `Clash.Meta`, module files, the
-  effective build configuration, `setup_hooks` sources, target flags and the Go toolchain.
+- Core fingerprints cover every file of the Concord workspace outside `target/`, the effective build configuration,
+  `setup_hooks` sources, the cargo arguments and the cargo and rustc versions.
   Helper fingerprints cover its Rust sources and manifests, Cargo/Rust toolchains and flags, and the expected Core
   SHA256.
 - A hit requires the fingerprint and every recorded output's path, size and modification state to match, and skips
@@ -1759,12 +1753,10 @@ Windows helper integrity/version check:
   `hub.rs` uses it at every lock site, tests included, and two tests in that file pin the behaviour.
 
 Build configuration defaults live in `plugins/setup/setup_hooks/lib/src/options.dart` and can be overridden via the root
-`build_config.yaml`.
-
-`core_version` in `build_config.yaml` is the mihomo release tag the `core/Clash.Meta` fork is based on. Upstream injects
-its version only from its own CI, so the fork alone reports the placeholder `1.10.0` in `/version` and in protocol
-user agents; `GoBuilder` passes the value as `-X github.com/metacubex/mihomo/constant.Version=...` for every build,
-local and CI alike. Bump it whenever the submodule moves onto a new upstream release.
+`build_config.yaml`, which holds `concord_dir`, `core_name`, `core_bundle_id`, `product_name`, `output_dir`, `helper_dir`
+and `helper_name`. On macOS the hook links `core_bundle_id` into the Core as its `__info_plist`, so codesign signs the
+Core under that identifier instead of `FlClashCore-<hash>`; macOS 27 shows a Core that is not root the sockets of other
+processes, which `PROCESS-NAME` rules need, only when its identifier contains a dot.
 
 ### Packaging
 
@@ -1791,50 +1783,62 @@ and step without building, for any platform.
   on and appends to `LD_LIBRARY_PATH`; and an AppImage that leaves `libstdc++`, glibc, the GL stack and the other
   libraries in `appImageSystemLibraries` to the host, since a bundled `libstdc++` older than the host's breaks Mesa.
 
+#### Android Core Sessions
+
+`libconcord.so` holds one Core per process, and every client reaches it through a session of its JSON-RPC server, opened in
+`concord-ffi` (`crates/ffi`; its C ABI is `concord_open`, `concord_send`, `concord_close`,
+`concord_adopt_fd`, `concord_init_dart_api`). A session lives until its owner closes it or its receiver reports the host
+gone, and ending one cancels every subscription it started. Two clients hold one each, independently:
+
+- The Flutter engine's. With `FfiFrameChannel`, Dart opens it on `Dart_PostCObject` to its own `ReceivePort`; a post to a
+  port that no longer exists returns false, which ends the session, so an isolate that dies without closing it still
+  releases its subscriptions. Dart also reports the session id to `ServicePlugin` (`session`), which closes it when the
+  engine detaches. Never reach the Core from Dart through `NativeCallable.listener`: calling it after its isolate is gone is
+  undefined behavior, and the VPN service outlives the engine. With `MethodChannelFrameChannel` the session is Kotlin's
+  (`Core.updateEventListener`), and frames cross the MethodChannel.
+- The service's own, `CoreClient` in `:core` over `NativeCore`, opened on first use. The VPN service, `NetworkObserver`,
+  the notification (a `traffic.watch`) and the memory callbacks reach the Core through `Core.kt`'s typed calls on it, so none
+  needs a Flutter engine. Its callbacks run on the Core's threads and must not block.
+
+`PlatformHost` (`protect`, `resolveUid`, `resolvePackage`) is no session: it is registered through JNI beside `tun.start`,
+whose `inherited` source names the descriptor `concord_adopt_fd` took over. `Core.startTun` registers the host before the call
+and `stopTun` clears it after; a start that fails clears it too.
+
+Loading follows one rule: Kotlin's `System.loadLibrary("core_jni")` loads `libconcord.so` with it and runs the
+glue's `JNI_OnLoad`, which starts the Core with `concord_start` and attaches every Core thread to the JVM, and Dart's
+`DynamicLibrary.open('libconcord.so')` then finds the same image. `ServicePlugin`'s `init` therefore answers only after the
+load when the frames are FFI, and Dart opens the library only after `init`.
+
 #### Android Core Build
 
-`android/core/build.gradle.kts` registers `bindCore`, which runs `gomobile bind` on `core/mobile`. `:core` cannot
-depend on the AAR itself: `bundleAar` refuses a local AAR in a library, which would break `./gradlew assemble` and
-Android Studio's Make Project. It takes the AAR apart instead, `classes.jar` as a file dependency and `jni/` through
-an `unpack<Variant>CoreJniLibs` task per variant handed to `variant.sources.jniLibs.addGeneratedSourceDirectory`; the
-legacy `sourceSets` DSL rejects a task-built directory. Gradle therefore runs the Go build before any task that needs
-its classes or libraries, in every variant and whether or not Flutter started the build, and its up-to-date check over
-`core/` (tests, `testdata` and `cmd/` left out), `build_config.yaml`, the Go version, the ABIs, the API level and the
-NDK version stands in for the hook's cache.
+`android/core/build.gradle.kts` registers `cargoCore`, which per ABI runs `cargo build --release --locked -p
+concord-android` in the Concord workspace, then builds `android/core/jni` against it in the same target directory, and
+copies `libconcord.so` and `libcore_jni.so` into `build/cargo/jniLibs`, handed to every variant through
+`variant.sources.jniLibs.addGeneratedSourceDirectory`. The glue pins its own toolchain and lockfile; the Kotlin
+sources, `Mobile` included, are in `android/core/src/main/java`. Gradle runs the cargo build before any task that needs the
+library, in every variant and whether or not Flutter started the build, and the task's up-to-date check over the
+workspace (`target/` left out) stands in for the hook's cache.
 
-- `gomobile` and `gobind` come from the `tool` directives in `core/go.mod` and are built into the task's temporary
-  directory, so their version moves only with `go.mod`. `bindCore` finds `go` on `PATH` or in the Homebrew and Go
-  installer locations that Android Studio's GUI `PATH` leaves out, and puts the JDK running Gradle first for
-  gomobile's `javac`.
+- `cargo` is found on `PATH` or in `~/.cargo/bin`, `/opt/homebrew/bin` and `/usr/local/bin`, which Android Studio's GUI
+  `PATH` leaves out; the build fails with a message when it is missing.
 - The ABIs come from the `target-platform` property Flutter passes, and default to all three for a Gradle build Flutter
-  did not start. `ANDROID_HOME` and `ANDROID_NDK_HOME` are AGP's SDK and its `ndkVersion` NDK, so the Core and the app
-  share one NDK, and `-androidapi` is the app's `minSdk`.
-- `tags`, `go_ldflags` and `core_version` come from `build_config.yaml`, the file the hook reads.
-- Both Cores take their GODEBUG defaults from the `go` line of `core/go.mod`, whatever toolchain builds them. The
-  desktop Core gets them from the Go command because `core` is its main module. gomobile links the library as the main
-  package of a module it generates, whose `go` line is the toolchain's, so `bindCore` hands the desktop Core's
-  `DefaultGODEBUG` (from `go list` on `./cmd/core`) to the Android Core through `-X=runtime.godebugDefault`. Without
-  it, a toolchain newer than that line would move only Android's TLS, x509 and runtime defaults. Raising the `go`
-  line therefore changes both Cores' behaviour at once; pin a setting with a `godebug` line in `core/go.mod` to hold
-  it back on both.
-- The TLS settings among them do nothing for proxy traffic. Every TLS connection the Core makes goes through
-  `metacubex/tls` or `metacubex/utls`, ports of `crypto/tls` that hard-code their version's defaults and never read
-  GODEBUG, so `tlssha1` and `tlsmlkem` cannot be held back. They still parse and verify through the standard
-  `crypto/x509` and `crypto/rsa`, and both run before `skip-cert-verify` is consulted, so `core/go.mod` keeps
-  `x509negativeserial=1` and `rsa1024min=0`: a server certificate with a negative serial number or an RSA key under
-  1024 bits would otherwise fail the handshake even on a proxy that skips verification.
-- gomobile names the library `gojni`, both as the file it builds and in the `System.loadLibrary` of the `go.Seq`
-  runtime, with no option to change it. `bindCore` rewrites that string constant in `go/Seq.class` to `clash` as it
-  extracts `classes.jar`, and the unpack task renames `libgojni.so` to `libclash.so`; each fails the build unless it
-  finds what it rewrites, the constant exactly once. Go writes no `DT_SONAME` into a c-shared library, so the ELF
-  needs no change.
-- The AAR's own `proguard.txt` goes with the rest of it. `android/core/consumer-rules.pro` keeps `go.**` and
-  `com.follow.clash.core.mobile.**`, the classes gobind's C glue looks up by name.
+  did not start. The NDK is AGP's `ndkVersion` NDK, so the Core and the app share one NDK, and the clang API level is the
+  app's `minSdk`.
+- The task points the C and C++ compilers, `ar`, the linker and a CMake toolchain file at that NDK for `boring-sys`, and
+  links libc++ statically because the APK ships no `libc++_shared.so`.
+- `android/core/consumer-rules.pro` keeps `com.follow.clash.core.mobile.**`, `FrameReceiver` and `PlatformHost`, the
+  classes JNI looks up by name.
 - The CI `android` job compiles `:core` without Flutter, so it passes `-Ptarget-platform=android-arm64` to build one ABI.
 
 ## Local Plugins
 
-- `setup`: build-time harness for Go core artifacts and the Rust helper, driven by a Dart build hook; no runtime Dart API.
+- `setup`: build-time harness for the Concord core and the Rust helper, driven by a Dart build hook; no runtime Dart API.
+- `proxy`: system proxy configuration. On Windows the package installer and uninstaller kill the app, and then run
+  `FlClash.exe --clear-stale-proxy`, the installer once the new files are in place; the runner hands it to the plugin
+  before any engine starts, and it turns off only a proxy still set to FlClash's `127.0.0.1:<port>` with nothing
+  listening on that port. In the app `SystemProxyQueue` sets the system proxy when the Core starts with it on, and
+  stops it on a stop or exit only when this run set it, since a stop also clears a proxy, PAC or auto-detect setting
+  someone else made. Nothing is stored, so a launch leaves alone the proxy a crashed run left.
 - `rust_api`: runtime Flutter Rust Bridge FFI package built through Native Assets. See below.
 - `window`: desktop window control for Linux, macOS and Windows. Written for FlClash; replaced the
   `window_manager` fork. See below.
@@ -2036,7 +2040,7 @@ UTF-8 bytes rather than a `String` so that decoding them stays off the UI isolat
 - `api/` is the only input flutter_rust_bridge parses (`rust_input: crate::api`). Every function there is a thin
   delegation, so the generated bindings stay identical on every platform.
 - `ipc/` implements the desktop socket server: `frame` (length-prefixed framing), `outbox` (the byte-bounded send
-  queue), `access` (socket mode, the Unix peer uid check, and the peer PID), and `server` (bind, the accept loop, and
+  queue), `access` (the private socket directory, socket mode, the Unix peer uid check, and the peer PID), and `server` (bind, the accept loop, and
   the read and write halves of a connection). Each `Server` runs a current-thread tokio runtime on an `ipc-server`
   thread of its own and holds no global state, so I/O is event-driven on every platform and closing or dropping the
   handle releases the socket. It serves one peer at a time; a second one waits in the backlog.
@@ -2200,14 +2204,14 @@ password the app asks for and hands to `sudo -S` on stdin. A 126 means the user 
 - `/start` additionally requires the Core address to be a socket owned by the owner UID before spawning, since the
   Core connects to it as root.
 - The Core is spawned with the owner's real UID and an effective UID of 0, which is what a setuid Core would have had.
-  It is the signal `core/ownership_unix.go` uses to hand the files it created back to the user; without it a root
+  It is the signal the Core uses to hand the files it created back to the user; without it a root
   service would leave a root-owned config tree in the owner's home.
 - An AppImage has neither a stable executable path nor a writable Core, and its FUSE mount is `nosuid`, so
   `system.isAppImage` reports TUN authorization as unavailable instead of prompting for a password that cannot help.
 - A Linux host without systemd (`/run/systemd/system` absent) has no Helper: `system.hasHelperService` is false there,
   readiness is the `stat` check, and the same elevation sets the setuid bit on the bundled Core as before.
 
-A setuid Core is a root process for whoever gives it an address to dial (`argv[1]`), so its mode never lets others
+A setuid Core is a root process for whoever gives it an address to dial (`argv[1]`) and a token to prove it with, so its mode never lets others
 execute it: macOS runs `chown root:admin` and `chmod 4750` (and refuses an account outside the `admin` group, which
 could not run the result), and a Linux host without systemd hands it to the primary group of the user that
 `PKEXEC_UID` or `SUDO_UID` names. `System.isPrivilegedStatOutput` reads a Core that others can execute as unauthorized, so one that an earlier
@@ -2216,15 +2220,16 @@ version marked `+sx` is re-authorized on the next TUN enable.
 In every Flutter build mode `/start` opens the fixed Core executable beside the Helper without write/delete sharing,
 validates it against the SHA256 embedded only in the Helper, and keeps that handle open through process creation.
 `/ping` only compares the requested `coreSha256` with the Helper's embedded value and checks the fixed Core path exists;
-it never hashes the Core. Protocol version 6 (8 on Windows, where the owner check and the browser-origin check arrived
-and an older Helper must be reinstalled) uses 32-character lowercase-hex session ownership:
+it never hashes the Core. Protocol version 7 (9 on Windows; the session ID doubles as the Core's IPC token, so an
+older Helper must be reinstalled) uses 32-character lowercase-hex session ownership:
 
 - `GET /ping?coreSha256=...` returns the current Helper executable path with `x-flclash-helper-protocol` when the
   requested SHA matches.
 - `POST /start` rejects unknown JSON fields and validates `{address, sessionId}` and, on Linux, the socket owner, which
   leaves a running Core alone. It then releases any previously managed Core before verifying the Core — so every
   outcome of a request that passed validation, including a rejected one, leaves the Helper owning no Core — and returns
-  `{sessionId, pid}`.
+  `{sessionId, pid}`. The Helper passes `sessionId` to the Core as one line on its standard input, then closes it; it
+  is the Core's IPC token and appears in no argument list, environment, or log.
 - `POST /stop` validates `{sessionId}` and only stops the matching managed Core. A session mismatch is HTTP 409.
 - `GET /logs` exposes the bounded recent Helper/Core stderr buffer with `no-store` caching.
 
@@ -2244,7 +2249,9 @@ connection through the TCP table to the process holding its client end and drops
 owner SID the service was registered with. The Windows Core runs as SYSTEM and dials whatever pipe `/start` names, so
 without that check any local account would host a SYSTEM Core. What no per-connection check closes is a process that
 runs as the owner itself, on either platform. Lifecycle safety also comes from the fixed executable/hash, the strict
-address namespace (`\\.\pipe\FlClashCore_<32 hex>` on Windows, `/tmp/FlClashSocket_<digits>.sock` on Linux), the session-scoped stop
-contract, Dart-side peer-PID verification on Windows and, on Unix, the Core socket that `plugins/rust_api` sets to
-mode `0600` so only the owning user (and the root-effective Core) can connect. When the Helper service itself shuts
+address namespace (`\\.\pipe\FlClashCore_<32 hex>` on Windows, `/run/user/<uid>/FlClash/<32 hex>.sock` or
+`/tmp/FlClash/<32 hex>.sock` on Linux, the directory owned by the Helper owner and closed to others), the session-scoped
+stop contract, Dart-side peer-PID verification on Windows and, on Unix, the Core socket that `plugins/rust_api` sets to
+mode `0600` in a `0700` directory so only the owning user (and the root-effective Core) can connect, and the transport
+handshake that a listener without the token cannot complete. When the Helper service itself shuts
 down, it unconditionally stops the Core process it owns; under systemd the unit's control group does the same.

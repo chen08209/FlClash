@@ -13,8 +13,7 @@ class FlClashHttpOverrides extends HttpOverrides {
 
   FlClashHttpOverrides(this._container);
 
-  static const _coreRootsAsset =
-      'core/Clash.Meta/component/ca/ca-certificates.crt';
+  static const _coreRootsAsset = 'concord/assets/ca-certificates.crt';
 
   /// The bundle the core embeds; only release CI fills it.
   static Future<void> trustCoreRoots() async {

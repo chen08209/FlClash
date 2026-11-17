@@ -391,16 +391,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tabAnimation => '选项卡动画';
 
   @override
-  String get desc => '基于ClashMeta的多平台代理客户端，简单易用，开源无广告。';
+  String get desc => '基于 Concord 内核的多平台代理客户端，简单易用，开源无广告。';
 
   @override
   String get startVpn => '正在启动VPN…';
 
   @override
   String get stopVpn => '正在停止VPN…';
-
-  @override
-  String get localNetworkDeniedTip => '本地网络权限被拒绝：已改用 gvisor 栈，局域网无法访问。';
 
   @override
   String get compatible => '兼容模式';
@@ -490,6 +487,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get externalControllerSecret => '外部控制器密钥';
 
   @override
+  String get externalControllerCors => '允许跨域访问';
+
+  @override
+  String get externalControllerCorsDesc => '允许网页面板从其他网址连接。';
+
+  @override
   String get ipv6Desc => '开启 IPv6 后才会接收 IPv6 流量。';
 
   @override
@@ -515,9 +518,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP并发';
-
-  @override
-  String get geodataLoader => 'Geo低内存模式';
 
   @override
   String get requests => '请求';
@@ -920,7 +920,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      '本软件是基于 Clash.Meta（mihomo）内核的开源网络代理客户端，仅提供配置管理、规则分流与流量转发等本地工具功能。';
+      '本软件是基于 Concord 内核的开源网络代理客户端，仅提供配置管理、规则分流与流量转发等本地工具功能。';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -973,7 +973,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      '本软件以 GPL-3.0 协议开源，你可以依该协议运行、研究、修改和分发本软件；分发本软件或其修改版本时，须同样以 GPL-3.0 协议提供源代码并保留原有的版权声明。\n\n本软件包含的第三方组件（包括 Clash.Meta 内核）分别遵循其各自的开源协议。基于本软件修改或分发的版本所产生的任何问题，与原作者无关。';
+      '本软件以 GPL-3.0 协议开源，你可以依该协议运行、研究、修改和分发本软件；分发本软件或其修改版本时，须同样以 GPL-3.0 协议提供源代码并保留原有的版权声明。\n\n本软件包含的第三方组件（包括 Concord 内核）分别遵循其各自的开源协议。基于本软件修改或分发的版本所产生的任何问题，与原作者无关。';
 
   @override
   String get disclaimerChangesTitle => '声明变更';
@@ -1069,9 +1069,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => '隐藏超时代理';
-
-  @override
-  String get stackMode => '栈模式';
 
   @override
   String get network => '网络';
@@ -1830,7 +1827,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get helperCorruptTip => 'Helper 服务不可用，无法启用 TUN 模式，请重新安装 FlClash。';
 
   @override
-  String get tunAuthorizationFailed => '虚拟网卡授权失败，已关闭。';
+  String get tunAuthorizationFailed => '虚拟网卡授权失败，本次运行不使用虚拟网卡。';
 
   @override
   String get sudoPasswordTitle => '输入 sudo 密码';
@@ -2603,9 +2600,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get congestionController => 'TCP 拥塞控制';
 
   @override
-  String get congestionControllerDesc => 'TCP 拥塞控制仅在 mips 栈生效。';
-
-  @override
   String get routeExcludeAddress => '排除路由地址';
 
   @override
@@ -2676,7 +2670,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get udpTimeout => 'UDP 超时';
 
   @override
-  String get udpTimeoutDesc => 'UDP 超时以秒为单位，仅在 gvisor、system 和 mixed 栈生效。';
+  String get udpTimeoutDesc => 'UDP 超时以秒为单位。';
 
   @override
   String get dnsHijackDesc => '未添加时劫持所有发往 53 端口的 DNS 请求（any:53）。';
@@ -3723,9 +3717,57 @@ class AppLocalizationsZh extends AppLocalizations {
   String get forceRestartCore => '强制重启';
 
   @override
+  String get configWarnings => '配置警告';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '加载配置时有 $count 条警告',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'HTTP端口';
+
+  @override
+  String get dnsServer => 'DNS 服务器';
+
+  @override
+  String get serviceFaults => '未能启动的服务';
+
+  @override
+  String get faultAddressInUse => '地址已被占用。';
+
+  @override
+  String get faultAddressNotAvailable => '本机没有这个地址。';
+
+  @override
+  String get faultPermissionDenied => '没有权限。';
+
+  @override
+  String get tunStartFailed => '虚拟网卡启动失败，本次运行不再尝试。';
+
+  @override
   String get vpnPermissionNotGranted =>
       '未获得 VPN 权限，VPN 没有启动。其他应用设为始终开启的 VPN 时也会如此。';
 
   @override
   String get vpnServiceStartFailed => 'VPN 服务无法启动。';
+
+  @override
+  String get rootTun => 'Root 模式';
+
+  @override
+  String get rootTunDesc => '不占用系统 VPN，需要 root 权限。';
+
+  @override
+  String get rootTunUnavailable => '未检测到 root';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root 不可用（$reason），本次使用系统 VPN。';
+  }
 }

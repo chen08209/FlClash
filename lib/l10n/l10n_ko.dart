@@ -393,17 +393,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get desc =>
-      'ClashMeta 기반의 멀티 플랫폼 프록시 클라이언트로, 간편하게 사용할 수 있으며 오픈 소스이고 광고가 없습니다.';
+      'Concord 코어 기반의 멀티 플랫폼 프록시 클라이언트로, 간편하게 사용할 수 있으며 오픈 소스이고 광고가 없습니다.';
 
   @override
   String get startVpn => 'VPN 시작 중…';
 
   @override
   String get stopVpn => 'VPN 중지 중…';
-
-  @override
-  String get localNetworkDeniedTip =>
-      '로컬 네트워크 권한이 거부되었습니다. gvisor 스택을 사용하므로 LAN에 연결할 수 없습니다.';
 
   @override
   String get compatible => '호환 모드';
@@ -494,6 +490,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get externalControllerSecret => '외부 컨트롤러 시크릿';
 
   @override
+  String get externalControllerCors => '교차 출처 접근 허용';
+
+  @override
+  String get externalControllerCorsDesc => '웹 대시보드가 다른 사이트에서 연결할 수 있습니다.';
+
+  @override
   String get ipv6Desc => 'IPv6 트래픽은 IPv6가 켜져 있을 때만 수신됩니다.';
 
   @override
@@ -519,9 +521,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP 동시 연결';
-
-  @override
-  String get geodataLoader => 'Geo 저메모리 모드';
 
   @override
   String get requests => '요청';
@@ -924,7 +923,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      '본 소프트웨어는 Clash.Meta(mihomo) 코어를 기반으로 한 오픈 소스 네트워크 프록시 클라이언트입니다. 구성 관리, 규칙 기반 라우팅, 트래픽 전달과 같은 로컬 도구만 제공합니다.';
+      '본 소프트웨어는 Concord 코어를 기반으로 한 오픈 소스 네트워크 프록시 클라이언트입니다. 구성 관리, 규칙 기반 라우팅, 트래픽 전달과 같은 로컬 도구만 제공합니다.';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -977,7 +976,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      '본 소프트웨어는 GPL-3.0 라이선스로 공개된 오픈 소스입니다. 이 라이선스에 따라 실행, 연구, 수정, 배포할 수 있으며, 본 소프트웨어나 그 수정본을 배포할 때는 마찬가지로 GPL-3.0으로 소스 코드를 제공하고 원래의 저작권 고지를 유지해야 합니다.\n\n본 소프트웨어에 포함된 서드파티 구성 요소(Clash.Meta 코어 포함)는 각자의 라이선스를 따릅니다. 다른 사람이 수정하거나 배포한 버전에서 생긴 문제에 대해 원저작자는 책임지지 않습니다.';
+      '본 소프트웨어는 GPL-3.0 라이선스로 공개된 오픈 소스입니다. 이 라이선스에 따라 실행, 연구, 수정, 배포할 수 있으며, 본 소프트웨어나 그 수정본을 배포할 때는 마찬가지로 GPL-3.0으로 소스 코드를 제공하고 원래의 저작권 고지를 유지해야 합니다.\n\n본 소프트웨어에 포함된 서드파티 구성 요소(Concord 코어 포함)는 각자의 라이선스를 따릅니다. 다른 사람이 수정하거나 배포한 버전에서 생긴 문제에 대해 원저작자는 책임지지 않습니다.';
 
   @override
   String get disclaimerChangesTitle => '본 문서의 변경';
@@ -1076,9 +1075,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => '시간 초과된 프록시 숨기기';
-
-  @override
-  String get stackMode => '스택 모드';
 
   @override
   String get network => '네트워크';
@@ -1894,7 +1890,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '헬퍼 서비스를 사용할 수 없어 TUN 모드를 켤 수 없습니다. FlClash를 다시 설치하여 복구하세요.';
 
   @override
-  String get tunAuthorizationFailed => 'TUN 권한을 얻지 못해 끄기로 되돌렸습니다.';
+  String get tunAuthorizationFailed => 'TUN 권한을 받지 못해 이번 실행에서는 TUN을 사용하지 않습니다.';
 
   @override
   String get sudoPasswordTitle => 'sudo 비밀번호를 입력하세요';
@@ -2677,9 +2673,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get congestionController => 'TCP 혼잡 제어';
 
   @override
-  String get congestionControllerDesc => 'TCP 혼잡 제어는 mips 스택에서만 작동합니다.';
-
-  @override
   String get routeExcludeAddress => '라우팅 제외 주소';
 
   @override
@@ -2753,8 +2746,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get udpTimeout => 'UDP 시간 제한';
 
   @override
-  String get udpTimeoutDesc =>
-      'UDP 시간 제한은 초 단위이며 gvisor, system, mixed 스택에서만 작동합니다.';
+  String get udpTimeoutDesc => 'UDP 시간 제한은 초 단위입니다.';
 
   @override
   String get dnsHijackDesc => '추가하지 않으면 53번 포트로 가는 모든 DNS 쿼리를 하이재킹합니다(any:53).';
@@ -3847,9 +3839,57 @@ class AppLocalizationsKo extends AppLocalizations {
   String get forceRestartCore => '강제 다시 시작';
 
   @override
+  String get configWarnings => '구성 경고';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '구성을 불러올 때 경고 $count개',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'HTTP 포트';
+
+  @override
+  String get dnsServer => 'DNS 서버';
+
+  @override
+  String get serviceFaults => '시작하지 못한 서비스';
+
+  @override
+  String get faultAddressInUse => '주소가 이미 사용 중입니다.';
+
+  @override
+  String get faultAddressNotAvailable => '이 기기에 해당 주소가 없습니다.';
+
+  @override
+  String get faultPermissionDenied => '권한이 없습니다.';
+
+  @override
+  String get tunStartFailed => 'TUN을 시작하지 못했습니다. 이번 실행에서는 다시 시도하지 않습니다.';
+
+  @override
   String get vpnPermissionNotGranted =>
       'VPN 권한이 허용되지 않아 VPN을 시작하지 않았습니다. 다른 앱이 상시 사용 VPN으로 설정되어 있어도 시작할 수 없습니다.';
 
   @override
   String get vpnServiceStartFailed => 'VPN 서비스를 시작하지 못했습니다.';
+
+  @override
+  String get rootTun => 'Root 모드';
+
+  @override
+  String get rootTunDesc => '시스템 VPN 대신 root를 사용합니다.';
+
+  @override
+  String get rootTunUnavailable => '이 기기에서 root를 찾지 못했습니다';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root를 사용할 수 없어($reason) 이번에는 시스템 VPN을 사용합니다.';
+  }
 }

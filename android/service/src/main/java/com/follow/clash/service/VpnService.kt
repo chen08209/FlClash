@@ -12,13 +12,13 @@ import com.follow.clash.common.AccessControlMode
 import com.follow.clash.common.GlobalState
 import com.follow.clash.common.R as CommonR
 import com.follow.clash.core.Core
+import com.follow.clash.core.TunOptions
 import com.follow.clash.service.models.CIDR
 import com.follow.clash.service.models.VpnOptions
 import com.follow.clash.service.models.getIpv4RouteAddress
 import com.follow.clash.service.models.getIpv6RouteAddress
 import com.follow.clash.service.models.toCIDR
 import com.follow.clash.service.models.tunMtu
-import com.follow.clash.service.models.tunOptions
 import com.follow.clash.service.modules.ServiceModules
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
@@ -75,16 +75,13 @@ class VpnService : SystemVpnService(), ManagedService {
         }
 
     private val VpnOptions.tunDns
-        get(): String {
+        get(): List<String> {
             if (dnsHijacking) {
-                return NET_ANY
+                return listOf(NET_ANY)
             }
-            return buildString {
-                append(DNS)
-                if (ipv6) {
-                    append(",")
-                    append(DNS6)
-                }
+            return buildList {
+                add(DNS)
+                if (ipv6) add(DNS6)
             }
         }
 
@@ -166,9 +163,9 @@ class VpnService : SystemVpnService(), ManagedService {
                         stack = options.stack,
                         address = options.tunAddress,
                         dns = options.tunDns,
-                        options = options.tunOptions,
+                        congestionController = options.congestionController,
                     ),
-                ) { "Core rejected the tun file descriptor" }
+                )
             } catch (error: Exception) {
                 stopTunLocked()
                 throw error
