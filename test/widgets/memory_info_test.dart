@@ -131,6 +131,35 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('an in-process Core with no share shows one shared figure', (
+    tester,
+  ) async {
+    Future<MemorySnapshot> readMemory() async => MemorySnapshot.resolve(
+      rss: 300 * 1024 * 1024,
+      core: const CoreMemoryStats(rss: 300 * 1024 * 1024),
+      coreInProcess: true,
+    );
+
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: SizedBox(
+          width: 380,
+          child: MemoryInfo(memoryReader: readMemory),
+        ),
+        homeBuilder: (child) => HostScaffold(body: Center(child: child)),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('App & shared'), findsOneWidget);
+    expect(find.text('App'), findsNothing);
+    expect(find.text('Core'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('a poll that barely moves the split leaves the bar still', (
     tester,
   ) async {
@@ -625,15 +654,33 @@ void main() {
         tester,
         reader: () async => MemorySnapshot.resolve(
           rss: 12 * 1024 * 1024,
+          core: const CoreMemoryStats(rss: 12 * 1024 * 1024),
+          coreInProcess: true,
+        ),
+      );
+
+      expect(inSheet('Core'), findsNothing);
+      expect(inSheet('App & shared'), findsOneWidget);
+      expect(find.text('Core is not running'), findsNothing);
+      expect(find.text(_estimateDesc), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('an in-process Core with a runtime breakdown says its share '
+        'comes from it', (tester) async {
+      await openSheet(
+        tester,
+        reader: () async => MemorySnapshot.resolve(
+          rss: 12 * 1024 * 1024,
           core: stats,
           coreInProcess: true,
         ),
       );
 
-      expect(find.text('App & shared'), findsOneWidget);
+      expect(inSheet('App & shared'), findsOneWidget);
       expect(inSheet('App'), findsNothing);
-      expect(find.text(_estimateSharedDesc), findsOneWidget);
-      expect(find.text(_estimateDesc), findsNothing);
+      expect(find.text(_sharedDesc), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
     });
@@ -732,9 +779,10 @@ void main() {
 const _estimateDesc =
     'Estimated from process resident memory; it may differ from what the '
     'system reports.';
-const _estimateSharedDesc =
-    'The Core runs inside the app process. Its share is estimated from '
-    'runtime stats, and the rest counts as app and shared memory.';
+
+const _sharedDesc =
+    'The Core runs inside the app process. Its share is estimated from runtime '
+    'stats, and the rest counts as app and shared memory.';
 
 Widget _scaffoldBody(Widget child) => HostScaffold(body: child);
 
