@@ -259,8 +259,14 @@ void main() {
       await buildClient().upload(archive.path);
 
       expect(server.requests.map((item) => item.method), ['MKCOL', 'PUT']);
-      expect(server.requests.last.path, '/$appName/backup.zip');
-      expect(server.files['/$appName/backup.zip'], archive.readAsBytesSync());
+      expect(
+        server.requests.last.path,
+        '/${Uri.encodeComponent(appName)}/backup.zip',
+      );
+      expect(
+        server.files['/${Uri.encodeComponent(appName)}/backup.zip'],
+        archive.readAsBytesSync(),
+      );
     });
 
     test('a base path prefixes every request', () async {
@@ -280,7 +286,7 @@ void main() {
 
     test('download writes the remote archive to the given path', () async {
       final payload = List<int>.generate(64, (index) => index);
-      server.files['/$appName/backup.zip'] = payload;
+      server.files['/${Uri.encodeComponent(appName)}/backup.zip'] = payload;
       final target = join(root.path, 'download.zip');
 
       await buildClient().download(target);
