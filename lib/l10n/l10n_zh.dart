@@ -3234,6 +3234,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String mitmUntrustedStores(Object stores) {
+    return '已安装但未信任：$stores';
+  }
+
+  @override
   String get mitmSystemStoreFailed => '无法把证书加入系统信任的根证书';
 
   @override

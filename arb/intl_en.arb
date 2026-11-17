@@ -1094,6 +1094,7 @@
   "mitmCertificateLinuxTip": "Flatpak browsers need the exported certificate imported by hand.",
   "mitmCertutilMissing": "Chrome and Firefox keep their own certificate stores, which need certutil: {command}",
   "mitmMissingStores": "Not yet in: {stores}",
+  "mitmUntrustedStores": "Installed but not trusted in: {stores}",
   "mitmSystemStoreFailed": "Adding the certificate to the system's trusted roots failed",
   "mitmRootUntilReboot": "No Magisk, KernelSU or APatch was found to keep the certificate. Install it again after the device restarts.",
   "mitmRootPendingReboot": "The certificate takes effect after the device restarts.",

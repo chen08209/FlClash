@@ -3276,6 +3276,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String mitmUntrustedStores(Object stores) {
+    return 'インストール済みですが未信頼：$stores';
+  }
+
+  @override
   String get mitmSystemStoreFailed => '証明書をシステムの信頼されたルートに追加できませんでした';
 
   @override

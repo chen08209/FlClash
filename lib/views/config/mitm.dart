@@ -111,6 +111,8 @@ class _MitmOptionsViewState extends ConsumerState<MitmOptionsView> {
         appLocalizations.mitmCertutilMissing(command)
       else if (check?.missingStores case final stores? when stores.isNotEmpty)
         appLocalizations.mitmMissingStores(stores.toSet().join(', ')),
+      if (check?.untrustedStores case final stores? when stores.isNotEmpty)
+        appLocalizations.mitmUntrustedStores(stores.toSet().join(', ')),
       if (system.isLinux) appLocalizations.mitmCertificateLinuxTip,
     ];
     return lines.isEmpty ? null : lines.join('\n');

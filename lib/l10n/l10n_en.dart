@@ -3435,6 +3435,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String mitmUntrustedStores(Object stores) {
+    return 'Installed but not trusted in: $stores';
+  }
+
+  @override
   String get mitmSystemStoreFailed =>
       'Adding the certificate to the system\'s trusted roots failed';
 

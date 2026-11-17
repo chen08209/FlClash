@@ -3429,6 +3429,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String mitmUntrustedStores(Object stores) {
+    return 'Установлен, но не доверен в: $stores';
+  }
+
+  @override
   String get mitmSystemStoreFailed =>
       'Не удалось добавить сертификат в доверенные корневые сертификаты системы';
 

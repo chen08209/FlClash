@@ -456,24 +456,58 @@ void main() {
       });
     });
 
+    void listTrust(String flags) {
+      processes.handle('${root.path}/bin/certutil', (arguments) {
+        if (arguments.contains('-a')) {
+          return ProcessResult(0, 0, _pem, '');
+        }
+        return ProcessResult(
+          0,
+          0,
+          '\nCertificate Nickname                                         '
+              'Trust Attributes\n'
+              '                                                             '
+              'SSL,S/MIME,JAR/XPI\n\n'
+              '${LinuxMitmTrustStore.nickname} #2                           '
+              'CT,C,C\n'
+              '${LinuxMitmTrustStore.nickname}                              '
+              '$flags\n',
+          '',
+        );
+      });
+    }
+
     test('a CA in the system bundle and every browser is trusted', () async {
       files[LinuxMitmTrustStore.bundles.first] = 'other\n$_pem';
       await touch('/home/.pki/nssdb/cert9.db');
-      processes.stub('${root.path}/bin/certutil', stdout: _pem);
+      listTrust('C,,');
 
       final check = await store().check(_ca, issueLeaf);
 
       expect(check.trust, MitmTrust.ready);
       expect(check.missingStores, isEmpty);
-      expect(processes.argumentsOf('${root.path}/bin/certutil').single, [
-        '-d',
-        'sql:${database('/.pki/nssdb')}',
-        '-L',
-        '-n',
-        LinuxMitmTrustStore.nickname,
-        '-a',
+      expect(check.untrustedStores, isEmpty);
+      final db = 'sql:${database('/.pki/nssdb')}';
+      expect(processes.argumentsOf('${root.path}/bin/certutil'), [
+        ['-d', db, '-L', '-n', LinuxMitmTrustStore.nickname, '-a'],
+        ['-d', db, '-L'],
       ]);
     });
+
+    test(
+      'a browser that holds the CA without SSL trust is told apart',
+      () async {
+        files[LinuxMitmTrustStore.bundles.first] = _pem;
+        await touch('/home/.pki/nssdb/cert9.db');
+        listTrust('c,C,C');
+
+        final check = await store().check(_ca, issueLeaf);
+
+        expect(check.trust, MitmTrust.untrusted);
+        expect(check.missingStores, isEmpty);
+        expect(check.untrustedStores, ['Chrome']);
+      },
+    );
 
     test('a browser without the CA leaves it partly trusted', () async {
       files[LinuxMitmTrustStore.bundles.last] = _pem;

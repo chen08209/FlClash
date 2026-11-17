@@ -6096,6 +6096,12 @@ abstract class AppLocalizations {
   /// **'Not yet in: {stores}'**
   String mitmMissingStores(Object stores);
 
+  /// No description provided for @mitmUntrustedStores.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed but not trusted in: {stores}'**
+  String mitmUntrustedStores(Object stores);
+
   /// No description provided for @mitmSystemStoreFailed.
   ///
   /// In en, this message translates to:

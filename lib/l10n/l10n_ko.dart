@@ -3349,6 +3349,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String mitmUntrustedStores(Object stores) {
+    return '설치됐지만 신뢰하지 않음: $stores';
+  }
+
+  @override
   String get mitmSystemStoreFailed => '인증서를 시스템의 신뢰할 수 있는 루트에 추가하지 못했습니다';
 
   @override

@@ -25,6 +25,7 @@ class MitmTrustCheck {
   const MitmTrustCheck(
     this.trust, {
     this.missingStores = const [],
+    this.untrustedStores = const [],
     this.certutilInstall,
     this.systemStore = false,
     this.rootAvailable = false,
@@ -39,6 +40,8 @@ class MitmTrustCheck {
 
   /// Linux: the browsers whose databases still lack the CA, by name.
   final List<String> missingStores;
+
+  final List<String> untrustedStores;
 
   /// Linux: the command that installs certutil, which those databases need.
   final String? certutilInstall;
@@ -540,6 +543,24 @@ fi
     return listed.contains(base64.encode(mitmCertificateDer(ca)));
   }
 
+  /// A CA for TLS needs `C` in the SSL field of the trust `certutil -L` lists.
+  Future<bool> _trustedForTls(String certutil, String database) async {
+    final result = await run(certutil, ['-d', 'sql:$database', '-L']);
+    if (result.exitCode != 0) {
+      return false;
+    }
+    final flags = RegExp(r'^\s+([A-Za-z]*),[A-Za-z]*,[A-Za-z]*\s*$');
+    for (final line in LineSplitter.split('${result.stdout}')) {
+      if (!line.startsWith(nickname)) {
+        continue;
+      }
+      if (flags.firstMatch(line.substring(nickname.length)) case final match?) {
+        return match.group(1)!.contains('C');
+      }
+    }
+    return false;
+  }
+
   @override
   Future<MitmTrustCheck> check(
     MitmCertificate ca,
@@ -549,20 +570,24 @@ fi
     final databases = await nssDatabases();
     final certutil = _findExecutable('certutil');
     final missing = <String>[];
+    final untrusted = <String>[];
     for (final MapEntry(key: database, value: browser) in databases.entries) {
       if (certutil == null || !await _inDatabase(certutil, database, ca)) {
         missing.add(browser);
+      } else if (!await _trustedForTls(certutil, database)) {
+        untrusted.add(browser);
       }
     }
-    final trust = switch ((system, missing.length)) {
+    final trust = switch ((system, missing.length + untrusted.length)) {
       (true, 0) => MitmTrust.ready,
-      (false, final count) when count == databases.length =>
+      (false, _) when missing.length == databases.length =>
         MitmTrust.notInstalled,
       _ => MitmTrust.untrusted,
     };
     return MitmTrustCheck(
       trust,
       missingStores: missing,
+      untrustedStores: untrusted,
       certutilInstall: certutil == null && databases.isNotEmpty
           ? certutilInstallCommand()
           : null,
