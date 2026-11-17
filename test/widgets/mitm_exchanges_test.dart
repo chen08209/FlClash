@@ -90,7 +90,7 @@ Future<ProviderContainer> _pumpDetail(
         contentType: contentType,
       ).overrideWith(
         (ref) async => bodyError == null
-            ? readMitmBody((responseBody, contentType))
+            ? readMitmBody((responseBody, contentType, grpcOverLimitNote: null))
             : throw bodyError,
       ),
       mitmModulesProvider.overrideWith(() => _Modules(modules)),

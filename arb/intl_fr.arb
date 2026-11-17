@@ -997,6 +997,7 @@
   "mitmCertificateLinuxTip": "Les navigateurs Flatpak nécessitent d’importer le certificat exporté à la main.",
   "mitmCertutilMissing": "Chrome et Firefox ont leurs propres magasins de certificats, qui nécessitent certutil : {command}",
   "mitmMissingStores": "Pas encore dans : {stores}",
+  "mitmGrpcOverLimit": "Dépasse {size} Mo une fois décompressé ; affiché compressé",
   "mitmUntrustedStores": "Installé mais non approuvé dans : {stores}",
   "mitmSystemStoreFailed": "Impossible d’ajouter le certificat aux racines de confiance du système",
   "mitmRootUntilReboot": "Aucun Magisk, KernelSU ou APatch n’a été trouvé pour conserver le certificat. Installez-le de nouveau après le redémarrage de l’appareil.",

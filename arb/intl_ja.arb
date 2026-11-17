@@ -997,6 +997,7 @@
   "mitmCertificateLinuxTip": "Flatpak 版ブラウザには、エクスポートした証明書を手動でインポートする必要があります。",
   "mitmCertutilMissing": "Chrome と Firefox は独自の証明書ストアを使うため、certutil が必要です：{command}",
   "mitmMissingStores": "未追加：{stores}",
+  "mitmGrpcOverLimit": "展開すると {size} MB を超えるため、圧縮データを表示しています",
   "mitmUntrustedStores": "インストール済みですが未信頼：{stores}",
   "mitmSystemStoreFailed": "証明書をシステムの信頼されたルートに追加できませんでした",
   "mitmRootUntilReboot": "証明書を保持する Magisk、KernelSU、APatch が見つかりません。端末の再起動後にもう一度インストールしてください。",

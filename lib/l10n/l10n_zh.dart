@@ -3234,6 +3234,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String mitmGrpcOverLimit(Object size) {
+    return '解压后超过 $size MB，显示压缩数据';
+  }
+
+  @override
   String mitmUntrustedStores(Object stores) {
     return '已安装但未信任：$stores';
   }

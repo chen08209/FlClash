@@ -3276,6 +3276,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String mitmGrpcOverLimit(Object size) {
+    return '展開すると $size MB を超えるため、圧縮データを表示しています';
+  }
+
+  @override
   String mitmUntrustedStores(Object stores) {
     return 'インストール済みですが未信頼：$stores';
   }

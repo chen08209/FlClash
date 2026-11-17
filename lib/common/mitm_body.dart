@@ -60,8 +60,11 @@ String mitmHeaderValue(Map<String, List<String>> header, String name) {
 }
 
 /// Runs off the UI isolate: a body is up to the Core's size limit.
-MitmBodyContent readMitmBody((MitmBody, String) input) {
-  final (body, contentType) = input;
+/// [grpcOverLimitNote] is localized before, since this isolate has no locale.
+MitmBodyContent readMitmBody(
+  (MitmBody, String, {String? grpcOverLimitNote}) input,
+) {
+  final (body, contentType, :grpcOverLimitNote) = input;
   final bytes = base64Decode(body.data);
   final mime = contentType.split(';').first.trim().toLowerCase();
   MitmBodyContent binary() => MitmBodyContent(
@@ -91,7 +94,13 @@ MitmBodyContent readMitmBody((MitmBody, String) input) {
           format: MitmBodyFormat.protobuf,
         );
   if (mime.startsWith('application/grpc')) {
-    final grpc = parsed(mitmGrpcText(bytes, truncated: body.truncated));
+    final grpc = parsed(
+      mitmGrpcText(
+        bytes,
+        truncated: body.truncated,
+        overLimitNote: grpcOverLimitNote,
+      ),
+    );
     if (grpc != null) {
       return grpc;
     }

@@ -16,6 +16,7 @@ MitmBodyContent _read(
 }) => readMitmBody((
   MitmBody(data: base64Encode(bytes), truncated: truncated, encoding: encoding),
   contentType,
+  grpcOverLimitNote: null,
 ));
 
 void main() {
@@ -158,9 +159,11 @@ void main() {
 
       final text = mitmGrpcText(
         Uint8List.fromList([...frame(small), ...frame(bomb), ...frame(small)]),
+        overLimitNote: 'too large',
       )!;
 
-      expect(text, startsWith('# 1\n1: 1\n# 2\n'));
+      expect(text, startsWith('# 1\n1: 1\n# 2\ntoo large\n'));
+      expect('too large'.allMatches(text), hasLength(1));
       expect(text.length, lessThan(mitmGrpcInflateLimit));
       expect(text, endsWith('# 3\n1: 1'));
     });

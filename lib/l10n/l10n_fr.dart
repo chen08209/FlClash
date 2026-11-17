@@ -3471,6 +3471,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String mitmGrpcOverLimit(Object size) {
+    return 'Dépasse $size Mo une fois décompressé ; affiché compressé';
+  }
+
+  @override
   String mitmUntrustedStores(Object stores) {
     return 'Installé mais non approuvé dans : $stores';
   }

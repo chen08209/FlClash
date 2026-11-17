@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_body.dart';
+import 'package:fl_clash/common/mitm_protobuf.dart';
 import 'package:fl_clash/common/mitm_module.dart';
 import 'package:fl_clash/common/mitm_network.dart';
 import 'package:fl_clash/common/mitm_trust.dart';
@@ -224,7 +225,13 @@ Future<MitmBodyContent?> mitmBody(
   if (body == null) {
     return null;
   }
-  final content = await compute(readMitmBody, (body, contentType));
+  final content = await compute(readMitmBody, (
+    body,
+    contentType,
+    grpcOverLimitNote: currentAppLocalizations.mitmGrpcOverLimit(
+      mitmGrpcInflateLimit >> 20,
+    ),
+  ));
   if (content.charset.isEmpty) {
     return content;
   }

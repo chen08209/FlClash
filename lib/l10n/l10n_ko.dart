@@ -3349,6 +3349,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String mitmGrpcOverLimit(Object size) {
+    return '압축을 풀면 $size MB를 넘어 압축된 데이터를 표시합니다';
+  }
+
+  @override
   String mitmUntrustedStores(Object stores) {
     return '설치됐지만 신뢰하지 않음: $stores';
   }

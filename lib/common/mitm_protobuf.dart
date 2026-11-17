@@ -36,8 +36,13 @@ String? mitmProtobufText(
 
 const mitmGrpcInflateLimit = 8 << 20;
 
-/// The messages of a gRPC or gRPC-Web body, each read as Protobuf.
-String? mitmGrpcText(Uint8List bytes, {bool truncated = false}) {
+/// The messages of a gRPC or gRPC-Web body, each read as Protobuf;
+/// [overLimitNote] heads a frame that inflates past [mitmGrpcInflateLimit].
+String? mitmGrpcText(
+  Uint8List bytes, {
+  bool truncated = false,
+  String? overLimitNote,
+}) {
   final out = StringBuffer();
   var inflated = 0;
   final view = ByteData.sublistView(bytes);
@@ -61,11 +66,14 @@ String? mitmGrpcText(Uint8List bytes, {bool truncated = false}) {
       out.writeln(latin1.decode(frame).trim());
     } else {
       final compressed = flag & 1 != 0;
-      final message = compressed
+      final (message, overLimit) = compressed
           ? _gunzip(frame, mitmGrpcInflateLimit - inflated)
-          : frame;
+          : (frame, false);
       if (compressed) {
         inflated += message?.length ?? 0;
+      }
+      if (overLimit && overLimitNote != null) {
+        out.writeln(overLimitNote);
       }
       final text = message == null ? null : mitmProtobufText(message);
       out.writeln(text ?? _hex(message ?? frame));
@@ -78,8 +86,9 @@ String? mitmGrpcText(Uint8List bytes, {bool truncated = false}) {
   return out.toString().trimRight();
 }
 
-/// Null for a frame that is not gzip or inflates past [limit].
-Uint8List? _gunzip(Uint8List frame, int limit) {
+/// No bytes for a frame that is not gzip or inflates past [limit], which the
+/// second field tells.
+(Uint8List?, bool) _gunzip(Uint8List frame, int limit) {
   final filter = RawZLibFilter.inflateFilter();
   final out = BytesBuilder(copy: false);
   bool drain({bool end = false}) {
@@ -98,12 +107,12 @@ Uint8List? _gunzip(Uint8List frame, int limit) {
   try {
     filter.process(frame, 0, frame.length);
     if (!drain()) {
-      return null;
+      return (null, true);
     }
     filter.process(const [], 0, 0);
-    return drain(end: true) ? out.takeBytes() : null;
+    return drain(end: true) ? (out.takeBytes(), false) : (null, true);
   } on FormatException {
-    return null;
+    return (null, false);
   }
 }
 

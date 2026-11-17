@@ -997,6 +997,7 @@
   "mitmCertificateLinuxTip": "Flatpak 版浏览器需要手动导入导出的证书。",
   "mitmCertutilMissing": "Chrome 和 Firefox 使用自己的证书库，需要 certutil：{command}",
   "mitmMissingStores": "尚未加入：{stores}",
+  "mitmGrpcOverLimit": "解压后超过 {size} MB，显示压缩数据",
   "mitmUntrustedStores": "已安装但未信任：{stores}",
   "mitmSystemStoreFailed": "无法把证书加入系统信任的根证书",
   "mitmRootUntilReboot": "未找到可保留证书的 Magisk、KernelSU 或 APatch，重启手机后需要重新安装。",

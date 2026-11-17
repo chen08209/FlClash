@@ -375,7 +375,7 @@ final class MitmBodyProvider
   }
 }
 
-String _$mitmBodyHash() => r'd6bf14762381cc5eaf6280a53e460babca946a91';
+String _$mitmBodyHash() => r'bf38c11bea05417c720bfb6e04ef8fc39a9275cc';
 
 final class MitmBodyFamily extends $Family
     with

@@ -997,6 +997,7 @@
   "mitmCertificateLinuxTip": "В браузеры из Flatpak экспортированный сертификат нужно импортировать вручную.",
   "mitmCertutilMissing": "Chrome и Firefox используют собственные хранилища сертификатов, для которых нужен certutil: {command}",
   "mitmMissingStores": "Ещё не добавлен в: {stores}",
+  "mitmGrpcOverLimit": "После распаковки больше {size} МБ; показаны сжатые данные",
   "mitmUntrustedStores": "Установлен, но не доверен в: {stores}",
   "mitmSystemStoreFailed": "Не удалось добавить сертификат в доверенные корневые сертификаты системы",
   "mitmRootUntilReboot": "Не найден Magisk, KernelSU или APatch, чтобы сохранить сертификат. После перезагрузки устройства установите его снова.",

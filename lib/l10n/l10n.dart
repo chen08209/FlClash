@@ -6096,6 +6096,12 @@ abstract class AppLocalizations {
   /// **'Not yet in: {stores}'**
   String mitmMissingStores(Object stores);
 
+  /// No description provided for @mitmGrpcOverLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Inflates past {size} MB; shown compressed'**
+  String mitmGrpcOverLimit(Object size);
+
   /// No description provided for @mitmUntrustedStores.
   ///
   /// In en, this message translates to:
