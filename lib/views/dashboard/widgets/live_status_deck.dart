@@ -744,12 +744,23 @@ class _StatusCard extends ConsumerWidget {
     unawaited(action.installUpdate());
   }
 
+  /// Asks module by module, each as it stands when its turn comes, until the
+  /// card goes or a prompt is dismissed.
   Future<void> _reviewModules(BuildContext context, WidgetRef ref) async {
-    for (final module in ref.read(mitmModulesToAgreeProvider)) {
+    final ids = [
+      for (final module in ref.read(mitmModulesToAgreeProvider)) module.id,
+    ];
+    for (final id in ids) {
       if (!context.mounted) {
         return;
       }
-      await offerMitmModule(ref, module);
+      final module = ref
+          .read(mitmModulesToAgreeProvider)
+          .where((item) => item.id == id)
+          .firstOrNull;
+      if (module != null && !await answerMitmModule(ref, module)) {
+        return;
+      }
     }
   }
 

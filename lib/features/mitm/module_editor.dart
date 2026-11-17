@@ -53,12 +53,13 @@ String mitmNetworkChangeValue(
   ].join('\n');
 }
 
-/// Scripts and network changes reach past the module's own hosts, so either
-/// asks before the module turns on; declining records the answer.
-Future<MitmModule> acceptMitmModule(WidgetRef ref, MitmModule module) async {
-  if (!module.asksBeforeTurningOn) {
-    return module.copyWith(enabled: true);
-  }
+/// Asks by the module's file as it reads now; false once dismissed.
+Future<bool> answerMitmModule(WidgetRef ref, MitmModule module) async {
+  final action = ref.read(mitmModulesActionProvider.notifier);
+  final overrides = ref.read(
+    profileOverridesProvider(ref.read(currentProfileIdProvider)),
+  );
+  final hosts = ref.read(patchClashConfigProvider).hosts;
   final content = ref.listenManual(
     mitmModuleContentProvider(module.id).future,
     (_, _) {},
@@ -69,15 +70,16 @@ Future<MitmModule> acceptMitmModule(WidgetRef ref, MitmModule module) async {
   } finally {
     content.close();
   }
+  final asksConsent = read?.asksConsent ?? module.asksConsent;
+  if (!module.copyWith(asksConsent: asksConsent).asksBeforeTurningOn) {
+    action.recordConsent(module.id, asksConsent: asksConsent);
+    return true;
+  }
   final changes = read?.network.changes ?? const <MitmNetworkChange>[];
   final unverified = read?.skipVerifyHostname ?? const <String>[];
   final sources = read?.clientSourceAddress ?? const <String>[];
   final scripts = module.scripts > 0;
   final appLocalizations = currentAppLocalizations;
-  final overrides = ref.read(
-    profileOverridesProvider(ref.read(currentProfileIdProvider)),
-  );
-  final hosts = ref.read(patchClashConfigProvider).hosts;
   String line(MitmNetworkChange change) {
     final title = mitmNetworkChangeTitle(appLocalizations, change);
     final value = mitmNetworkChangeValue(appLocalizations, change);
@@ -88,8 +90,8 @@ Future<MitmModule> acceptMitmModule(WidgetRef ref, MitmModule module) async {
     ].join('\n');
   }
 
-  final accepted = await dialogs.showMessage(
-    title: read?.asksConsent == true
+  final agreed = await dialogs.showMessage(
+    title: asksConsent
         ? appLocalizations.mitmModuleRiskTitle
         : appLocalizations.mitmScriptRiskTitle,
     message: TextSpan(
@@ -117,18 +119,17 @@ Future<MitmModule> acceptMitmModule(WidgetRef ref, MitmModule module) async {
     ),
     confirmText: appLocalizations.turnOn,
   );
-  return accepted == true
-      ? module.copyWith(enabled: true, accepted: true)
-      : module.copyWith(accepted: false);
+  if (agreed == null) {
+    return false;
+  }
+  action.recordConsent(module.id, asksConsent: asksConsent, agreed: agreed);
+  return true;
 }
 
 Future<void> offerMitmModule(WidgetRef ref, MitmModule? module) async {
-  if (module == null || !module.awaitsConsent) {
-    return;
+  if (module != null && module.awaitsConsent) {
+    await answerMitmModule(ref, module);
   }
-  ref
-      .read(mitmModulesActionProvider.notifier)
-      .putModule(await acceptMitmModule(ref, module));
 }
 
 String _moduleTemplate(String name) =>

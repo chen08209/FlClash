@@ -1,4 +1,6 @@
+import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/mitm.dart';
@@ -295,6 +297,70 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  group('with modules stored', () {
+    late Database testDatabase;
+
+    setUp(() {
+      testDatabase = Database(NativeDatabase.memory());
+      database = testDatabase;
+    });
+
+    // The modules provider holds a query open until its container goes.
+    tearDown(() {
+      container.dispose();
+      return testDatabase.close();
+    });
+
+    testWidgets('the module card asks about each module in turn', (
+      tester,
+    ) async {
+      MitmModule module(int id, String name) => MitmModule(
+        id: id,
+        name: name,
+        enabled: false,
+        scripts: 1,
+        order: id,
+        lastUpdateTime: DateTime(2026, 11, 17),
+      );
+      await testDatabase.mitmModulesDao.putAll([
+        module(1, 'Ads').toCompanion(),
+        module(2, 'Tracker').toCompanion(),
+      ]);
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([_profile])),
+          for (final id in [1, 2])
+            mitmModuleContentProvider(id).overrideWith((ref) async => null),
+        ],
+      );
+      globalState.container = container;
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      await pumpButton(tester);
+      await open(tester);
+
+      await tester.tap(front('View'));
+      for (final _ in [1, 2]) {
+        await settle(tester);
+        expect(
+          find.text(currentAppLocalizations.mitmScriptRiskTitle),
+          findsOneWidget,
+        );
+        await tester.tap(find.text(currentAppLocalizations.cancel));
+      }
+      await settle(tester);
+
+      final stored = await testDatabase.mitmModulesDao.query().get();
+      expect([for (final item in stored) item.accepted], [false, false]);
+      expect(container.read(mitmModulesToAgreeProvider), isEmpty);
+      expect(
+        find.text(currentAppLocalizations.mitmScriptRiskTitle),
+        findsNothing,
+      );
+      expect(badge('Modules turned off'), findsNothing);
+    });
   });
 
   testWidgets('leaves updating resources out', (tester) async {

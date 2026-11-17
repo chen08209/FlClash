@@ -274,6 +274,23 @@ Extra = type=http-response,pattern=^https://b,script-path=${urlOf('/extra.js')},
     expect(container.read(mitmModulesToAgreeProvider), isEmpty);
   });
 
+  test('a restore reads what each module asks from its own file', () async {
+    bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
+    final added = await action().addFromUrl(urlOf('/ads.sgmodule'));
+    action().putModule(added.copyWith(id: added.id + 1));
+    await File(
+      join(await appPath.mitmModulesDirPath, added.fileName),
+    ).writeAsString('[General]\ndns-server = 223.5.5.5\n');
+    expect(
+      [for (final item in await stored()) item.asksConsent],
+      [false, false],
+    );
+
+    await action().recheckConsent();
+
+    expect([for (final item in await stored()) item.asksConsent], [true, true]);
+  });
+
   group('an update that brings scripts', () {
     String withScript() =>
         '''

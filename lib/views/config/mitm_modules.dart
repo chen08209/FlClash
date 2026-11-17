@@ -27,15 +27,12 @@ MitmModule? _moduleOf(WidgetRef ref, int id) => ref.watch(
   ),
 );
 
-void _putModule(WidgetRef ref, MitmModule module) {
-  ref.read(mitmModulesActionProvider.notifier).putModule(module);
-}
-
 Future<void> _setEnabled(WidgetRef ref, MitmModule module, bool enabled) async {
-  final next = enabled
-      ? await acceptMitmModule(ref, module)
-      : module.copyWith(enabled: false, accepted: module.accepted ?? false);
-  _putModule(ref, next);
+  if (enabled) {
+    await answerMitmModule(ref, module);
+  } else {
+    ref.read(mitmModulesActionProvider.notifier).turnOff(module.id);
+  }
 }
 
 /// Runs a cron, event or generic script line now; any other line, any while

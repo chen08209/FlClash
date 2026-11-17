@@ -201,6 +201,32 @@ void main() {
     expect((await stored()).last.accepted, isTrue);
   });
 
+  testWidgets('turning on asks by what the file asks now', (tester) async {
+    await pump(tester, const MitmModulesView());
+    container
+        .read(mitmModulesActionProvider.notifier)
+        .putModule(_remote.copyWith(enabled: false));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Switch).first);
+    await tester.pumpAndSettle();
+    final title = find.text(currentAppLocalizations.mitmModuleRiskTitle);
+    expect(title, findsOneWidget);
+    Navigator.of(tester.element(title)).pop();
+    await tester.pumpAndSettle();
+    expect((await stored()).first.enabled, isFalse);
+    expect((await stored()).first.accepted, isNull);
+
+    await tester.tap(find.byType(Switch).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(currentAppLocalizations.turnOn));
+    await tester.pumpAndSettle();
+    final ads = (await stored()).first;
+    expect(ads.enabled, isTrue);
+    expect(ads.accepted, isTrue);
+    expect(ads.asksConsent, isTrue);
+  });
+
   group('a change that turns a module off for consent', () {
     Future<void> expectAsked(WidgetTester tester) async {
       expect(

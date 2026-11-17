@@ -85,6 +85,58 @@ class MitmModulesAction extends _$MitmModulesAction {
     ref.read(mitmModulesProvider.notifier).put(module, first: first);
   }
 
+  void recordConsent(int id, {required bool asksConsent, bool? agreed}) {
+    final current = _loaded(id);
+    if (current == null) {
+      return;
+    }
+    putModule(
+      current.copyWith(
+        asksConsent: asksConsent,
+        enabled: agreed ?? true,
+        accepted: agreed ?? current.accepted,
+      ),
+    );
+  }
+
+  /// Turning a module off counts as declining it until it is turned on.
+  void turnOff(int id) {
+    final current = _loaded(id);
+    if (current != null) {
+      putModule(
+        current.copyWith(enabled: false, accepted: current.accepted ?? false),
+      );
+    }
+  }
+
+  /// A restored row may have been judged against another device's files.
+  Future<void> recheckConsent() async {
+    for (final module in await database.mitmModulesDao.query().get()) {
+      bool asksConsent;
+      try {
+        final text = await File(await _pathOf(module)).readAsString();
+        asksConsent = (await compute(_parseMitmModule, (
+          text,
+          module.arguments,
+        ))).asksConsent;
+      } catch (_) {
+        asksConsent = true;
+      }
+      if (!ref.mounted) {
+        return;
+      }
+      if (asksConsent != module.asksConsent) {
+        putModule(module.copyWith(asksConsent: asksConsent));
+      }
+    }
+  }
+
+  MitmModule? _loaded(int id) => ref
+      .read(mitmModulesProvider)
+      .value
+      ?.where((item) => item.id == id)
+      .firstOrNull;
+
   /// Null once the module is gone; a module file that cannot be read throws.
   Future<MitmModule?> setArguments(
     MitmModule module,
