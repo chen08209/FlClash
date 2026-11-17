@@ -160,7 +160,7 @@ class TrackerInfoAnimatedList extends StatelessWidget {
         itemBuilder: (itemContext, trackerInfo) {
           final striped = positions[trackerInfo.id]?.isOdd ?? false;
           return MemoBuilder(
-            key: Key(trackerInfo.id),
+            key: ValueKey(trackerInfo.id),
             // A live row reads its age off the clock, which moves on its own.
             inputs: [
               trackerInfo,
@@ -267,7 +267,7 @@ class _TrackerInfoGroupedListState
       itemBuilder: (_, trackerInfo, index) {
         final striped = index.isOdd;
         return MemoBuilder(
-          key: Key(trackerInfo.id),
+          key: ValueKey(trackerInfo.id),
           inputs: [
             ...showsTraffic ? [trackerInfo] : _shownInList(trackerInfo),
             detailTitle,
@@ -334,7 +334,7 @@ Widget _buildTrackerInfoItem(
 }) {
   if (table != null) {
     return TrackerInfoTableRow(
-      key: Key(trackerInfo.id),
+      key: ValueKey(trackerInfo.id),
       trackerInfo: trackerInfo,
       table: table,
       striped: striped,
@@ -343,7 +343,7 @@ Widget _buildTrackerInfoItem(
     );
   }
   return TrackerInfoItem(
-    key: Key(trackerInfo.id),
+    key: ValueKey(trackerInfo.id),
     trackerInfo: trackerInfo,
     isLive: isLive,
     onClose: onClose,
