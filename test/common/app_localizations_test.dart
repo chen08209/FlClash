@@ -186,6 +186,30 @@ void main() {
     );
   });
 
+  test('says the Core is not running when it cannot be reached', () {
+    for (final code in const [
+      'core_unavailable',
+      'transport_disconnected',
+      'transport_error',
+    ]) {
+      expect(
+        userFacingErrorMessage(
+          CoreMethodException(code: code, message: 'Core is not connected'),
+          appLocalizations,
+        ),
+        'The core is not running. Try again once it has started.',
+        reason: code,
+      );
+    }
+    expect(
+      userFacingErrorMessage(
+        const CoreMethodException(code: 'core_unavailable', message: ''),
+        lookupAppLocalizations(const Locale('zh')),
+      ),
+      '核心未运行，请在核心启动后重试',
+    );
+  });
+
   group('a lost Core session', () {
     test('says the connection is gone when it has no cause', () {
       expect(

@@ -1,14 +1,12 @@
 part of '../action.dart';
 
-MitmModuleContent _parseMitmModule((String, Map<String, String>) source) =>
-    parseMitmModule(source.$1, values: source.$2);
-
 @Riverpod(keepAlive: true)
 class MitmModulesAction extends _$MitmModulesAction {
   var _autoUpdating = false;
 
   /// Files written before a row or a line names them, which [clean] keeps.
   final _held = <String>[];
+  final _refreshes = <int, Object>{};
 
   /// Deletions run one at a time: two at once can both find a file still there
   /// and the later delete fails.
@@ -63,20 +61,37 @@ class MitmModulesAction extends _$MitmModulesAction {
     return _save(module, text, edited: true);
   }
 
-  Future<MitmModule> updateModule(MitmModule module) async {
+  Future<MitmModule> updateModule(MitmModule module) =>
+      _refresh(module, module.url);
+
+  /// The module keeps its old URL when the new one fails to download.
+  Future<MitmModule> changeUrl(MitmModule module, String url) =>
+      _refresh(module, url);
+
+  Future<MitmModule> _refresh(MitmModule module, String? url) async {
     final updatingKeys = ref.read(updatingKeysProvider.notifier);
     final operation = updatingKeys.start(module.updatingKey);
+    final token = _refreshes[module.id] = Object();
+    bool superseded() => _refreshes[module.id] != token;
     try {
-      final url = module.url;
       if (url == null) {
         return await _save(
           module,
           await File(await _pathOf(module)).readAsString(),
+          superseded: superseded,
         );
       }
       final response = await request.getTextResponseForUrl(url);
-      return await _save(module, response.data ?? '');
+      return await _save(
+        module,
+        response.data ?? '',
+        url: url,
+        superseded: superseded,
+      );
     } finally {
+      if (!superseded()) {
+        _refreshes.remove(module.id);
+      }
       updatingKeys.stop(module.updatingKey, operation);
     }
   }
@@ -116,17 +131,17 @@ class MitmModulesAction extends _$MitmModulesAction {
   /// A restored row may have been judged against another device's files.
   Future<void> recheckConsent() async {
     for (final module in await database.mitmModulesDao.query().get()) {
-      bool asksConsent;
+      MitmModule checked;
       try {
-        asksConsent = (await _read(module, module.arguments)).asksConsent;
+        checked = _withContent(module, await _read(module, module.arguments));
       } catch (_) {
-        asksConsent = true;
+        checked = module.copyWith(asksConsent: true);
       }
       if (!ref.mounted) {
         return;
       }
-      if (asksConsent != module.asksConsent) {
-        putModule(module.copyWith(asksConsent: asksConsent));
+      if (checked != module) {
+        putModule(checked);
       }
     }
   }
@@ -146,33 +161,7 @@ class MitmModulesAction extends _$MitmModulesAction {
       content,
     );
     putModule(changed);
-    final held = <String>[];
-    try {
-      final missing = content.resourceUrls.difference({
-        ...changed.resources.keys,
-      });
-      final fetched = missing.isEmpty || !ref.mounted
-          ? const <String, String>{}
-          : await _download(missing, previous: const {}, held: held);
-      final written = await _writeInline({
-        for (final MapEntry(:key, :value) in content.inlineResources.entries)
-          if (!changed.resources.containsKey(key)) key: value,
-      }, held);
-      if (fetched.isEmpty && written.isEmpty) {
-        return changed;
-      }
-      final latest = await _current(module.id);
-      if (!ref.mounted || latest == null) {
-        return latest;
-      }
-      final withResources = latest.copyWith(
-        resources: {...latest.resources, ...fetched, ...written},
-      );
-      putModule(withResources);
-      return withResources;
-    } finally {
-      held.forEach(_held.remove);
-    }
+    return changed;
   }
 
   Future<void> attach(
@@ -192,9 +181,23 @@ class MitmModulesAction extends _$MitmModulesAction {
         putModule(
           current.copyWith(resources: {...current.resources, fileName: name}),
         );
+        final replaced = mitmAttachments(current)[fileName];
+        if (replaced != null && replaced != name) {
+          await _oneDeletionAtATime(() => _dropAttachments([replaced]));
+        }
       }
     } finally {
       _held.remove(name);
+    }
+  }
+
+  Future<void> fetchResources(MitmModule module) async {
+    await ref
+        .read(coreHandlerProvider)
+        .api
+        .fetchMitmModule(name: '${module.id}');
+    if (ref.mounted) {
+      ref.invalidate(mitmModuleStatusProvider);
     }
   }
 
@@ -211,7 +214,10 @@ class MitmModulesAction extends _$MitmModulesAction {
         },
       ),
     );
-    await clean();
+    final stored = mitmAttachments(current)[fileName];
+    if (stored != null) {
+      await _oneDeletionAtATime(() => _dropAttachments([stored]));
+    }
   }
 
   Future<void> deleteModule(MitmModule module) async {
@@ -219,8 +225,24 @@ class MitmModulesAction extends _$MitmModulesAction {
     final path = await _pathOf(module);
     await _oneDeletionAtATime(() async {
       await File(path).safeDelete();
-      await _sweep();
+      await _dropAttachments(mitmAttachments(module).values);
     });
+  }
+
+  Future<void> _dropAttachments(Iterable<String> names) async {
+    final directory = await appPath.mitmResourcesDirPath;
+    final modules = [
+      ...await database.mitmModulesDao.query().get(),
+      ...?ref.read(mitmModulesProvider).value,
+    ];
+    for (final name in names) {
+      if (!_held.contains(name) &&
+          !modules.any(
+            (module) => mitmAttachments(module).containsValue(name),
+          )) {
+        await File(join(directory, name)).safeDelete();
+      }
+    }
   }
 
   Future<void> _oneDeletionAtATime(Future<void> Function() delete) =>
@@ -230,13 +252,10 @@ class MitmModulesAction extends _$MitmModulesAction {
     return join(await appPath.mitmModulesDirPath, module.fileName);
   }
 
-  Future<MitmModuleContent> _read(
+  Future<MitmModuleDetails> _read(
     MitmModule module,
     Map<String, String> arguments,
-  ) async {
-    final text = await File(await _pathOf(module)).readAsString();
-    return compute(_parseMitmModule, (text, arguments));
-  }
+  ) => readMitmModule(ref, module, arguments: arguments);
 
   Future<MitmModule?> _current(int id) async => (await ref.read(
     mitmModulesProvider.future,
@@ -248,20 +267,18 @@ class MitmModulesAction extends _$MitmModulesAction {
     bool added = false,
     bool first = false,
     bool edited = false,
+    String? url,
+    bool Function()? superseded,
   }) async {
-    final content = await compute(_parseMitmModule, (text, module.arguments));
+    final content = await readMitmModule(ref, module, text: text);
+    if (superseded?.call() ?? false) {
+      return await _current(module.id) ?? module;
+    }
     if (content.isEmpty && !edited) {
       throw MessageException(currentAppLocalizations.mitmModuleInvalid);
     }
-    final held = [module.fileName];
-    _held.addAll(held);
+    _held.add(module.fileName);
     try {
-      final resources = await _download(
-        content.resourceUrls,
-        previous: module.resources,
-        held: held,
-      );
-      final written = await _writeInline(content.inlineResources, held);
       await File(await _pathOf(module)).writeAsStringAtomically(text);
       if (!ref.mounted) {
         return module;
@@ -270,27 +287,39 @@ class MitmModulesAction extends _$MitmModulesAction {
       if (current == null || !ref.mounted) {
         return module;
       }
-      final saved = _withContent(current, content).copyWith(
-        name: content.name ?? current.name,
-        description: content.description ?? '',
-        system: content.system,
-        resources: {...mitmAttachments(current), ...resources, ...written},
-        lastUpdateTime: DateTime.now(),
-      );
+      // Consent covers what the old URL served; a module that is off asks
+      // again when it is turned on anyway.
+      final moved = url != null && url != current.url && current.enabled;
+      final saved =
+          _withContent(
+            moved ? current.copyWith(accepted: null) : current,
+            content,
+          ).copyWith(
+            url: url ?? current.url,
+            name: content.read.meta.name ?? current.name,
+            description: content.read.meta.desc ?? '',
+            system: content.read.meta.system,
+            resources: {
+              ...mitmAttachments(current),
+              for (final resource in content.read.resources)
+                resource.url: ?current.resources[resource.url],
+            },
+            lastUpdateTime: DateTime.now(),
+          );
       putModule(saved, first: first);
       return saved;
     } finally {
-      held.forEach(_held.remove);
+      _held.remove(module.fileName);
       if (ref.mounted) {
         unawaited(_cleanAfterSave());
       }
     }
   }
 
-  MitmModule _withContent(MitmModule current, MitmModuleContent content) {
+  MitmModule _withContent(MitmModule current, MitmModuleDetails content) {
     final next = current.copyWith(
-      scripts: content.declaredScripts,
-      asksConsent: content.asksConsent,
+      scripts: content.read.declaredScripts.length,
+      asksConsent: content.read.asksConsent,
     );
     if (!current.enabled ||
         current.accepted == true ||
@@ -313,55 +342,6 @@ class MitmModulesAction extends _$MitmModulesAction {
     }
   }
 
-  /// A resource that fails to download keeps the copy an earlier update left.
-  Future<Map<String, String>> _download(
-    Set<String> urls, {
-    required Map<String, String> previous,
-    required List<String> held,
-  }) async {
-    final directory = await appPath.mitmResourcesDirPath;
-    final names = await Future.wait([
-      for (final url in urls)
-        () async {
-          try {
-            final bytes = (await request.getFileResponseForUrl(url)).data;
-            if (bytes == null || bytes.length > maxMitmResourceSize) {
-              throw const FileSystemException('too large');
-            }
-            final name = await _storeResource(url, bytes);
-            held.add(name);
-            return name;
-          } catch (e) {
-            commonPrint.log(
-              'MITM resource $url: ${compactError(e)}',
-              logLevel: LogLevel.warning,
-            );
-            final name = previous[url];
-            if (name == null) {
-              return null;
-            }
-            held.add(name);
-            _held.add(name);
-            return await File(join(directory, name)).exists() ? name : null;
-          }
-        }(),
-    ]);
-    return {for (final (index, url) in urls.indexed) url: ?names[index]};
-  }
-
-  Future<Map<String, String>> _writeInline(
-    Map<String, String> sources,
-    List<String> held,
-  ) async {
-    final written = <String, String>{};
-    for (final MapEntry(:key, :value) in sources.entries) {
-      final name = await _storeResource(key, utf8.encode(value));
-      held.add(name);
-      written[key] = name;
-    }
-    return written;
-  }
-
   Future<String> _storeResource(String source, List<int> bytes) async {
     final name = mitmResourceName(source, bytes);
     _held.add(name);
@@ -372,49 +352,32 @@ class MitmModulesAction extends _$MitmModulesAction {
     return name;
   }
 
-  /// Removes every file no module names, judged file by file so that what a
+  /// Removes every module file no module names, judged file by file so that what a
   /// save writes or names while it runs stays.
   Future<void> clean() => _oneDeletionAtATime(_sweep);
 
   Future<void> _sweep() async {
+    final directory = Directory(await appPath.mitmModulesDirPath);
+    if (!await directory.exists()) {
+      return;
+    }
     final stored = await database.mitmModulesDao.query().get();
-    Future<void> sweep(
-      String path,
-      Iterable<String> Function(MitmModule module) namesOf,
-    ) async {
-      final directory = Directory(path);
-      if (!await directory.exists()) {
-        return;
+    await for (final entity in directory.list()) {
+      if (entity is! File || !ref.mounted) {
+        continue;
       }
-      await for (final entity in directory.list()) {
-        if (entity is! File || !ref.mounted) {
-          continue;
-        }
-        // writeAsStringAtomically writes a held file through `<name>.<pid>.tmp`.
-        final name = basename(
-          entity.path,
-        ).replaceFirst(RegExp(r'\.\d+\.tmp$'), '');
-        final modules = [...stored, ...?ref.read(mitmModulesProvider).value];
-        if (!_held.contains(name) &&
-            !modules.any((module) => namesOf(module).contains(name))) {
-          await entity.safeDelete();
-        }
+      // writeAsStringAtomically writes a held file through `<name>.<pid>.tmp`.
+      final name = basename(
+        entity.path,
+      ).replaceFirst(RegExp(r'\.\d+\.tmp$'), '');
+      final modules = [...stored, ...?ref.read(mitmModulesProvider).value];
+      if (!_held.contains(name) &&
+          !modules.any((module) => module.fileName == name)) {
+        await entity.safeDelete();
       }
     }
-
-    await sweep(
-      await appPath.mitmModulesDirPath,
-      (module) => [module.fileName],
-    );
-    await sweep(
-      await appPath.mitmResourcesDirPath,
-      (module) => module.resources.values,
-    );
   }
 
-  /// Remote modules follow the resources' two settings. What a restore leaves
-  /// out, the content of remote modules and every downloaded resource, comes
-  /// back even with auto update off.
   Future<void> autoUpdate() async {
     final setting = ref.read(patchClashConfigProvider);
     if (_autoUpdating || !ref.mounted || !setting.mitm.enable) {
@@ -423,14 +386,8 @@ class MitmModulesAction extends _$MitmModulesAction {
     _autoUpdating = true;
     try {
       final interval = Duration(hours: setting.geoUpdateInterval);
-      final resourcesDir = await appPath.mitmResourcesDirPath;
       for (final module in await database.mitmModulesDao.query().get()) {
-        final missing =
-            !await File(await _pathOf(module)).exists() ||
-            !(await Future.wait([
-              for (final name in module.resources.values)
-                File(join(resourcesDir, name)).exists(),
-            ])).every((exists) => exists);
+        final missing = !await File(await _pathOf(module)).exists();
         final due =
             setting.geoAutoUpdate &&
             module.isRemote &&
@@ -441,11 +398,14 @@ class MitmModulesAction extends _$MitmModulesAction {
         if (!ref.mounted) {
           return;
         }
-        if (!module.isRemote && !await File(await _pathOf(module)).exists()) {
+        if (!module.isRemote && missing) {
           continue;
         }
         try {
-          await updateModule(module);
+          final updated = await updateModule(module);
+          if (due && updated.enabled) {
+            await fetchResources(updated);
+          }
         } catch (e) {
           commonPrint.log(
             'auto update ${module.name}: ${compactError(e)}',

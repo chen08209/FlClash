@@ -3636,6 +3636,11 @@ class AppLocalizationsZh extends AppLocalizations {
       'URL-REGEX 和 USER-AGENT 规则改作 URL 重写，HTTPS 只对主机名中的主机生效。';
 
   @override
+  String mitmExtendedMatchingNote(Object count) {
+    return '其中 $count 条使用扩展匹配';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return '为 $system 编写，部分行可能不适用于本设备。';
   }
@@ -3710,10 +3715,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mitmSkipRule => '不支持此规则类型';
 
   @override
-  String get mitmSkipHttpRulePolicy =>
-      'URL-REGEX 和 USER-AGENT 规则只能用 REJECT 类策略';
-
-  @override
   String get mitmSkipFinalRule => '模块的规则排在最前面，兜底规则会盖住后面的所有规则';
 
   @override
@@ -3735,19 +3736,66 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mitmSkipReflect => 'FlClash 不能把数据包原路弹回';
 
   @override
-  String get mitmSkipConditional => '不支持条件重写';
-
-  @override
   String get mitmSkipSkipVerifyAll => '不会对全部主机关闭证书校验';
 
   @override
   String get mitmSkipRelativeData => '此行引用的文件不是附件，请改用 URL 或添加为附件';
 
   @override
-  String get mitmSkipNotDownloaded => '其文件尚未下载';
+  String get mitmSkipUnreadable => '无法识别此行';
 
   @override
-  String get mitmSkipUnreadable => '无法识别此行';
+  String get mitmSkipNoSection => '此行不在任何段内';
+
+  @override
+  String get mitmSkipRequirementUnreadable => '无法识别此行的生效条件';
+
+  @override
+  String get mitmSkipPolicy => '此规则的策略没有指向任何目标';
+
+  @override
+  String get mitmSkipNestedRuleSet => '规则集里不能再引用规则集';
+
+  @override
+  String get mitmSkipCondition => '无法判断此条件';
+
+  @override
+  String get mitmSkipRuntimeValue => '此行需要只有当前请求才有的值';
+
+  @override
+  String get mitmResources => '远程文件';
+
+  @override
+  String get mitmResourceOk => '已下载';
+
+  @override
+  String get mitmResourceFetching => '正在下载';
+
+  @override
+  String get mitmResourceMissing => '尚未下载';
+
+  @override
+  String get mitmFetchDns => '下载失败：无法解析主机名';
+
+  @override
+  String get mitmFetchTls => '下载失败：无法建立安全连接';
+
+  @override
+  String get mitmFetchTimeout => '下载失败：服务器响应超时';
+
+  @override
+  String get mitmFetchConnection => '下载失败：连接中断';
+
+  @override
+  String get mitmFetchOther => '下载失败';
+
+  @override
+  String get mitmResourcesFetch => '重新下载';
+
+  @override
+  String mitmFetchHttp(int status) {
+    return '下载失败：服务器返回 $status';
+  }
 
   @override
   String get mitmAddLocalFile => '添加本地文件';
@@ -3783,6 +3831,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mitmScriptGeneric => '通用';
+
+  @override
+  String get mitmScriptDns => 'DNS';
 
   @override
   String get mitmExcluded => '排除';
@@ -3940,6 +3991,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String coreStoppedWithReason(Object reason) {
     return '应用与核心的连接已断开：$reason';
   }
+
+  @override
+  String get coreUnavailableTip => '核心未运行，请在核心启动后重试';
 
   @override
   String mixedPortReset(Object value, Object port) {

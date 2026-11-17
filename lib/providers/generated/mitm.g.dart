@@ -571,13 +571,15 @@ final enabledMitmModulesProvider = EnabledMitmModulesProvider._();
 final class EnabledMitmModulesProvider
     extends
         $FunctionalProvider<
-          AsyncValue<List<({MitmModuleContent content, String name})>>,
-          List<({MitmModuleContent content, String name})>,
-          FutureOr<List<({MitmModuleContent content, String name})>>
+          AsyncValue<List<({MitmModuleDetails details, MitmModule module})>>,
+          List<({MitmModuleDetails details, MitmModule module})>,
+          FutureOr<List<({MitmModuleDetails details, MitmModule module})>>
         >
     with
-        $FutureModifier<List<({MitmModuleContent content, String name})>>,
-        $FutureProvider<List<({MitmModuleContent content, String name})>> {
+        $FutureModifier<List<({MitmModuleDetails details, MitmModule module})>>,
+        $FutureProvider<
+          List<({MitmModuleDetails details, MitmModule module})>
+        > {
   /// A module that fails to read adds nothing, so the VPN can still start.
   EnabledMitmModulesProvider._()
     : super(
@@ -595,17 +597,19 @@ final class EnabledMitmModulesProvider
 
   @$internal
   @override
-  $FutureProviderElement<List<({MitmModuleContent content, String name})>>
+  $FutureProviderElement<List<({MitmModuleDetails details, MitmModule module})>>
   $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<List<({MitmModuleContent content, String name})>> create(Ref ref) {
+  FutureOr<List<({MitmModuleDetails details, MitmModule module})>> create(
+    Ref ref,
+  ) {
     return enabledMitmModules(ref);
   }
 }
 
 String _$enabledMitmModulesHash() =>
-    r'd2160368d73532d43c570eab4cc7f194e979b9b3';
+    r'c31ce98df5e7062f04108bcc2e7b19d09b05d5f5';
 
 @ProviderFor(mitmModuleExits)
 final mitmModuleExitsProvider = MitmModuleExitsProvider._();
@@ -646,7 +650,7 @@ final class MitmModuleExitsProvider
   }
 }
 
-String _$mitmModuleExitsHash() => r'caa3ac4da1572dd187bf49adb7658d835c3c6d3f';
+String _$mitmModuleExitsHash() => r'4d61a4b5182e60c1fa6929246a575899a16f926f';
 
 @ProviderFor(mitmModuleNetworkChanges)
 final mitmModuleNetworkChangesProvider = MitmModuleNetworkChangesFamily._();
@@ -707,7 +711,7 @@ final class MitmModuleNetworkChangesProvider
 }
 
 String _$mitmModuleNetworkChangesHash() =>
-    r'7e61482361d5042964f37e52ac82351a1ca94839';
+    r'654762b2ec4332bb158e7de2d408e393edd4a05b';
 
 final class MitmModuleNetworkChangesFamily extends $Family
     with
@@ -773,7 +777,7 @@ final class MitmTakeoverProvider
   }
 }
 
-String _$mitmTakeoverHash() => r'73bf5048a5aec25697b69b4af7c32dc9907edd60';
+String _$mitmTakeoverHash() => r'65f83338f5494bced3308743e28277161f7a1464';
 
 @ProviderFor(mitmModuleNetwork)
 final mitmModuleNetworkProvider = MitmModuleNetworkProvider._();
@@ -812,16 +816,64 @@ final class MitmModuleNetworkProvider
   }
 }
 
-String _$mitmModuleNetworkHash() => r'63683164275d7be63ff680d0dfdcc0119546b523';
+String _$mitmModuleNetworkHash() => r'6570112fcf67889f9233758d80f014ae4eb2af07';
 
-/// Null while the module's content is not on disk.
+/// The modules in force by the names the profile gives them.
 
-@ProviderFor(mitmModuleDetails)
-final mitmModuleDetailsProvider = MitmModuleDetailsFamily._();
+@ProviderFor(mitmModuleStatus)
+final mitmModuleStatusProvider = MitmModuleStatusProvider._();
 
-/// Null while the module's content is not on disk.
+/// The modules in force by the names the profile gives them.
 
-final class MitmModuleDetailsProvider
+final class MitmModuleStatusProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, MitmModuleStatus>>,
+          Map<String, MitmModuleStatus>,
+          FutureOr<Map<String, MitmModuleStatus>>
+        >
+    with
+        $FutureModifier<Map<String, MitmModuleStatus>>,
+        $FutureProvider<Map<String, MitmModuleStatus>> {
+  /// The modules in force by the names the profile gives them.
+  MitmModuleStatusProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'mitmModuleStatusProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$mitmModuleStatusHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, MitmModuleStatus>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, MitmModuleStatus>> create(Ref ref) {
+    return mitmModuleStatus(ref);
+  }
+}
+
+String _$mitmModuleStatusHash() => r'4b75d9de6976e99581aa478141e28d8cc2bf359e';
+
+/// Null while the module's file is not on disk. A file that fails to read
+/// fails again until it or the module changes, which rebuilds this anyway.
+
+@ProviderFor(mitmModuleContent)
+final mitmModuleContentProvider = MitmModuleContentFamily._();
+
+/// Null while the module's file is not on disk. A file that fails to read
+/// fails again until it or the module changes, which rebuilds this anyway.
+
+final class MitmModuleContentProvider
     extends
         $FunctionalProvider<
           AsyncValue<MitmModuleDetails?>,
@@ -831,96 +883,8 @@ final class MitmModuleDetailsProvider
     with
         $FutureModifier<MitmModuleDetails?>,
         $FutureProvider<MitmModuleDetails?> {
-  /// Null while the module's content is not on disk.
-  MitmModuleDetailsProvider._({
-    required MitmModuleDetailsFamily super.from,
-    required int super.argument,
-  }) : super(
-         retry: null,
-         name: r'mitmModuleDetailsProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$mitmModuleDetailsHash();
-
-  @override
-  String toString() {
-    return r'mitmModuleDetailsProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<MitmModuleDetails?> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<MitmModuleDetails?> create(Ref ref) {
-    final argument = this.argument as int;
-    return mitmModuleDetails(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is MitmModuleDetailsProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$mitmModuleDetailsHash() => r'f11c973cbb43a0e9ad3eb71f731a6e7f908d9ab7';
-
-/// Null while the module's content is not on disk.
-
-final class MitmModuleDetailsFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<MitmModuleDetails?>, int> {
-  MitmModuleDetailsFamily._()
-    : super(
-        retry: null,
-        name: r'mitmModuleDetailsProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  /// Null while the module's content is not on disk.
-
-  MitmModuleDetailsProvider call(int id) =>
-      MitmModuleDetailsProvider._(argument: id, from: this);
-
-  @override
-  String toString() => r'mitmModuleDetailsProvider';
-}
-
-/// A file that fails to parse fails again until it changes, which rebuilds
-/// this anyway.
-
-@ProviderFor(mitmModuleContent)
-final mitmModuleContentProvider = MitmModuleContentFamily._();
-
-/// A file that fails to parse fails again until it changes, which rebuilds
-/// this anyway.
-
-final class MitmModuleContentProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<MitmModuleContent?>,
-          MitmModuleContent?,
-          FutureOr<MitmModuleContent?>
-        >
-    with
-        $FutureModifier<MitmModuleContent?>,
-        $FutureProvider<MitmModuleContent?> {
-  /// A file that fails to parse fails again until it changes, which rebuilds
-  /// this anyway.
+  /// Null while the module's file is not on disk. A file that fails to read
+  /// fails again until it or the module changes, which rebuilds this anyway.
   MitmModuleContentProvider._({
     required MitmModuleContentFamily super.from,
     required int super.argument,
@@ -944,12 +908,12 @@ final class MitmModuleContentProvider
 
   @$internal
   @override
-  $FutureProviderElement<MitmModuleContent?> $createElement(
+  $FutureProviderElement<MitmModuleDetails?> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<MitmModuleContent?> create(Ref ref) {
+  FutureOr<MitmModuleDetails?> create(Ref ref) {
     final argument = this.argument as int;
     return mitmModuleContent(ref, argument);
   }
@@ -965,13 +929,13 @@ final class MitmModuleContentProvider
   }
 }
 
-String _$mitmModuleContentHash() => r'8d05136558342f475dec4642a78405585a471968';
+String _$mitmModuleContentHash() => r'f563b3d246dc2518ee94dd867c75dbd9546b0f0b';
 
-/// A file that fails to parse fails again until it changes, which rebuilds
-/// this anyway.
+/// Null while the module's file is not on disk. A file that fails to read
+/// fails again until it or the module changes, which rebuilds this anyway.
 
 final class MitmModuleContentFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<MitmModuleContent?>, int> {
+    with $FunctionalFamilyOverride<FutureOr<MitmModuleDetails?>, int> {
   MitmModuleContentFamily._()
     : super(
         retry: _noRetry,
@@ -981,8 +945,8 @@ final class MitmModuleContentFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// A file that fails to parse fails again until it changes, which rebuilds
-  /// this anyway.
+  /// Null while the module's file is not on disk. A file that fails to read
+  /// fails again until it or the module changes, which rebuilds this anyway.
 
   MitmModuleContentProvider call(int id) =>
       MitmModuleContentProvider._(argument: id, from: this);

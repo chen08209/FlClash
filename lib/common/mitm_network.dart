@@ -1,7 +1,3 @@
-import 'dart:io' show InternetAddress, InternetAddressType;
-
-import 'package:fl_clash/common/cidr.dart';
-
 enum MitmNetworkKey {
   nameserver('nameserver'),
   defaultNameserver('default-nameserver'),
@@ -93,6 +89,31 @@ class MitmNetwork {
   final MitmListEdit? routeExcludeAddress;
   final MitmListEdit? bypassDomain;
 
+  /// The Core's `MitmModuleNetwork`.
+  factory MitmNetwork.fromCoreJson(Map<String, Object?> json) {
+    MitmListEdit? edit(Object? value) => value is Map
+        ? MitmListEdit(
+            replace: value['replace'] == true,
+            before: _listOf(value['before']),
+            after: _listOf(value['after']),
+          )
+        : null;
+    Map<String, List<String>> entries(Object? value) => {
+      for (final entry in value is List ? value : const [])
+        if (entry is Map) '${entry['domain']}': _listOf(entry['values']),
+    };
+    return MitmNetwork(
+      nameserver: edit(json['nameserver']),
+      defaultNameserver: edit(json['defaultNameserver']),
+      fakeIpFilter: edit(json['fakeIpFilter']),
+      nameserverPolicy: entries(json['nameserverPolicy']),
+      hosts: entries(json['hosts']),
+      routeAddress: _listOf(json['routeAddress']),
+      routeExcludeAddress: edit(json['routeExcludeAddress']),
+      bypassDomain: edit(json['bypassDomain']),
+    );
+  }
+
   bool get isEmpty => changes.isEmpty;
 
   MitmListEdit? editOf(MitmNetworkKey key) => switch (key) {
@@ -151,25 +172,6 @@ class MitmNetwork {
       routeExcludeAddress: fold((module) => module.routeExcludeAddress),
       bypassDomain: fold((module) => module.bypassDomain),
     );
-  }
-
-  void applyToDns(Map<String, dynamic> dns) {
-    for (final key in const [
-      MitmNetworkKey.nameserver,
-      MitmNetworkKey.defaultNameserver,
-      MitmNetworkKey.fakeIpFilter,
-    ]) {
-      if (editOf(key) case final edit?) {
-        dns[key.path] = edit.applyTo(_listOf(dns[key.path]));
-      }
-    }
-    if (nameserverPolicy.isNotEmpty) {
-      dns[MitmNetworkKey.nameserverPolicy.path] = {
-        if (dns[MitmNetworkKey.nameserverPolicy.path] case final Map policy)
-          ...policy.cast<String, dynamic>(),
-        ...nameserverPolicy,
-      };
-    }
   }
 
   /// Included routes only widen a list that names any: an empty one already
@@ -239,44 +241,4 @@ class MitmNetworkChange {
     MitmNetworkKey.hosts => later.hosts.containsKey(entry),
     _ => later.editOf(key)?.replace ?? false,
   };
-}
-
-final _ipWithPort = RegExp(r'^\[?([0-9a-fA-F:.]+)\]?(?::\d{1,5})?$');
-final _dnsScheme = RegExp(
-  r'^(?:udp|tcp|tls|https|http|quic|system|dhcp|rcode)://\S+$',
-);
-
-String? mitmDnsServer(String server) {
-  final value = server.trim();
-  if (value == 'system' || value == 'syslib') {
-    return 'system://';
-  }
-  if (value.startsWith('h3://')) {
-    final url = 'https://${value.substring('h3://'.length)}';
-    return url.contains('#') ? '$url&h3=true' : '$url#h3=true';
-  }
-  if (_dnsScheme.hasMatch(value)) {
-    return value;
-  }
-  final address = _ipWithPort.firstMatch(value)?.group(1);
-  return address != null && InternetAddress.tryParse(address) != null
-      ? value
-      : null;
-}
-
-bool isMitmPlainDnsServer(String server) =>
-    server == 'system://' || _ipWithPort.hasMatch(server);
-
-/// A route Surge, Loon or Stash writes as an address alone reads as a host.
-String? mitmRoute(String route) {
-  final value = route.trim();
-  if (isCidr(value)) {
-    return value;
-  }
-  final address = InternetAddress.tryParse(value);
-  if (address == null) {
-    return null;
-  }
-  final bits = address.type == InternetAddressType.IPv4 ? 32 : 128;
-  return '$value/$bits';
 }

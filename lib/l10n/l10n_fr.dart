@@ -3900,6 +3900,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les règles URL-REGEX et USER-AGENT agissent comme des réécritures d’URL, en HTTPS seulement pour les hôtes listés.';
 
   @override
+  String mitmExtendedMatchingNote(Object count) {
+    return '$count utilisent la correspondance étendue';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return 'Écrit pour $system ; certaines lignes peuvent ne pas correspondre aux applications de cet appareil.';
   }
@@ -3977,10 +3982,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mitmSkipRule => 'Ce type de règle n’est pas pris en charge';
 
   @override
-  String get mitmSkipHttpRulePolicy =>
-      'Les règles URL-REGEX et USER-AGENT n’acceptent qu’une stratégie REJECT';
-
-  @override
   String get mitmSkipFinalRule =>
       'Les règles du module passent en premier ; une règle finale masquerait toutes les suivantes';
 
@@ -4009,10 +4010,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'FlClash ne peut pas renvoyer les paquets à leur expéditeur';
 
   @override
-  String get mitmSkipConditional =>
-      'Les réécritures conditionnelles ne sont pas prises en charge';
-
-  @override
   String get mitmSkipSkipVerifyAll =>
       'La vérification des certificats n’est pas désactivée pour tous les hôtes';
 
@@ -4021,11 +4018,67 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le fichier que nomme cette ligne n’est pas joint ; utilisez une URL ou joignez-le';
 
   @override
-  String get mitmSkipNotDownloaded =>
-      'Son fichier n’a pas encore été téléchargé';
+  String get mitmSkipUnreadable => 'Cette ligne est illisible';
 
   @override
-  String get mitmSkipUnreadable => 'Cette ligne est illisible';
+  String get mitmSkipNoSection => 'Cette ligne n’est dans aucune section';
+
+  @override
+  String get mitmSkipRequirementUnreadable =>
+      'La condition requise de cette ligne est illisible';
+
+  @override
+  String get mitmSkipPolicy => 'La stratégie de cette règle ne désigne rien';
+
+  @override
+  String get mitmSkipNestedRuleSet =>
+      'Un ensemble de règles ne peut pas en inclure un autre';
+
+  @override
+  String get mitmSkipCondition => 'Cette condition ne peut pas être vérifiée';
+
+  @override
+  String get mitmSkipRuntimeValue =>
+      'Cette ligne demande une valeur que seule la requête en cours possède';
+
+  @override
+  String get mitmResources => 'Fichiers distants';
+
+  @override
+  String get mitmResourceOk => 'Téléchargé';
+
+  @override
+  String get mitmResourceFetching => 'Téléchargement en cours';
+
+  @override
+  String get mitmResourceMissing => 'Pas encore téléchargé';
+
+  @override
+  String get mitmFetchDns =>
+      'Échec du téléchargement : le nom d’hôte n’a pas pu être résolu';
+
+  @override
+  String get mitmFetchTls =>
+      'Échec du téléchargement : la connexion sécurisée n’a pas pu être établie';
+
+  @override
+  String get mitmFetchTimeout =>
+      'Échec du téléchargement : le serveur a mis trop de temps';
+
+  @override
+  String get mitmFetchConnection =>
+      'Échec du téléchargement : la connexion a été perdue';
+
+  @override
+  String get mitmFetchOther => 'Échec du téléchargement';
+
+  @override
+  String get mitmResourcesFetch => 'Télécharger à nouveau';
+
+  @override
+  String mitmFetchHttp(int status) {
+    return 'Échec du téléchargement : le serveur a répondu $status';
+  }
 
   @override
   String get mitmAddLocalFile => 'Ajouter un fichier local';
@@ -4062,6 +4115,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mitmScriptGeneric => 'Générique';
+
+  @override
+  String get mitmScriptDns => 'DNS';
 
   @override
   String get mitmExcluded => 'Exclu';
@@ -4238,6 +4294,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String coreStoppedWithReason(Object reason) {
     return 'L’application a perdu la connexion au cœur : $reason';
   }
+
+  @override
+  String get coreUnavailableTip =>
+      'Le cœur n’est pas en marche. Réessayez une fois qu’il aura démarré.';
 
   @override
   String mixedPortReset(Object value, Object port) {

@@ -9,6 +9,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -233,6 +234,8 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         ref
             .read(geoResourceActionProvider.notifier)
             .handleCoreUpdate(name, phase, error);
+      case ResourceUpdateEvent(kind: ResourceKind.mitmModule):
+        ref.invalidate(mitmModuleStatusProvider);
       case ResourceUpdateEvent(
         :final name,
         phase: ResourcePhase.updated || ResourcePhase.unchanged,

@@ -362,17 +362,13 @@ void main() {
 
   group('module exits', () {
     const module = MitmModuleSource(
-      content: '''
-[Rule]
-DOMAIN,a.example,Media
-DOMAIN,b.example,PROXY
-RULE-SET,https://example.com/ai.list,AI,no-resolve
-DOMAIN,c.example,REJECT
-''',
+      name: '1',
+      path: 'modules/1.sgmodule',
+      policies: {'Media', 'PROXY', 'AI'},
     );
 
-    List<Object?> moduleRulesOf(YamlMap config) =>
-        (config['rules'] as List).take(4).toList();
+    Map<Object?, Object?> modulePolicyOf(YamlMap config) =>
+        Map.of((config['mitm'] as YamlMap)['module-policy'] as YamlMap);
 
     Future<YamlMap> normal(Map<String, String> exitTargets) async {
       final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
@@ -407,66 +403,29 @@ DOMAIN,c.example,REJECT
 
     test('go to a group of their name, then where MATCH goes', () async {
       final config = await normal(const {});
-      final rules = moduleRulesOf(config);
-      expect(rules.take(2), [
-        'DOMAIN,a.example,Media',
-        'DOMAIN,b.example,Proxy',
-      ]);
-      expect('${rules[2]}', matches(r'^RULE-SET,mitm-\w+,Proxy,no-resolve$'));
-      expect(rules[3], 'DOMAIN,c.example,REJECT');
-      final set = '${rules[2]}'.split(',')[1];
-      expect(
-        (config['rule-providers'] as YamlMap)[set]['url'],
-        'https://example.com/ai.list',
-      );
+      expect(modulePolicyOf(config), {
+        'Media': 'Media',
+        'PROXY': 'Proxy',
+        'AI': 'Proxy',
+      });
+      expect(config['rules'], ['MATCH,Proxy']);
     });
 
     test(
       'go where the profile maps them, and back from a target gone',
       () async {
-        final rules = moduleRulesOf(
-          await normal({'PROXY': 'HK', 'AI': 'DIRECT', 'Media': 'Gone'}),
-        );
-        expect(rules[0], 'DOMAIN,a.example,Media');
-        expect(rules[1], 'DOMAIN,b.example,HK');
-        expect('${rules[2]}', endsWith(',DIRECT,no-resolve'));
+        final config = await normal({
+          'PROXY': 'HK',
+          'AI': 'DIRECT',
+          'Media': 'Gone',
+        });
+        expect(modulePolicyOf(config), {
+          'Media': 'Media',
+          'PROXY': 'HK',
+          'AI': 'DIRECT',
+        });
       },
     );
-
-    test('read an attached rule set where it is, not confined', () async {
-      final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
-        jsonEncode({
-          'rules': ['MATCH,DIRECT'],
-        }),
-      );
-      final real = await makeRealProfileTask(
-        MakeRealProfileState(
-          profilesPath: '/profiles',
-          profileId: 7,
-          rawConfig: rawConfig,
-          realPatchConfig: const PatchClashConfig(mitm: Mitm(enable: true)),
-          appendSystemDns: false,
-          proxyGroups: const [],
-          rules: const [],
-          addedRules: const [],
-          defaultUA: 'FlClash-Test',
-          mitmModules: const [
-            MitmModuleSource(
-              content: '[Rule]\nDOMAIN-SET,reject.conf,REJECT\n',
-              resources: {'reject.conf': 'ab12.conf'},
-            ),
-          ],
-        ),
-      );
-      final config = loadYaml(real.yaml) as YamlMap;
-      final set = '${(config['rules'] as List).first}'.split(',')[1];
-      expect(Map.of((config['rule-providers'] as YamlMap)[set] as YamlMap), {
-        'type': 'file',
-        'behavior': 'domain',
-        'format': 'domain-set',
-        'path': 'mitm/resources/ab12.conf',
-      });
-    });
 
     test('in a custom profile go to its own groups', () async {
       final real = await makeRealProfileTask(
@@ -497,10 +456,11 @@ DOMAIN,c.example,REJECT
           mitmModules: [module],
         ),
       );
-      final rules = moduleRulesOf(loadYaml(real.yaml) as YamlMap);
-      expect(rules[0], 'DOMAIN,a.example,Media');
-      expect(rules[1], 'DOMAIN,b.example,Select');
-      expect('${rules[2]}', endsWith(',Media,no-resolve'));
+      expect(modulePolicyOf(loadYaml(real.yaml) as YamlMap), {
+        'Media': 'Media',
+        'PROXY': 'Select',
+        'AI': 'Media',
+      });
     });
   });
 
@@ -1089,52 +1049,79 @@ DOMAIN,c.example,REJECT
       expect(mitm['ca-fingerprint'], 'AB:CD');
     });
 
-    test('modules join the mitm lists and lead the rules', () async {
-      final config = await runWith(
-        const PatchClashConfig(
-          mitm: Mitm(enable: true, hostname: ['-own.example.com']),
-        ),
-        {
-          'rules': ['MATCH,DIRECT'],
-        },
-        mitmModules: const [
-          MitmModuleSource(
-            content: '''
-#!arguments=Host:module.example.com
-[MITM]
-hostname = %APPEND% {{{Host}}}
-[URL Rewrite]
-^https://module _ reject
-[Rule]
-DOMAIN-SUFFIX,ads.example.com,REJECT
-''',
-            arguments: {'Host': '*.example.com'},
+    test(
+      'modules are handed to the Core with their values and files',
+      () async {
+        final config = await runWith(
+          const PatchClashConfig(
+            mitm: Mitm(enable: true, hostname: ['-own.example.com']),
           ),
-        ],
-      );
-      final mitm = config['mitm'] as YamlMap;
+          {
+            'rules': ['MATCH,DIRECT'],
+          },
+          mitmModules: const [
+            MitmModuleSource(
+              name: '7',
+              path: 'modules/7.sgmodule',
+              arguments: {'Host': '*.example.com'},
+              attachments: {'own.js': 'ab12.js'},
+              adoptResources: {'https://cdn.test/a.js': 'cd34.js'},
+            ),
+            MitmModuleSource(name: '8', path: 'modules/8.plugin'),
+            MitmModuleSource(
+              name: '9',
+              path: 'modules/9.sgmodule',
+              enabled: false,
+            ),
+          ],
+        );
+        final mitm = config['mitm'] as YamlMap;
 
-      expect(mitm['hostname'], ['-own.example.com', '*.example.com']);
-      expect(mitm['url-rewrite'], ['^https://module _ reject']);
-      expect(config['rules'], [
-        'DOMAIN-SUFFIX,ads.example.com,REJECT',
-        'MATCH,DIRECT',
-      ]);
+        expect(mitm['hostname'], ['-own.example.com']);
+        expect(jsonDecode(jsonEncode(mitm['modules'])), [
+          {
+            'name': '7',
+            'path': 'modules/7.sgmodule',
+            'arguments': {'Host': '*.example.com'},
+            'attachments': {'own.js': 'ab12.js'},
+            'adopt-resources': {'https://cdn.test/a.js': 'cd34.js'},
+          },
+          {'name': '8', 'path': 'modules/8.plugin'},
+          {'name': '9', 'path': 'modules/9.sgmodule', 'enabled': false},
+        ]);
+        expect(mitm['module-language'], isA<String>());
+        expect(mitm, isNot(contains('module-policy')));
+        expect(config['rules'], ['MATCH,DIRECT']);
+      },
+    );
+
+    test('the module list goes only while MITM is on, empty or not', () async {
+      final on = await runWith(
+        const PatchClashConfig(mitm: Mitm(enable: true)),
+        const {},
+      );
+      expect((on['mitm'] as YamlMap)['modules'], isEmpty);
+      final off = await runWith(const PatchClashConfig(), const {});
+      expect(off['mitm'] as YamlMap, isNot(contains('modules')));
     });
 
-    test('module network settings go over the profile and the user', () async {
+    test('a module routes the TUN over the profile and the user', () async {
       const module = MitmModuleSource(
-        content: '''
-[General]
-dns-server = 9.9.9.9
-always-real-ip = %APPEND% *.game.test
-tun-excluded-routes = %APPEND% 10.0.0.0/8
-tun-included-routes = 172.16.0.0/12
-
-[Host]
-ad.test = 0.0.0.0
-own.test = 0.0.0.0
-''',
+        name: '1',
+        path: 'modules/1.sgmodule',
+        network: {
+          'nameserver': {
+            'replace': true,
+            'before': ['9.9.9.9'],
+            'after': <String>[],
+          },
+          'routeAddress': ['172.16.0.0/12'],
+          'routeExcludeAddress': {
+            'replace': false,
+            'before': <String>[],
+            'after': ['10.0.0.0/8'],
+          },
+        },
       );
       Future<YamlMap> run(ProfileOverrides overrides) async {
         final result = await makeRealProfileTask(
@@ -1146,7 +1133,6 @@ own.test = 0.0.0.0
                 'dns': {
                   'enable': true,
                   'nameserver': ['1.1.1.1'],
-                  'fake-ip-filter': ['*.lan'],
                 },
                 'tun': {
                   'route-exclude-address': ['192.168.0.0/16'],
@@ -1154,10 +1140,7 @@ own.test = 0.0.0.0
                 'rules': ['MATCH,DIRECT'],
               }),
             ),
-            realPatchConfig: const PatchClashConfig(
-              mitm: Mitm(enable: true),
-              hosts: {'own.test': '127.0.0.1'},
-            ),
+            realPatchConfig: const PatchClashConfig(mitm: Mitm(enable: true)),
             appendSystemDns: false,
             proxyGroups: const [],
             rules: const [],
@@ -1171,10 +1154,7 @@ own.test = 0.0.0.0
       }
 
       final config = await run(const ProfileOverrides());
-      expect(config['dns']['nameserver'], ['9.9.9.9']);
-      expect(config['dns']['fake-ip-filter'], ['*.lan', '*.game.test']);
-      expect(config['hosts']['ad.test'], ['0.0.0.0']);
-      expect(config['hosts']['own.test'], ['0.0.0.0']);
+      expect(config['dns']['nameserver'], ['1.1.1.1']);
       expect(config['tun']['route-exclude-address'], [
         '192.168.0.0/16',
         '10.0.0.0/8',
@@ -1183,13 +1163,10 @@ own.test = 0.0.0.0
 
       final overridden = await run(
         const ProfileOverrides(
-          dns: Dns(nameserver: ['8.8.8.8']),
-          dnsOverrideKeys: {DnsOverrideKey.nameserver},
           tun: ProfileTun(routeExcludeAddress: ['100.64.0.0/10']),
           tunOverrideKeys: {TunOverrideKey.routeExcludeAddress},
         ),
       );
-      expect(overridden['dns']['nameserver'], ['9.9.9.9']);
       expect(overridden['tun']['route-exclude-address'], [
         '100.64.0.0/10',
         '10.0.0.0/8',

@@ -3902,6 +3902,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Las reglas URL-REGEX y USER-AGENT funcionan como reescrituras de URL; en HTTPS, solo para los hosts de la lista.';
 
   @override
+  String mitmExtendedMatchingNote(Object count) {
+    return '$count usan coincidencia extendida';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return 'Escrito para $system; algunas líneas pueden no coincidir con las apps de este dispositivo.';
   }
@@ -3978,10 +3983,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get mitmSkipRule => 'Este tipo de regla no es compatible';
 
   @override
-  String get mitmSkipHttpRulePolicy =>
-      'Las reglas URL-REGEX y USER-AGENT solo admiten una política REJECT';
-
-  @override
   String get mitmSkipFinalRule =>
       'Las reglas del módulo van primero, así que una regla final ocultaría todas las siguientes';
 
@@ -4010,10 +4011,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'FlClash no puede devolver los paquetes a su remitente';
 
   @override
-  String get mitmSkipConditional =>
-      'Las reescrituras condicionales no son compatibles';
-
-  @override
   String get mitmSkipSkipVerifyAll =>
       'No se desactiva la verificación de certificados para todos los hosts';
 
@@ -4022,10 +4019,67 @@ class AppLocalizationsEs extends AppLocalizations {
       'El archivo que nombra esta línea no está adjunto; usa una URL o adjúntalo';
 
   @override
-  String get mitmSkipNotDownloaded => 'Su archivo aún no se ha descargado';
+  String get mitmSkipUnreadable => 'No se puede leer esta línea';
 
   @override
-  String get mitmSkipUnreadable => 'No se puede leer esta línea';
+  String get mitmSkipNoSection =>
+      'Esta línea no está dentro de ninguna sección';
+
+  @override
+  String get mitmSkipRequirementUnreadable =>
+      'No se puede leer el requisito de esta línea';
+
+  @override
+  String get mitmSkipPolicy => 'La política de esta regla no nombra nada';
+
+  @override
+  String get mitmSkipNestedRuleSet =>
+      'Un conjunto de reglas no puede incluir otro';
+
+  @override
+  String get mitmSkipCondition => 'Esta condición no se puede comprobar';
+
+  @override
+  String get mitmSkipRuntimeValue =>
+      'Esta línea necesita un valor que solo tiene la solicitud en curso';
+
+  @override
+  String get mitmResources => 'Archivos remotos';
+
+  @override
+  String get mitmResourceOk => 'Descargado';
+
+  @override
+  String get mitmResourceFetching => 'Descargando';
+
+  @override
+  String get mitmResourceMissing => 'Aún no descargado';
+
+  @override
+  String get mitmFetchDns =>
+      'Error de descarga: no se pudo resolver el nombre del host';
+
+  @override
+  String get mitmFetchTls =>
+      'Error de descarga: no se pudo establecer la conexión segura';
+
+  @override
+  String get mitmFetchTimeout =>
+      'Error de descarga: el servidor tardó demasiado';
+
+  @override
+  String get mitmFetchConnection => 'Error de descarga: se perdió la conexión';
+
+  @override
+  String get mitmFetchOther => 'Error de descarga';
+
+  @override
+  String get mitmResourcesFetch => 'Descargar de nuevo';
+
+  @override
+  String mitmFetchHttp(int status) {
+    return 'Error de descarga: el servidor respondió $status';
+  }
 
   @override
   String get mitmAddLocalFile => 'Añadir un archivo local';
@@ -4062,6 +4116,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get mitmScriptGeneric => 'Genérico';
+
+  @override
+  String get mitmScriptDns => 'DNS';
 
   @override
   String get mitmExcluded => 'Excluido';
@@ -4235,6 +4292,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String coreStoppedWithReason(Object reason) {
     return 'La app perdió la conexión con el núcleo: $reason';
   }
+
+  @override
+  String get coreUnavailableTip =>
+      'El núcleo no está en marcha. Inténtalo de nuevo cuando haya arrancado.';
 
   @override
   String mixedPortReset(Object value, Object port) {

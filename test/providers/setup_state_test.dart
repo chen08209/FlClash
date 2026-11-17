@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/module_reads.dart';
 import '../helpers/test_profiles.dart';
 
 void main() {
@@ -144,5 +145,25 @@ void main() {
     final state = await container.read(setupStateProvider(profile.id).future);
 
     expect(state.proxyDialers, {30: 'Relay'});
+  });
+
+  test('every installed module goes, as off unless it was read', () {
+    final at = DateTime(2026);
+    final on = MitmModule(id: 1, name: 'On', lastUpdateTime: at);
+    final unread = MitmModule(id: 2, name: 'Unread', lastUpdateTime: at);
+    final off = MitmModule(
+      id: 3,
+      name: 'Off',
+      enabled: false,
+      lastUpdateTime: at,
+    );
+    final sources = mitmModuleSourcesOf(
+      [on, unread, off],
+      [(module: on, details: moduleDetails('', moduleRead()))],
+    );
+    expect(
+      [for (final source in sources) (source.name, source.enabled)],
+      [('1', true), ('2', false), ('3', false)],
+    );
   });
 }
