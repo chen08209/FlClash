@@ -3,12 +3,13 @@ import 'dart:math' as math;
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:fl_clash/views/config/mitm_modules.dart' show MitmModulesView;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -743,14 +744,13 @@ class _StatusCard extends ConsumerWidget {
     unawaited(action.installUpdate());
   }
 
-  void _reviewModules(BuildContext context) {
-    final navigator = Navigator.of(context)..pop();
-    unawaited(
-      BaseNavigator.push<void>(
-        navigator.overlay!.context,
-        const MitmModulesView(),
-      ),
-    );
+  Future<void> _reviewModules(BuildContext context, WidgetRef ref) async {
+    for (final module in ref.read(mitmModulesToAgreeProvider)) {
+      if (!context.mounted) {
+        return;
+      }
+      await offerMitmModule(ref, module);
+    }
   }
 
   @override
@@ -767,7 +767,7 @@ class _StatusCard extends ConsumerWidget {
             stopDownload: action.cancelUpdateDownload,
             install: () => _install(context, ref),
             discard: () => unawaited(action.discardUpdate()),
-            reviewModules: () => _reviewModules(context),
+            reviewModules: () => unawaited(_reviewModules(context, ref)),
           )
         : (
             restartCore: _inert,
