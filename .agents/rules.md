@@ -660,15 +660,14 @@ Install the hooks once with `pre-commit install --hook-type pre-commit --hook-ty
 
 ### Fixup Commits
 
-A follow-up to a change that has not shipped in a stable release goes in as `git commit --fixup=<target>`, aimed at the
-commit that introduced what it amends.
+A follow-up lands as a regular commit. Create a `fixup!` commit only when the user asks for one, aimed at the commit
+that introduced what it amends.
 
 - Only stable tags (`vX.Y.Z`) close a commit. A target reached only by pre-release tags (`vX.Y.Z-pre.N`) is still open
-  for fixups, so do not steer away from it or flag it.
-- A commit a stable tag contains takes no fixup; land the follow-up as a regular commit. Check with
+  for fixups. A commit a stable tag contains takes no fixup, even on request; check with
   `git tag --contains <target> | grep -v -- '-pre'`, which must print nothing.
-- Asking for a fixup means creating the `fixup!` commit only. Do not run `git rebase --autosquash` or otherwise fold it
-  into its target unless the user asks for the squash.
+- Asking for a fixup means creating the `fixup!` commit only. Do not run `git rebase --autosquash`, amend, or otherwise
+  fold it into its target unless the user asks for the squash.
 
 ### Changelog Trailers
 
