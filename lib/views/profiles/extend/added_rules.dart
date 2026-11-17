@@ -92,10 +92,6 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
     _profileId = ProfileIdProvider.of(context)!.profileId;
   }
 
-  void _handleToEditGlobalAddedRules() {
-    BaseNavigator.push(context, _EditGlobalAddedRules(_profileId));
-  }
-
   Widget _buildRuleItem(List<Rule> rules, int index, Set<dynamic> selected) {
     final rule = rules[index];
     return ReorderDragStartListener(
@@ -184,14 +180,16 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
                 .read(profileRulesProvider(_profileId).notifier)
                 .order,
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          SliverToBoxAdapter(child: _ExitsSection(_profileId)),
           SliverToBoxAdapter(
-            child: MoreActionButton(
-              label: appLocalizations.controlGlobalAddedRules,
-              onPressed: _handleToEditGlobalAddedRules,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: generateSection(
+                items: [_GlobalAddedRulesItem(_profileId)],
+              ),
             ),
           ),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          SliverToBoxAdapter(child: ExitsSection(_profileId)),
         ],
       ),
     );
@@ -217,10 +215,10 @@ Set<String> _namesOf(ClashConfig config) => {
   for (final item in config.proxies) item.name,
 };
 
-class _ExitsSection extends ConsumerWidget {
+class ExitsSection extends ConsumerWidget {
   final int profileId;
 
-  const _ExitsSection(this.profileId);
+  const ExitsSection(this.profileId, {super.key});
 
   List<String> _watchExits(WidgetRef ref) {
     final own = ref.watch(profileRulesProvider(profileId)).value ?? const [];
@@ -398,6 +396,26 @@ class _ExitsSection extends ConsumerWidget {
   }
 }
 
+class _GlobalAddedRulesItem extends ConsumerWidget {
+  final int profileId;
+
+  const _GlobalAddedRulesItem(this.profileId);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rules = ref.watch(globalRulesProvider).value ?? const <Rule>[];
+    final disabled =
+        ref.watch(profileDisabledRuleIdsProvider(profileId)).value ??
+        const <int>[];
+    final enabled = rules.where((rule) => !disabled.contains(rule.id)).length;
+    return ListItem.open(
+      title: Text(context.appLocalizations.controlGlobalAddedRules),
+      trailing: rules.isEmpty ? null : Text('$enabled/${rules.length}'),
+      widget: _EditGlobalAddedRules(profileId),
+    );
+  }
+}
+
 class _EditGlobalAddedRules extends ConsumerStatefulWidget {
   final int profileId;
 
@@ -447,6 +465,13 @@ class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
     return Scaffold(
       title: appLocalizations.editGlobalRules,
       searchState: AppBarSearchState(onSearch: _handleSearch),
+      iconActions: [
+        IconButtonData(
+          glyph: AppGlyphs.edit,
+          tooltip: appLocalizations.goToConfigureAddedRules,
+          onPressed: _handleToAddedRules,
+        ),
+      ],
       body: NullStatusSwitcher(
         isLoading: rulesState.isLoading || disabledRuleIdsState.isLoading,
         isEmpty: rules.isEmpty,
@@ -488,15 +513,8 @@ class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
                     itemCount: rules.length,
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
                 SliverToBoxAdapter(
-                  child: MoreActionButton(
-                    label: appLocalizations.goToConfigureAddedRules,
-                    onPressed: _handleToAddedRules,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: SizedBox(height: 12 + context.bottomInset),
+                  child: SizedBox(height: 16 + context.bottomInset),
                 ),
               ],
             ),

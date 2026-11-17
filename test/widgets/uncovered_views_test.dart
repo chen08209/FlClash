@@ -674,7 +674,13 @@ void main() {
       );
 
       expect(find.text(l10n.outboundExit), findsOneWidget);
-      expect(find.byType(ListItem<dynamic>), findsNWidgets(2));
+      expect(
+        find.descendant(
+          of: find.byType(ExitsSection),
+          matching: find.byType(ListItem<dynamic>),
+        ),
+        findsNWidgets(2),
+      );
       for (final exit in ['Media', 'AI']) {
         expect(inRow(exit, l10n.exitDefault), findsOneWidget);
         expect(inRow(exit, 'Final'), findsOneWidget);
@@ -874,6 +880,58 @@ void main() {
 
     expect(find.byType(AddedRulesView), findsOneWidget);
     expect(find.text(l10n.editGlobalRules), findsOneWidget);
+    expect(tester.takeException(), null);
+  });
+  testWidgets('the global added rules row counts the ones this profile keeps '
+      'and the page opens their editor from its bar', (tester) async {
+    final profile = Profile.normal();
+    const rules = [
+      Rule(id: 1, ruleAction: RuleAction.DOMAIN, content: 'a.com'),
+      Rule(id: 2, ruleAction: RuleAction.DOMAIN, content: 'b.com'),
+    ];
+    final container = _containerFor(
+      tester,
+      profiles: [profile],
+      overrides: [
+        currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+        profileRulesProvider.overrideWith2(
+          (_) => _TestProfileAddedRules(const []),
+        ),
+        globalRulesProvider.overrideWith(() => _TestGlobalRules(rules)),
+        profileDisabledRuleIdsProvider.overrideWith2(
+          (_) => _TestProfileDisabledRuleIds(const [2]),
+        ),
+        clashConfigProvider(
+          profile.id,
+        ).overrideWithValue(const AsyncData(ClashConfig())),
+      ],
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: TestApp(
+          child: ProfileIdProvider(
+            profileId: profile.id,
+            child: const HostScaffold(
+              body: CustomScrollView(slivers: [AddedRulesContent()]),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final l10n = currentAppLocalizations;
+
+    expect(find.text('1/2'), findsOneWidget);
+    await tester.tap(find.text(l10n.controlGlobalAddedRules));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.editGlobalRules), findsOneWidget);
+    expect(find.text(l10n.goToConfigureAddedRules), findsNothing);
+    await tester.tap(find.byTooltip(l10n.goToConfigureAddedRules));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AddedRulesView), findsOneWidget);
     expect(tester.takeException(), null);
   });
 }

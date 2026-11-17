@@ -81,40 +81,25 @@ void main() {
     expect(find.text(currentAppLocalizations.none), findsOneWidget);
     expect(find.text('alpha'), findsNothing);
     expect(
-      find.text(currentAppLocalizations.goToConfigureScript),
+      find.byTooltip(currentAppLocalizations.goToConfigureScript),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the configure entry opens the scripts in a sheet over it', (
+  testWidgets('the header action opens the scripts in a sheet over it', (
     tester,
   ) async {
     container = buildContainer(scripts: [_script(10, 'alpha')]);
 
     await pumpScriptContent(tester);
-    await tester.tap(find.text(currentAppLocalizations.goToConfigureScript));
+    await tester.tap(
+      find.byTooltip(currentAppLocalizations.goToConfigureScript),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(ScriptsView), findsOneWidget);
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('leaves a gap above its configure entry', (tester) async {
-    container = buildContainer(scripts: [_script(10, 'alpha')]);
-
-    await pumpScriptContent(tester);
-
-    final rowBottom = tester.getBottomLeft(find.byType(ListItem<int?>)).dy;
-    final entryTop = tester
-        .getTopLeft(
-          find.descendant(
-            of: find.byType(MoreActionButton),
-            matching: find.byType(Card),
-          ),
-        )
-        .dy;
-    expect(entryTop - rowBottom, 20);
   });
 
   testWidgets('offers only no script when none exists', (tester) async {
