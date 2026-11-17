@@ -3429,6 +3429,15 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get httpRequestsReadFailed => 'Не удалось прочитать запросы';
+
+  @override
+  String get requestBodyReadFailed => 'Не удалось прочитать тело запроса';
+
+  @override
+  String get responseBodyReadFailed => 'Не удалось прочитать тело ответа';
+
+  @override
   String mitmGrpcOverLimit(Object size) {
     return 'После распаковки больше $size МБ; показаны сжатые данные';
   }

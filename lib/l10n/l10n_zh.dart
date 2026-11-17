@@ -3234,6 +3234,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get httpRequestsReadFailed => '无法读取请求';
+
+  @override
+  String get requestBodyReadFailed => '无法读取请求体';
+
+  @override
+  String get responseBodyReadFailed => '无法读取响应体';
+
+  @override
   String mitmGrpcOverLimit(Object size) {
     return '解压后超过 $size MB，显示压缩数据';
   }

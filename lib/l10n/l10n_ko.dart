@@ -3349,6 +3349,15 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get httpRequestsReadFailed => '요청을 읽을 수 없습니다';
+
+  @override
+  String get requestBodyReadFailed => '요청 본문을 읽을 수 없습니다';
+
+  @override
+  String get responseBodyReadFailed => '응답 본문을 읽을 수 없습니다';
+
+  @override
   String mitmGrpcOverLimit(Object size) {
     return '압축을 풀면 $size MB를 넘어 압축된 데이터를 표시합니다';
   }

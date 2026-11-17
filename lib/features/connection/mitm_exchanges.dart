@@ -4,7 +4,9 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/mitm.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -62,6 +64,12 @@ String _phaseLabel(AppLocalizations appLocalizations, String phase) {
   };
 }
 
+Future<void> _copyError(BuildContext context, String text) async {
+  await Clipboard.setData(ClipboardData(text: text));
+  if (!context.mounted) return;
+  dialogs.showBanner(context.appLocalizations.copySuccess);
+}
+
 /// The requests captured on a decrypted connection.
 class MitmExchangesView extends ConsumerWidget {
   final TrackerInfo trackerInfo;
@@ -75,11 +83,14 @@ class MitmExchangesView extends ConsumerWidget {
       mitmExchangesProvider(trackerInfo.id).select(
         (value) => (
           value.value,
-          value.isLoading && !value.hasValue && !value.hasError,
-          value.hasValue ? null : value.error,
+          !value.hasValue && (value.isLoading || value.retrying),
+          value.hasValue || value.retrying ? null : value.error,
         ),
       ),
     );
+    final errorText = error == null
+        ? null
+        : userFacingErrorMessage(error, appLocalizations);
     final exchanges = list?.exchanges ?? const <MitmExchangeSummary>[];
     final since = list?.since;
     final missing = since != null && trackerInfo.start.isBefore(since);
@@ -87,13 +98,22 @@ class MitmExchangesView extends ConsumerWidget {
       isLoading: loading,
       isEmpty: exchanges.isEmpty,
       nullStatus: NullStatus(
-        label: error != null
-            ? userFacingErrorMessage(error, appLocalizations)
+        label: errorText != null
+            ? appLocalizations.httpRequestsReadFailed
             : list?.capturing == false
             ? appLocalizations.httpCaptureOff
             : missing
             ? appLocalizations.httpRequestsMissing
             : appLocalizations.nullTip(appLocalizations.httpRequests),
+        description: errorText,
+        action: errorText == null
+            ? null
+            : TonalButton(
+                size: TonalButtonSize.bar,
+                glyph: AppGlyphs.copy,
+                label: appLocalizations.copy,
+                onPressed: () => _copyError(context, errorText),
+              ),
         illustration: NullStatusIllustration.requests,
       ),
       child: CustomScrollView(
@@ -321,11 +341,13 @@ class _MitmSideView extends ConsumerWidget {
     final content = body?.value;
     final kept =
         content != null && (content.bytes.isNotEmpty || content.truncated);
-    final bodyError = body != null && !body.hasValue ? body.error : null;
+    final bodyError = body != null && !body.hasValue && !body.retrying
+        ? body.error
+        : null;
     final names = header.keys.toList()..sort();
     return NullStatusSwitcher(
       isLoading:
-          body != null && body.isLoading && !body.hasValue && bodyError == null,
+          body != null && !body.hasValue && (body.isLoading || body.retrying),
       isEmpty: header.isEmpty && !sending && !kept && bodyError == null,
       nullStatus: NullStatus(
         label: exchange.pending
@@ -358,10 +380,11 @@ class _MitmSideView extends ConsumerWidget {
             generateSection(
               title: bodyTitle,
               items: [
-                ListItem(
-                  title: Text(
-                    userFacingErrorMessage(bodyError, appLocalizations),
-                  ),
+                DetailRow.text(
+                  title: response
+                      ? appLocalizations.responseBodyReadFailed
+                      : appLocalizations.requestBodyReadFailed,
+                  value: userFacingErrorMessage(bodyError, appLocalizations),
                 ),
               ],
             ),

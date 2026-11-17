@@ -3471,6 +3471,17 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get httpRequestsReadFailed => 'Impossible de lire les requêtes';
+
+  @override
+  String get requestBodyReadFailed =>
+      'Impossible de lire le corps de la requête';
+
+  @override
+  String get responseBodyReadFailed =>
+      'Impossible de lire le corps de la réponse';
+
+  @override
   String mitmGrpcOverLimit(Object size) {
     return 'Dépasse $size Mo une fois décompressé ; affiché compressé';
   }

@@ -3276,6 +3276,15 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get httpRequestsReadFailed => 'リクエストを読み取れません';
+
+  @override
+  String get requestBodyReadFailed => 'リクエストボディを読み取れません';
+
+  @override
+  String get responseBodyReadFailed => 'レスポンスボディを読み取れません';
+
+  @override
   String mitmGrpcOverLimit(Object size) {
     return '展開すると $size MB を超えるため、圧縮データを表示しています';
   }

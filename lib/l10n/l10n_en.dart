@@ -3435,6 +3435,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get httpRequestsReadFailed => 'Couldn\'t read the requests';
+
+  @override
+  String get requestBodyReadFailed => 'Couldn\'t read the request body';
+
+  @override
+  String get responseBodyReadFailed => 'Couldn\'t read the response body';
+
+  @override
   String mitmGrpcOverLimit(Object size) {
     return 'Inflates past $size MB; shown compressed';
   }

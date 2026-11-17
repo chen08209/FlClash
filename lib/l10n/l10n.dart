@@ -6096,6 +6096,24 @@ abstract class AppLocalizations {
   /// **'Not yet in: {stores}'**
   String mitmMissingStores(Object stores);
 
+  /// No description provided for @httpRequestsReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the requests'**
+  String get httpRequestsReadFailed;
+
+  /// No description provided for @requestBodyReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the request body'**
+  String get requestBodyReadFailed;
+
+  /// No description provided for @responseBodyReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the response body'**
+  String get responseBodyReadFailed;
+
   /// No description provided for @mitmGrpcOverLimit.
   ///
   /// In en, this message translates to:
