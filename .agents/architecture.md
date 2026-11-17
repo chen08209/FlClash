@@ -519,7 +519,7 @@ force or is being asked again. The mechanism has three parts.
   come in bursts: a network switch reports more than once, and a launch applies the config and starts the
   listeners back to back. A new route version keeps every answer on show and sends their hits to `checkRoutes` in
   one call, at once for the first move and, for the moves that follow within `probeSettleDuration`, together when
-  it ends, so groups re-picking on neighbouring pick polls cost one check more; only an answer whose exit moved is
+  it ends, so groups re-picking moments apart cost one check more; only an answer whose exit moved is
   dropped and asked again, and one that held takes the checked version. An answer that lands under an older version
   than the state is held back as checking until its own check returns, so it never shows and then flips. An ask
   that is not the user's or a reset's waits out `probeThrottleDuration` since the target's last probe, so a config
