@@ -29,16 +29,18 @@ class RuleItem extends StatelessWidget {
   final bool isSelected;
   final bool isEditing;
   final Rule rule;
-  final void Function() onSelected;
-  final void Function(Rule rule) onEdit;
+
+  /// Without it the row has no selection checkbox.
+  final void Function()? onSelected;
+  final void Function(Rule rule)? onEdit;
   final String? Function(Rule rule)? invalidMessageOf;
 
   const RuleItem({
     super.key,
-    required this.isSelected,
+    this.isSelected = false,
     required this.rule,
-    required this.onSelected,
-    required this.onEdit,
+    this.onSelected,
+    this.onEdit,
     this.invalidMessageOf,
     this.isEditing = false,
   });
@@ -106,6 +108,67 @@ class RuleItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final checkResult = _checkInvalid(context);
     final invalid = checkResult.invalid;
+    final title = Center(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final labelStyle = DefaultTextStyle.of(context).style.toJetBrainsMono;
+          final actionWidth = globalState.measure
+              .computeTextSize(Text(rule.ruleAction.name, style: labelStyle))
+              .width;
+          final maxWidth = constraints.maxWidth;
+          final targetMaxWidth = (maxWidth - _labelTargetGap - actionWidth)
+              .clamp(
+                maxWidth * _targetMinWidthFactor,
+                maxWidth * _targetMaxWidthFactor,
+              );
+          return Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: _RuleItemLabel(rule: rule, style: labelStyle),
+              ),
+              const SizedBox(width: _labelTargetGap),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: targetMaxWidth),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (invalid) _buildInfoWidget(context, checkResult.message),
+                    if (rule.realTarget != null)
+                      Flexible(
+                        child: TooltipText(
+                          text: Text(
+                            rule.realTarget!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyle.subheadline
+                                .of(context)
+                                .toJetBrainsMono
+                                .copyWith(color: checkResult.color),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    final onSelected = this.onSelected;
+    final onEdit = this.onEdit;
+    if (onSelected == null) {
+      return DecorationListItem(
+        minVerticalPadding: 0,
+        horizontalTitleGap: 0,
+        invalid: invalid,
+        title: title,
+        onPressed: onEdit == null ? null : () => onEdit(rule),
+      );
+    }
     return SelectedDecorationListItem(
       minVerticalPadding: 0,
       isSelected: isSelected,
@@ -115,61 +178,9 @@ class RuleItem extends StatelessWidget {
       onSelected: () {
         onSelected();
       },
-      title: Center(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final labelStyle = DefaultTextStyle.of(
-              context,
-            ).style.toJetBrainsMono;
-            final actionWidth = globalState.measure
-                .computeTextSize(Text(rule.ruleAction.name, style: labelStyle))
-                .width;
-            final maxWidth = constraints.maxWidth;
-            final targetMaxWidth = (maxWidth - _labelTargetGap - actionWidth)
-                .clamp(
-                  maxWidth * _targetMinWidthFactor,
-                  maxWidth * _targetMaxWidthFactor,
-                );
-            return Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: _RuleItemLabel(rule: rule, style: labelStyle),
-                ),
-                const SizedBox(width: _labelTargetGap),
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: targetMaxWidth),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (invalid)
-                        _buildInfoWidget(context, checkResult.message),
-                      if (rule.realTarget != null)
-                        Flexible(
-                          child: TooltipText(
-                            text: Text(
-                              rule.realTarget!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTextStyle.subheadline
-                                  .of(context)
-                                  .toJetBrainsMono
-                                  .copyWith(color: checkResult.color),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+      title: title,
       onPressed: () {
-        onEdit(rule);
+        onEdit?.call(rule);
       },
     );
   }

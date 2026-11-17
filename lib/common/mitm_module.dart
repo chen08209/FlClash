@@ -1,8 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart';
+import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/loon_rewrite.dart';
+import 'package:fl_clash/common/mitm_network.dart';
+import 'package:fl_clash/common/mitm_requirement.dart';
 import 'package:fl_clash/common/string.dart';
 import 'package:fl_clash/common/yaml.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -43,11 +48,18 @@ enum MitmModuleSkipReason {
   event,
   disabled,
   rule,
-  policy,
-  jq,
-  jsonBody,
-  rawHeader,
+  httpRulePolicy,
+  finalRule,
+  deviceRule,
+  requirement,
+  managedCa,
+  proxies,
+  appOnly,
+  reflect,
   conditional,
+
+  /// `skip-server-cert-verify` with a hostname entry that covers every host.
+  skipVerifyAll,
   relativeData,
   notDownloaded,
   unreadable,
@@ -77,11 +89,22 @@ class MitmModuleContent {
     this.headerRewrite = const [],
     this.bodyRewrite = const [],
     this.mapLocal = const [],
+    this.requestBodyMock = const [],
+    this.clientSourceAddress = const [],
+    this.skipVerifyHostname = const [],
     this.script = const [],
     this.declaredScriptLines = const [],
     this.rules = const [],
     this.resourceUrls = const {},
+    this.inlineResources = const {},
     this.skipped = const [],
+    this.requestRules = 0,
+    this.h2 = false,
+    this.requirement,
+    this.requirementMet,
+    this.ruleProviders = const {},
+    this.exits = const {},
+    this.network = const MitmNetwork(),
   });
 
   final String? name;
@@ -97,6 +120,10 @@ class MitmModuleContent {
   final List<String> headerRewrite;
   final List<String> bodyRewrite;
   final List<String> mapLocal;
+  final List<String> requestBodyMock;
+  final List<String> clientSourceAddress;
+
+  final List<String> skipVerifyHostname;
   final List<String> script;
 
   /// The scripts it declares that FlClash runs, whatever its arguments leave
@@ -104,11 +131,39 @@ class MitmModuleContent {
   final List<String> declaredScriptLines;
   int get declaredScripts => declaredScriptLines.length;
   final List<String> rules;
+
+  /// The rule sets its rules name, under names no profile uses.
+  final Map<String, Map<String, Object?>> ruleProviders;
+
+  final Set<String> exits;
+  final MitmNetwork network;
   final Set<String> resourceUrls;
+
+  /// What the module writes out itself, by the key [resources] names it with.
+  final Map<String, String> inlineResources;
   final List<MitmModuleSkip> skipped;
 
+  final int requestRules;
+  final bool h2;
+  final String? requirement;
+
+  /// Null when [requirement] cannot be read.
+  final bool? requirementMet;
+
+  /// Whether turning it on changes what the user set for traffic it does not
+  /// itself rewrite, which they confirm first.
+  bool get asksConsent =>
+      !network.isEmpty ||
+      skipVerifyHostname.isNotEmpty ||
+      clientSourceAddress.isNotEmpty;
+
   bool get isEmpty =>
-      lines.isEmpty && rules.isEmpty && resourceUrls.isEmpty && skipped.isEmpty;
+      lines.isEmpty &&
+      rules.isEmpty &&
+      resourceUrls.isEmpty &&
+      inlineResources.isEmpty &&
+      skipped.isEmpty &&
+      network.isEmpty;
 
   MitmRules get mitm => MitmRules(
     hostname: [...insertedHostname, ...hostname],
@@ -116,7 +171,11 @@ class MitmModuleContent {
     headerRewrite: headerRewrite,
     bodyRewrite: bodyRewrite,
     mapLocal: mapLocal,
+    requestBodyMock: requestBodyMock,
+    clientSourceAddress: clientSourceAddress,
+    skipVerifyHostname: skipVerifyHostname,
     script: script,
+    h2: h2,
   );
 
   List<String> get lines => [
@@ -126,10 +185,14 @@ class MitmModuleContent {
 
 /// The user's own hostnames come first, so an exclusion they wrote holds
 /// against any module.
-({MitmRules mitm, List<String> rules}) mergeMitmModules(
-  List<String> hostname,
-  Iterable<MitmModuleContent> modules,
-) {
+({
+  MitmRules mitm,
+  List<String> rules,
+  Map<String, Map<String, Object?>> ruleProviders,
+  Set<String> exits,
+  MitmNetwork network,
+})
+mergeMitmModules(List<String> hostname, Iterable<MitmModuleContent> modules) {
   final contents = modules.toList();
   List<String> all(List<String> Function(MitmModuleContent) of) => [
     for (final module in contents) ...of(module),
@@ -145,17 +208,50 @@ class MitmModuleContent {
       headerRewrite: all((module) => module.headerRewrite),
       bodyRewrite: all((module) => module.bodyRewrite),
       mapLocal: all((module) => module.mapLocal),
+      requestBodyMock: all((module) => module.requestBodyMock),
+      clientSourceAddress: all((module) => module.clientSourceAddress),
+      skipVerifyHostname: all((module) => module.skipVerifyHostname),
       script: all((module) => module.script),
+      h2: contents.any((module) => module.h2),
     ),
     rules: all((module) => module.rules),
+    ruleProviders: _mergeRuleProviders(contents),
+    exits: {for (final module in contents) ...module.exits},
+    network: MitmNetwork.merge(contents.map((module) => module.network)),
   );
+}
+
+/// Inline sets of one name add up, as Surge merges a module's `[Ruleset]`
+/// lines into the set of that name.
+Map<String, Map<String, Object?>> _mergeRuleProviders(
+  List<MitmModuleContent> modules,
+) {
+  final merged = <String, Map<String, Object?>>{};
+  for (final module in modules) {
+    for (final MapEntry(:key, :value) in module.ruleProviders.entries) {
+      final previous = merged[key];
+      merged[key] = previous != null && value['type'] == 'inline'
+          ? {
+              ...value,
+              'payload': {
+                ...previous['payload']! as List,
+                ...value['payload']! as List,
+              }.toList(),
+            }
+          : {...value};
+    }
+  }
+  return merged;
 }
 
 Map<String, String> mitmAttachments(MitmModule module) => {
   if (!module.isRemote)
     for (final MapEntry(:key, :value) in module.resources.entries)
-      if (!isMitmResourceUrl(key)) key: value,
+      if (!isMitmResourceUrl(key) && !key.startsWith(_inlineResource))
+        key: value,
 };
+
+const _inlineResource = 'inline:';
 
 /// Named by content, so a resource that changes changes the line naming it
 /// and the Core reads it again.
@@ -306,27 +402,30 @@ MitmModuleContent parseMitmModule(
   String text, {
   Map<String, String> values = const {},
   Map<String, String> resources = const {},
+  MitmRequirementEnvironment? environment,
 }) {
-  final parser = _ModuleParser(values: values, resources: resources);
+  final parser = _ModuleParser(
+    values: values,
+    resources: resources,
+    environment: environment ?? MitmRequirementEnvironment.current(),
+  );
   final override = _stashOverride(text);
   return override == null
       ? parser.parse(text)
       : parser.parseStash(override, text);
 }
 
-/// What consent to a module's scripts covers; a line run names its content's hash.
-Set<String> mitmScriptScope(
-  String text, {
-  Map<String, String> values = const {},
-  Map<String, String> resources = const {},
-}) {
-  final content = parseMitmModule(text, values: values, resources: resources);
-  return {...content.declaredScriptLines, ...content.script};
-}
-
 /// Keys at the top of a Stash override that a Surge module or a Quantumult X
 /// snippet read as YAML never has.
-const _stashKeys = {'http', 'script-providers', 'cron', 'rules', 'tiles'};
+const _stashKeys = {
+  'http',
+  'script-providers',
+  'cron',
+  'rules',
+  'tiles',
+  'dns',
+  'hosts',
+};
 
 const _stashScriptTypes = {
   'request': 'http-request',
@@ -372,6 +471,14 @@ final _sectionPattern = RegExp(r'^\[([^\]]+)\]$');
 final _conditionalPattern = RegExp(r'^(request|response)\s+if\s');
 final _loonScriptCall = RegExp(r'\bthen\s+script\s*\(');
 
+/// Loon's `cron|network-changed|generic then script(path[, argument])
+/// [with options]`; a request or response one names a condition.
+final _loonTriggeredScript = RegExp(
+  r'^(?:cron\s+("[^"]*"|.+?)|(network-changed|generic))\s+then\s+script\(\s*'
+  r'("[^"]*"|[^,\s)]+)\s*(?:,\s*(\{.*\}|"(?:[^"\\]|\\.)*"|[^)]*?))?\s*\)'
+  r'\s*(?:with\s+(.*))?$',
+);
+
 /// A Loon cron expression an argument fills in, so without its quotes: every
 /// word before the first `key=value`.
 final _unquotedCron = RegExp(r'^[^"\s=]+(?:\s+[^"\s=]+)+(?=\s+[\w-]+\s*=)');
@@ -402,6 +509,9 @@ const _scriptEvents = {'network-changed', 'engine-started', 'profile-reloaded'};
 const _scriptValueKeys = ['pattern', 'cronexp', 'event-name'];
 
 const _qxFilterTypes = {
+  'user-agent': 'USER-AGENT',
+  'geoip': 'GEOIP',
+  'ip-asn': 'IP-ASN',
   'host': 'DOMAIN',
   'host-suffix': 'DOMAIN-SUFFIX',
   'host-keyword': 'DOMAIN-KEYWORD',
@@ -412,6 +522,9 @@ const _qxFilterTypes = {
 
 final _qxFilterPattern = RegExp(
   r'^(host|host-suffix|host-keyword|host-wildcard|ip-cidr|ip6-cidr|user-agent|geoip|ip-asn|final)\s*,',
+);
+final _qxMitmPattern = RegExp(
+  r'^(skip_dst_ip|skip_src_ip|skip_validating_cert|passphrase|p12)\s*=',
 );
 final _qxRewritePattern = RegExp(r'^\S+\s+url\s+\S|\surl-and-header\s');
 
@@ -429,6 +542,12 @@ const _qxScripts = {
 /// Quantumult X gives its tasks no timeout; Script-Hub converts them with this
 /// one, which modules written for both platforms expect.
 const _qxTaskTimeout = '120';
+
+/// Loon's default for a script a request or response runs.
+const _loonHttpScriptTimeout = '20';
+
+/// Loon's default for a script no request triggers.
+const _loonTriggeredTimeout = '300';
 
 final _cronField = RegExp(r'^[\d*?/,\-A-Za-z#]+$');
 
@@ -460,6 +579,7 @@ const _stashHttpLists = {
   'body-rewrite',
   'mock',
   'script',
+  'force-http-engine',
 };
 
 final _stashReference = RegExp(r'(\$?)\$\{args\.(\w+)(\|json)?\}');
@@ -485,6 +605,7 @@ const _rejectActions = {
   'REJECT-DICT': 'reject-dict',
   'REJECT-ARRAY': 'reject-array',
   'REJECT-200': 'reject-200',
+  'REJECT-VIDEO': 'reject-200',
 };
 
 final _rejectRewrites = {..._rejectActions.values};
@@ -503,19 +624,187 @@ const _ruleTypes = {
   'SRC-PORT': 'SRC-PORT',
   'IN-PORT': 'IN-PORT',
   'PROCESS-NAME': 'PROCESS-NAME',
+  'PROCESS-PATH': 'PROCESS-PATH',
+  'GEOIP': 'GEOIP',
+  'IP-ASN': 'IP-ASN',
+  'GEOSITE': 'GEOSITE',
+  'DOMAIN-REGEX': 'DOMAIN-REGEX',
+  'NETWORK': 'NETWORK',
 };
 
-const _loonContentTypes = {
-  'text': 'text/plain; charset=utf-8',
-  'json': 'application/json',
-  'html': 'text/html; charset=utf-8',
-  'javascript': 'application/javascript',
-  'css': 'text/css',
-  'xml': 'application/xml',
-  'png': 'image/png',
-  'jpg': 'image/jpeg',
-  'gif': 'image/gif',
+/// Options a rule may carry after its policy, which say nothing of what it
+/// matches; Loon leaves the policy out for DIRECT.
+const _ruleOptions = {'no-resolve', 'extended-matching', 'pre-matching'};
+
+/// Rules on what only an Apple device knows of its network or itself.
+const _deviceRules = {
+  'CELLULAR-RADIO',
+  'CELLULAR-CARRIER',
+  'SUBNET',
+  'DEVICE-NAME',
+  'MAC-ADDRESS',
+  'HOSTNAME-TYPE',
 };
+
+const _proxySections = {'proxy', 'proxy group', 'proxy-groups', 'proxies'};
+
+/// Sections for features of the app the module was written for that FlClash
+/// has nothing like.
+final _appOnlySection = RegExp(
+  r'^(panel|ponte|dhcp|ssid setting|mtproto|snell server|replica|tiles|'
+  r'(wireguard|tailscale) .+)$',
+);
+
+/// Surge's internal rule sets as `rules/ruleset.md` lists them.
+const _builtInRuleSets = {
+  'LAN': [
+    'DOMAIN-SUFFIX,local',
+    'IP-CIDR,0.0.0.0/8',
+    'IP-CIDR,10.0.0.0/8',
+    'IP-CIDR,100.64.0.0/10',
+    'IP-CIDR,127.0.0.0/8',
+    'IP-CIDR,169.254.0.0/16',
+    'IP-CIDR,172.16.0.0/12',
+    'IP-CIDR,192.0.0.0/24',
+    'IP-CIDR,192.0.2.0/24',
+    'IP-CIDR,192.168.0.0/16',
+    'IP-CIDR,224.0.0.0/4',
+    'IP-CIDR6,::1/128',
+    'IP-CIDR6,fc00::/7',
+    'IP-CIDR6,fe80::/10',
+  ],
+  'SYSTEM': [
+    'DOMAIN,api.smoot.apple.com',
+    'DOMAIN,captive.apple.com',
+    'DOMAIN,xp.apple.com',
+    'DOMAIN,configuration.apple.com',
+    'DOMAIN,guzzoni.apple.com',
+    'DOMAIN,smp-device-content.apple.com',
+    'DOMAIN,aod.itunes.apple.com',
+    'DOMAIN,mesu.apple.com',
+    'DOMAIN,api.smoot.apple.cn',
+    'DOMAIN,gs-loc.apple.com',
+    'DOMAIN,mvod.itunes.apple.com',
+    'DOMAIN,streamingaudio.itunes.apple.com',
+    'DOMAIN-SUFFIX,ess.apple.com',
+    'DOMAIN-SUFFIX,push-apple.com.akadns.net',
+    'DOMAIN-SUFFIX,push.apple.com',
+    'DOMAIN-SUFFIX,lcdn-locator.apple.com',
+    'DOMAIN-SUFFIX,lcdn-registration.apple.com',
+    'DOMAIN-SUFFIX,ls.apple.com',
+    'PROCESS-NAME,trustd',
+    'PROCESS-NAME,netbiosd',
+  ],
+};
+
+/// Surge re-downloads a rule set daily unless the line says otherwise.
+const _ruleSetInterval = 86400;
+
+String _inlineSetName(String name) => _ruleSetName('ruleset:$name');
+
+/// A list a module writes without a mark takes its format's default.
+enum _ListMark { plain, replace, insert, append }
+
+const _plainDnsKey = 'dns-server';
+const _encryptedDnsKey = 'encrypted-dns-server';
+
+const _loonSections = {'rewrite', 'argument', 'remote rule', 'plugin'};
+const _loonGeneralKeys = {
+  'doh-server',
+  'doh3-server',
+  'doq-server',
+  'bypass-tun',
+  'include-tun',
+  'real-ip',
+};
+
+final _hostPattern = RegExp(r'^[A-Za-z0-9*+._-]+$');
+
+String? _builtInTarget(String policy) => switch (policy.toUpperCase()) {
+  'DIRECT' => 'DIRECT',
+  'REJECT-DROP' => 'REJECT-DROP',
+  final upper when _rejectActions.containsKey(upper) => 'REJECT',
+  _ => null,
+};
+
+List<String> mitmRulesWithExits(
+  List<String> rules,
+  Set<String> exits,
+  String Function(String exit) target,
+) => [
+  for (final rule in rules)
+    if (rule.split(',') case final parts
+        when exits.contains(parts[_targetIndex(parts)]))
+      (parts..[_targetIndex(parts)] = target(parts[_targetIndex(parts)])).join(
+        ',',
+      )
+    else
+      rule,
+];
+
+int _targetIndex(List<String> parts) =>
+    parts.last == 'no-resolve' ? parts.length - 2 : parts.length - 1;
+
+String _ruleSetName(String key) =>
+    'mitm-${sha1.convert(utf8.encode(key)).toString().substring(0, 12)}';
+
+final _portComparison = RegExp(r'^(>=|=>|<=|=<|>|<)\s*(\d{1,5})$');
+
+/// `>=443` and the like as the range of ports they cover.
+String? _portRange(String value) {
+  final match = _portComparison.firstMatch(value.trim());
+  final port = int.tryParse(match?.group(2) ?? '');
+  if (match == null || port == null || port > 65535) {
+    return null;
+  }
+  final (low, high) = switch (match.group(1)!) {
+    '>=' || '=>' => (port, 65535),
+    '>' => (port + 1, 65535),
+    '<=' || '=<' => (0, port),
+    _ => (0, port - 1),
+  };
+  return low > high ? null : '$low-$high';
+}
+
+final _leadingRequirement = RegExp(r'^#!REQUIREMENT\s+("[^"]*"|\S+)\s+(.*)$');
+final _trailingRequirement = RegExp(
+  r'\s+(?:#|//)!(?:REQUIREMENT\s+("[^"]*"|\S+)|(IOS|MACOS|TVOS)-ONLY)\s*$',
+);
+
+/// A line with its Surge line requirement taken off, and the requirement.
+({String line, String? requirement}) _lineRequirement(String line) {
+  if (_leadingRequirement.firstMatch(line) case final match?) {
+    return (
+      line: match.group(2)!.trim(),
+      requirement: _unquote(match.group(1)!),
+    );
+  }
+  if (_trailingRequirement.firstMatch(line) case final match?) {
+    final system = switch (match.group(2)) {
+      'IOS' => 'iOS',
+      'MACOS' => 'macOS',
+      'TVOS' => 'tvOS',
+      _ => null,
+    };
+    return (
+      line: line.substring(0, match.start).trim(),
+      requirement: system == null
+          ? _unquote(match.group(1)!)
+          : "SYSTEM=='$system'",
+    );
+  }
+  return (line: line, requirement: null);
+}
+
+/// Surge's USER-AGENT wildcard, `*` and `?` within the header's value, as a
+/// pattern over the request head the Core matches `url-and-header` against.
+String _userAgentHead(String wildcard) {
+  final value = wildcard
+      .replaceAllMapped(RegExp(r'[.+^${}()|[\]\\]'), (match) => '\\${match[0]}')
+      .replaceAll('*', r'[^\r\n]*')
+      .replaceAll('?', r'[^\r\n]');
+  return '\\r\\nUser-Agent: $value\\r\\n';
+}
 
 bool _isComment(String line) =>
     line.startsWith('#') || line.startsWith(';') || line.startsWith('//');
@@ -784,10 +1073,15 @@ bool _validPorts(String text) {
 }
 
 class _ModuleParser {
-  _ModuleParser({required this.values, required this.resources});
+  _ModuleParser({
+    required this.values,
+    required this.resources,
+    required this.environment,
+  });
 
   final Map<String, String> values;
   final Map<String, String> resources;
+  final MitmRequirementEnvironment environment;
 
   final _meta = <String, String>{};
   final _surgeArguments = <MitmModuleArgument>[];
@@ -799,11 +1093,28 @@ class _ModuleParser {
   final _headerRewrite = <String>[];
   final _bodyRewrite = <String>[];
   final _mapLocal = <String>[];
+  final _requestBodyMock = <String>[];
+  final _clientSourceAddress = <String>[];
+  (String, String)? _skipVerify;
   final _script = <String>[];
   final _declaredScriptLines = <String>[];
   final _rules = <String>[];
   final _resourceUrls = <String>{};
+  final _inlineResources = <String, String>{};
   final _skipped = <MitmModuleSkip>[];
+  var _requestRules = 0;
+  var _h2 = false;
+  final _ruleProviders = <String, Map<String, Object?>>{};
+  final _rulesetNames = <String>{};
+  final _rulesets = <String, List<String>>{};
+  final _stashProviderNames = <String, String>{};
+  final _exits = <String>{};
+  final _sections = <String>{};
+  final _generalKeys = <String>{};
+  final _listEdits = <String, List<(_ListMark, List<String>)>>{};
+  final _nameserverPolicy = <String, List<String>>{};
+  final _hosts = <String, List<String>>{};
+  final _routeAddress = <String>[];
 
   MitmModuleContent parse(String text) {
     final lines = text.split(RegExp(r'\r\n|\r|\n'));
@@ -816,25 +1127,32 @@ class _ModuleParser {
         section = header.group(1)!.trim();
         continue;
       }
-      if (trimmed.isEmpty || _isComment(trimmed)) {
+      final (line: unconditional, :requirement) = _lineRequirement(trimmed);
+      if (unconditional.isEmpty || _isComment(unconditional)) {
+        continue;
+      }
+      if (requirement != null &&
+          evaluateMitmRequirement(requirement, environment) != true) {
+        _skip(section ?? '', trimmed, MitmModuleSkipReason.requirement);
         continue;
       }
       if (section == null) {
-        _readQuantumultX(trimmed);
+        _readQuantumultX(unconditional);
         continue;
       }
       if (section.toLowerCase() == 'script') {
-        if (trimmed.contains('{')) {
-          _declaredScriptLines.add(trimmed);
+        if (unconditional.contains('{') ||
+            _loonScriptCall.hasMatch(unconditional)) {
+          _declaredScriptLines.add(unconditional);
         } else {
-          _declareScript(_scriptLine(trimmed)?.type, trimmed);
+          _declareScript(_scriptLine(unconditional)?.type, unconditional);
         }
       }
-      final line = _substitute(trimmed).trim();
+      final line = _substitute(unconditional).trim();
       if (line.isEmpty || _isComment(line)) {
         continue;
       }
-      _readLine(section, line, trimmed);
+      _readLine(section, line, unconditional);
     }
     return _content();
   }
@@ -845,7 +1163,14 @@ class _ModuleParser {
       return value == null || value.isEmpty ? null : value;
     }
 
+    final requirement = meta('requirement');
+    final skipVerifyHostname = _skipVerifyHostname();
     return MitmModuleContent(
+      requirement: requirement,
+      requirementMet: requirement == null
+          ? null
+          : evaluateMitmRequirement(requirement, environment),
+      h2: _h2,
       name: meta('name'),
       description: meta('desc'),
       system: meta('system'),
@@ -857,12 +1182,53 @@ class _ModuleParser {
       headerRewrite: _headerRewrite,
       bodyRewrite: _bodyRewrite,
       mapLocal: _mapLocal,
+      requestBodyMock: _requestBodyMock,
+      clientSourceAddress: _clientSourceAddress,
+      skipVerifyHostname: skipVerifyHostname,
       script: _script,
       declaredScriptLines: _declaredScriptLines,
       rules: _rules,
+      exits: _exits,
+      network: _network(),
+      ruleProviders: {
+        ..._ruleProviders,
+        for (final MapEntry(:key, :value) in _rulesets.entries)
+          _inlineSetName(key): {
+            'type': 'inline',
+            'behavior': 'classical',
+            'payload': value,
+          },
+      },
       resourceUrls: _resourceUrls,
+      inlineResources: _inlineResources,
       skipped: _skipped,
+      requestRules: _requestRules,
     );
+  }
+
+  /// The module's own hostnames it may skip verifying, never one that covers
+  /// every host: a module cannot turn verifying off for all servers.
+  List<String> _skipVerifyHostname() {
+    final (section, line) = _skipVerify ?? (null, null);
+    if (section == null || line == null) {
+      return const [];
+    }
+    final hosts = <String>[];
+    var coversAll = false;
+    for (final entry in [..._insertedHostname, ..._hostname]) {
+      if (entry.startsWith('-')) {
+        continue;
+      }
+      if (RegExp(r'^\*+(:[\d*]+)?$').hasMatch(entry)) {
+        coversAll = true;
+      } else {
+        hosts.add(entry);
+      }
+    }
+    if (coversAll) {
+      _skip(section, line, MitmModuleSkipReason.skipVerifyAll);
+    }
+    return hosts;
   }
 
   void _readDeclarations(List<String> lines) {
@@ -871,7 +1237,11 @@ class _ModuleParser {
       final line = raw.trim();
       final header = _sectionPattern.firstMatch(line);
       if (header != null) {
-        section = header.group(1)!.trim().toLowerCase();
+        final name = header.group(1)!.trim();
+        section = name.toLowerCase();
+        if (section.startsWith('ruleset ')) {
+          _rulesetNames.add(name.substring('ruleset '.length).trim());
+        }
         continue;
       }
       if (line.startsWith('#!')) {
@@ -1011,7 +1381,12 @@ class _ModuleParser {
   }
 
   void _readLine(String section, String line, String raw) {
+    _sections.add(section.toLowerCase());
     switch (section.toLowerCase()) {
+      case 'general':
+        _readGeneral(section, line);
+      case 'host':
+        _readHost(section, line);
       case 'argument':
         break;
       case 'rule':
@@ -1021,11 +1396,7 @@ class _ModuleParser {
       case 'header rewrite':
         _headerRewrite.add(line);
       case 'body rewrite':
-        if (RegExp(r'^http-(request|response)-jq\s').hasMatch(line)) {
-          _skip(section, line, MitmModuleSkipReason.jq);
-        } else {
-          _bodyRewrite.add(line);
-        }
+        _bodyRewrite.add(line);
       case 'map local':
         _readMapLocal(section, line);
       case 'rewrite':
@@ -1038,6 +1409,28 @@ class _ModuleParser {
         if (!_readQuantumultX(line)) {
           _skip(section, line, MitmModuleSkipReason.unreadable);
         }
+      case 'ip rewrite':
+        _readIpRewrite(section, line);
+      case 'remote rule':
+        _readLoonRemoteRule(section, line);
+      case final name when name.startsWith('ruleset '):
+        if (RegExp(
+          r'^(RULE|DOMAIN)-SET\s*,',
+          caseSensitive: false,
+        ).hasMatch(line)) {
+          _skip(section, line, MitmModuleSkipReason.rule);
+        } else {
+          _rulesets
+              .putIfAbsent(
+                section.substring('ruleset '.length).trim(),
+                () => [],
+              )
+              .add(line);
+        }
+      case final name when _proxySections.contains(name):
+        _skip(section, line, MitmModuleSkipReason.proxies);
+      case final name when _appOnlySection.hasMatch(name):
+        _skip(section, line, MitmModuleSkipReason.appOnly);
       default:
         _skip(section, line, MitmModuleSkipReason.section);
     }
@@ -1046,7 +1439,15 @@ class _ModuleParser {
   /// Reads Surge's `name = type=...,...` and the legacy `type pattern ...`
   /// Loon writes, into the form the Core's script list takes.
   void _readScript(String section, String line, String raw) {
-    if (_conditionalPattern.hasMatch(line) || _loonScriptCall.hasMatch(line)) {
+    if (_loonTriggeredScript.firstMatch(line) case final match?) {
+      _readLoonTriggeredScript(section, line, match, raw);
+      return;
+    }
+    if (_conditionalPattern.hasMatch(line)) {
+      _readLoonConditional(section, line);
+      return;
+    }
+    if (_loonScriptCall.hasMatch(line)) {
       _skip(section, line, MitmModuleSkipReason.conditional);
       return;
     }
@@ -1081,15 +1482,87 @@ class _ModuleParser {
     }, after);
   }
 
+  void _readLoonTriggeredScript(
+    String section,
+    String line,
+    RegExpMatch match,
+    String raw,
+  ) {
+    final options = <String, String>{};
+    for (final option in _splitArguments(match.group(5) ?? '')) {
+      final equals = option.indexOf('=');
+      if (equals <= 0) {
+        _skip(section, line, MitmModuleSkipReason.unreadable);
+        return;
+      }
+      options[option.substring(0, equals).trim()] = _unquote(
+        option.substring(equals + 1).trim(),
+      );
+    }
+    if (options['enable']?.toLowerCase() == 'false') {
+      _skip(section, line, MitmModuleSkipReason.disabled);
+      return;
+    }
+    final argument = match.group(4)?.trim();
+    final names = RegExp(
+      r'^\{(.*)\}$',
+    ).firstMatch(_loonTriggeredScript.firstMatch(raw)?.group(4)?.trim() ?? '');
+    final object = names == null
+        ? null
+        : _objectArgument(
+            '[${names.group(1)!.split(',').map((name) => name.trim().replaceAll(r'$', '')).join(',')}]',
+          );
+    _addScript(
+      section,
+      line,
+      options['tag'] ?? '',
+      _unquote(match.group(3)!),
+      {
+        if (match.group(1) case final cron?) ...{
+          'type': 'cron',
+          'cronexp': _unquote(cron),
+        } else if (match.group(2) == 'generic')
+          'type': 'generic'
+        else ...{
+          'type': 'event',
+          'event-name': 'network-changed',
+        },
+      },
+      {
+        'timeout': options['timeout'] ?? _loonTriggeredTimeout,
+        if (object != null)
+          'argument-json': jsonEncode(object)
+        else if (argument != null && argument.isNotEmpty)
+          'argument': _unquote(argument),
+      },
+    );
+  }
+
   void _declareScript(String? type, String line) {
     if (_runnableScriptTypes.contains(type) || (type?.contains('{') ?? false)) {
       _declaredScriptLines.add(line);
     }
   }
 
+  /// A script or file the module carries in its own text, under a key that
+  /// changes with it.
+  String _inline(String text) {
+    final key =
+        '$_inlineResource${sha256.convert(utf8.encode(text)).toString().substring(0, 16)}.js';
+    _inlineResources[key] = text;
+    return key;
+  }
+
   /// The resources directory's file for [url], or null once the line is
   /// skipped for a file the module does not download or FlClash has not.
   String? _resource(String section, String line, String url) {
+    if (url.startsWith(_inlineResource)) {
+      final file = resources[url];
+      if (file == null) {
+        _skip(section, line, MitmModuleSkipReason.notDownloaded);
+      }
+      return file;
+    }
     if (!isMitmResourceUrl(url)) {
       final attachment = resources[url];
       if (attachment == null) {
@@ -1168,9 +1641,36 @@ class _ModuleParser {
     final key = equals < 0
         ? ''
         : line.substring(0, equals).trim().toLowerCase();
-    if (key != 'hostname') {
-      _skip(section, line, MitmModuleSkipReason.setting);
-      return;
+    switch (key) {
+      case 'hostname':
+        break;
+      case 'h2':
+        _h2 = _h2 || line.substring(equals + 1).trim().toLowerCase() == 'true';
+        return;
+      case 'skip-server-cert-verify':
+        if (line.substring(equals + 1).trim().toLowerCase() == 'true') {
+          _skipVerify = (section, line);
+        }
+        return;
+      case 'client-source-address':
+        final value = line
+            .substring(equals + 1)
+            .trim()
+            .replaceFirst(RegExp('^%(APPEND|INSERT)%'), '')
+            .trim();
+        if (value.isNotEmpty) {
+          _clientSourceAddress.add(value);
+        }
+        return;
+      case 'ca-p12' || 'ca-passphrase' || 'keystore':
+        _skip(section, line, MitmModuleSkipReason.managedCa);
+        return;
+      case _ when _qxMitmPattern.hasMatch('$key='):
+        _readQxMitm(line);
+        return;
+      default:
+        _skip(section, line, MitmModuleSkipReason.setting);
+        return;
     }
     var value = line.substring(equals + 1).trim();
     var target = _hostname;
@@ -1188,37 +1688,388 @@ class _ModuleParser {
     );
   }
 
+  /// A Loon plugin adds to the profile's lists, as its manual says; a Surge
+  /// module replaces them unless marked. Surge reads its plain servers only
+  /// for the encrypted ones' domains once any encrypted one is set, which is
+  /// mihomo's default-nameserver.
+  MitmNetwork _network() {
+    final loon =
+        _sections.any(_loonSections.contains) ||
+        _generalKeys.any(_loonGeneralKeys.contains);
+    MitmListEdit? edit(String key) {
+      MitmListEdit? merged;
+      for (final (mark, values)
+          in _listEdits[key] ?? const <(_ListMark, List<String>)>[]) {
+        final next = switch (mark) {
+          _ListMark.insert => MitmListEdit(before: values),
+          _ListMark.append => MitmListEdit(after: values),
+          _ListMark.plain when loon => MitmListEdit(after: values),
+          _ListMark.plain ||
+          _ListMark.replace => MitmListEdit(replace: true, before: values),
+        };
+        merged = merged?.then(next) ?? next;
+      }
+      return merged;
+    }
+
+    final plain = edit(_plainDnsKey);
+    final encrypted = edit(_encryptedDnsKey);
+    final bootstrap = plain == null || encrypted == null || loon
+        ? null
+        : MitmListEdit(
+            replace: plain.replace,
+            before: plain.before.where(isMitmPlainDnsServer).toList(),
+            after: plain.after.where(isMitmPlainDnsServer).toList(),
+          );
+    return MitmNetwork(
+      nameserver: encrypted == null
+          ? plain
+          : loon && plain != null
+          ? plain.then(encrypted)
+          : encrypted,
+      defaultNameserver:
+          edit(MitmNetworkKey.defaultNameserver.path) ?? bootstrap,
+      fakeIpFilter: edit(MitmNetworkKey.fakeIpFilter.path),
+      nameserverPolicy: _nameserverPolicy,
+      hosts: _hosts,
+      routeAddress: _routeAddress,
+      routeExcludeAddress: edit(MitmNetworkKey.routeExcludeAddress.path),
+      bypassDomain: edit(MitmNetworkKey.bypassDomain.path),
+    );
+  }
+
+  void _editList(String key, _ListMark mark, List<String> values) {
+    _listEdits.putIfAbsent(key, () => []).add((mark, values));
+  }
+
+  /// The `[General]` keys a Surge module or a Loon plugin may set.
+  void _readGeneral(String section, String line) {
+    final equals = line.indexOf('=');
+    if (equals < 0) {
+      _skip(section, line, MitmModuleSkipReason.unreadable);
+      return;
+    }
+    final key = line.substring(0, equals).trim().toLowerCase();
+    var value = line.substring(equals + 1).trim();
+    var mark = _ListMark.plain;
+    for (final (prefix, marked) in const [
+      ('%INSERT%', _ListMark.insert),
+      ('%APPEND%', _ListMark.append),
+    ]) {
+      if (value.startsWith(prefix)) {
+        value = value.substring(prefix.length);
+        mark = marked;
+      }
+    }
+    _generalKeys.add(key);
+    final items = [
+      for (final item in value.split(','))
+        if (item.trim().isNotEmpty) item.trim(),
+    ];
+    List<String>? read(String? Function(String) parse) {
+      final parsed = items.map(parse).toList();
+      if (parsed.contains(null)) {
+        _skip(section, line, MitmModuleSkipReason.unreadable);
+        return null;
+      }
+      return parsed.nonNulls.toList();
+    }
+
+    switch (key) {
+      case 'dns-server':
+        if (read(mitmDnsServer) case final servers?) {
+          _editList(_plainDnsKey, mark, servers);
+        }
+      case 'encrypted-dns-server' ||
+          'doh-server' ||
+          'doh3-server' ||
+          'doq-server':
+        if (read(mitmDnsServer) case final servers?) {
+          _editList(_encryptedDnsKey, mark, servers);
+        }
+      case 'skip-proxy':
+        _editList(MitmNetworkKey.bypassDomain.path, mark, items);
+      case 'tun-excluded-routes' || 'bypass-tun':
+        if (read(mitmRoute) case final routes?) {
+          _editList(MitmNetworkKey.routeExcludeAddress.path, mark, routes);
+        }
+      case 'tun-included-routes' || 'include-tun':
+        if (read(mitmRoute) case final routes?) {
+          _routeAddress.addAll(routes);
+        }
+      case 'always-real-ip' || 'real-ip':
+        _editList(MitmNetworkKey.fakeIpFilter.path, mark, items);
+      case 'force-http-engine-hosts':
+        _hostname.addAll(items);
+      default:
+        _skip(section, line, MitmModuleSkipReason.setting);
+    }
+  }
+
+  /// `domain = address[, address]`, `domain = alias` or
+  /// `domain = server:dns-server`, as Surge and Loon write `[Host]`.
+  void _readHost(String section, String line) {
+    final equals = line.indexOf('=');
+    final host = equals < 0 ? '' : line.substring(0, equals).trim();
+    final value = equals < 0 ? '' : line.substring(equals + 1).trim();
+    if (!_hostPattern.hasMatch(host) || value.isEmpty) {
+      _skip(section, line, MitmModuleSkipReason.unreadable);
+      return;
+    }
+    if (value.toLowerCase().startsWith('server:')) {
+      final server = mitmDnsServer(value.substring('server:'.length));
+      if (server == null) {
+        _skip(section, line, MitmModuleSkipReason.unreadable);
+        return;
+      }
+      _nameserverPolicy[host] = [server];
+      return;
+    }
+    final targets = [
+      for (final item in value.split(','))
+        if (item.trim().isNotEmpty) item.trim(),
+    ];
+    if (!targets.every(
+      (target) =>
+          InternetAddress.tryParse(target) != null ||
+          _hostPattern.hasMatch(target),
+    )) {
+      _skip(section, line, MitmModuleSkipReason.unreadable);
+      return;
+    }
+    _hosts[host] = targets;
+  }
+
+  /// Stash puts an override's list ahead of the profile's unless the key is
+  /// marked `#!append` or `#!replace`, in a comment the YAML no longer holds.
+  void _readStashDns(Map<String, Object?> dns, String text) {
+    _ListMark markOf(String key) => switch (RegExp(
+      '^\\s+$key:\\s*#!(replace|append)',
+      multiLine: true,
+    ).firstMatch(text)?.group(1)) {
+      'replace' => _ListMark.replace,
+      'append' => _ListMark.append,
+      _ => _ListMark.insert,
+    };
+    List<String> strings(Object? value) => switch (value) {
+      final List list => [for (final item in list) '$item'.trim()],
+      null => const [],
+      _ => ['$value'.trim()],
+    };
+    for (final MapEntry(:key, :value) in dns.entries) {
+      switch (key) {
+        case 'nameserver' || 'default-nameserver':
+          final servers = strings(value).map(mitmDnsServer).toList();
+          if (servers.contains(null)) {
+            _skip(
+              'dns',
+              '$key: ${strings(value).join(', ')}',
+              MitmModuleSkipReason.unreadable,
+            );
+            continue;
+          }
+          _editList(
+            key == 'nameserver' ? _plainDnsKey : key,
+            markOf(key),
+            servers.nonNulls.toList(),
+          );
+        case 'fake-ip-filter':
+          _editList(key, markOf(key), strings(value));
+        case 'nameserver-policy' when value is Map:
+          for (final MapEntry(key: domain, value: servers) in value.entries) {
+            final read = strings(servers).map(mitmDnsServer).toList();
+            if (read.contains(null) || read.isEmpty) {
+              _skip(
+                'dns',
+                '$domain: $servers',
+                MitmModuleSkipReason.unreadable,
+              );
+            } else {
+              _nameserverPolicy['$domain'] = read.nonNulls.toList();
+            }
+          }
+        default:
+          _skip('dns', key, MitmModuleSkipReason.setting);
+      }
+    }
+  }
+
   void _readRule(String section, String line, {String? shown}) {
     final parts = _ruleParts(line);
     final type = parts.first.toUpperCase();
-    final policy = parts.length > 2 ? parts[2].toUpperCase() : null;
-    if (type == 'URL-REGEX') {
-      final action = _rejectActions[policy];
+    if (type == 'FINAL' || type == 'MATCH') {
+      _skip(section, shown ?? line, MitmModuleSkipReason.finalRule);
+      return;
+    }
+    if (_deviceRules.contains(type)) {
+      _skip(section, shown ?? line, MitmModuleSkipReason.deviceRule);
+      return;
+    }
+    final named =
+        parts.length > 2 &&
+        parts[2].trim().isNotEmpty &&
+        !_ruleOptions.contains(parts[2].toLowerCase());
+    final policy = named ? _unquote(parts[2].trim()) : 'DIRECT';
+    final options = [...parts.skip(named ? 3 : 2)];
+    if (RegExp(r'^https?://').hasMatch(parts.first)) {
+      _readRuleSet(
+        section,
+        shown ?? line,
+        parts.first,
+        parts.length > 1 ? _unquote(parts[1].trim()) : 'DIRECT',
+        [...parts.skip(2)],
+      );
+      return;
+    }
+    if (type == 'RULE-SET' && parts.length > 1) {
+      _readRuleSet(section, shown ?? line, _unquote(parts[1]), policy, options);
+      return;
+    }
+    if (type == 'DOMAIN-SET' && parts.length > 1) {
+      _readRuleSet(
+        section,
+        shown ?? line,
+        _unquote(parts[1]),
+        policy,
+        options,
+        domainSet: true,
+      );
+      return;
+    }
+    if (type == 'URL-REGEX' || type == 'USER-AGENT') {
+      final action = _rejectActions[policy.toUpperCase()];
       if (action == null) {
-        _skip(section, shown ?? line, MitmModuleSkipReason.policy);
-      } else {
-        _urlRewrite.add('${_field(_unquote(parts[1]))} $action');
+        _skip(section, shown ?? line, MitmModuleSkipReason.httpRulePolicy);
+        return;
       }
+      final value = _unquote(parts[1].trim());
+      _urlRewrite.add(
+        type == 'URL-REGEX'
+            ? '${_field(value)} $action'
+            : '^https?:// ${_field(_userAgentHead(value))} url-and-header $action',
+      );
+      _requestRules++;
       return;
     }
-    final target = switch (policy) {
-      'DIRECT' => 'DIRECT',
-      'REJECT-DROP' => 'REJECT-DROP',
-      final policy? when _rejectActions.containsKey(policy) => 'REJECT',
-      _ => null,
-    };
-    if (target == null) {
-      _skip(section, shown ?? line, MitmModuleSkipReason.policy);
-      return;
-    }
-    final rule = _translateRule(parts.first, parts.length > 1 ? parts[1] : '', [
-      ...parts.skip(3),
-    ]);
-    if (rule == null) {
+    final rule = _translateRule(
+      parts.first,
+      parts.length > 1 ? parts[1] : '',
+      options,
+    );
+    final target = _target(policy);
+    if (rule == null || target == null) {
       _skip(section, shown ?? line, MitmModuleSkipReason.rule);
       return;
     }
     _rules.add([rule.body, target, if (rule.noResolve) 'no-resolve'].join(','));
+  }
+
+  /// A built-in policy, or an exit of the policy's name; Quantumult X writes
+  /// Loon's `PROXY` as `proxy`. An argument left unexpanded names nothing.
+  String? _target(String policy) {
+    if (_builtInTarget(policy) case final target?) {
+      return target;
+    }
+    if (policy.contains(r'${')) {
+      return null;
+    }
+    final exit = policy == 'proxy' ? 'PROXY' : policy;
+    _exits.add(exit);
+    return exit;
+  }
+
+  /// A RULE-SET of a URL, of Surge's internal sets, of a `[Ruleset]` section
+  /// of the module, or of a rule provider a Stash override brings.
+  void _readRuleSet(
+    String section,
+    String line,
+    String value,
+    String policy,
+    List<String> options, {
+    bool domainSet = false,
+  }) {
+    final target = _target(policy);
+    if (target == null) {
+      _skip(section, line, MitmModuleSkipReason.rule);
+      return;
+    }
+    final String name;
+    if (RegExp(r'^https?://').hasMatch(value)) {
+      final interval = options
+          .map(
+            (option) => RegExp(
+              r'^update-interval\s*=\s*(-?\d+)$',
+            ).firstMatch(option.trim()),
+          )
+          .nonNulls
+          .map((match) => int.parse(match.group(1)!))
+          .firstOrNull;
+      name = _ruleSetName(domainSet ? 'domain-set:$value' : value);
+      _ruleProviders[name] = {
+        'type': 'http',
+        'behavior': domainSet ? 'domain' : 'classical',
+        'format': domainSet ? 'domain-set' : 'text',
+        'url': value,
+        'interval': max(interval ?? _ruleSetInterval, 0),
+      };
+    } else if (_builtInRuleSets[value.toUpperCase()] case final payload?) {
+      name = _ruleSetName('surge:${value.toUpperCase()}');
+      _ruleProviders[name] = {
+        'type': 'inline',
+        'behavior': 'classical',
+        'payload': [...payload],
+      };
+    } else if (_rulesetNames.contains(value)) {
+      name = _inlineSetName(value);
+    } else if (_stashProviderNames[value] case final mapped?) {
+      name = mapped;
+    } else if (section == 'rules') {
+      _skip(section, line, MitmModuleSkipReason.rule);
+      return;
+    } else if (_resource(section, line, value) case final file?) {
+      name = _ruleSetName('file:${domainSet ? 'domain-set:' : ''}$file');
+      _ruleProviders[name] = {
+        'type': 'file',
+        'behavior': domainSet ? 'domain' : 'classical',
+        'format': domainSet ? 'domain-set' : 'text',
+        'path': '$mitmDirectoryName/$mitmResourcesDirectoryName/$file',
+      };
+    } else {
+      return;
+    }
+    final noResolve = options.any(
+      (option) => option.trim().toLowerCase() == 'no-resolve',
+    );
+    _rules.add(
+      ['RULE-SET', name, target, if (noResolve) 'no-resolve'].join(','),
+    );
+  }
+
+  /// Loon's `url, policy=..., tag=..., enabled=...`.
+  void _readLoonRemoteRule(String section, String line) {
+    final parts = _splitArguments(line);
+    final params = {
+      for (final part in parts.skip(1))
+        if (part.indexOf('=') case final equals when equals > 0)
+          part.substring(0, equals).trim().toLowerCase(): _unquote(
+            part.substring(equals + 1).trim(),
+          ),
+    };
+    if (params['enabled']?.toLowerCase() == 'false') {
+      _skip(section, line, MitmModuleSkipReason.disabled);
+      return;
+    }
+    if (parts.isEmpty || !RegExp(r'^https?://').hasMatch(parts.first)) {
+      _skip(section, line, MitmModuleSkipReason.unreadable);
+      return;
+    }
+    _readRuleSet(
+      section,
+      line,
+      parts.first,
+      params['policy'] ?? 'DIRECT',
+      const [],
+    );
   }
 
   ({String body, bool noResolve})? _translateRule(
@@ -1249,10 +2100,11 @@ class _ModuleParser {
           translated.add('(${rule.body})');
         }
         return (body: '$type,(${translated.join(',')})', noResolve: false);
-      case 'PROTOCOL' when nested:
+      case 'PROTOCOL':
         final network = switch (payload.trim().toUpperCase()) {
           'TCP' => 'TCP',
-          'UDP' || 'QUIC' => 'UDP',
+          'UDP' => 'UDP',
+          'QUIC' when nested => 'UDP',
           _ => null,
         };
         return network == null
@@ -1275,7 +2127,17 @@ class _ModuleParser {
         }
         value = cidr;
       case 'DST-PORT' || 'SRC-PORT' || 'IN-PORT':
+        value = _portRange(value) ?? value;
         if (!_validPorts(value)) {
+          return null;
+        }
+      case 'IP-ASN':
+        if (int.tryParse(value) == null) {
+          return null;
+        }
+      case 'NETWORK':
+        value = value.toUpperCase();
+        if (value != 'TCP' && value != 'UDP') {
           return null;
         }
       default:
@@ -1286,7 +2148,7 @@ class _ModuleParser {
     return (
       body: '$target,$value',
       noResolve:
-          target.startsWith('IP-CIDR') &&
+          const {'IP-CIDR', 'IP-CIDR6', 'GEOIP', 'IP-ASN'}.contains(target) &&
           options.any((option) => option.toLowerCase() == 'no-resolve'),
     );
   }
@@ -1309,6 +2171,27 @@ class _ModuleParser {
     return operands.isEmpty ? null : operands;
   }
 
+  /// Surge's `address = action`, where reject answers and drop stays silent,
+  /// as the rules that do the same.
+  void _readIpRewrite(String section, String line) {
+    final equals = line.indexOf('=');
+    final cidr = equals < 0 ? null : _cidr(line.substring(0, equals).trim());
+    final policy = switch (line.substring(equals + 1).trim().toLowerCase()) {
+      'reject' => 'REJECT',
+      'drop' => 'REJECT-DROP',
+      'reflect' => 'reflect',
+      _ => null,
+    };
+    if (cidr == null || policy == null) {
+      _skip(section, line, MitmModuleSkipReason.unreadable);
+    } else if (policy == 'reflect') {
+      _skip(section, line, MitmModuleSkipReason.reflect);
+    } else {
+      final type = cidr.contains(':') ? 'IP-CIDR6' : 'IP-CIDR';
+      _rules.add('$type,$cidr,$policy,no-resolve');
+    }
+  }
+
   void _readMapLocal(String section, String line) {
     final tokens = _tokens(line);
     if (tokens == null || tokens.isEmpty) {
@@ -1328,12 +2211,15 @@ class _ModuleParser {
     _addMapLocal(section, line, tokens.first.text, params);
   }
 
+  /// With [request], a request body mock, which takes no status.
   void _addMapLocal(
     String section,
     String line,
     String pattern,
-    Map<String, String> params,
-  ) {
+    Map<String, String> params, {
+    String? head,
+    bool request = false,
+  }) {
     if ((params['data-type'] ?? 'file') == 'file') {
       final file = _resource(section, line, params['data'] ?? '');
       if (file == null) {
@@ -1341,11 +2227,12 @@ class _ModuleParser {
       }
       params['data'] = file;
     }
-    _mapLocal.add(
+    (request ? _requestBodyMock : _mapLocal).add(
       [
         _field(pattern),
+        if (head != null) ...['request-head', _field(head)],
         for (final MapEntry(:key, :value) in params.entries)
-          '$key=${_quoted(value)}',
+          if (!request || key != 'status-code') '$key=${_quoted(value)}',
       ].join(' '),
     );
   }
@@ -1353,7 +2240,7 @@ class _ModuleParser {
   /// Loon's legacy `pattern action ...`, which spreads over Surge's lists.
   void _readLoonRewrite(String section, String line) {
     if (_conditionalPattern.hasMatch(line)) {
-      _skip(section, line, MitmModuleSkipReason.conditional);
+      _readLoonConditional(section, line);
       return;
     }
     final tokens = _tokens(line);
@@ -1399,6 +2286,20 @@ class _ModuleParser {
       final phase = header.group(1) == 'response-'
           ? 'http-response'
           : 'http-request';
+      final pairs = _tokens(rest);
+      if (header.group(3) == 'add' && pairs != null && pairs.length > 2) {
+        if (pairs.length.isOdd) {
+          _skip(section, line, MitmModuleSkipReason.unreadable);
+          return;
+        }
+        for (var i = 0; i < pairs.length; i += 2) {
+          _headerRewrite.add(
+            '$phase $pattern header-add ${_field(pairs[i].text)} '
+            '${_field(pairs[i + 1].text)}',
+          );
+        }
+        return;
+      }
       _headerRewrite.add('$phase $pattern ${header.group(2)} $rest'.trim());
       return;
     }
@@ -1407,16 +2308,87 @@ class _ModuleParser {
         _bodyRewrite.add('http-request $pattern $rest');
       case 'response-body-replace-regex':
         _bodyRewrite.add('http-response $pattern $rest');
-      case 'mock-response-body':
-        _readLoonMock(section, line, tokens[0].text, tokens.skip(2));
-      default:
-        _skip(
+      case 'request-body-json-jq':
+        _bodyRewrite.add('http-request-jq $pattern $rest');
+      case 'response-body-json-jq':
+        _bodyRewrite.add('http-response-jq $pattern $rest');
+      case 'mock-response-body' || 'mock-request-body':
+        _readLoonMock(
           section,
           line,
-          RegExp(r'^(request|response)-body-json-').hasMatch(action)
-              ? MitmModuleSkipReason.jsonBody
-              : MitmModuleSkipReason.unreadable,
+          tokens[0].text,
+          tokens.skip(2),
+          request: action == 'mock-request-body',
         );
+      default:
+        final json = RegExp(
+          r'^(request|response)-body-json-(add|replace|del)$',
+        ).firstMatch(action);
+        final jq = switch ((json, jsonEditArgs(rest))) {
+          (final json?, final args?) => jsonEditJq(
+            json.group(2)!,
+            args,
+            stash: false,
+          ),
+          _ => null,
+        };
+        if (jq == null) {
+          _skip(section, line, MitmModuleSkipReason.unreadable);
+        } else {
+          _bodyRewrite.add('http-${json!.group(1)}-jq $pattern $jq');
+        }
+    }
+  }
+
+  /// Loon's `request|response if <condition> then <actions>`, whose
+  /// actions all go over or the line is skipped.
+  void _readLoonConditional(String section, String line) {
+    switch (translateLoonRewrite(line)) {
+      case LoonRewriteFailure.unreadable:
+        _skip(section, line, MitmModuleSkipReason.unreadable);
+      case LoonRewriteFailure.unsupported:
+        _skip(section, line, MitmModuleSkipReason.conditional);
+      case final LoonRewrite out:
+        _urlRewrite.addAll(out.urlRewrite);
+        _headerRewrite.addAll(out.headerRewrite);
+        _bodyRewrite.addAll(out.bodyRewrite);
+        for (final (:pattern, :head, :params) in out.mapLocal) {
+          _addMapLocal(section, line, pattern, params, head: head);
+        }
+        for (final (:pattern, :head, :params) in out.requestBodyMock) {
+          _addMapLocal(
+            section,
+            line,
+            pattern,
+            params,
+            head: head,
+            request: true,
+          );
+        }
+        for (final (:path, :fields, :tag) in out.scripts) {
+          if (fields['enable']?.toLowerCase() == 'false') {
+            _skip(section, line, MitmModuleSkipReason.disabled);
+            continue;
+          }
+          _addScript(
+            section,
+            line,
+            tag,
+            path,
+            {
+              'type': fields['type']!,
+              'pattern': fields['pattern']!,
+              'request-head': ?fields['request-head'],
+              'response-head': ?fields['response-head'],
+            },
+            {
+              'requires-body': ?fields['requires-body'],
+              'binary-body-mode': ?fields['binary-body-mode'],
+              'timeout': fields['timeout'] ?? _loonHttpScriptTimeout,
+              'argument': ?fields['argument'],
+            },
+          );
+        }
     }
   }
 
@@ -1424,8 +2396,9 @@ class _ModuleParser {
     String section,
     String line,
     String pattern,
-    Iterable<_Token> tokens,
-  ) {
+    Iterable<_Token> tokens, {
+    bool request = false,
+  }) {
     final params = <String, String>{};
     for (final token in tokens) {
       final equals = token.text.indexOf('=');
@@ -1451,11 +2424,11 @@ class _ModuleParser {
     if (params['status-code'] case final status?) {
       mapped['status-code'] = status;
     }
-    if (_loonContentTypes[dataType] case final contentType?
+    if (loonContentTypes[dataType] case final contentType?
         when dataType != 'tiny-gif') {
       mapped['header'] = 'Content-Type:$contentType';
     }
-    _addMapLocal(section, line, pattern, mapped);
+    _addMapLocal(section, line, pattern, mapped, request: request);
   }
 
   /// Reads a line of a Quantumult X snippet, which may stand outside any
@@ -1464,6 +2437,8 @@ class _ModuleParser {
     final lower = line.toLowerCase();
     if (RegExp(r'^hostname\s*=').hasMatch(lower)) {
       _readMitm('mitm', line);
+    } else if (_qxMitmPattern.hasMatch(lower)) {
+      _readQxMitm(line);
     } else if (_qxFilterPattern.hasMatch(lower)) {
       _readQxFilter(line);
     } else if (lower.startsWith('event-') || _qxCron(line) != null) {
@@ -1476,9 +2451,48 @@ class _ModuleParser {
     return true;
   }
 
+  void _readQxMitm(String line) {
+    const section = 'mitm';
+    final equals = line.indexOf('=');
+    final key = line.substring(0, equals).trim().toLowerCase();
+    switch (key) {
+      case 'skip_dst_ip':
+        _insertedHostname.addAll(
+          line
+              .substring(equals + 1)
+              .split(',')
+              .map((item) => item.trim())
+              .where((item) => item.isNotEmpty)
+              .map((item) => '-$item'),
+        );
+      case 'skip_src_ip':
+        final skipped = line
+            .substring(equals + 1)
+            .split(',')
+            .map((item) => item.trim())
+            .where((item) => item.isNotEmpty)
+            .map((item) => '-$item');
+        if (skipped.isNotEmpty) {
+          _clientSourceAddress.add(skipped.join(', '));
+        }
+      case 'skip_validating_cert':
+        if (line.substring(equals + 1).trim().toLowerCase() == 'true') {
+          _skipVerify = (section, line);
+        }
+      case 'p12' || 'passphrase':
+        _skip(section, line, MitmModuleSkipReason.managedCa);
+      default:
+        _skip(section, line, MitmModuleSkipReason.setting);
+    }
+  }
+
   void _readQxFilter(String line) {
     const section = 'filter_local';
     final parts = _ruleParts(line);
+    if (parts.first.toLowerCase() == 'final') {
+      _skip(section, line, MitmModuleSkipReason.finalRule);
+      return;
+    }
     final type = _qxFilterTypes[parts.first.toLowerCase()];
     if (type == null || parts.length < 3) {
       _skip(section, line, MitmModuleSkipReason.rule);
@@ -1489,51 +2503,81 @@ class _ModuleParser {
 
   /// Reads `pattern url type ...`, where a body or echo rewrite repeats its
   /// type between the two values it takes.
+  /// Quantumult X's `pattern url type ...`, and `pattern head url-and-header
+  /// type ...`, whose head pattern is the Core's `request-head`.
   void _readQxRewrite(String line) {
     const section = 'rewrite_local';
-    if (RegExp(r'\surl-and-header\s').hasMatch(line)) {
-      _skip(section, line, MitmModuleSkipReason.conditional);
-      return;
-    }
-    final match = RegExp(r'^(\S+)\s+url\s+(\S+)\s*(.*)$').firstMatch(line);
+    final match =
+        RegExp(r'^(\S+)\s+url\s+(\S+)\s*(.*)$').firstMatch(line) ??
+        RegExp(
+          r'^(\S+)\s+(.+?)\s+url-and-header\s+(\S+)\s*(.*)$',
+        ).firstMatch(line);
     if (match == null) {
       _skip(section, line, MitmModuleSkipReason.unreadable);
       return;
     }
+    final conditioned = match.groupCount == 4;
     final pattern = match.group(1)!;
-    final type = match.group(2)!.toLowerCase();
-    final rest = match.group(3)!.trim();
+    final head = conditioned ? match.group(2)!.trim() : null;
+    final type = match.group(conditioned ? 3 : 2)!.toLowerCase();
+    final rest = match.group(conditioned ? 4 : 3)!.trim();
     final repeated = rest.indexOf(type);
+    final url = [
+      _field(pattern),
+      if (head != null) ...[_field(head), 'url-and-header'],
+    ].join(' ');
+    String rule(String phase, List<String> after) => [
+      phase,
+      _field(pattern),
+      if (head != null) ...['request-head', _field(head)],
+      ...after,
+    ].join(' ');
     if (_qxScripts[type] case (final phase, final body)) {
       _declareScript(phase, line);
       _addScript(section, line, '', rest, {
         'type': phase,
         'pattern': pattern,
+        'request-head': ?head,
         if (body) 'requires-body': 'true',
       });
       return;
     }
     switch (type) {
       case _ when _rejectRewrites.contains(type):
-        _urlRewrite.add('${_field(pattern)} $type');
+        _urlRewrite.add('$url $type');
       case '302' || '307' when rest.isNotEmpty && !rest.contains(' '):
-        _urlRewrite.add('${_field(pattern)} ${_field(rest)} $type');
+        _urlRewrite.add(
+          head == null
+              ? '$url ${_field(rest)} $type'
+              : '$url $type ${_field(rest)}',
+        );
       case 'request-body' || 'response-body' when repeated > 0:
         _bodyRewrite.add(
-          [
-            type == 'request-body' ? 'http-request' : 'http-response',
-            _field(pattern),
+          rule(type == 'request-body' ? 'http-request' : 'http-response', [
             _field(rest.substring(0, repeated).trim()),
             _field(rest.substring(repeated + type.length).trim()),
-          ].join(' '),
+          ]),
         );
-      case 'request-header' || 'response-header':
-        _skip(section, line, MitmModuleSkipReason.rawHeader);
-      case 'jsonjq-request-body' || 'jsonjq-response-body':
-        _skip(section, line, MitmModuleSkipReason.jq);
+      case 'request-header' || 'response-header' when repeated > 0:
+        _headerRewrite.add(
+          rule(type == 'request-header' ? 'http-request' : 'http-response', [
+            'header-text-replace',
+            _field(rest.substring(0, repeated).trim()),
+            _field(rest.substring(repeated + type.length).trim()),
+          ]),
+        );
+      case 'jsonjq-request-body' || 'jsonjq-response-body' when rest.isNotEmpty:
+        _bodyRewrite.add(
+          rule(
+            type == 'jsonjq-request-body'
+                ? 'http-request-jq'
+                : 'http-response-jq',
+            [rest],
+          ),
+        );
       case 'echo-response' when repeated > 0:
         final headers = rest.substring(0, repeated).trim().split(r'\r\n');
-        _addMapLocal(section, line, pattern, {
+        _addMapLocal(section, line, pattern, head: head, {
           'data-type': 'file',
           'data': rest.substring(repeated + type.length).trim(),
           'header': [
@@ -1556,8 +2600,11 @@ class _ModuleParser {
     final lower = line.toLowerCase();
     final cron = _qxCron(line);
     final String rest;
+    final interaction = lower.startsWith('event-interaction');
     if (lower.startsWith('event-network')) {
       rest = line.substring('event-network'.length).trim();
+    } else if (interaction) {
+      rest = line.substring('event-interaction'.length).trim();
     } else if (cron != null) {
       rest = cron.rest;
     } else {
@@ -1570,7 +2617,14 @@ class _ModuleParser {
       );
       return;
     }
-    _declareScript(cron != null ? 'cron' : 'event', line);
+    _declareScript(
+      cron != null
+          ? 'cron'
+          : interaction
+          ? 'generic'
+          : 'event',
+      line,
+    );
     final comma = rest.indexOf(',');
     final params = comma < 0
         ? const <String, String>{}
@@ -1585,8 +2639,15 @@ class _ModuleParser {
       params['tag'] ?? '',
       (comma < 0 ? rest : rest.substring(0, comma)).trim(),
       {
-        if (cron != null) ...{'type': 'cron', 'cronexp': cron.expression},
-        if (cron == null) ...{'type': 'event', 'event-name': 'network-changed'},
+        if (cron != null) ...{
+          'type': 'cron',
+          'cronexp': cron.expression,
+        } else if (interaction)
+          'type': 'generic'
+        else ...{
+          'type': 'event',
+          'event-name': 'network-changed',
+        },
       },
       const {'timeout': _qxTaskTimeout},
     );
@@ -1600,6 +2661,7 @@ class _ModuleParser {
     }
     _readDeclarations(text.split(RegExp(r'\r\n|\r|\n')));
     _readStashArguments(override['arguments']);
+    _readStashRuleProviders(override['rule-providers']);
     final providers = switch (override['script-providers']) {
       final Map<String, Object?> providers => providers,
       _ => const <String, Object?>{},
@@ -1618,10 +2680,25 @@ class _ModuleParser {
               _skip('cron', name, MitmModuleSkipReason.setting);
             }
           }
+        case _ when key == 'rule-providers':
+          break;
+        case final Map<String, Object?> dns when key == 'dns':
+          _readStashDns(dns, text);
+        case final Map<String, Object?> hosts when key == 'hosts':
+          for (final MapEntry(key: host, :value) in hosts.entries) {
+            _readHost(
+              key,
+              '$host = ${value is List ? value.join(', ') : value}',
+            );
+          }
         case final List rules when key == 'rules':
           for (final rule in rules) {
             _readRule('rules', _stashText(rule), shown: _stashLine(rule));
           }
+        case _ when _proxySections.contains(key) || key == 'proxy-providers':
+          _skip(key, key, MitmModuleSkipReason.proxies);
+        case _ when _appOnlySection.hasMatch(key):
+          _skip(key, key, MitmModuleSkipReason.appOnly);
         case _ when !_stashMetaKeys.contains(key):
           _skip(key, key, MitmModuleSkipReason.section);
       }
@@ -1634,6 +2711,10 @@ class _ModuleParser {
     Map<String, Object?> providers,
   ) {
     for (final MapEntry(:key, :value) in http.entries) {
+      if (key == 'ca' || key == 'ca-passphrase') {
+        _skip('http', key, MitmModuleSkipReason.managedCa);
+        continue;
+      }
       if (value is! List || !_stashHttpLists.contains(key)) {
         _skip('http', key, MitmModuleSkipReason.setting);
         continue;
@@ -1641,6 +2722,10 @@ class _ModuleParser {
       for (final item in value) {
         final line = _stashText(item);
         switch (key) {
+          case 'force-http-engine':
+            if (line.trim().isNotEmpty) {
+              _hostname.add(line.trim());
+            }
           case 'mitm':
             final host = line.endsWith(':*')
                 ? line.substring(0, line.length - 2)
@@ -1673,7 +2758,7 @@ class _ModuleParser {
     } else if (_rejectRewrites.contains(type)) {
       _urlRewrite.add('${_field(tokens.first.text)} $type');
     } else if (tokens.length == 3 &&
-        const {'302', '307', 'transparent'}.contains(type)) {
+        const {'302', '307', 'transparent', 'header'}.contains(type)) {
       _urlRewrite.add(
         '${_field(tokens.first.text)} ${_field(tokens[1].text)} '
         '${type == 'transparent' ? 'header' : type}',
@@ -1708,9 +2793,23 @@ class _ModuleParser {
           '${match.group(4)}',
         );
       case 'jq':
-        _skip(section, line, MitmModuleSkipReason.jq);
-      case final action? when action.startsWith('json-'):
-        _skip(section, line, MitmModuleSkipReason.jsonBody);
+        _bodyRewrite.add(
+          'http-${match!.group(2)}-jq ${_field(match.group(1)!)} '
+          '${match.group(4)}',
+        );
+      case final action?
+          when RegExp(r'^json-(add|replace|del)$').hasMatch(action):
+        final args = jsonEditArgs(match!.group(4)!);
+        final jq = args == null
+            ? null
+            : jsonEditJq(action.substring('json-'.length), args, stash: true);
+        if (jq == null) {
+          _skip(section, line, MitmModuleSkipReason.unreadable);
+        } else {
+          _bodyRewrite.add(
+            'http-${match.group(2)}-jq ${_field(match.group(1)!)} $jq',
+          );
+        }
       default:
         _skip(section, line, MitmModuleSkipReason.unreadable);
     }
@@ -1777,11 +2876,19 @@ class _ModuleParser {
     final name = field('name') ?? '';
     final provider = providers[name];
     final argument = field('argument');
+    final url = provider is Map<String, Object?>
+        ? _stashText(provider['url'])
+        : '';
     _addScript(
       section,
       shown,
       name,
-      provider is Map<String, Object?> ? _stashText(provider['url']) : '',
+      switch (provider) {
+        {'payload': final String payload} when url.isEmpty => _inline(
+          _stashText(payload),
+        ),
+        _ => url,
+      },
       {
         'type': type,
         if (cron) 'cronexp': ?field('cron') else 'pattern': ?field('match'),
@@ -1794,6 +2901,32 @@ class _ModuleParser {
         if (argument != null && argument.isNotEmpty) 'argument': argument,
       },
     );
+  }
+
+  void _readStashRuleProviders(Object? providers) {
+    if (providers is! Map<String, Object?>) {
+      return;
+    }
+    for (final MapEntry(key: name, :value) in providers.entries) {
+      if (value is! Map<String, Object?> ||
+          !const {'http', 'inline'}.contains(value['type'])) {
+        _skip(
+          'rule-providers',
+          name,
+          value is Map && value['type'] == 'file'
+              ? MitmModuleSkipReason.relativeData
+              : MitmModuleSkipReason.unreadable,
+        );
+        continue;
+      }
+      final provider = {
+        for (final MapEntry(:key, :value) in value.entries)
+          if (key != 'path') key: value is String ? _stashText(value) : value,
+      };
+      final mapped = _ruleSetName('stash:$name:${jsonEncode(provider)}');
+      _stashProviderNames[name] = mapped;
+      _ruleProviders[mapped] = provider;
+    }
   }
 
   void _readStashArguments(Object? arguments) {

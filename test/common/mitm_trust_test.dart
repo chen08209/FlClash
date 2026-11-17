@@ -205,7 +205,10 @@ void main() {
         () => app.removeCaCertificateWithRoot(any()),
       ).thenAnswer((_) async => true);
 
-      expect(await AndroidMitmTrustStore(app).remove(_ca), isTrue);
+      expect(
+        await AndroidMitmTrustStore(app).remove(_ca),
+        MitmRemoveOutcome.removed,
+      );
       verify(() => app.removeCaCertificateWithRoot(any())).called(1);
     });
 
@@ -216,7 +219,23 @@ void main() {
         () => app.removeCaCertificateWithRoot(any()),
       ).thenAnswer((_) async => true);
 
-      expect(await AndroidMitmTrustStore(app).remove(_ca), isFalse);
+      expect(
+        await AndroidMitmTrustStore(app).remove(_ca),
+        MitmRemoveOutcome.userStore,
+      );
+    });
+
+    test('a system CA without su is left for the root manager', () async {
+      final app = _MockApp();
+      locate(app, system: true);
+      when(
+        () => app.removeCaCertificateWithRoot(any()),
+      ).thenAnswer((_) async => false);
+
+      expect(
+        await AndroidMitmTrustStore(app).remove(_ca),
+        MitmRemoveOutcome.needsRoot,
+      );
     });
   });
 
@@ -304,7 +323,7 @@ void main() {
     });
 
     test('removing deletes the CA by its hash', () async {
-      expect(await store().remove(_ca), isTrue);
+      expect(await store().remove(_ca), MitmRemoveOutcome.removed);
 
       expect(processes.argumentsOf('/usr/bin/security').single, [
         'delete-certificate',
@@ -332,7 +351,7 @@ void main() {
     });
 
     test('removing deletes the CA by its SHA-1', () async {
-      expect(await store().remove(_ca), isTrue);
+      expect(await store().remove(_ca), MitmRemoveOutcome.removed);
 
       expect(processes.argumentsOf('certutil').single, [
         '-user',
@@ -400,7 +419,7 @@ void main() {
         await touch('/home/.pki/nssdb/cert9.db');
         listDatabases(stays: false);
 
-        expect(await store().remove(_ca), isTrue);
+        expect(await store().remove(_ca), MitmRemoveOutcome.removed);
 
         expect(elevated, [
           ['/bin/sh', '-c', LinuxMitmTrustStore.removeScript, 'flclash'],
@@ -408,7 +427,7 @@ void main() {
       });
 
       test('asks for no elevation for a CA the bundle does not hold', () async {
-        expect(await store().remove(_ca), isTrue);
+        expect(await store().remove(_ca), MitmRemoveOutcome.removed);
 
         expect(elevated, isEmpty);
       });
@@ -417,20 +436,23 @@ void main() {
         files[LinuxMitmTrustStore.bundles.first] = _pem;
         elevation = false;
 
-        expect(await store().remove(_ca), isFalse);
+        expect(await store().remove(_ca), MitmRemoveOutcome.failed);
       });
 
       test('reports a database it could not clear', () async {
         await touch('/home/.pki/nssdb/cert9.db');
         listDatabases(stays: true);
 
-        expect(await store().remove(_ca), isFalse);
+        expect(await store().remove(_ca), MitmRemoveOutcome.failed);
       });
 
       test('reports databases no certutil can reach', () async {
         await touch('/home/.pki/nssdb/cert9.db');
 
-        expect(await store(certutil: false).remove(_ca), isFalse);
+        expect(
+          await store(certutil: false).remove(_ca),
+          MitmRemoveOutcome.failed,
+        );
       });
     });
 

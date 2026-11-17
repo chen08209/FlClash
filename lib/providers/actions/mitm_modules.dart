@@ -3,31 +3,6 @@ part of '../action.dart';
 MitmModuleContent _parseMitmModule((String, Map<String, String>) source) =>
     parseMitmModule(source.$1, values: source.$2);
 
-bool _bringsNewScripts(
-  ({
-    String before,
-    Map<String, String> resourcesBefore,
-    String after,
-    Map<String, String> resourcesAfter,
-    Map<String, String> values,
-  })
-  source,
-) {
-  return mitmScriptScope(
-        source.after,
-        values: source.values,
-        resources: source.resourcesAfter,
-      )
-      .difference(
-        mitmScriptScope(
-          source.before,
-          values: source.values,
-          resources: source.resourcesBefore,
-        ),
-      )
-      .isNotEmpty;
-}
-
 @Riverpod(keepAlive: true)
 class MitmModulesAction extends _$MitmModulesAction {
   var _autoUpdating = false;
@@ -106,51 +81,44 @@ class MitmModulesAction extends _$MitmModulesAction {
     ref.read(mitmModulesProvider.notifier).put(module, first: first);
   }
 
-  /// Downloads the resources of the lines the new values bring in, which the
-  /// last save did not see. Returns the module if the values turned it off by
-  /// declaring more scripts than the user accepted.
-  Future<MitmModule?> setArguments(
+  Future<void> setArguments(
     MitmModule module,
     Map<String, String> arguments,
   ) async {
     putModule(module.copyWith(arguments: arguments));
     final held = <String>[];
-    MitmModule? turnedOff;
     try {
       final text = await File(await _pathOf(module)).readAsString();
       final content = await compute(_parseMitmModule, (text, arguments));
-      if (ref.mounted &&
-          module.enabled &&
-          content.declaredScripts > module.scripts) {
-        turnedOff = (await _current(
-          module.id,
-        ))?.copyWith(enabled: false, scripts: content.declaredScripts);
-        if (turnedOff != null && ref.mounted) {
-          putModule(turnedOff);
-        }
-      }
       final missing = content.resourceUrls.difference({
         ...module.resources.keys,
       });
-      if (missing.isEmpty || !ref.mounted) {
-        return turnedOff;
-      }
-      final fetched = await _download(missing, previous: const {}, held: held);
+      final fetched = missing.isEmpty || !ref.mounted
+          ? const <String, String>{}
+          : await _download(missing, previous: const {}, held: held);
+      final written = await _writeInline({
+        for (final MapEntry(:key, :value) in content.inlineResources.entries)
+          if (!module.resources.containsKey(key)) key: value,
+      }, held);
       final current = await _current(module.id);
-      if (fetched.isNotEmpty && current != null && ref.mounted) {
-        final saved = current.copyWith(
-          resources: {...current.resources, ...fetched},
-        );
-        putModule(saved);
-        turnedOff = turnedOff == null ? null : saved;
+      if (!ref.mounted ||
+          current == null ||
+          (fetched.isEmpty &&
+              written.isEmpty &&
+              current.scripts == content.declaredScripts)) {
+        return;
       }
-      return turnedOff;
+      putModule(
+        current.copyWith(
+          resources: {...current.resources, ...fetched, ...written},
+          scripts: content.declaredScripts,
+        ),
+      );
     } on FileSystemException catch (e) {
       commonPrint.log(
         'MITM module ${module.name}: ${compactError(e)}',
         logLevel: LogLevel.warning,
       );
-      return turnedOff;
     } finally {
       held.forEach(_held.remove);
     }
@@ -209,10 +177,8 @@ class MitmModulesAction extends _$MitmModulesAction {
     mitmModulesProvider.future,
   )).where((item) => item.id == id).firstOrNull;
 
-  /// A module [added] with scripts starts off until the user accepts them, and
-  /// one an update brings new or changed scripts to turns off until they accept
-  /// again; with no earlier text, as after a restore, only the count can tell.
-  /// What the user changed while it downloaded stays.
+  /// Accepting a module's scripts or network changes trusts its source, so
+  /// later saves keep it on.
   Future<MitmModule> _save(
     MitmModule module,
     String text, {
@@ -227,12 +193,12 @@ class MitmModulesAction extends _$MitmModulesAction {
     final held = [module.fileName];
     _held.addAll(held);
     try {
-      final previous = added || edited ? null : await _readText(module);
       final resources = await _download(
         content.resourceUrls,
         previous: module.resources,
         held: held,
       );
+      final written = await _writeInline(content.inlineResources, held);
       await File(await _pathOf(module)).writeAsStringAtomically(text);
       if (!ref.mounted) {
         return module;
@@ -241,31 +207,15 @@ class MitmModulesAction extends _$MitmModulesAction {
       if (current == null || !ref.mounted) {
         return module;
       }
-      final merged = {...mitmAttachments(current), ...resources};
-      final bringsNew =
-          previous != null &&
-          current.enabled &&
-          await compute(_bringsNewScripts, (
-            before: previous,
-            resourcesBefore: current.resources,
-            after: text,
-            resourcesAfter: merged,
-            values: current.arguments,
-          ));
-      if (!ref.mounted) {
-        return module;
-      }
       final saved = current.copyWith(
         name: content.name ?? current.name,
         description: content.description ?? '',
         system: content.system,
         enabled: added
-            ? content.declaredScripts == 0
-            : current.enabled &&
-                  !bringsNew &&
-                  content.declaredScripts <= current.scripts,
+            ? content.declaredScripts == 0 && !content.asksConsent
+            : current.enabled,
         scripts: content.declaredScripts,
-        resources: merged,
+        resources: {...mitmAttachments(current), ...resources, ...written},
         lastUpdateTime: DateTime.now(),
       );
       putModule(saved, first: first);
@@ -288,14 +238,6 @@ class MitmModulesAction extends _$MitmModulesAction {
           logLevel: LogLevel.warning,
         );
       }
-    }
-  }
-
-  Future<String?> _readText(MitmModule module) async {
-    try {
-      return await File(await _pathOf(module)).readAsString();
-    } on FileSystemException {
-      return null;
     }
   }
 
@@ -333,6 +275,19 @@ class MitmModulesAction extends _$MitmModulesAction {
         }(),
     ]);
     return {for (final (index, url) in urls.indexed) url: ?names[index]};
+  }
+
+  Future<Map<String, String>> _writeInline(
+    Map<String, String> sources,
+    List<String> held,
+  ) async {
+    final written = <String, String>{};
+    for (final MapEntry(:key, :value) in sources.entries) {
+      final name = await _storeResource(key, utf8.encode(value));
+      held.add(name);
+      written[key] = name;
+    }
+    return written;
   }
 
   Future<String> _storeResource(String source, List<int> bytes) async {
@@ -416,13 +371,7 @@ class MitmModulesAction extends _$MitmModulesAction {
           continue;
         }
         try {
-          final updated = await updateModule(module);
-          if (module.enabled && !updated.enabled) {
-            dialogs.showBanner(
-              currentAppLocalizations.mitmModuleScriptsChanged(updated.name),
-              level: BannerLevel.warning,
-            );
-          }
+          await updateModule(module);
         } catch (e) {
           commonPrint.log(
             'auto update ${module.name}: ${compactError(e)}',

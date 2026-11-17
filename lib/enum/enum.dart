@@ -850,6 +850,9 @@ enum MitmList {
   headerRewrite('header-rewrite'),
   bodyRewrite('body-rewrite'),
   mapLocal('map-local'),
+  requestBodyMock('request-body-mock'),
+  clientSourceAddress('client-source-address'),
+  skipVerifyHostname('skip-server-cert-verify-hostname'),
   script('script');
 
   final String key;
@@ -860,6 +863,10 @@ enum MitmList {
 enum MitmTrust { notGenerated, notInstalled, untrusted, ready }
 
 enum MitmInstallOutcome { installed, untilReboot, prompted, saved }
+
+/// [userStore]: only the user can take it out, in Android's settings.
+/// [needsRoot]: Android's system store holds it and su was unavailable.
+enum MitmRemoveOutcome { removed, userStore, needsRoot, failed }
 
 enum CoreStatus { connecting, connected, disconnected }
 

@@ -94,6 +94,9 @@ extension MitmListL10n on MitmList {
       MitmList.headerRewrite => appLocalizations.headerRewrite,
       MitmList.bodyRewrite => appLocalizations.bodyRewrite,
       MitmList.mapLocal => appLocalizations.mapLocal,
+      MitmList.requestBodyMock => appLocalizations.requestBodyMock,
+      MitmList.clientSourceAddress => appLocalizations.clientSourceAddress,
+      MitmList.skipVerifyHostname => appLocalizations.skipVerifyHostname,
       MitmList.script => appLocalizations.script,
     };
   }

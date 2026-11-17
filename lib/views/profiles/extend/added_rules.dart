@@ -3,6 +3,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/models/profile.dart';
+import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/rules.dart';
@@ -199,7 +200,33 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
 bool _runsScript(Profile? profile) =>
     profile?.type != ProfileType.custom && profile?.scriptId != null;
 
+/// A custom profile has no profile file: its own groups, the app's proxies
+/// and its own rules stand in.
 ClashConfig? _watchOutbounds(WidgetRef ref, int profileId) {
+  if (ref.watch(
+    profileProvider(
+      profileId,
+    ).select((state) => state?.type == ProfileType.custom),
+  )) {
+    final groups = ref.watch(proxyGroupsProvider(profileId)).value;
+    final proxies = ref.watch(customProxiesProvider).value;
+    final rules = ref.watch(profileRulesProvider(profileId)).value;
+    if (groups == null || proxies == null || rules == null) {
+      return null;
+    }
+    return ClashConfig(
+      proxyGroups: groups,
+      rules: rules,
+      proxies: [
+        for (final proxy in proxies)
+          if (proxy.definition case {
+            'name': final String name,
+            'type': final String type,
+          })
+            Proxy(name: name, type: type),
+      ],
+    );
+  }
   final scripted = ref.watch(profileProvider(profileId).select(_runsScript))
       ? ref.watch(scriptOutboundsProvider(profileId))
       : const AsyncData<ClashConfig?>(null);
@@ -210,25 +237,43 @@ ClashConfig? _watchOutbounds(WidgetRef ref, int profileId) {
   };
 }
 
+String? _watchFallback(WidgetRef ref, int profileId) =>
+    ref.watch(
+      profileProvider(
+        profileId,
+      ).select((state) => state?.type == ProfileType.custom),
+    )
+    ? matchTargetOf(_watchOutbounds(ref, profileId)?.rules ?? const [])
+    : ref.watch(profileMatchTargetProvider(profileId)).value;
+
 Set<String> _namesOf(ClashConfig config) => {
   for (final item in config.proxyGroups) item.name,
   for (final item in config.proxies) item.name,
 };
 
+/// The exits a profile's added rules and the enabled MITM modules name; a
+/// custom profile has only the modules'.
 class ExitsSection extends ConsumerWidget {
   final int profileId;
+  final bool modulesOnly;
 
-  const ExitsSection(this.profileId, {super.key});
+  const ExitsSection(this.profileId, {super.key, this.modulesOnly = false});
 
-  List<String> _watchExits(WidgetRef ref) {
+  List<String> _watchExits(WidgetRef ref, Map<String, List<String>> modules) {
+    if (modulesOnly) {
+      return modules.keys.toList();
+    }
     final own = ref.watch(profileRulesProvider(profileId)).value ?? const [];
     final global = ref.watch(globalRulesProvider).value ?? const [];
     final disabled =
         ref.watch(profileDisabledRuleIdsProvider(profileId)).value ?? const [];
-    return customExitsOf([
-      ...own,
-      ...global.where((rule) => !disabled.contains(rule.id)),
-    ]).toList();
+    return {
+      ...customExitsOf([
+        ...own,
+        ...global.where((rule) => !disabled.contains(rule.id)),
+      ]),
+      ...modules.keys,
+    }.toList();
   }
 
   Future<void> _handleSelect(
@@ -261,9 +306,7 @@ class ExitsSection extends ConsumerWidget {
             );
           }
           final clashConfig = _watchOutbounds(ref, profileId);
-          final fallback = ref
-              .watch(profileMatchTargetProvider(profileId))
-              .value;
+          final fallback = _watchFallback(ref, profileId);
           final groups = clashConfig?.proxyGroups ?? const [];
           final proxies = clashConfig?.proxies ?? const [];
           final groupTypes = {
@@ -332,6 +375,7 @@ class ExitsSection extends ConsumerWidget {
     required String? target,
     required Set<String>? names,
     required String? fallback,
+    required List<String>? modules,
   }) {
     bool usable(String? name) =>
         name != null &&
@@ -344,9 +388,14 @@ class ExitsSection extends ConsumerWidget {
         : usable(fallback)
         ? fallback
         : null;
+    final lines = [
+      ?actual,
+      if (modules != null)
+        context.appLocalizations.mitmExitModules(modules.join(', ')),
+    ];
     return ListItem(
       title: Text(exit),
-      subtitle: actual == null ? null : Text(actual),
+      subtitle: lines.isEmpty ? null : Text(lines.join('\n')),
       trailing: Text(
         target ?? context.appLocalizations.exitDefault,
         style: AppTextStyle.subheadline
@@ -366,7 +415,8 @@ class ExitsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final exits = _watchExits(ref);
+    final modules = ref.watch(mitmModuleExitsProvider).value ?? const {};
+    final exits = _watchExits(ref, modules);
     if (exits.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -375,23 +425,21 @@ class ExitsSection extends ConsumerWidget {
     );
     final outbounds = _watchOutbounds(ref, profileId);
     final names = outbounds == null ? null : _namesOf(outbounds);
-    final fallback = ref.watch(profileMatchTargetProvider(profileId)).value;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: generateSection(
-        title: context.appLocalizations.outboundExit,
-        items: [
-          for (final exit in exits)
-            _buildExit(
-              context,
-              ref,
-              exit: exit,
-              target: exitTargets?[exit],
-              names: names,
-              fallback: fallback,
-            ),
-        ],
-      ),
+    final fallback = _watchFallback(ref, profileId);
+    return generateSection(
+      title: context.appLocalizations.outboundExit,
+      items: [
+        for (final exit in exits)
+          _buildExit(
+            context,
+            ref,
+            exit: exit,
+            target: exitTargets?[exit],
+            names: names,
+            fallback: fallback,
+            modules: modules[exit],
+          ),
+      ],
     );
   }
 }

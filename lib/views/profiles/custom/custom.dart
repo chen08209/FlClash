@@ -10,6 +10,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/dns.dart';
+import 'package:fl_clash/views/profiles/extend/added_rules.dart';
 import 'package:fl_clash/views/config/ntp.dart';
 import 'package:fl_clash/views/config/sniffer.dart';
 import 'package:fl_clash/views/config/tun.dart';
@@ -601,6 +602,7 @@ class _MoreSectionsView extends ConsumerWidget {
                 ),
             ],
           ),
+          ExitsSection(profileId, modulesOnly: true),
         ],
       ),
     );

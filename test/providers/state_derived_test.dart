@@ -2,12 +2,14 @@ import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/common/cidr.dart';
 import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/mitm_network.dart';
 import 'package:fl_clash/common/system.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/views/navigation.dart';
 import 'package:flutter/widgets.dart';
@@ -818,6 +820,50 @@ void main() {
     expect(
       container.read(sharedStateProvider).vpnOptions?.routeAddress,
       subtractCidrs(const [], privateRouteAddress, wholeWhenEmpty: true),
+    );
+  });
+
+  test('modules add their routes and bypass domains to the VPN', () async {
+    final scoped = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        mitmModuleNetworkProvider.overrideWith(
+          (ref) async => const MitmNetwork(
+            routeAddress: ['172.16.0.0/12'],
+            routeExcludeAddress: MitmListEdit(
+              replace: true,
+              before: ['10.0.0.0/8'],
+            ),
+            bypassDomain: MitmListEdit(after: ['captive.test']),
+          ),
+        ),
+      ],
+    );
+    addTearDown(scoped.dispose);
+    scoped
+        .read(networkSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            bypassPrivateRoute: false,
+            bypassDomain: const ['localhost'],
+          ),
+        );
+    var vpn = await scoped.read(vpnOptionsProvider.future);
+    expect(vpn.bypassDomain, ['localhost', 'captive.test']);
+    expect(vpn.routeAddress, isNot(contains('0.0.0.0/0')));
+    expect(vpn.routeAddress, contains('::/0'));
+
+    scoped
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            tun: state.tun.copyWith(routeAddress: const ['192.168.0.0/16']),
+          ),
+        );
+    vpn = await scoped.read(vpnOptionsProvider.future);
+    expect(
+      vpn.routeAddress,
+      unorderedEquals(['192.168.0.0/16', '172.16.0.0/12', '::/0']),
     );
   });
 

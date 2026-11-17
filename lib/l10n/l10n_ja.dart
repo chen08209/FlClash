@@ -3215,9 +3215,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'オンにすると、FlClash は復号するホストに送られるすべての内容（Cookie やパスワードを含む）を読み取れます。書き換えが必要なホストに限ってオンにしてください。';
 
   @override
-  String get certificate => '証明書';
-
-  @override
   String get generateCertificate => '証明書を生成';
 
   @override
@@ -3257,11 +3254,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mitmTrustChecking => '確認中…';
 
   @override
-  String get trustCertificate => '証明書を信頼';
-
-  @override
   String get mitmCertificateAndroidReadyTip =>
       '復号されるのはユーザー証明書を信頼するアプリ（主にブラウザ）だけです。';
+
+  @override
+  String get mitmAndroidRootDesc =>
+      'root がない場合、復号できるのはユーザー証明書を信頼するアプリ（主にブラウザ）だけです。root があればすべてのアプリを復号できます。';
 
   @override
   String get mitmCertificateLinuxTip =>
@@ -3319,6 +3317,30 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get removeCertificate => '証明書を削除';
+
+  @override
+  String get removeCertificateSuccess => '証明書を削除しました';
+
+  @override
+  String get mitmSystemStoreRemoveFailed => '証明書をシステムの信頼されたルートから削除できませんでした';
+
+  @override
+  String get mitmRemoveInSettings => '設定で削除';
+
+  @override
+  String mitmRemoveUserCertificateTip(Object name) {
+    return 'Android ではアプリがユーザー証明書を削除できません。設定の「セキュリティ › 暗号化と認証情報 › 信頼できる認証情報 › ユーザー」で $name を削除してください。';
+  }
+
+  @override
+  String get mitmCannotRemove => '削除できません';
+
+  @override
+  String get mitmRemoveSystemCertificateTip =>
+      'この証明書は root モジュール「FlClash MITM CA」によってシステムに追加されています。root マネージャーで FlClash に root を許可してからもう一度試すか、そこでモジュールを削除して再起動してください。';
+
+  @override
   String get mitmDecryptHost => 'このホストを復号';
 
   @override
@@ -3351,7 +3373,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mapLocal => 'ローカルマップ';
 
   @override
-  String get mitmHostnameDesc => '先頭の - は除外を表し、最初に一致した項目が優先されます。';
+  String get requestBodyMock => 'リクエストボディの置き換え';
+
+  @override
+  String get clientSourceAddress => 'クライアントアドレス';
+
+  @override
+  String get skipVerifyHostname => '証明書を検証しないホスト';
 
   @override
   String get mitmModules => 'モジュール';
@@ -3376,8 +3404,69 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mitmModuleRulesDesc => 'ルーティングルールはプロファイル自身のルールより前に入ります。';
 
   @override
+  String get mitmRequestRulesDesc =>
+      'このモジュールの URL-REGEX と USER-AGENT のルールは URL 書き換えに変換され、リクエストごとに判定されます。平文の HTTP はすべてのリクエスト、HTTPS は MITM ホスト名に含まれる接続だけが対象です。';
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return '$system 向けに書かれています。一部の行はこのデバイスのアプリに一致しない場合があります。';
+  }
+
+  @override
+  String mitmModuleRequirementTip(Object requirement) {
+    return 'このモジュールは $requirement を必要としますが、このデバイスは満たしていないため、想定どおりに動作しない場合があります。';
+  }
+
+  @override
+  String mitmExitModules(Object modules) {
+    return 'モジュール：$modules';
+  }
+
+  @override
+  String get mitmModuleRiskTitle => 'このモジュールをオンにしますか？';
+
+  @override
+  String get mitmNetworkRisk =>
+      '設定の生成時に以下のネットワーク設定を変更し、FlClash で同じ項目に設定した内容より優先されます。モジュールをオフにするか削除すると元に戻ります。';
+
+  @override
+  String mitmSkipVerifyRisk(Object hosts) {
+    return 'オンにすると、次のホストのサーバー証明書を検証しなくなり、それらになりすましたサーバーに気付けなくなります：$hosts';
+  }
+
+  @override
+  String mitmClientSourceRisk(Object addresses) {
+    return '次のクライアントの通信だけを復号します：$addresses。TUN がオンのとき、この端末のアプリは TUN のアドレスから接続するため、対象外になることがあります。';
+  }
+
+  @override
+  String get mitmClientSourceTunTip =>
+      'TUN がオンのとき、この端末のアプリの送信元は TUN のアドレスです。リストに含まれていない場合、その通信は復号されません。';
+
+  @override
+  String get mitmNetworkChanges => 'ネットワーク設定';
+
+  @override
+  String mitmChangeReplace(Object values) {
+    return '$values に置き換え';
+  }
+
+  @override
+  String mitmChangeInsert(Object values) {
+    return '先頭に $values を追加';
+  }
+
+  @override
+  String mitmChangeAppend(Object values) {
+    return '$values を追加';
+  }
+
+  @override
+  String get mitmChangeOverridesYours => 'あなたの設定より優先されます';
+
+  @override
+  String mitmChangeReplacedBy(Object module) {
+    return 'モジュール $module が優先されています';
   }
 
   @override
@@ -3395,19 +3484,35 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mitmSkipRule => 'この種類のルールには対応していません';
 
   @override
-  String get mitmSkipPolicy => 'DIRECT と REJECT のポリシーのみに対応しています';
+  String get mitmSkipHttpRulePolicy =>
+      'URL-REGEX と USER-AGENT のルールは REJECT 系のポリシーのみ使えます';
 
   @override
-  String get mitmSkipJq => 'jq による書き換えには対応していません';
+  String get mitmSkipFinalRule => 'モジュールのルールは先頭に入るため、最終ルールは以降のすべてのルールを隠してしまいます';
 
   @override
-  String get mitmSkipJsonBody => 'JSON 本文の書き換えには対応していません';
+  String get mitmSkipDeviceRule => 'このルールには FlClash が読み取れないデバイスやネットワークの情報が必要です';
 
   @override
-  String get mitmSkipRawHeader => 'ヘッダー全体を 1 つのテキストとして書き換えることには対応していません';
+  String get mitmSkipRequirement => 'この行の使用条件をこのデバイスは満たしていません';
+
+  @override
+  String get mitmSkipManagedCa => 'CA 証明書は FlClash が管理しており、モジュールからは変更できません';
+
+  @override
+  String get mitmSkipProxies => 'モジュールはプロキシやプロキシグループを変更できません';
+
+  @override
+  String get mitmSkipAppOnly => '元のアプリ固有の機能で、FlClash には対応するものがありません';
+
+  @override
+  String get mitmSkipReflect => 'FlClash はパケットを送信元へ折り返せません';
 
   @override
   String get mitmSkipConditional => '条件付きの書き換えには対応していません';
+
+  @override
+  String get mitmSkipSkipVerifyAll => 'すべてのホストで証明書の検証を無効にすることはできません';
 
   @override
   String get mitmSkipRelativeData => 'この行が指すファイルは添付されていません。URL を使うか、添付してください';
@@ -3446,6 +3551,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mitmRunScript => '今すぐ実行';
 
   @override
+  String get mitmScriptCron => '定期';
+
+  @override
+  String get mitmScriptEvent => 'イベント';
+
+  @override
+  String get mitmScriptGeneric => '汎用';
+
+  @override
+  String get mitmExcluded => '除外';
+
+  @override
   String get mitmScriptNoOutput => 'スクリプトは出力なしで終了しました';
 
   @override
@@ -3453,12 +3570,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mitmScriptRisk =>
-      'スクリプトは一致したホストの通信を読み取り、変更できます。Cookie やトークンも含まれ、独自にリクエストを送ることもできます。提供元を信頼できる場合にのみオンにしてください。';
-
-  @override
-  String mitmModuleScriptsChanged(Object name) {
-    return '$name のスクリプトが変更されたためオフにしました';
-  }
+      'スクリプトは一致したホストの通信を読み取り、変更できます。Cookie やトークンも含まれ、独自にリクエストを送ることもできます。提供元を信頼できる場合にのみオンにしてください。オンにすると、以後の更新は確認なしで反映されます。';
 
   @override
   String get skipServerCertVerify => 'サーバー証明書の検証をスキップ';

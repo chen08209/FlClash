@@ -213,7 +213,8 @@ SharedState sharedState(Ref ref) {
 }
 
 @Riverpod(keepAlive: true)
-Future<List<String>> vpnRouteAddress(Ref ref) {
+Future<List<String>> vpnRouteAddress(Ref ref) async {
+  final modules = ref.watch(mitmModuleNetworkProvider.future);
   final routes = ref.watch(
     patchClashConfigProvider.select(
       (state) => Tun(
@@ -225,7 +226,18 @@ Future<List<String>> vpnRouteAddress(Ref ref) {
   final bypassPrivateRoute = ref.watch(
     networkSettingProvider.select((state) => state.bypassPrivateRoute),
   );
-  return routes.vpnRouteAddress(bypassPrivateRoute: bypassPrivateRoute);
+  final network = await modules;
+  return routes
+      .copyWith(
+        routeAddress: routes.routeAddress.isEmpty
+            ? const []
+            : {...routes.routeAddress, ...network.routeAddress}.toList(),
+        routeExcludeAddress: {
+          ...routes.routeExcludeAddress,
+          ...?network.routeExcludeAddress?.values,
+        }.toList(),
+      )
+      .vpnRouteAddress(bypassPrivateRoute: bypassPrivateRoute);
 }
 
 @Riverpod(keepAlive: true)
@@ -246,6 +258,7 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
   final vpnSetting = ref.watch(vpnSettingProvider);
   final safeMode = ref.watch(safeModeProvider);
   final routeAddress = ref.watch(vpnRouteAddressProvider.future);
+  final modules = ref.watch(mitmModuleNetworkProvider.future);
   final tun = clashConfig.tun;
   return VpnOptions(
     enable: vpnSetting.enable && !safeMode,
@@ -259,7 +272,9 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
     dnsHijacking: vpnSetting.dnsHijacking,
     accessControlProps: vpnSetting.accessControlProps,
     allowBypass: vpnSetting.allowBypass,
-    bypassDomain: networkSetting.bypassDomain,
+    bypassDomain:
+        (await modules).bypassDomain?.applyTo(networkSetting.bypassDomain) ??
+        networkSetting.bypassDomain,
     routeAddress: await routeAddress,
     mtu: tun.mtu,
     congestionController: tun.congestionController,

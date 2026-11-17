@@ -346,6 +346,150 @@ void main() {
     });
   });
 
+  group('module exits', () {
+    const module = MitmModuleSource(
+      content: '''
+[Rule]
+DOMAIN,a.example,Media
+DOMAIN,b.example,PROXY
+RULE-SET,https://example.com/ai.list,AI,no-resolve
+DOMAIN,c.example,REJECT
+''',
+    );
+
+    List<Object?> moduleRulesOf(YamlMap config) =>
+        (config['rules'] as List).take(4).toList();
+
+    Future<YamlMap> normal(Map<String, String> exitTargets) async {
+      final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
+        jsonEncode({
+          'proxies': [
+            {'name': 'HK', 'type': 'ss'},
+          ],
+          'proxy-groups': [
+            for (final name in ['Proxy', 'Media'])
+              {'name': name, 'type': 'select'},
+          ],
+          'rules': ['MATCH,Proxy'],
+        }),
+      );
+      final real = await makeRealProfileTask(
+        MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 7,
+          rawConfig: rawConfig,
+          realPatchConfig: const PatchClashConfig(mitm: Mitm(enable: true)),
+          appendSystemDns: false,
+          proxyGroups: const [],
+          rules: const [],
+          addedRules: const [],
+          defaultUA: 'FlClash-Test',
+          exitTargets: exitTargets,
+          mitmModules: const [module],
+        ),
+      );
+      return loadYaml(real.yaml) as YamlMap;
+    }
+
+    test('go to a group of their name, then where MATCH goes', () async {
+      final config = await normal(const {});
+      final rules = moduleRulesOf(config);
+      expect(rules.take(2), [
+        'DOMAIN,a.example,Media',
+        'DOMAIN,b.example,Proxy',
+      ]);
+      expect('${rules[2]}', matches(r'^RULE-SET,mitm-\w+,Proxy,no-resolve$'));
+      expect(rules[3], 'DOMAIN,c.example,REJECT');
+      final set = '${rules[2]}'.split(',')[1];
+      expect(
+        (config['rule-providers'] as YamlMap)[set]['url'],
+        'https://example.com/ai.list',
+      );
+    });
+
+    test(
+      'go where the profile maps them, and back from a target gone',
+      () async {
+        final rules = moduleRulesOf(
+          await normal({'PROXY': 'HK', 'AI': 'DIRECT', 'Media': 'Gone'}),
+        );
+        expect(rules[0], 'DOMAIN,a.example,Media');
+        expect(rules[1], 'DOMAIN,b.example,HK');
+        expect('${rules[2]}', endsWith(',DIRECT,no-resolve'));
+      },
+    );
+
+    test('read an attached rule set where it is, not confined', () async {
+      final rawConfig = await decodeJSONTask<Map<String, dynamic>>(
+        jsonEncode({
+          'rules': ['MATCH,DIRECT'],
+        }),
+      );
+      final real = await makeRealProfileTask(
+        MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 7,
+          rawConfig: rawConfig,
+          realPatchConfig: const PatchClashConfig(mitm: Mitm(enable: true)),
+          appendSystemDns: false,
+          proxyGroups: const [],
+          rules: const [],
+          addedRules: const [],
+          defaultUA: 'FlClash-Test',
+          mitmModules: const [
+            MitmModuleSource(
+              content: '[Rule]\nDOMAIN-SET,reject.conf,REJECT\n',
+              resources: {'reject.conf': 'ab12.conf'},
+            ),
+          ],
+        ),
+      );
+      final config = loadYaml(real.yaml) as YamlMap;
+      final set = '${(config['rules'] as List).first}'.split(',')[1];
+      expect(Map.of((config['rule-providers'] as YamlMap)[set] as YamlMap), {
+        'type': 'file',
+        'behavior': 'domain',
+        'format': 'domain-set',
+        'path': 'mitm/resources/ab12.conf',
+      });
+    });
+
+    test('in a custom profile go to its own groups', () async {
+      final real = await makeRealProfileTask(
+        const MakeRealProfileState(
+          profilesPath: '/profiles',
+          profileId: 9,
+          rawConfig: {},
+          realPatchConfig: PatchClashConfig(mitm: Mitm(enable: true)),
+          appendSystemDns: false,
+          proxyGroups: [
+            ProxyGroup(
+              id: 1,
+              name: 'Media',
+              type: GroupType.Selector,
+              proxies: ['DIRECT'],
+            ),
+            ProxyGroup(
+              id: 2,
+              name: 'Select',
+              type: GroupType.Selector,
+              proxies: ['DIRECT'],
+            ),
+          ],
+          rules: [Rule(ruleAction: RuleAction.MATCH, ruleTarget: 'Select')],
+          addedRules: [],
+          defaultUA: 'FlClash-Test',
+          exitTargets: {'AI': 'Media'},
+          mitmModules: [module],
+        ),
+      );
+      final rules = moduleRulesOf(loadYaml(real.yaml) as YamlMap);
+      expect(rules[0], 'DOMAIN,a.example,Media');
+      expect(rules[1], 'DOMAIN,b.example,Select');
+      expect('${rules[2]}', endsWith(',Media,no-resolve'));
+    });
+  });
+
   // The core re-reads these two keys out of the generated config on every
   // profile apply and adopts whatever it finds, so a subscription that ships
   // them would otherwise decide whether GEO databases auto-update — including

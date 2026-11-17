@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_body.dart';
 import 'package:fl_clash/common/mitm_module.dart';
+import 'package:fl_clash/common/mitm_network.dart';
 import 'package:fl_clash/common/mitm_trust.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -19,6 +20,7 @@ import 'app.dart';
 import 'config.dart';
 import 'core.dart';
 import 'database.dart';
+import 'state.dart';
 
 part 'generated/mitm.g.dart';
 
@@ -129,6 +131,30 @@ class MitmTrustState extends _$MitmTrustState {
     return outcome;
   }
 
+  Future<MitmRemoveOutcome?> remove() async {
+    final ca = await ref.read(mitmCaProvider.future);
+    final store = ref.read(mitmTrustStoreProvider);
+    if (ca == null || store == null || ref.read(safeModeProvider)) {
+      return null;
+    }
+    MitmRemoveOutcome outcome;
+    try {
+      outcome = await store.remove(ca);
+    } on ProcessException catch (error) {
+      commonPrint.log(
+        'Removing the MITM certificate failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      outcome = MitmRemoveOutcome.failed;
+    } finally {
+      if (store is AndroidMitmTrustStore && ref.mounted) {
+        ref.invalidate(rootAccessProvider);
+      }
+    }
+    await refresh();
+    return outcome;
+  }
+
   /// False when the old CA is left in the trust store for the user to remove,
   /// as safe mode always leaves it.
   Future<bool> regenerate() async {
@@ -140,7 +166,9 @@ class MitmTrustState extends _$MitmTrustState {
         store != null &&
         (trust == MitmTrust.ready || trust == MitmTrust.untrusted)) {
       try {
-        removed = !ref.read(safeModeProvider) && await store.remove(old);
+        removed =
+            !ref.read(safeModeProvider) &&
+            await store.remove(old) == MitmRemoveOutcome.removed;
       } catch (error) {
         commonPrint.log(
           'Removing the old MITM certificate failed: ${compactError(error)}',
@@ -243,27 +271,203 @@ Future<Map<String, String>> mitmHostnameIssues(Ref ref) async {
   final hostname = ref.watch(
     patchClashConfigProvider.select((state) => state.mitm.hostname),
   );
-  final issues = await _issuesOf(ref, MitmRules(hostname: hostname));
-  return issues[MitmList.hostname] ?? const {};
+  if (hostname.isEmpty) {
+    return const {};
+  }
+  final check = await _checkOf(ref, MitmRules(hostname: hostname));
+  return check.issues[MitmList.hostname] ?? const {};
 }
 
-Future<Map<MitmList, Map<String, String>>> _issuesOf(
-  Ref ref,
-  MitmRules mitm,
-) async {
+typedef _MitmLineCheck = ({
+  Map<MitmList, Map<String, String>> issues,
+  Map<MitmList, Map<String, MitmLineView>> views,
+});
+
+Future<_MitmLineCheck> _checkOf(Ref ref, MitmRules mitm) async {
   final issues = await ref.read(coreHandlerProvider).validateMitm(mitm);
-  return {
-    for (final MapEntry(key: list, value: lines) in issues.entries)
+  Map<MitmList, Map<String, T>> byLine<T>(Map<MitmList, Map<int, T>> lists) => {
+    for (final MapEntry(key: list, value: lines) in lists.entries)
       list: {
-        for (final MapEntry(key: index, value: issue) in lines.entries)
-          mitm.linesOf(list)[index]: issue,
+        for (final MapEntry(key: index, :value) in lines.entries)
+          ?mitm.linesOf(list).elementAtOrNull(index): value,
       },
   };
+  return (
+    issues: byLine(issues),
+    views: const <MitmList, Map<String, MitmLineView>>{},
+  );
 }
+
+/// A module that fails to read adds nothing, so the VPN can still start.
+@riverpod
+Future<List<({String name, MitmModuleContent content})>> enabledMitmModules(
+  Ref ref,
+) async {
+  if (!(rsFeature &&
+      ref.watch(
+        patchClashConfigProvider.select((state) => state.mitm.enable),
+      ))) {
+    return const [];
+  }
+  final modules = await ref.watch(mitmModulesProvider.future);
+  final contents = <({String name, MitmModuleContent content})>[];
+  for (final module in modules.where((module) => module.enabled)) {
+    try {
+      final content = await ref.watch(
+        mitmModuleContentProvider(module.id).future,
+      );
+      if (content != null) {
+        contents.add((name: module.name, content: content));
+      }
+    } catch (e) {
+      commonPrint.log(
+        'MITM module ${module.name}: ${compactError(e)}',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
+  return contents;
+}
+
+@riverpod
+Future<Map<String, List<String>>> mitmModuleExits(Ref ref) async {
+  final exits = <String, List<String>>{};
+  for (final module in await ref.watch(enabledMitmModulesProvider.future)) {
+    for (final exit in module.content.exits) {
+      exits.putIfAbsent(exit, () => []).add(module.name);
+    }
+  }
+  return exits;
+}
+
+typedef MitmNetworkChangeState = ({
+  MitmNetworkChange change,
+  bool overridesYours,
+  String? replacedBy,
+});
+
+/// A list goes over the user's only when it replaces it whole, a per-domain
+/// entry only where the user wrote that domain. Android's VPN reads its own
+/// route rows, never the TUN overrides, and only adds a module's routes.
+bool mitmChangeOverridesUser(
+  MitmNetworkChange change, {
+  required ProfileOverrides overrides,
+  required Map<String, String> hosts,
+}) {
+  bool dnsKey(DnsOverrideKey key) => overrides.dnsOverrideKeys.contains(key);
+  return switch (change.key) {
+    MitmNetworkKey.nameserver =>
+      change.replaces && dnsKey(DnsOverrideKey.nameserver),
+    MitmNetworkKey.defaultNameserver =>
+      change.replaces && dnsKey(DnsOverrideKey.defaultNameserver),
+    MitmNetworkKey.fakeIpFilter =>
+      change.replaces && dnsKey(DnsOverrideKey.fakeIpFilter),
+    MitmNetworkKey.nameserverPolicy =>
+      dnsKey(DnsOverrideKey.nameserverPolicy) &&
+          overrides.dns.nameserverPolicy.containsKey(change.entry),
+    MitmNetworkKey.hosts => hosts.containsKey(change.entry),
+    MitmNetworkKey.routeExcludeAddress =>
+      change.replaces &&
+          !system.isAndroid &&
+          overrides.tunOverrideKeys.contains(
+            TunOverrideKey.routeExcludeAddress,
+          ),
+    MitmNetworkKey.bypassDomain => change.replaces,
+    MitmNetworkKey.routeAddress => false,
+  };
+}
+
+@riverpod
+Future<List<MitmNetworkChangeState>> mitmModuleNetworkChanges(
+  Ref ref,
+  int id,
+) async {
+  final overrides = ref.watch(
+    profileOverridesProvider(ref.watch(currentProfileIdProvider)),
+  );
+  final hosts = ref.watch(
+    patchClashConfigProvider.select((state) => state.hosts),
+  );
+  final changes =
+      (await ref.watch(
+        mitmModuleContentProvider(id).future,
+      ))?.network.changes ??
+      const [];
+  if (changes.isEmpty) {
+    return const [];
+  }
+  final modules = await ref.watch(mitmModulesProvider.future);
+  final later = <(String, MitmNetwork)>[];
+  for (final module in modules.skipWhile((module) => module.id != id).skip(1)) {
+    if (!module.enabled) {
+      continue;
+    }
+    final content = await ref.watch(
+      mitmModuleContentProvider(module.id).future,
+    );
+    if (content != null && !content.network.isEmpty) {
+      later.add((module.name, content.network));
+    }
+  }
+  return [
+    for (final change in changes)
+      (
+        change: change,
+        overridesYours: mitmChangeOverridesUser(
+          change,
+          overrides: overrides,
+          hosts: hosts,
+        ),
+        replacedBy: later
+            .lastWhereOrNull((module) => change.replacedBy(module.$2))
+            ?.$1,
+      ),
+  ];
+}
+
+typedef MitmTakeover = ({
+  Map<MitmNetworkKey, String> keys,
+  Map<String, String> hosts,
+  Map<String, String> nameserverPolicy,
+});
+
+/// The module that last replaces each setting, for the setting's own page to
+/// name; a module that only adds to a list leaves it the user's.
+@riverpod
+Future<MitmTakeover> mitmTakeover(Ref ref) async {
+  final keys = <MitmNetworkKey, String>{};
+  final hosts = <String, String>{};
+  final nameserverPolicy = <String, String>{};
+  for (final module in await ref.watch(enabledMitmModulesProvider.future)) {
+    for (final change in module.content.network.changes) {
+      switch (change.key) {
+        case MitmNetworkKey.hosts:
+          hosts[change.entry!] = module.name;
+        case MitmNetworkKey.nameserverPolicy:
+          nameserverPolicy[change.entry!] = module.name;
+        case MitmNetworkKey.routeExcludeAddress when system.isAndroid:
+          break;
+        case final key when change.replaces:
+          keys[key] = module.name;
+        default:
+          break;
+      }
+    }
+  }
+  return (keys: keys, hosts: hosts, nameserverPolicy: nameserverPolicy);
+}
+
+@riverpod
+Future<MitmNetwork> mitmModuleNetwork(Ref ref) async => MitmNetwork.merge(
+  (await ref.watch(
+    enabledMitmModulesProvider.future,
+  )).map((module) => module.content.network),
+);
 
 typedef MitmModuleDetails = ({
   MitmModuleContent content,
   Map<MitmList, Map<String, String>> issues,
+  Map<MitmList, Map<String, MitmLineView>> views,
 });
 
 MitmModuleContent _parseModuleSource(MitmModuleSource source) =>
@@ -276,6 +480,16 @@ MitmModuleContent _parseModuleSource(MitmModuleSource source) =>
 /// Null while the module's content is not on disk.
 @riverpod
 Future<MitmModuleDetails?> mitmModuleDetails(Ref ref, int id) async {
+  final content = await ref.watch(mitmModuleContentProvider(id).future);
+  if (content == null) {
+    return null;
+  }
+  final check = await _checkOf(ref, content.mitm);
+  return (content: content, issues: check.issues, views: check.views);
+}
+
+@riverpod
+Future<MitmModuleContent?> mitmModuleContent(Ref ref, int id) async {
   final module = ref.watch(
     mitmModulesProvider.select(
       (state) => state.value?.firstWhereOrNull((item) => item.id == id),
@@ -288,7 +502,7 @@ Future<MitmModuleDetails?> mitmModuleDetails(Ref ref, int id) async {
   if (!await file.exists()) {
     return null;
   }
-  final content = await compute(
+  return compute(
     _parseModuleSource,
     MitmModuleSource(
       content: await file.readAsString(),
@@ -296,5 +510,4 @@ Future<MitmModuleDetails?> mitmModuleDetails(Ref ref, int id) async {
       resources: module.resources,
     ),
   );
-  return (content: content, issues: await _issuesOf(ref, content.mitm));
 }

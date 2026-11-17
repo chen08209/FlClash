@@ -1,42 +1,132 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/mitm_module.dart';
+import 'package:fl_clash/common/mitm_network.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/action.dart';
+import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/mitm.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' show join;
 
-Future<bool> acceptMitmScripts() async {
+String mitmNetworkChangeTitle(
+  AppLocalizations appLocalizations,
+  MitmNetworkChange change,
+) => switch (change.key) {
+  MitmNetworkKey.nameserver => 'Nameserver',
+  MitmNetworkKey.defaultNameserver => 'Default Nameserver',
+  MitmNetworkKey.fakeIpFilter => appLocalizations.fakeipFilter,
+  MitmNetworkKey.nameserverPolicy => 'Nameserver Policy',
+  MitmNetworkKey.hosts => 'Hosts',
+  MitmNetworkKey.routeAddress => appLocalizations.routeAddress,
+  MitmNetworkKey.routeExcludeAddress => appLocalizations.routeExcludeAddress,
+  MitmNetworkKey.bypassDomain => appLocalizations.bypassDomain,
+};
+
+String mitmNetworkChangeValue(
+  AppLocalizations appLocalizations,
+  MitmNetworkChange change,
+) {
+  if (change.entry case final entry?) {
+    return '$entry → ${change.values.join(', ')}';
+  }
+  final edit = change.edit;
+  if (edit == null) {
+    return appLocalizations.mitmChangeAppend(change.values.join(', '));
+  }
+  if (edit.replace) {
+    return appLocalizations.mitmChangeReplace(edit.values.join(', '));
+  }
+  return [
+    if (edit.before.isNotEmpty)
+      appLocalizations.mitmChangeInsert(edit.before.join(', ')),
+    if (edit.after.isNotEmpty)
+      appLocalizations.mitmChangeAppend(edit.after.join(', ')),
+  ].join('\n');
+}
+
+/// Scripts and network changes reach past the module's own hosts, so either
+/// asks before the module turns on.
+Future<bool> acceptMitmModule(WidgetRef ref, MitmModule module) async {
+  final content = ref.listenManual(
+    mitmModuleContentProvider(module.id).future,
+    (_, _) {},
+  );
+  final MitmModuleContent? read;
+  try {
+    read = await content.read();
+  } finally {
+    content.close();
+  }
+  final changes = read?.network.changes ?? const <MitmNetworkChange>[];
+  final unverified = read?.skipVerifyHostname ?? const <String>[];
+  final sources = read?.clientSourceAddress ?? const <String>[];
+  final scripts = module.scripts > 0;
+  if (!scripts && read?.asksConsent != true) {
+    return true;
+  }
   final appLocalizations = currentAppLocalizations;
+  final overrides = ref.read(
+    profileOverridesProvider(ref.read(currentProfileIdProvider)),
+  );
+  final hosts = ref.read(patchClashConfigProvider).hosts;
+  String line(MitmNetworkChange change) {
+    final title = mitmNetworkChangeTitle(appLocalizations, change);
+    final value = mitmNetworkChangeValue(appLocalizations, change);
+    return [
+      '• $title: $value',
+      if (mitmChangeOverridesUser(change, overrides: overrides, hosts: hosts))
+        '  ${appLocalizations.mitmChangeOverridesYours}',
+    ].join('\n');
+  }
+
   final accepted = await dialogs.showMessage(
-    title: appLocalizations.mitmScriptRiskTitle,
-    message: TextSpan(text: appLocalizations.mitmScriptRisk),
+    title: read?.asksConsent == true
+        ? appLocalizations.mitmModuleRiskTitle
+        : appLocalizations.mitmScriptRiskTitle,
+    message: TextSpan(
+      children: [
+        if (unverified.isNotEmpty)
+          TextSpan(
+            text:
+                '${appLocalizations.mitmSkipVerifyRisk(unverified.join(', '))}'
+                '\n\n',
+            style: AppTextStyle.emphasis,
+          ),
+        TextSpan(
+          text: [
+            if (scripts) appLocalizations.mitmScriptRisk,
+            if (sources.isNotEmpty)
+              appLocalizations.mitmClientSourceRisk(sources.join(', ')),
+            if (changes.isNotEmpty)
+              [
+                appLocalizations.mitmNetworkRisk,
+                for (final change in changes) line(change),
+              ].join('\n'),
+          ].join('\n\n'),
+        ),
+      ],
+    ),
     confirmText: appLocalizations.turnOn,
   );
   return accepted == true;
 }
 
-Future<void> offerMitmScripts(WidgetRef ref, MitmModule? module) async {
-  if (module != null && !module.enabled && await acceptMitmScripts()) {
+Future<void> offerMitmModule(WidgetRef ref, MitmModule? module) async {
+  if (module != null &&
+      !module.enabled &&
+      await acceptMitmModule(ref, module)) {
     ref
         .read(mitmModulesActionProvider.notifier)
         .putModule(module.copyWith(enabled: true));
-  }
-}
-
-/// An update that brings new or changed scripts turned the module off, so it
-/// asks to turn it back on.
-Future<void> updateMitmModule(WidgetRef ref, MitmModule module) async {
-  final updated = await ref
-      .read(mitmModulesActionProvider.notifier)
-      .updateModule(module);
-  if (module.enabled && !updated.enabled) {
-    await offerMitmScripts(ref, updated);
   }
 }
 
@@ -74,7 +164,9 @@ Future<void> openMitmModuleEditor(
     if (context.mounted) {
       Navigator.of(context).pop();
     }
-    await offerMitmScripts(ref, saved);
+    if (module == null) {
+      await offerMitmModule(ref, saved);
+    }
   }
 
   if (!context.mounted) {

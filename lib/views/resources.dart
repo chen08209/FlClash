@@ -4,7 +4,6 @@ import 'dart:isolate';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/features/mitm/module_editor.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -653,7 +652,8 @@ class _ModuleItem extends ConsumerWidget {
       chip: null,
       lastUpdateTime: module.lastUpdateTime,
       isUpdating: ref.watch(isUpdatingProvider(module.updatingKey)),
-      onSync: () => updateMitmModule(ref, module),
+      onSync: () =>
+          ref.read(mitmModulesActionProvider.notifier).updateModule(module),
     );
   }
 }

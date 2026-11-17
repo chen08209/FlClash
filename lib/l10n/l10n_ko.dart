@@ -3289,9 +3289,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '켜면 FlClash가 복호화되는 호스트로 보내는 모든 내용을 읽을 수 있습니다(쿠키와 비밀번호 포함). 재작성이 필요한 호스트에만 켜세요.';
 
   @override
-  String get certificate => '인증서';
-
-  @override
   String get generateCertificate => '인증서 생성';
 
   @override
@@ -3331,11 +3328,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mitmTrustChecking => '확인 중…';
 
   @override
-  String get trustCertificate => '인증서 신뢰';
-
-  @override
   String get mitmCertificateAndroidReadyTip =>
       '사용자 인증서를 신뢰하는 앱(주로 브라우저)만 복호화됩니다.';
+
+  @override
+  String get mitmAndroidRootDesc =>
+      '루팅하지 않으면 사용자 인증서를 신뢰하는 앱(주로 브라우저)만 복호화할 수 있습니다. 루팅하면 모든 앱을 복호화할 수 있습니다.';
 
   @override
   String get mitmCertificateLinuxTip => 'Flatpak 브라우저에는 내보낸 인증서를 직접 가져와야 합니다.';
@@ -3392,6 +3390,31 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get removeCertificate => '인증서 제거';
+
+  @override
+  String get removeCertificateSuccess => '인증서를 제거했습니다';
+
+  @override
+  String get mitmSystemStoreRemoveFailed =>
+      '인증서를 시스템의 신뢰할 수 있는 루트에서 제거하지 못했습니다';
+
+  @override
+  String get mitmRemoveInSettings => '설정에서 제거';
+
+  @override
+  String mitmRemoveUserCertificateTip(Object name) {
+    return 'Android에서는 앱이 사용자 인증서를 제거할 수 없습니다. 설정의 \'보안 › 암호화 및 사용자 인증 정보 › 신뢰할 수 있는 자격증명 › 사용자\'에서 $name을(를) 제거하세요.';
+  }
+
+  @override
+  String get mitmCannotRemove => '제거할 수 없음';
+
+  @override
+  String get mitmRemoveSystemCertificateTip =>
+      '인증서는 루트 모듈 \'FlClash MITM CA\'가 시스템에 추가했습니다. 루트 관리자에서 FlClash의 루트 권한을 허용한 뒤 다시 시도하거나, 그곳에서 모듈을 제거하고 다시 시작하세요.';
+
+  @override
   String get mitmDecryptHost => '이 호스트 복호화';
 
   @override
@@ -3424,7 +3447,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mapLocal => '로컬 매핑';
 
   @override
-  String get mitmHostnameDesc => '앞에 -를 붙이면 제외하며, 처음 일치하는 항목이 적용됩니다.';
+  String get requestBodyMock => '요청 본문 대체';
+
+  @override
+  String get clientSourceAddress => '클라이언트 주소';
+
+  @override
+  String get skipVerifyHostname => '인증서를 검증하지 않는 호스트';
 
   @override
   String get mitmModules => '모듈';
@@ -3449,8 +3478,69 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mitmModuleRulesDesc => '라우팅 규칙은 프로필 자체 규칙보다 앞에 적용됩니다.';
 
   @override
+  String get mitmRequestRulesDesc =>
+      '이 모듈의 URL-REGEX 및 USER-AGENT 규칙은 URL 재작성으로 바뀌어 요청마다 판단됩니다. 평문 HTTP는 모든 요청이, HTTPS는 MITM 호스트 이름 목록에 있는 연결만 대상입니다.';
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return '$system용으로 작성되었습니다. 일부 줄은 이 기기의 앱과 맞지 않을 수 있습니다.';
+  }
+
+  @override
+  String mitmModuleRequirementTip(Object requirement) {
+    return '이 모듈은 $requirement을(를) 요구하지만 이 기기는 충족하지 않아 의도대로 작동하지 않을 수 있습니다.';
+  }
+
+  @override
+  String mitmExitModules(Object modules) {
+    return '모듈: $modules';
+  }
+
+  @override
+  String get mitmModuleRiskTitle => '이 모듈을 켤까요?';
+
+  @override
+  String get mitmNetworkRisk =>
+      '구성을 생성할 때 아래 네트워크 설정을 변경하며, FlClash에서 같은 항목에 한 설정보다 우선합니다. 모듈을 끄거나 삭제하면 원래대로 돌아갑니다.';
+
+  @override
+  String mitmSkipVerifyRisk(Object hosts) {
+    return '켜면 다음 호스트의 서버 인증서를 더 이상 검증하지 않아, 이들을 사칭하는 서버를 알아차릴 수 없습니다: $hosts';
+  }
+
+  @override
+  String mitmClientSourceRisk(Object addresses) {
+    return '다음 클라이언트의 트래픽만 복호화합니다: $addresses. TUN이 켜져 있으면 이 기기의 앱은 TUN 주소에서 연결하므로 제외될 수 있습니다.';
+  }
+
+  @override
+  String get mitmClientSourceTunTip =>
+      'TUN이 켜져 있으면 이 기기의 앱은 TUN 주소에서 연결합니다. 목록에 그 주소가 없으면 앱의 트래픽은 복호화되지 않습니다.';
+
+  @override
+  String get mitmNetworkChanges => '네트워크 설정';
+
+  @override
+  String mitmChangeReplace(Object values) {
+    return '$values(으)로 바꿈';
+  }
+
+  @override
+  String mitmChangeInsert(Object values) {
+    return '앞에 $values 추가';
+  }
+
+  @override
+  String mitmChangeAppend(Object values) {
+    return '$values 추가';
+  }
+
+  @override
+  String get mitmChangeOverridesYours => '내 설정보다 우선 적용됨';
+
+  @override
+  String mitmChangeReplacedBy(Object module) {
+    return '모듈 $module이(가) 우선 적용됨';
   }
 
   @override
@@ -3468,19 +3558,36 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mitmSkipRule => '이 규칙 유형은 지원되지 않습니다';
 
   @override
-  String get mitmSkipPolicy => 'DIRECT 및 REJECT 정책만 지원됩니다';
+  String get mitmSkipHttpRulePolicy =>
+      'URL-REGEX 및 USER-AGENT 규칙은 REJECT 계열 정책만 사용할 수 있습니다';
 
   @override
-  String get mitmSkipJq => 'jq 재작성은 지원되지 않습니다';
+  String get mitmSkipFinalRule => '모듈 규칙은 맨 앞에 들어가므로 최종 규칙은 그 뒤의 모든 규칙을 가립니다';
 
   @override
-  String get mitmSkipJsonBody => 'JSON 본문 재작성은 지원되지 않습니다';
+  String get mitmSkipDeviceRule =>
+      '이 규칙에는 FlClash가 읽을 수 없는 기기 또는 네트워크 정보가 필요합니다';
 
   @override
-  String get mitmSkipRawHeader => '모든 헤더를 하나의 텍스트로 다시 쓰는 기능은 지원되지 않습니다';
+  String get mitmSkipRequirement => '이 기기는 이 줄의 사용 조건을 충족하지 않습니다';
+
+  @override
+  String get mitmSkipManagedCa => 'CA 인증서는 FlClash가 관리하며 모듈이 변경할 수 없습니다';
+
+  @override
+  String get mitmSkipProxies => '모듈은 프록시와 프록시 그룹을 변경할 수 없습니다';
+
+  @override
+  String get mitmSkipAppOnly => '원래 앱에만 있는 기능으로, FlClash에는 대응하는 항목이 없습니다';
+
+  @override
+  String get mitmSkipReflect => 'FlClash는 패킷을 보낸 쪽으로 되돌려 보낼 수 없습니다';
 
   @override
   String get mitmSkipConditional => '조건부 재작성은 지원되지 않습니다';
+
+  @override
+  String get mitmSkipSkipVerifyAll => '모든 호스트에 대해 인증서 검증을 끌 수는 없습니다';
 
   @override
   String get mitmSkipRelativeData =>
@@ -3520,6 +3627,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mitmRunScript => '지금 실행';
 
   @override
+  String get mitmScriptCron => '예약';
+
+  @override
+  String get mitmScriptEvent => '이벤트';
+
+  @override
+  String get mitmScriptGeneric => '일반';
+
+  @override
+  String get mitmExcluded => '제외';
+
+  @override
   String get mitmScriptNoOutput => '스크립트가 출력 없이 끝났습니다';
 
   @override
@@ -3527,12 +3646,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get mitmScriptRisk =>
-      '스크립트가 일치하는 호스트의 트래픽을 읽고 바꿀 수 있으며, 쿠키와 토큰도 포함되고 직접 요청을 보낼 수도 있습니다. 출처를 신뢰할 때만 켜세요.';
-
-  @override
-  String mitmModuleScriptsChanged(Object name) {
-    return '$name의 스크립트가 변경되어 껐습니다';
-  }
+      '스크립트가 일치하는 호스트의 트래픽을 읽고 바꿀 수 있으며, 쿠키와 토큰도 포함되고 직접 요청을 보낼 수도 있습니다. 출처를 신뢰할 때만 켜세요. 켜면 이후 업데이트는 다시 묻지 않고 적용됩니다.';
 
   @override
   String get skipServerCertVerify => '서버 인증서 검증 건너뛰기';

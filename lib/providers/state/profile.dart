@@ -75,17 +75,18 @@ Future<String?> profileMatchTarget(Ref ref, int profileId) async {
   return ref.read(coreHandlerProvider).getProfileMatchTarget(profileId);
 }
 
+/// What the user set over the profile: a custom profile's own settings over
+/// the app's TUN overrides, or the app's overrides for any other profile.
 @riverpod
-Future<SetupState> setupState(Ref ref, int? profileId) async {
+ProfileOverrides profileOverrides(Ref ref, int? profileId) {
   final profile = ref.watch(profileProvider(profileId));
-  final scriptId = profile?.scriptId;
-  final profileLastUpdateDate = profile?.lastUpdateDate?.millisecondsSinceEpoch;
-  final profileType = profile?.type ?? ProfileType.file;
-  final overrides = profileType == ProfileType.custom
+  return profile?.type == ProfileType.custom
       ? ref.watch(
           patchClashConfigProvider.select(
-            (state) => (profile?.overrides ?? const ProfileOverrides())
-                .overAppTun(state.tunOverride, state.tunOverrideKeys),
+            (state) => profile!.overrides.overAppTun(
+              state.tunOverride,
+              state.tunOverrideKeys,
+            ),
           ),
         )
       : ref.watch(
@@ -100,6 +101,15 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
             ),
           ),
         );
+}
+
+@riverpod
+Future<SetupState> setupState(Ref ref, int? profileId) async {
+  final profile = ref.watch(profileProvider(profileId));
+  final scriptId = profile?.scriptId;
+  final profileLastUpdateDate = profile?.lastUpdateDate?.millisecondsSinceEpoch;
+  final profileType = profile?.type ?? ProfileType.file;
+  final overrides = ref.watch(profileOverridesProvider(profileId));
   final allProfileProviders = ref.watch(profileProvidersProvider);
   final mitmModules =
       rsFeature &&
@@ -151,9 +161,7 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     addedRules: addedRules,
     script: script,
     overrides: overrides,
-    exitTargets: profileType != ProfileType.custom
-        ? profile?.exitTargets ?? const {}
-        : const {},
+    exitTargets: profile?.exitTargets ?? const {},
   );
 }
 

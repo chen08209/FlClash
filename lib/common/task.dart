@@ -312,10 +312,25 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
     };
   }
 
+  final attachedRuleSets = {
+    for (final MapEntry(:key, :value) in mitm.ruleProviders.entries)
+      if (value['type'] == 'file') key: value,
+  };
+  if (mitm.ruleProviders.length > attachedRuleSets.length) {
+    final providers = rawConfig['rule-providers'];
+    rawConfig['rule-providers'] = {
+      if (providers is Map) ...providers.cast<String, dynamic>(),
+      for (final MapEntry(:key, :value) in mitm.ruleProviders.entries)
+        if (!attachedRuleSets.containsKey(key)) key: value,
+    };
+  }
   confineProviders('proxy-providers', proxiesProviderDirectoryName);
   confineProviders('rule-providers', rulesProviderDirectoryName);
   injectUnconfinedProviders('proxy-providers', data.injectedProxyProviders);
-  injectUnconfinedProviders('rule-providers', data.injectedRuleProviders);
+  injectUnconfinedProviders('rule-providers', {
+    ...data.injectedRuleProviders,
+    ...attachedRuleSets,
+  });
   rawConfig['profile']['store-selected'] = false;
   rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
@@ -325,6 +340,7 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   for (final host in realPatchConfig.hosts.entries) {
     rawConfig['hosts'][host.key] = host.value.splitByMultipleSeparators;
   }
+  (rawConfig['hosts'] as Map).addAll(mitm.network.hosts);
   var rawDns = rawConfig['dns'] is Map
       ? Map<String, dynamic>.from(rawConfig['dns'] as Map)
       : <String, dynamic>{};
@@ -340,6 +356,7 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
     rawDns,
     overrides.dns.overrideJson(overrides.dnsOverrideKeys),
   );
+  mitm.network.applyToDns(rawDns);
   rawConfig['dns'] = rawDns;
   final ntpOverride = overrides.ntp.overrideJson(overrides.ntpOverrideKeys);
   if (ntpOverride.isNotEmpty) {
@@ -400,7 +417,18 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
         .map((item) => item.definition)
         .toList();
   }
-  rawConfig['rules'] = [...mitm.rules, ...rules];
+  final mitmRules = mitm.exits.isEmpty
+      ? mitm.rules
+      : mitmRulesWithExits(
+          mitm.rules,
+          mitm.exits,
+          exitTargetResolver(
+            targets: data.exitTargets,
+            outbounds: data.outboundNames ?? outboundNamesOf(rawConfig),
+            fallback: data.defaultExitTarget ?? lastMatchTarget(rules),
+          ),
+        );
+  rawConfig['rules'] = [...mitmRules, ...rules];
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
   return (yaml: yaml, md5: yaml.toMd5(), counts: configCountsOf(rawConfig));
 }

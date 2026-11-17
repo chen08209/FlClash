@@ -2307,6 +2307,7 @@ extension MitmExt on Mitm {
     return {
       ...json,
       ...rules.toJson(),
+      'h2': h2 || rules.h2,
       'decrypt-tls': decryptUntrusted || trustedFingerprint != null,
       'ca-fingerprint': decryptUntrusted ? '' : trustedFingerprint ?? '',
       'limits': {
@@ -2324,7 +2325,11 @@ class MitmRules {
     this.headerRewrite = const [],
     this.bodyRewrite = const [],
     this.mapLocal = const [],
+    this.requestBodyMock = const [],
+    this.clientSourceAddress = const [],
+    this.skipVerifyHostname = const [],
     this.script = const [],
+    this.h2 = false,
   });
 
   final List<String> hostname;
@@ -2332,7 +2337,13 @@ class MitmRules {
   final List<String> headerRewrite;
   final List<String> bodyRewrite;
   final List<String> mapLocal;
+  final List<String> requestBodyMock;
+  final List<String> clientSourceAddress;
+  final List<String> skipVerifyHostname;
   final List<String> script;
+
+  /// A module that turns HTTP/2 on, which only adds to the user's choice.
+  final bool h2;
 
   List<String> linesOf(MitmList list) => switch (list) {
     MitmList.hostname => hostname,
@@ -2340,6 +2351,9 @@ class MitmRules {
     MitmList.headerRewrite => headerRewrite,
     MitmList.bodyRewrite => bodyRewrite,
     MitmList.mapLocal => mapLocal,
+    MitmList.requestBodyMock => requestBodyMock,
+    MitmList.clientSourceAddress => clientSourceAddress,
+    MitmList.skipVerifyHostname => skipVerifyHostname,
     MitmList.script => script,
   };
 

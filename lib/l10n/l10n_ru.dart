@@ -3367,9 +3367,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'FlClash сможет читать всё, что отправляется на расшифровываемые узлы, включая cookie и пароли. Включайте только для узлов, которые нужно перезаписывать.';
 
   @override
-  String get certificate => 'Сертификат';
-
-  @override
   String get generateCertificate => 'Создать сертификат';
 
   @override
@@ -3410,11 +3407,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mitmTrustChecking => 'Проверка…';
 
   @override
-  String get trustCertificate => 'Доверять сертификату';
-
-  @override
   String get mitmCertificateAndroidReadyTip =>
       'Расшифровываются только приложения, доверяющие пользовательским сертификатам, в основном браузеры.';
+
+  @override
+  String get mitmAndroidRootDesc =>
+      'Без root можно расшифровать только приложения, доверяющие пользовательским сертификатам, в основном браузеры. С root — любые приложения.';
 
   @override
   String get mitmCertificateLinuxTip =>
@@ -3474,6 +3472,31 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get removeCertificate => 'Удалить сертификат';
+
+  @override
+  String get removeCertificateSuccess => 'Сертификат удалён';
+
+  @override
+  String get mitmSystemStoreRemoveFailed =>
+      'Не удалось удалить сертификат из доверенных корневых сертификатов системы';
+
+  @override
+  String get mitmRemoveInSettings => 'Удалите в настройках';
+
+  @override
+  String mitmRemoveUserCertificateTip(Object name) {
+    return 'Android не позволяет приложениям удалять пользовательские сертификаты. Удалите $name в настройках: Безопасность › Шифрование и учётные данные › Надёжные учётные данные › Пользователь.';
+  }
+
+  @override
+  String get mitmCannotRemove => 'Не удалось удалить';
+
+  @override
+  String get mitmRemoveSystemCertificateTip =>
+      'Сертификат добавлен в систему root-модулем «FlClash MITM CA». Разрешите FlClash доступ root в менеджере root и повторите попытку или удалите там модуль и перезагрузите устройство.';
+
+  @override
   String get mitmDecryptHost => 'Расшифровывать этот хост';
 
   @override
@@ -3506,8 +3529,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mapLocal => 'Локальная подмена';
 
   @override
-  String get mitmHostnameDesc =>
-      'Префикс - исключает хост; действует первое совпадение.';
+  String get requestBodyMock => 'Подмена тела запроса';
+
+  @override
+  String get clientSourceAddress => 'Адреса клиентов';
+
+  @override
+  String get skipVerifyHostname => 'Хосты без проверки сертификата';
 
   @override
   String get mitmModules => 'Модули';
@@ -3533,8 +3561,69 @@ class AppLocalizationsRu extends AppLocalizations {
       'Правила маршрутизации идут перед правилами профиля.';
 
   @override
+  String get mitmRequestRulesDesc =>
+      'Правила URL-REGEX и USER-AGENT модуля превращаются в перезаписи URL и проверяются для каждого запроса: для всех запросов по открытому HTTP, а для HTTPS — только для хостов из списка MITM.';
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return 'Написан для $system; некоторые строки могут не подходить к приложениям на этом устройстве.';
+  }
+
+  @override
+  String mitmModuleRequirementTip(Object requirement) {
+    return 'Модуль требует $requirement, а это устройство не удовлетворяет условию; он может работать не так, как задумано.';
+  }
+
+  @override
+  String mitmExitModules(Object modules) {
+    return 'Из модулей: $modules';
+  }
+
+  @override
+  String get mitmModuleRiskTitle => 'Включить этот модуль?';
+
+  @override
+  String get mitmNetworkRisk =>
+      'При создании конфигурации он меняет сетевые настройки ниже и имеет приоритет над тем, что вы задали для них в FlClash. Если выключить или удалить модуль, всё вернётся.';
+
+  @override
+  String mitmSkipVerifyRisk(Object hosts) {
+    return 'После включения сертификаты серверов этих хостов больше не проверяются, и сервер, выдающий себя за них, останется незамеченным: $hosts';
+  }
+
+  @override
+  String mitmClientSourceRisk(Object addresses) {
+    return 'Расшифровывается трафик только этих клиентов: $addresses. При включённом TUN приложения этого устройства подключаются с адреса TUN и могут не попасть в список.';
+  }
+
+  @override
+  String get mitmClientSourceTunTip =>
+      'При включённом TUN приложения этого устройства подключаются с адреса TUN; если его нет в списке, их трафик не расшифровывается.';
+
+  @override
+  String get mitmNetworkChanges => 'Сетевые настройки';
+
+  @override
+  String mitmChangeReplace(Object values) {
+    return 'Заменяется на $values';
+  }
+
+  @override
+  String mitmChangeInsert(Object values) {
+    return 'Добавляет $values в начало';
+  }
+
+  @override
+  String mitmChangeAppend(Object values) {
+    return 'Добавляет $values';
+  }
+
+  @override
+  String get mitmChangeOverridesYours => 'Перекрывает вашу настройку';
+
+  @override
+  String mitmChangeReplacedBy(Object module) {
+    return 'Перекрыто модулем $module';
   }
 
   @override
@@ -3552,20 +3641,43 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mitmSkipRule => 'Этот тип правила не поддерживается';
 
   @override
-  String get mitmSkipPolicy => 'Поддерживаются только политики DIRECT и REJECT';
+  String get mitmSkipHttpRulePolicy =>
+      'Правила URL-REGEX и USER-AGENT допускают только политику REJECT';
 
   @override
-  String get mitmSkipJq => 'Перезаписи jq не поддерживаются';
+  String get mitmSkipFinalRule =>
+      'Правила модуля идут первыми, поэтому финальное правило скрыло бы все последующие';
 
   @override
-  String get mitmSkipJsonBody => 'Перезаписи тела JSON не поддерживаются';
+  String get mitmSkipDeviceRule =>
+      'Этому правилу нужны сведения об устройстве или сети, которые FlClash не может получить';
 
   @override
-  String get mitmSkipRawHeader =>
-      'Перезапись всех заголовков как одного текста не поддерживается';
+  String get mitmSkipRequirement =>
+      'Устройство не удовлетворяет условию этой строки';
+
+  @override
+  String get mitmSkipManagedCa =>
+      'Сертификатом ЦС управляет FlClash; модуль не может его изменить';
+
+  @override
+  String get mitmSkipProxies =>
+      'Модуль не может изменять прокси и группы прокси';
+
+  @override
+  String get mitmSkipAppOnly =>
+      'Это функция исходного приложения, которой нет в FlClash';
+
+  @override
+  String get mitmSkipReflect =>
+      'FlClash не может отправить пакеты обратно отправителю';
 
   @override
   String get mitmSkipConditional => 'Условные перезаписи не поддерживаются';
+
+  @override
+  String get mitmSkipSkipVerifyAll =>
+      'Проверку сертификатов нельзя отключить для всех хостов';
 
   @override
   String get mitmSkipRelativeData =>
@@ -3605,6 +3717,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mitmRunScript => 'Запустить сейчас';
 
   @override
+  String get mitmScriptCron => 'По расписанию';
+
+  @override
+  String get mitmScriptEvent => 'Событие';
+
+  @override
+  String get mitmScriptGeneric => 'Общий';
+
+  @override
+  String get mitmExcluded => 'Исключено';
+
+  @override
   String get mitmScriptNoOutput => 'Скрипт завершился без вывода';
 
   @override
@@ -3612,12 +3736,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mitmScriptRisk =>
-      'Его скрипты читают и меняют трафик подходящих хостов, включая файлы cookie и токены, и могут сами отправлять запросы. Включайте, только если доверяете источнику.';
-
-  @override
-  String mitmModuleScriptsChanged(Object name) {
-    return 'Скрипты модуля $name изменились, модуль выключен';
-  }
+      'Его скрипты читают и меняют трафик подходящих хостов, включая файлы cookie и токены, и могут сами отправлять запросы. Включайте, только если доверяете источнику. После включения его обновления применяются без повторного запроса.';
 
   @override
   String get skipServerCertVerify => 'Пропускать проверку сертификата сервера';

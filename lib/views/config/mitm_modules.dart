@@ -19,6 +19,7 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 MitmModule? _moduleOf(WidgetRef ref, int id) => ref.watch(
   mitmModulesProvider.select(
@@ -31,7 +32,7 @@ void _putModule(WidgetRef ref, MitmModule module) {
 }
 
 Future<void> _setEnabled(WidgetRef ref, MitmModule module, bool enabled) async {
-  if (enabled && module.scripts > 0 && !await acceptMitmScripts()) {
+  if (enabled && !await acceptMitmModule(ref, module)) {
     return;
   }
   _putModule(ref, module.copyWith(enabled: enabled));
@@ -129,7 +130,7 @@ String? _resultText(String result) {
 
 Future<void> _updateModule(WidgetRef ref, MitmModule module) async {
   await globalState.safeRun<void>(
-    () => updateMitmModule(ref, module),
+    () => ref.read(mitmModulesActionProvider.notifier).updateModule(module),
     title: module.name,
     silence: false,
   );
@@ -145,6 +146,7 @@ class MitmModulesItem extends ConsumerWidget {
       mitmModulesProvider.select((state) => state.value?.length ?? 0),
     );
     return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.puzzle),
       title: Text(appLocalizations.mitmModules),
       subtitle: Text(
         count == 0 ? appLocalizations.none : appLocalizations.itemsCount(count),
@@ -182,7 +184,7 @@ class MitmModulesView extends ConsumerWidget {
         title: appLocalizations.importUrl,
         tag: LoadingTag.mitm,
       );
-      await offerMitmScripts(ref, added);
+      await offerMitmModule(ref, added);
     }
   }
 
@@ -199,7 +201,7 @@ class MitmModulesView extends ConsumerWidget {
       title: appLocalizations.importFile,
       tag: LoadingTag.mitm,
     );
-    await offerMitmScripts(ref, added);
+    await offerMitmModule(ref, added);
   }
 
   @override
@@ -383,11 +385,18 @@ class MitmModuleView extends ConsumerWidget {
       MitmModuleSkipReason.event => appLocalizations.mitmSkipEvent,
       MitmModuleSkipReason.disabled => appLocalizations.mitmSkipDisabled,
       MitmModuleSkipReason.rule => appLocalizations.mitmSkipRule,
-      MitmModuleSkipReason.policy => appLocalizations.mitmSkipPolicy,
-      MitmModuleSkipReason.jq => appLocalizations.mitmSkipJq,
-      MitmModuleSkipReason.jsonBody => appLocalizations.mitmSkipJsonBody,
-      MitmModuleSkipReason.rawHeader => appLocalizations.mitmSkipRawHeader,
+      MitmModuleSkipReason.httpRulePolicy =>
+        appLocalizations.mitmSkipHttpRulePolicy,
+      MitmModuleSkipReason.finalRule => appLocalizations.mitmSkipFinalRule,
+      MitmModuleSkipReason.deviceRule => appLocalizations.mitmSkipDeviceRule,
+      MitmModuleSkipReason.requirement => appLocalizations.mitmSkipRequirement,
+      MitmModuleSkipReason.managedCa => appLocalizations.mitmSkipManagedCa,
+      MitmModuleSkipReason.proxies => appLocalizations.mitmSkipProxies,
+      MitmModuleSkipReason.appOnly => appLocalizations.mitmSkipAppOnly,
+      MitmModuleSkipReason.reflect => appLocalizations.mitmSkipReflect,
       MitmModuleSkipReason.conditional => appLocalizations.mitmSkipConditional,
+      MitmModuleSkipReason.skipVerifyAll =>
+        appLocalizations.mitmSkipSkipVerifyAll,
       MitmModuleSkipReason.relativeData =>
         appLocalizations.mitmSkipRelativeData,
       MitmModuleSkipReason.notDownloaded =>
@@ -414,22 +423,28 @@ class MitmModuleView extends ConsumerWidget {
     String title,
     List<String> lines, {
     Map<String, String> issues = const {},
+    Map<String, MitmLineView> views = const {},
+    String? note,
+    bool rules = false,
+    Map<String, Map<String, Object?>> ruleSets = const {},
     List<PopupMenuItem> Function(String line)? menuItemsOf,
   }) {
     return Builder(
       builder: (context) {
         final appLocalizations = context.appLocalizations;
         final invalid = lines.where(issues.containsKey).length;
+        final count = invalid == 0
+            ? appLocalizations.itemsCount(lines.length)
+            : appLocalizations.invalidOfCount(invalid, lines.length);
         return ListItem.open(
           title: Text(title),
-          subtitle: Text(
-            invalid == 0
-                ? appLocalizations.itemsCount(lines.length)
-                : appLocalizations.invalidOfCount(invalid, lines.length),
-          ),
+          subtitle: Text([count, ?note].join('\n')),
           widget: _MitmModuleLinesView(
             title: title,
             lines: [for (final line in lines) (line, issues[line])],
+            views: views,
+            rules: rules,
+            ruleSets: ruleSets,
             menuItemsOf: menuItemsOf,
           ),
         );
@@ -536,12 +551,9 @@ class MitmModuleView extends ConsumerWidget {
     MitmModuleArgument argument,
   ) {
     final value = module.arguments[argument.name] ?? argument.defaultValue;
-    Future<void> save(String next) async {
-      final turnedOff = await ref
-          .read(mitmModulesActionProvider.notifier)
-          .setArguments(module, {...module.arguments, argument.name: next});
-      await offerMitmScripts(ref, turnedOff);
-    }
+    Future<void> save(String next) => ref
+        .read(mitmModulesActionProvider.notifier)
+        .setArguments(module, {...module.arguments, argument.name: next});
 
     return switch (argument.type) {
       MitmModuleArgumentType.toggle => ListItem.toggle(
@@ -572,12 +584,35 @@ class MitmModuleView extends ConsumerWidget {
     };
   }
 
-  String? _aboutFooter(AppLocalizations appLocalizations, MitmModule module) {
+  String? _aboutFooter(
+    AppLocalizations appLocalizations,
+    MitmModule module,
+    MitmModuleContent? content,
+  ) {
     final paragraphs = [
       if (module.description.isNotEmpty) module.description,
       ?_systemTip(appLocalizations, module.system),
+      if (content?.requirement case final requirement?
+          when content?.requirementMet != true)
+        appLocalizations.mitmModuleRequirementTip(requirement),
     ];
     return paragraphs.isEmpty ? null : paragraphs.join('\n\n');
+  }
+
+  Widget _networkItem(BuildContext context, MitmNetworkChangeState state) {
+    final appLocalizations = context.appLocalizations;
+    return ListItem(
+      title: Text(mitmNetworkChangeTitle(appLocalizations, state.change)),
+      subtitle: Text(
+        [
+          mitmNetworkChangeValue(appLocalizations, state.change),
+          if (state.replacedBy case final module?)
+            appLocalizations.mitmChangeReplacedBy(module)
+          else if (state.overridesYours)
+            appLocalizations.mitmChangeOverridesYours,
+        ].join('\n'),
+      ),
+    );
   }
 
   String? _argumentsFooter(MitmModuleContent content) {
@@ -597,6 +632,9 @@ class MitmModuleView extends ConsumerWidget {
     final details = ref.watch(mitmModuleDetailsProvider(id));
     final content = details.value?.content;
     final issues = details.value?.issues ?? const {};
+    final views = details.value?.views ?? const {};
+    final networkChanges =
+        ref.watch(mitmModuleNetworkChangesProvider(id)).value ?? const [];
     return Scaffold(
       title: module?.name ?? appLocalizations.mitmModule,
       body: NullStatusSwitcher(
@@ -617,7 +655,7 @@ class MitmModuleView extends ConsumerWidget {
                         onChanged: (value) => _setEnabled(ref, module, value),
                       ),
                     ],
-                    footer: _aboutFooter(appLocalizations, module),
+                    footer: _aboutFooter(appLocalizations, module, content),
                   ),
                   generateSection(
                     title: appLocalizations.source,
@@ -638,6 +676,15 @@ class MitmModuleView extends ConsumerWidget {
                       ],
                       footer: _argumentsFooter(content),
                     ),
+                  if (networkChanges.isNotEmpty)
+                    generateSection(
+                      title: appLocalizations.mitmNetworkChanges,
+                      items: [
+                        for (final state in networkChanges)
+                          _networkItem(context, state),
+                      ],
+                      footer: appLocalizations.mitmNetworkRisk,
+                    ),
                   if (content != null)
                     generateSection(
                       title: appLocalizations.rules,
@@ -649,6 +696,10 @@ class MitmModuleView extends ConsumerWidget {
                               list.label,
                               lines,
                               issues: issues[list] ?? const {},
+                              views: views[list] ?? const {},
+                              note: list == MitmList.clientSourceAddress
+                                  ? appLocalizations.mitmClientSourceTunTip
+                                  : null,
                               menuItemsOf:
                                   list == MitmList.script && module.enabled
                                   ? (line) => [?mitmRunScriptItem(ref, line)]
@@ -658,6 +709,13 @@ class MitmModuleView extends ConsumerWidget {
                           _linesItem(
                             appLocalizations.mitmRoutingRules,
                             content.rules,
+                            issues: {
+                              for (final line in content.rules)
+                                if (_moduleRule(line) == null)
+                                  line: appLocalizations.mitmSkipRule,
+                            },
+                            rules: true,
+                            ruleSets: content.ruleProviders,
                           ),
                         if (content.skipped.isNotEmpty)
                           ListItem.open(
@@ -680,7 +738,11 @@ class MitmModuleView extends ConsumerWidget {
                             ),
                           ),
                       ],
-                      footer: appLocalizations.mitmModuleRulesDesc,
+                      footer: [
+                        appLocalizations.mitmModuleRulesDesc,
+                        if (content.requestRules > 0)
+                          appLocalizations.mitmRequestRulesDesc,
+                      ].join(' '),
                     ),
                 ],
               ),
@@ -689,11 +751,29 @@ class MitmModuleView extends ConsumerWidget {
   }
 }
 
+/// A routing rule as the module's reader wrote it, or null for a line whose
+/// type, payload or target [Rule.parse] would have to guess.
+Rule? _moduleRule(String line) {
+  final type = line.split(',').first.trim().toUpperCase();
+  if (!RuleAction.values.any((action) => action.value == type)) {
+    return null;
+  }
+  final rule = Rule.parse(line, id: 0);
+  if (rule.realTarget == null ||
+      rule.ruleAction != RuleAction.MATCH && rule.realContent == null) {
+    return null;
+  }
+  return rule;
+}
+
 class _MitmModuleLinesView extends StatelessWidget {
   const _MitmModuleLinesView({
     required this.title,
     required this.lines,
+    this.views = const {},
     this.notes = false,
+    this.rules = false,
+    this.ruleSets = const {},
     this.menuItemsOf,
   });
 
@@ -702,14 +782,162 @@ class _MitmModuleLinesView extends StatelessWidget {
   /// Each line with why the Core skips it, or with [notes] why the module's
   /// reader left it out.
   final List<(String, String?)> lines;
+
+  /// How the Core reads each line it applies, in whole or in part.
+  final Map<String, MitmLineView> views;
   final bool notes;
+  final bool rules;
+  final Map<String, Map<String, Object?>> ruleSets;
   final List<PopupMenuItem> Function(String line)? menuItemsOf;
+
+  Color? _issueColor(BuildContext context) =>
+      notes ? null : context.colorScheme.error;
+
+  void _showLine(BuildContext context, String line, String? issue) {
+    dialogs.showAlert(
+      title: title,
+      message: TextSpan(
+        children: [
+          TextSpan(text: line, style: const TextStyle().toJetBrainsMono),
+          if (issue != null)
+            TextSpan(
+              text: '\n\n$issue',
+              style: TextStyle(color: _issueColor(context)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// A rule set the module's reader named after a hash shows where it reads
+  /// from instead.
+  Rule _shownRule(Rule rule) {
+    if (rule.ruleAction != RuleAction.RULE_SET) {
+      return rule;
+    }
+    final source = switch (ruleSets[rule.ruleProvider]) {
+      {'url': final String url} => url,
+      {'path': final String path} => p.basename(path),
+      _ => null,
+    };
+    return source == null ? rule : rule.copyWith(ruleProvider: source);
+  }
+
+  Widget _ruleRow(BuildContext context, String line, String? issue) {
+    if (_moduleRule(line) case final rule?) {
+      return RuleItem(
+        rule: _shownRule(rule),
+        invalidMessageOf: (_) => issue,
+        onEdit: (_) => _showLine(context, line, issue),
+      );
+    }
+    final message = issue ?? context.appLocalizations.mitmSkipRule;
+    return DecorationListItem(
+      minVerticalPadding: 0,
+      invalid: true,
+      title: Text(
+        line,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: DefaultTextStyle.of(context).style.toJetBrainsMono,
+      ),
+      subtitle: Text(
+        message,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(color: context.colorScheme.error),
+      ),
+      onPressed: () => _showLine(context, line, message),
+    );
+  }
+
+  Widget _lineRow(BuildContext context, String line, String? issue) {
+    return MitmTaskRunning(
+      line: line,
+      builder: (running) => ContextMenuRegion(
+        menuItems: menuItemsOf?.call(line),
+        child: switch (views[line]) {
+          final view? => _viewRow(context, line, view, issue, running),
+          null => _rawRow(context, line, issue, running),
+        },
+      ),
+    );
+  }
+
+  Widget _viewRow(
+    BuildContext context,
+    String line,
+    MitmLineView view,
+    String? issue,
+    bool running,
+  ) {
+    final parts = _MitmLineParts.of(context, view);
+    final codeStyle = AppTextStyle.subheadline.of(context).toJetBrainsMono;
+    return DecorationListItem(
+      title: Text(
+        parts.primary,
+        maxLines: _primaryLines,
+        overflow: TextOverflow.ellipsis,
+        style: parts.code ? codeStyle : null,
+      ),
+      subtitle: parts.details.isEmpty && issue == null
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final detail in parts.details)
+                  Text(
+                    detail,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.listCaptionStyle.toJetBrainsMono,
+                  ),
+                if (issue != null)
+                  Text(issue, style: TextStyle(color: _issueColor(context))),
+              ],
+            ),
+      trailing: running
+          ? const ActivityIndicator(size: 24)
+          : parts.tag == null
+          ? null
+          : Text(parts.tag!, style: codeStyle.copyWith(color: parts.tagColor)),
+      onPressed: () => _showLine(context, line, issue),
+    );
+  }
+
+  Widget _rawRow(
+    BuildContext context,
+    String line,
+    String? issue,
+    bool running,
+  ) {
+    return DecorationListItem(
+      title: Text(
+        line,
+        maxLines: _shownLines,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyle.subheadline.of(context).toJetBrainsMono,
+      ),
+      subtitle: issue == null
+          ? null
+          : Text(
+              issue,
+              style: notes
+                  ? context.listCaptionStyle
+                  : TextStyle(color: _issueColor(context)),
+            ),
+      invalid: !notes && issue != null,
+      trailing: running ? const ActivityIndicator(size: 24) : null,
+      onPressed: () => _showLine(context, line, issue),
+    );
+  }
+
+  static const _shownLines = 3;
+  static const _primaryLines = 2;
 
   @override
   Widget build(BuildContext context) {
-    final noteStyle = notes
-        ? context.listCaptionStyle
-        : TextStyle(color: context.colorScheme.error);
     return Scaffold(
       title: title,
       body: PrismListView(
@@ -718,27 +946,159 @@ class _MitmModuleLinesView extends StatelessWidget {
           bottom: 16 + context.bottomInset,
         ),
         itemCount: lines.length,
-        itemBuilder: (_, index) {
+        itemExtent: rules ? ruleItemHeight : null,
+        itemBuilder: (context, index) {
           final (line, issue) = lines[index];
           return ItemPositionProvider(
             position: ItemPosition.get(index, lines.length),
-            child: MitmTaskRunning(
-              line: line,
-              builder: (running) => ContextMenuRegion(
-                menuItems: menuItemsOf?.call(line),
-                child: DecorationListItem(
-                  title: Text(line),
-                  subtitle: issue == null
-                      ? null
-                      : Text(issue, style: noteStyle),
-                  invalid: !notes && issue != null,
-                  trailing: running ? const ActivityIndicator(size: 24) : null,
-                ),
-              ),
-            ),
+            child: rules
+                ? ContextMenuRegion(
+                    menuItems: menuItemsOf?.call(line),
+                    child: _ruleRow(context, line, issue),
+                  )
+                : _lineRow(context, line, issue),
           );
         },
       ),
+    );
+  }
+}
+
+/// A line the Core reads, laid out as a rule row is: what it matches on top,
+/// what it does below, and the kind of action at the trailing edge.
+class _MitmLineParts {
+  const _MitmLineParts({
+    required this.primary,
+    this.code = true,
+    this.details = const [],
+    this.tag,
+    this.tagColor,
+  });
+
+  final String primary;
+  final bool code;
+  final List<String> details;
+  final String? tag;
+  final Color? tagColor;
+
+  factory _MitmLineParts.of(BuildContext context, MitmLineView view) {
+    final appLocalizations = context.appLocalizations;
+    final colorScheme = context.colorScheme;
+    String phase(String phase) => phase == 'response'
+        ? appLocalizations.response
+        : appLocalizations.request;
+    List<String> heads(String? request, String? response) => [
+      if (request != null) 'request-head $request',
+      if (response != null) 'response-head $response',
+    ];
+    return switch (view) {
+      MitmUrlRewriteView(
+        :final pattern,
+        :final action,
+        :final replacement,
+        :final requestHead,
+      ) =>
+        _MitmLineParts(
+          primary: pattern,
+          details: [
+            if (replacement != null) '→ $replacement',
+            ...heads(requestHead, null),
+          ],
+          tag: action,
+          tagColor: action.startsWith('reject')
+              ? colorScheme.warning
+              : colorScheme.tertiary,
+        ),
+      final MitmHeaderRewriteView view => _MitmLineParts(
+        primary: view.pattern,
+        details: [
+          [
+            view.action,
+            if (view.name case final name?)
+              view.value != null || view.regex != null ? '$name:' : name,
+            ?view.value,
+            if (view.regex case final regex?) '$regex → ${view.replacement}',
+          ].join(' '),
+          ...heads(view.requestHead, view.responseHead),
+        ],
+        tag: phase(view.phase),
+      ),
+      final MitmBodyRewriteView view => _MitmLineParts(
+        primary: view.pattern,
+        details: [
+          if (view.jq case final jq?)
+            'jq $jq'
+          else if (view.replacements case [final first, ...final rest])
+            [
+              '${first.regex} → ${first.replacement}',
+              if (rest.isNotEmpty) '+${rest.length}',
+            ].join('  '),
+          ...heads(view.requestHead, view.responseHead),
+        ],
+        tag: phase(view.phase),
+      ),
+      final MitmMapLocalView view => _MitmLineParts(
+        primary: view.pattern,
+        details: [
+          switch (view.dataType) {
+            'text' || 'file' when view.data.isNotEmpty => view.data,
+            final dataType => dataType,
+          },
+          ...heads(view.requestHead, null),
+        ],
+        tag: view.status?.toString() ?? view.dataType,
+      ),
+      final MitmScriptView view => _MitmLineParts(
+        primary: view.name,
+        code: false,
+        details: [?(view.pattern ?? view.cronexp ?? view.event)],
+        tag: switch (view.kind) {
+          'httpRequest' => appLocalizations.request,
+          'httpResponse' => appLocalizations.response,
+          'cron' => appLocalizations.mitmScriptCron,
+          'event' => appLocalizations.mitmScriptEvent,
+          _ => appLocalizations.mitmScriptGeneric,
+        },
+      ),
+      MitmHostsView(:final entries) =>
+        _MitmLineParts._entries(appLocalizations, colorScheme, [
+          for (final entry in entries)
+            (
+              switch (entry.port) {
+                final port? when entry.host.contains(':') =>
+                  '[${entry.host}]:$port',
+                final port? => '${entry.host}:$port',
+                null => entry.host,
+              },
+              entry.exclude,
+            ),
+        ]),
+      MitmSourcesView(:final entries) => _MitmLineParts._entries(
+        appLocalizations,
+        colorScheme,
+        [for (final entry in entries) (entry.network, entry.exclude)],
+      ),
+    };
+  }
+
+  /// One entry carries its exclusion as the tag; several keep the `-` they
+  /// are written with.
+  factory _MitmLineParts._entries(
+    AppLocalizations appLocalizations,
+    ColorScheme colorScheme,
+    List<(String, bool)> entries,
+  ) {
+    if (entries case [(final entry, final exclude)]) {
+      return _MitmLineParts(
+        primary: entry,
+        tag: exclude ? appLocalizations.mitmExcluded : null,
+        tagColor: colorScheme.warning,
+      );
+    }
+    return _MitmLineParts(
+      primary: [
+        for (final (entry, exclude) in entries) exclude ? '-$entry' : entry,
+      ].join(', '),
     );
   }
 }
