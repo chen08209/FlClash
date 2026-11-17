@@ -92,7 +92,7 @@ ConnectionPoll pollTrackerInfos(
   final fresh = <TrackerInfo>[];
   final freshAt = <int>[];
   for (final (index, trackerInfo) in trackerInfos.indexed) {
-    final id = _idHashOf(trackerInfo.id);
+    final id = trackerInfo.id;
     final detail = _detailHashOf(trackerInfo);
     final last = previousIndex[id];
     ids[index] = id;
@@ -166,16 +166,6 @@ void _sample(
   samples[base + _baseUpload] = trackerInfo.upload;
   samples[base + _baseDownload] = trackerInfo.download;
   samples[base + _baseMicros] = nowMicros;
-}
-
-/// FNV-1a over the id's code units: the 32 bits of [String.hashCode] would
-/// collide across thousands of connections.
-int _idHashOf(String id) {
-  var hash = 0xcbf29ce484222325;
-  for (final unit in id.codeUnits) {
-    hash = (hash ^ unit) * 0x100000001b3;
-  }
-  return hash;
 }
 
 int _detailHashOf(TrackerInfo trackerInfo) => trackerInfo

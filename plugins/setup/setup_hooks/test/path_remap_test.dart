@@ -67,10 +67,27 @@ void main() {
     );
   });
 
-  test('leaves C flags alone for MSVC', () {
-    expect(environment('x86_64-pc-windows-msvc').keys, [
-      'CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS',
-    ]);
+  test('gives MSVC no path prefix maps for C', () {
+    final env = environment('x86_64-pc-windows-msvc', {
+      'CFLAGS_x86_64_pc_windows_msvc': '/W3',
+    });
+    expect(env['CFLAGS_x86_64_pc_windows_msvc'], '/W3 -DNDEBUG');
+    expect(env['CXXFLAGS_x86_64_pc_windows_msvc'], '-DNDEBUG');
+  });
+
+  test('defines NDEBUG for C on every target', () {
+    for (final triple in const [
+      'aarch64-apple-darwin',
+      'aarch64-linux-android',
+      'x86_64-unknown-linux-gnu',
+      'aarch64-pc-windows-msvc',
+    ]) {
+      final env = environment(triple);
+      final under = triple.replaceAll('-', '_');
+      for (final name in const ['CFLAGS', 'CXXFLAGS']) {
+        expect(env['${name}_$under']!.split(' ').last, '-DNDEBUG');
+      }
+    }
   });
 
   test('adds to the target rustflags a Cargo config joins', () {

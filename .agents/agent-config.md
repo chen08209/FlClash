@@ -32,12 +32,12 @@ match a task against the skill `name` and `description`, then load the full inst
 - `localization`: hardcoded UI text scans, ARB updates, locale generation, and localization verification.
 - `ui-work`: Flutter UI, widgets, color and surface styling, icons and glyphs, shapes and corner radii, navigation
   surfaces, async feedback, and user-facing interactions.
-- `core-platform`: Core lifecycle/process ownership, Android services, Go event delivery, desktop IPC, platform
+- `core-platform`: Core lifecycle/process ownership, Android services, Core event delivery, desktop IPC, platform
   managers, build hooks, system proxy, tray, VPN/TUN, and the Windows and Linux Helper.
 - `ui-performance`: dropped frames, slow pages and transitions, UI-thread and raster load, isolate decisions, and the
   probes that measure them.
-- `test-scope`: which checks a change runs and on which machine, across Dart, Go, Rust, Android, desktop and CI
-  files; reading a `tool/test.dart` run, the `rsFeature` pass, and Dart-only runs without the Go core build.
+- `test-scope`: which checks a change runs and on which machine, across Dart, Concord, Rust, Android, desktop and CI
+  files; reading a `tool/test.dart` run, and Dart-only runs without the Concord build.
 - `pre-commit-quality-review`: lightweight triage before every commit, with scoped structural review and decisions on
   concrete regressions by whoever authorized the commit.
 

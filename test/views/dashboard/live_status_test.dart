@@ -369,7 +369,7 @@ void main() {
   testWidgets('leaves updating resources out', (tester) async {
     container.read(updatingKeysProvider.notifier)
       ..start(_profile.updatingKey)
-      ..start(GeoResource.GEOIP.updatingKey);
+      ..start(GeoResource.GEOSITE.updatingKey);
     await pumpButton(tester);
 
     expect(find.byTooltip('Live status'), findsNothing);

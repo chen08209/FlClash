@@ -1,6 +1,4 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -12,15 +10,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 import 'package:prism_ui/prism_ui.dart';
 
-class _MockCore extends Mock implements CoreHandlerInterface {}
-
 void main() {
   late ProviderContainer container;
-  late _MockCore core;
+  late CoreMocks mocks;
 
   setUpAll(() {
     registerFallbackValue(<String>[]);
@@ -51,8 +48,8 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    core = _MockCore();
-    when(() => core.validateFilters(any())).thenAnswer(
+    mocks = coreMocks();
+    when(() => mocks.api.validateFilters(any())).thenAnswer(
       (invocation) async => {
         for (final (index, filter)
             in (invocation.positionalArguments.single as List<String>).indexed)
@@ -62,7 +59,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
       ],
     );
     addTearDown(container.dispose);
@@ -151,7 +148,7 @@ void main() {
 
     expect(banner('missing closing )'), findsOneWidget);
     expect(saved(), defaultFilters);
-    verify(() => core.validateFilters(['(hk'])).called(1);
+    verify(() => mocks.api.validateFilters(['(hk'])).called(1);
 
     await tester.enterText(dialogField(1), 'hk');
     await tester.pump();

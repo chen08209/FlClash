@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:fl_clash/core/core.dart';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -173,6 +174,7 @@ Future<MitmBody?> _body(WidgetRef ref, MitmExchange exchange, bool response) {
   }
   return ref
       .read(coreHandlerProvider)
+      .api
       .getMitmBody(exchange.id, response: response);
 }
 

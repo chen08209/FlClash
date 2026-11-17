@@ -64,7 +64,6 @@ class SharedStateTest {
         assertEquals(true, state.onlyStatisticsProxy)
         assertEquals(false, state.showStopAction)
         assertEquals(7890, state.vpnOptions?.port)
-        assertEquals("gvisor", state.vpnOptions?.stack)
         assertEquals(
             AccessControlMode.REJECT_SELECTED,
             state.vpnOptions?.accessControlProps?.mode,

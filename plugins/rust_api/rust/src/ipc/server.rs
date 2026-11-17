@@ -116,6 +116,7 @@ fn run(
 }
 
 fn listen(address: &str) -> io::Result<Listener> {
+    access::private_directory(address)?;
     let options = ListenerOptions::new()
         .name(address.to_fs_name::<GenericFilePath>()?)
         .try_overwrite(true)
@@ -198,23 +199,41 @@ fn is_peer_gone(error: &io::Error) -> bool {
 mod tests {
     use super::*;
     use std::io::{Read, Write};
-    use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
     use std::os::unix::net::{UnixListener, UnixStream};
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::{channel, Receiver};
     use std::time::Instant;
 
     const WAIT: Duration = Duration::from_secs(5);
 
-    fn socket_path() -> String {
+    struct Directory(PathBuf);
+
+    impl Drop for Directory {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn private_directory() -> Directory {
         static NEXT: AtomicUsize = AtomicUsize::new(0);
-        let name = format!(
-            "flclash-ipc-{}-{}.sock",
+        let directory = std::env::temp_dir().join(format!(
+            "flclash-ipc-{}-{}",
             std::process::id(),
             NEXT.fetch_add(1, Ordering::Relaxed),
-        );
-        std::env::temp_dir().join(name).to_str().unwrap().to_owned()
+        ));
+        std::fs::DirBuilder::new()
+            .mode(0o700)
+            .create(&directory)
+            .unwrap();
+        Directory(directory)
+    }
+
+    fn socket_path() -> (Directory, String) {
+        let directory = private_directory();
+        let path = directory.0.join("core.sock").to_str().unwrap().to_owned();
+        (directory, path)
     }
 
     fn attach(server: &Server) -> Receiver<Event> {
@@ -265,7 +284,7 @@ mod tests {
 
     #[test]
     fn frames_flow_both_ways_between_connect_and_disconnect() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let (server, events) = serve(&path);
         let mut peer = connect(&path);
         expect_connected(&events);
@@ -284,7 +303,7 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn a_connection_reports_the_peer_process() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let (server, events) = serve(&path);
         let _peer = connect(&path);
 
@@ -295,7 +314,7 @@ mod tests {
 
     #[test]
     fn frames_sent_in_a_burst_arrive_in_order() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let (server, events) = serve(&path);
         let mut peer = connect(&path);
         expect_connected(&events);
@@ -314,7 +333,7 @@ mod tests {
 
     #[test]
     fn a_frame_larger_than_the_socket_buffer_arrives_whole() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let (server, events) = serve(&path);
         let mut peer = connect(&path);
         expect_connected(&events);
@@ -330,7 +349,7 @@ mod tests {
 
     #[test]
     fn the_next_peer_is_served_after_the_last_one_left() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let (server, events) = serve(&path);
         drop(connect(&path));
         expect_connected(&events);
@@ -346,7 +365,7 @@ mod tests {
 
     #[test]
     fn a_send_without_a_peer_is_refused() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let (server, events) = serve(&path);
         assert_eq!(
             server.send(b"early").unwrap_err().kind(),
@@ -366,7 +385,7 @@ mod tests {
 
     #[test]
     fn a_peer_that_connects_before_events_are_attached_is_still_reported() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let server = Server::bind(path.clone()).unwrap();
         let mut peer = connect(&path);
         write_frame(&mut peer, b"early");
@@ -380,7 +399,7 @@ mod tests {
 
     #[test]
     fn an_oversized_frame_ends_the_connection_with_an_error() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let (server, events) = serve(&path);
         let mut peer = connect(&path);
         expect_connected(&events);
@@ -398,7 +417,7 @@ mod tests {
 
     #[test]
     fn closing_disconnects_the_peer_and_removes_the_socket() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let (server, events) = serve(&path);
         let mut peer = connect(&path);
         expect_connected(&events);
@@ -417,7 +436,7 @@ mod tests {
 
     #[test]
     fn dropping_the_server_releases_the_socket() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let (server, _events) = serve(&path);
 
         drop(server);
@@ -427,7 +446,7 @@ mod tests {
 
     #[test]
     fn the_server_ends_once_nobody_listens_for_events() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let (_server, events) = serve(&path);
         drop(events);
 
@@ -438,7 +457,7 @@ mod tests {
 
     #[test]
     fn binding_takes_over_a_stale_socket_file() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         drop(UnixListener::bind(&path).unwrap());
         assert!(Path::new(&path).exists());
 
@@ -451,7 +470,7 @@ mod tests {
 
     #[test]
     fn the_socket_is_reachable_by_its_owner_only() {
-        let path = socket_path();
+        let (_directory, path) = socket_path();
         let server = Server::bind(path.clone()).unwrap();
 
         let mode = std::fs::metadata(&path).unwrap().permissions().mode();
@@ -462,10 +481,54 @@ mod tests {
 
     #[test]
     fn an_unusable_address_fails_the_bind() {
-        let path = std::env::temp_dir()
-            .join("flclash-ipc-missing-dir")
-            .join("core.sock");
+        let (directory, _) = socket_path();
+        let path = directory.0.join("missing").join("deeper").join("core.sock");
 
         assert!(Server::bind(path.to_str().unwrap().to_owned()).is_err());
+    }
+
+    #[test]
+    fn a_missing_socket_directory_is_created_for_its_owner_only() {
+        let (directory, _) = socket_path();
+        let created = directory.0.join("runtime");
+        let path = created.join("core.sock");
+
+        let server = Server::bind(path.to_str().unwrap().to_owned()).unwrap();
+
+        let mode = std::fs::metadata(&created).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o700);
+        server.close();
+    }
+
+    #[test]
+    fn a_socket_directory_others_can_enter_is_refused() {
+        let (directory, _) = socket_path();
+        let shared = directory.0.join("shared");
+        std::fs::create_dir(&shared).unwrap();
+        std::fs::set_permissions(&shared, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+        let refused = Server::bind(shared.join("core.sock").to_str().unwrap().to_owned());
+
+        assert_eq!(
+            refused.err().map(|error| error.kind()),
+            Some(io::ErrorKind::PermissionDenied)
+        );
+    }
+
+    #[test]
+    fn a_symlinked_socket_directory_is_refused() {
+        let (directory, _) = socket_path();
+        let target = directory.0.join("target");
+        std::fs::create_dir(&target).unwrap();
+        std::fs::set_permissions(&target, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let link = directory.0.join("link");
+        std::os::unix::fs::symlink(&target, &link).unwrap();
+
+        let refused = Server::bind(link.join("core.sock").to_str().unwrap().to_owned());
+
+        assert_eq!(
+            refused.err().map(|error| error.kind()),
+            Some(io::ErrorKind::PermissionDenied)
+        );
     }
 }

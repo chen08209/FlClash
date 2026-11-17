@@ -6,7 +6,6 @@ extension on GeneralOverrideKey {
     GeneralOverrideKey.unifiedDelay => l.unifiedDelay,
     GeneralOverrideKey.tcpConcurrent => l.tcpConcurrent,
     GeneralOverrideKey.ipv6 => 'IPv6',
-    GeneralOverrideKey.geodataLoader => l.geodataLoader,
   };
 }
 
@@ -81,14 +80,6 @@ class _GeneralOverrideSpec
         GeneralOverrideKey.ipv6 => ToggleOverrideField(
           (config) => config.ipv6,
           (config, value) => config.copyWith(ipv6: value),
-        ),
-        GeneralOverrideKey.geodataLoader => ToggleOverrideField(
-          (config) => config.geodataLoader == GeodataLoader.memconservative,
-          (config, value) => config.copyWith(
-            geodataLoader: value
-                ? GeodataLoader.memconservative
-                : GeodataLoader.standard,
-          ),
         ),
       };
 }

@@ -19,7 +19,7 @@ import 'tracker_info_detail.dart';
 /// Where a page shows the connection a row opens beside its list, the rows
 /// select it here rather than each opening a sheet of its own.
 class TrackerSelection extends InheritedWidget {
-  final ValueListenable<String?> selected;
+  final ValueListenable<int?> selected;
   final ValueChanged<TrackerInfo> onSelect;
 
   const TrackerSelection({
@@ -97,7 +97,7 @@ void openTrackerInfo(
 /// Builds [builder] with whether the row of [id] is the selected one, and
 /// scrolls the row into view when it becomes so.
 class TrackerSelected extends StatefulWidget {
-  final String id;
+  final int id;
   final Widget Function(BuildContext context, bool selected) builder;
 
   const TrackerSelected({super.key, required this.id, required this.builder});
@@ -107,7 +107,7 @@ class TrackerSelected extends StatefulWidget {
 }
 
 class _TrackerSelectedState extends State<TrackerSelected> {
-  ValueListenable<String?>? _selected;
+  ValueListenable<int?>? _selected;
   var _isSelected = false;
 
   @override
@@ -232,7 +232,7 @@ class TrackerInfoHeader extends ConsumerWidget {
 
 /// The detail of the selected connection, while the log or [rows] hold it.
 class TrackerSelectedDetail extends StatelessWidget {
-  final ValueListenable<String?> selected;
+  final ValueListenable<int?> selected;
   final ConnectionRows rows;
 
   /// Read out rather than shown.
@@ -287,7 +287,7 @@ class TrackerSelectedDetail extends StatelessWidget {
 
 /// The selected connection in a side sheet.
 class TrackerInfoDetailSheet extends StatelessWidget {
-  final ValueListenable<String?> selected;
+  final ValueListenable<int?> selected;
   final ConnectionRows rows;
 
   /// Read out rather than shown.

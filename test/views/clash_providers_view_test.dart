@@ -1,9 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
@@ -21,10 +19,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../helpers/app_paths.dart';
 import '../helpers/context_menu.dart';
+import '../helpers/core_mocks.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
-
-class _MockCore extends Mock implements CoreHandlerInterface {}
 
 class _TestClashProviders extends ClashProviders {
   _TestClashProviders(this.initial);
@@ -408,15 +405,17 @@ void main() {
   });
 
   testWidgets('a remote rule set previews read-only on a tap', (tester) async {
-    final core = _MockCore();
-    when(() => core.dumpRuleSet(any())).thenAnswer((_) async => 'payload: []');
+    final mocks = coreMocks();
+    when(
+      () => mocks.api.dumpRuleSet(any()),
+    ).thenAnswer((_) async => const TextOutput(text: 'payload: []'));
     final container = _containerFor(
       tester,
       overrides: [
         clashProvidersProvider.overrideWith(
           () => _TestClashProviders([appRules]),
         ),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(mocks.controller),
       ],
     );
 

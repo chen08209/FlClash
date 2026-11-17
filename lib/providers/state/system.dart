@@ -1,7 +1,7 @@
 part of '../state.dart';
 
 @riverpod
-UpdateParams updateParams(Ref ref) {
+ConfigPatch updateParams(Ref ref) {
   final authentication = ref.watch(
     networkSettingProvider.select((state) => state.authentication),
   );
@@ -203,7 +203,6 @@ SharedState sharedState(Ref ref) {
     stopText: currentAppLocalizations.stop,
     stopTip: currentAppLocalizations.stopVpn,
     startTip: currentAppLocalizations.startVpn,
-    localNetworkTip: currentAppLocalizations.localNetworkDeniedTip,
     setupParams: SetupParams(
       selectedMap: selectedMap,
       options: ref.watch(coreOptionsProvider),
@@ -265,7 +264,6 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
   final tun = clashConfig.tun;
   return VpnOptions(
     enable: vpnSetting.enable && !safeMode,
-    stack: tun.stack.name,
     // VpnService.setHttpProxy cannot carry credentials, so an authenticated
     // mixed port is left to TUN instead of declared as the system proxy.
     systemProxy:

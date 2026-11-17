@@ -5,7 +5,7 @@ import 'connection_rows.dart';
 import 'tracker_info_item.dart';
 
 /// A connection's row in [rows], built again only when its details change.
-Widget Function(String id) trackerInfoRows(
+Widget Function(int id) trackerInfoRows(
   ConnectionRows rows, {
   required String detailTitle,
   ValueChanged<TrackerInfo>? onClose,
@@ -20,7 +20,7 @@ Widget Function(String id) trackerInfoRows(
 
 class _TrackerInfoRow extends StatefulWidget {
   final ConnectionRows rows;
-  final String id;
+  final int id;
   final TrackerInfo details;
   final String detailTitle;
   final ValueChanged<TrackerInfo>? onClose;

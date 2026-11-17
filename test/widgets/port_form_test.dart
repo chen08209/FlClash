@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -45,6 +46,10 @@ Future<ProviderContainer> _openPortForm(WidgetTester tester) async {
 
 Finder get _fields => find.byType(TextFormField);
 
+final _fieldCount =
+    3 +
+    [transparentPorts.redir, transparentPorts.tproxy].where((on) => on).length;
+
 Finder _banner(String text) => find.descendant(
   of: find.byType(ErrorBanner),
   matching: find.textContaining(text),
@@ -55,7 +60,7 @@ void main() {
     final container = await _openPortForm(tester);
     final config = container.read(patchClashConfigProvider);
 
-    expect(_fields, findsNWidgets(5));
+    expect(_fields, findsNWidgets(_fieldCount));
     expect(
       [
         for (final field in tester.widgetList<TextFormField>(_fields))
@@ -66,8 +71,8 @@ void main() {
           config.mixedPort,
           config.port,
           config.socksPort,
-          config.redirPort,
-          config.tproxyPort,
+          if (transparentPorts.redir) config.redirPort,
+          if (transparentPorts.tproxy) config.tproxyPort,
         ])
           '$port',
       ],
@@ -130,7 +135,7 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Save'));
     await tester.pumpAndSettle();
 
-    expect(_fields, findsNWidgets(5));
+    expect(_fields, findsNWidgets(_fieldCount));
     expect(container.read(patchClashConfigProvider), before);
   });
 
@@ -142,8 +147,9 @@ void main() {
     await tester.enterText(_fields.first, '7891');
     await tester.enterText(_fields.at(1), '7892');
     await tester.enterText(_fields.at(2), '7893');
-    await tester.enterText(_fields.at(3), '0');
-    await tester.enterText(_fields.at(4), '0');
+    for (var index = 3; index < _fieldCount; index++) {
+      await tester.enterText(_fields.at(index), '0');
+    }
     await tester.pumpAndSettle();
 
     await tester.tap(find.widgetWithText(TextButton, 'Save'));

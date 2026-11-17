@@ -2,22 +2,19 @@ import 'dart:async';
 
 import 'package:fl_clash/core/desktop/lifecycle.dart';
 import 'package:fl_clash/core/desktop/model.dart';
-import 'package:fl_clash/core/desktop/rpc_client.dart';
-import 'package:fl_clash/core/event.dart';
-import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/core/service.dart';
 import 'package:flutter/foundation.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+import '../helpers/core_mocks.dart';
 
 final class _MockLifecycle extends Mock
     implements DesktopCoreLifecycleController {}
 
-final class _MockRpcClient extends Mock implements CoreRpcChannel {}
-
 void main() {
   late _MockLifecycle lifecycle;
-  late _MockRpcClient rpcClient;
+  late MockCoreApi api;
   late StreamController<DesktopCoreFailure> crashes;
   late CoreService service;
 
@@ -28,23 +25,23 @@ void main() {
 
   setUp(() {
     lifecycle = _MockLifecycle();
-    rpcClient = _MockRpcClient();
+    api = MockCoreApi();
     crashes = StreamController<DesktopCoreFailure>.broadcast();
     when(() => lifecycle.crashEvents).thenAnswer((_) => crashes.stream);
     when(() => lifecycle.start()).thenAnswer((_) async => result);
     when(() => lifecycle.restart()).thenAnswer((_) async => result);
     when(() => lifecycle.stop()).thenAnswer((_) async => result);
     when(() => lifecycle.close()).thenAnswer((_) async => result);
-    when(() => rpcClient.close()).thenAnswer((_) async {});
-    service = CoreService.forTesting(
-      lifecycle: lifecycle,
-      rpcClient: rpcClient,
-    );
+    service = CoreService.forTesting(lifecycle: lifecycle, api: api);
   });
 
   tearDown(() async {
     await service.close();
     await crashes.close();
+  });
+
+  test('exposes the API it was given', () {
+    expect(service.api, same(api));
   });
 
   test(
@@ -60,29 +57,24 @@ void main() {
     },
   );
 
-  test('delegates Core method calls to the RPC channel', () async {
-    when(
-      () => rpcClient.invoke(
-        method: CoreMethod.coreInitialized,
-        arguments: null,
-        timeout: null,
-      ),
-    ).thenAnswer((_) async => true);
+  test('opens and closes the Core listeners through the API', () async {
+    when(() => api.startEngine()).thenAnswer((_) async {});
+    when(() => api.stopEngine()).thenAnswer((_) async {});
 
-    expect(
-      await service.invokeMethod(method: CoreMethod.coreInitialized),
-      isTrue,
-    );
+    await service.startListener();
+    await service.stopListener();
+
+    verify(() => api.startEngine()).called(1);
+    verify(() => api.stopEngine()).called(1);
   });
 
-  test('forwards a lost session once, in words, with its cause', () async {
-    final listener = _CrashListener();
-    coreEventManager.addListener(listener);
-    addTearDown(() => coreEventManager.removeListener(listener));
+  test('reports a lost session in words, with the cause it has', () async {
+    final messages = <String>[];
     final logs = <String>[];
     final print = debugPrint;
     debugPrint = (message, {wrapWidth}) => logs.add(message ?? '');
     addTearDown(() => debugPrint = print);
+    final subscription = service.crashes.listen(messages.add);
 
     crashes.add(
       const DesktopCoreFailure(
@@ -104,8 +96,9 @@ void main() {
       ),
     );
     await pumpEventQueue();
+    await subscription.cancel();
 
-    expect(listener.messages, [
+    expect(messages, [
       'The app lost its connection to the core: pipe closed',
       'The app lost its connection to the core',
     ]);
@@ -120,22 +113,12 @@ void main() {
     );
   });
 
-  test('close coalesces lifecycle and RPC cleanup', () async {
+  test('close coalesces lifecycle cleanup', () async {
     final first = service.close();
     final second = service.close();
 
     expect(await first, same(result));
     expect(await second, same(result));
     verify(() => lifecycle.close()).called(1);
-    verify(() => rpcClient.close()).called(1);
   });
-}
-
-final class _CrashListener with CoreEventListener {
-  final List<String> messages = [];
-
-  @override
-  void onCrash(String message) {
-    messages.add(message);
-  }
 }

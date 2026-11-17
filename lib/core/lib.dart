@@ -6,28 +6,60 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
+import 'api/core_api.dart';
+import 'api/core_client.dart';
+import 'api/frame_channel.dart';
+import 'api/errors.dart';
+import 'api/rpc_core_api.dart';
+import 'backend.dart';
 import 'desktop/model.dart';
-import 'interface.dart';
-import 'method.dart';
-import 'spill.dart';
 
-class CoreLib extends CoreHandlerInterface {
+class CoreLib extends CoreBackend {
   static CoreLib? _instance;
 
   final Service? _service;
 
+  @override
+  final CoreApi api;
+
+  final StreamController<String> _crashController =
+      StreamController<String>.broadcast();
+  StreamSubscription<ChannelEvent>? _sessionEvents;
   Completer<bool> _connectedCompleter = Completer<bool>();
   Future<CoreLifecycleResult>? _closeOperation;
   Future<void> _lastOperation = Future<void>.value();
   int _lifecycleRevision = 0;
-  int _methodCallId = 0;
   bool _wantsSession = false;
   bool _closed = false;
 
-  CoreLib._internal() : _service = service;
+  CoreLib._internal() : this._(service);
 
   @visibleForTesting
-  CoreLib.scoped(Service this._service);
+  CoreLib.scoped(Service this._service, {CoreApi? api})
+    : api = api ?? RpcCoreApi(CoreClient(_service.frames)) {
+    _watchSession();
+  }
+
+  CoreLib._(Service? service)
+    : _service = service,
+      api = RpcCoreApi(CoreClient(service!.frames)) {
+    _watchSession();
+  }
+
+  @override
+  Stream<String> get crashes => _crashController.stream;
+
+  void _watchSession() {
+    _sessionEvents = _service?.frames.events.listen((event) {
+      if (event is ChannelDisconnected &&
+          _connectedCompleter.isCompleted &&
+          !_closed) {
+        _crashController.add(
+          coreSessionLostMessage(event.error, currentAppLocalizations),
+        );
+      }
+    });
+  }
 
   @visibleForTesting
   static void resetInstance() {
@@ -73,14 +105,20 @@ class CoreLib extends CoreHandlerInterface {
     if (initializationError.isNotEmpty) {
       throw StateError(initializationError);
     }
-    await globalState.container.read(vpnOptionsProvider.future);
     if (!_wantsSession) {
       await _service?.shutdown();
       return _superseded(revision);
     }
+    try {
+      _service?.frames.connect();
+    } catch (_) {
+      await _service?.shutdown();
+      rethrow;
+    }
     _connectedCompleter.complete(true);
     final String syncError;
     try {
+      await globalState.container.read(vpnOptionsProvider.future);
       syncError =
           await _service?.syncState(
             globalState.container.read(sharedStateProvider),
@@ -105,6 +143,7 @@ class CoreLib extends CoreHandlerInterface {
 
   Future<void> _disconnect() async {
     _connectedCompleter = Completer<bool>();
+    _service?.frames.disconnect();
     await _service?.shutdown();
   }
 
@@ -136,6 +175,7 @@ class CoreLib extends CoreHandlerInterface {
       );
     }
     _connectedCompleter = Completer<bool>();
+    _service?.frames.disconnect();
     final stopped = await _service?.shutdown() ?? true;
     if (!stopped) {
       throw StateError('Android Core service shutdown failed');
@@ -154,14 +194,18 @@ class CoreLib extends CoreHandlerInterface {
   Future<CoreLifecycleResult> _close() async {
     _closed = true;
     _wantsSession = false;
-    return _enqueue(_stop);
+    try {
+      return await _enqueue(_stop);
+    } finally {
+      await _sessionEvents?.cancel();
+      await _crashController.close();
+    }
   }
 
   // The service opens and closes the Core's listeners itself and reports a run
-  // that ends, so once it takes the command the Core's own answer is moot.
+  // that ends, so the Core is not asked to.
   @override
   Future<void> startListener() async {
-    await _ignoreUnanswered(super.startListener);
     if (!await _service!.start()) {
       throw const CoreMethodException(
         code: 'service_refused',
@@ -172,62 +216,12 @@ class CoreLib extends CoreHandlerInterface {
 
   @override
   Future<void> stopListener() async {
-    final serviceStopped = await _service!.stop();
-    await _ignoreUnanswered(super.stopListener);
-    if (!serviceStopped) {
+    if (!await _service!.stop()) {
       throw const CoreMethodException(
         code: 'service_refused',
         message: 'The Android service did not stop',
       );
     }
-  }
-
-  Future<void> _ignoreUnanswered(Future<void> Function() command) async {
-    try {
-      await command();
-    } catch (error) {
-      if (!isUnansweredCoreError(error)) {
-        rethrow;
-      }
-    }
-  }
-
-  @override
-  Future<Object?> invokeMethod({
-    required CoreMethod method,
-    Object? arguments,
-    Duration? timeout,
-    CoreResultModel? model,
-  }) {
-    final call = _send(method: method, arguments: arguments, model: model);
-    return call.withTimeout(
-      timeout: timeout,
-      onTimeout: () {
-        unawaited(call.then(discardSpilledFile, onError: (_) {}));
-        throw TimeoutException('Core method ${method.wireName} timed out');
-      },
-    );
-  }
-
-  Future<Object?> _send({
-    required CoreMethod method,
-    Object? arguments,
-    CoreResultModel? model,
-  }) async {
-    try {
-      await _connectedCompleter.future.timeout(coreConnectionWaitDuration);
-    } on TimeoutException {
-      throw CoreMethodException(
-        code: 'core_unavailable',
-        message: 'Core is not connected for ${method.wireName}',
-      );
-    }
-    final id = '${++_methodCallId}';
-    final response = await _service!.invokeMethod(
-      CoreMethodCall(id: id, method: method, arguments: arguments),
-      model: model,
-    );
-    return response.unwrap<Object?>();
   }
 }
 

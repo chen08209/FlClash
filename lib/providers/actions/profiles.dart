@@ -484,7 +484,7 @@ class ProfilesAction extends _$ProfilesAction {
       await profileFile.safeDelete(recursive: true);
     }
     try {
-      await _core.clearEffect(profileId);
+      await _core.api.clearEffect(profileId);
     } catch (error) {
       commonPrint.log(
         'clearEffect($profileId) failed: $error',

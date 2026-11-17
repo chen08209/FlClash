@@ -118,7 +118,7 @@ void main() {
   group('TrackerInfoExt', () {
     test('builds destination title and process text', () {
       final trackerInfo = TrackerInfo(
-        id: '1',
+        id: 1,
         start: DateTime(2026),
         metadata: const Metadata(
           network: 'tcp',

@@ -411,10 +411,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get stopVpn => 'VPN 중지 중…';
 
   @override
-  String get localNetworkDeniedTip =>
-      '로컬 네트워크 권한이 거부되었습니다. gvisor 스택을 사용하므로 LAN에 연결할 수 없습니다.';
-
-  @override
   String get compatible => '호환 모드';
 
   @override
@@ -503,6 +499,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get externalControllerSecret => '외부 컨트롤러 시크릿';
 
   @override
+  String get externalControllerCors => '교차 출처 접근 허용';
+
+  @override
+  String get externalControllerCorsDesc => '웹 대시보드가 다른 사이트에서 연결할 수 있습니다.';
+
+  @override
   String get ipv6Desc => 'IPv6 트래픽은 IPv6가 켜져 있을 때만 수신됩니다.';
 
   @override
@@ -525,9 +527,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tcpConcurrent => 'TCP 동시 연결';
-
-  @override
-  String get geodataLoader => 'Geo 저메모리 모드';
 
   @override
   String get requests => '요청';
@@ -1304,9 +1303,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get hideTimeoutProxies => '시간 초과된 프록시 숨기기';
-
-  @override
-  String get stackMode => '스택 모드';
 
   @override
   String get network => '네트워크';
@@ -2920,9 +2916,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get congestionController => 'TCP 혼잡 제어';
 
   @override
-  String get congestionControllerDesc => 'TCP 혼잡 제어는 mips 스택에서만 작동합니다.';
-
-  @override
   String get routeExcludeAddress => '라우팅 제외 주소';
 
   @override
@@ -2994,8 +2987,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get udpTimeout => 'UDP 시간 제한';
 
   @override
-  String get udpTimeoutDesc =>
-      'UDP 시간 제한은 초 단위이며 gvisor, system, mixed 스택에서만 작동합니다.';
+  String get udpTimeoutDesc => 'UDP 시간 제한은 초 단위입니다.';
 
   @override
   String get dnsHijackDesc => '추가하지 않으면 53번 포트로 가는 모든 DNS 쿼리를 하이재킹합니다(any:53).';

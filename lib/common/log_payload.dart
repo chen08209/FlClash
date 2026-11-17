@@ -1,6 +1,7 @@
-// Mirrors the wording of the routing and dial-failure lines in mihomo's
-// tunnel/tunnel.go; a line that stops matching falls back to plain text.
-const _endpoint = r'((?:\[[^\]]+\]|[^\s\[\]()]+):\d+|mihomo)(?:\((.*)\))?';
+// Mirrors the wording of the core's routing and dial-failure lines, which
+// follow mihomo's tunnel/tunnel.go; a line that stops matching falls back to
+// plain text.
+const _endpoint = r'((?:\[[^\]]+\]|[^\s\[\]()]+):\d+|concord)(?:\((.*)\))?';
 
 final _tagPattern = RegExp(r'^\[([^\]]+)\] (.+)$', dotAll: true);
 

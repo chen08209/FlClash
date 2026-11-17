@@ -156,21 +156,6 @@ class DNSHijackingItem extends ConsumerWidget {
   }
 }
 
-class TunStackItem extends ConsumerWidget {
-  const TunStackItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    return ConfigOptionsItem<TunStack>(
-      title: (l) => l.stackMode,
-      options: TunStack.values,
-      textBuilder: (stack) => stack.name,
-      selector: patchClashConfigProvider.select((state) => state.tun.stack),
-      onChanged: _tunWriter((state, value) => state.copyWith.tun(stack: value)),
-    );
-  }
-}
-
 class InterfaceNameModeItem extends ConsumerWidget {
   const InterfaceNameModeItem({super.key});
 
@@ -492,9 +477,7 @@ List<Widget> networkOptionsItems({
 }) {
   return [
     if (isDesktop) const TUNItem(),
-    const TunStackItem(),
-    // mihomo's DefaultSocketHook ignores interface-name on Android
-    // (core/lib.go installHooks, vendored dialer.go), so these rows only
+    // makeRealProfileTask drops interface-name on Android, so these rows only
     // apply on desktop.
     if (isDesktop) ...[
       const InterfaceNameModeItem(),

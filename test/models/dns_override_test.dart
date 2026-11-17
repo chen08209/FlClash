@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
+
+import '../helpers/concord_config.dart';
 
 PatchClashConfig _decode(Map<String, Object?> json) {
   return PatchClashConfig.fromJson(
@@ -13,59 +14,36 @@ PatchClashConfig _decode(Map<String, Object?> json) {
 
 void main() {
   test('DnsOverrideKey names every key of the core DNS section', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
-    Iterable<String> yamlKeysOf(String struct) {
-      final body = RegExp(
-        'type $struct struct {([^}]*)}',
-      ).firstMatch(source)!.group(1)!;
-      return RegExp(
-        r'yaml:"([^",]+)',
-      ).allMatches(body).map((match) => match.group(1)!);
-    }
-
     expect(DnsOverrideKey.values.map((key) => key.path).toSet(), {
-      for (final key in yamlKeysOf('RawDNS'))
+      for (final key in concordKeys('dns'))
         if (key != DnsOverrideKey.fallbackFilterSection) key,
-      for (final key in yamlKeysOf('RawFallbackFilter'))
+      for (final key in concordKeys('dns.fallback-filter'))
         '${DnsOverrideKey.fallbackFilterSection}.$key',
     });
   });
 
-  test('the model defaults match the core\'s, GeoIP code aside', () {
-    final source = File('core/Clash.Meta/config/config.go').readAsStringSync();
-    final body = RegExp(
-      r'DNS: RawDNS\{([\s\S]*?)\n\t\t\},',
-    ).firstMatch(source)!.group(1)!;
-    String valueOf(String field) =>
-        RegExp('\\b$field:\\s*(.+),').firstMatch(body)!.group(1)!.trim();
-    String stringOf(String field) => jsonDecode(valueOf(field)) as String;
-    List<String> stringsOf(String field) => [
-      for (final match in RegExp(r'"([^"]*)"').allMatches(
-        RegExp(
-          '\\b$field:\\s*\\[\\]string\\{([^}]*)\\}',
-        ).firstMatch(body)!.group(1)!,
-      ))
-        match.group(1)!,
-    ];
+  test('the model defaults match the core\'s', () {
+    final core = concordDefaults('dns');
 
-    expect(valueOf('Enable'), '${defaultDns.enable}');
-    expect(valueOf('IPv6'), '${defaultDns.ipv6}');
-    expect(valueOf('UseHosts'), '${defaultDns.useHosts}');
-    expect(valueOf('UseSystemHosts'), '${defaultDns.useSystemHosts}');
-    expect(valueOf('IPv6Timeout'), '${defaultDns.ipv6Timeout}');
-    expect(valueOf('FakeIPTTL'), '${defaultDns.fakeIpTtl}');
-    expect(valueOf('GeoIP'), '${defaultDns.fallbackFilter.geoip}');
-    expect(valueOf('EnhancedMode'), 'C.DNSMapping');
+    expect(core['enable'], defaultDns.enable);
+    expect(core['ipv6'], defaultDns.ipv6);
+    expect(core['use-hosts'], defaultDns.useHosts);
+    expect(core['use-system-hosts'], defaultDns.useSystemHosts);
+    expect(core['ipv6-timeout'], defaultDns.ipv6Timeout);
+    expect(core['fake-ip-ttl'], defaultDns.fakeIpTtl);
+    final filter = core['fallback-filter']! as Map;
+    expect(filter['geoip'], defaultDns.fallbackFilter.geoip);
+    expect(filter['geoip-code'], defaultDns.fallbackFilter.geoipCode);
+    expect(core['enhanced-mode'], 'redir-host');
     expect(defaultDns.enhancedMode, DnsMode.redirHost);
-    expect(valueOf('FakeIPFilterMode'), 'C.FilterBlackList');
+    expect(core['fake-ip-filter-mode'], 'blacklist');
     expect(defaultDns.fakeIpFilterMode, FakeIpFilterMode.blacklist);
-    expect(stringOf('FakeIPRange'), defaultDns.fakeIpRange);
-    expect(stringOf('GeoIPCode'), isNotEmpty);
-    expect(stringsOf('FakeIPFilter'), defaultDns.fakeIpFilter);
-    expect(stringsOf('DefaultNameserver'), defaultDns.defaultNameserver);
-    expect(stringsOf('NameServer'), defaultDns.nameserver);
-    expect(body, isNot(contains('Listen:')));
-    expect(body, isNot(contains('FakeIPRange6:')));
+    expect(core['fake-ip-range'], defaultDns.fakeIpRange);
+    expect(core['fake-ip-filter'], defaultDns.fakeIpFilter);
+    expect(core['default-nameserver'], defaultDns.defaultNameserver);
+    expect(core['nameserver'], defaultDns.nameserver);
+    expect(core['listen'], isEmpty);
+    expect(core['fake-ip-range6'], isEmpty);
     expect(
       defaultDns.overrideJson({
         DnsOverrideKey.listen,

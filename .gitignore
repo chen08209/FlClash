@@ -67,6 +67,7 @@ docs/
 /libclash/
 /android/app/src/main/jniLibs/
 /services/helper/target
+/android/core/jni/target
 /macos/**/Package.resolved
 /macos/build/
 /env.json
@@ -79,3 +80,4 @@ devtools_options.yaml
 .fvm/
 .fvmrc
 /coverage/lcov.info
+

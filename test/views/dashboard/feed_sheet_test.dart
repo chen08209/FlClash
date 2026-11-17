@@ -47,7 +47,7 @@ void main() {
     final notifier = container.read(dnsQueriesProvider.notifier);
     notifier.value = FixedList<DnsQuery>(500);
     for (var index = 0; index < count; index++) {
-      notifier.addQuery(
+      notifier.addQueries([
         DnsQuery(
           domain: 'host-$index.example',
           type: 'A',
@@ -56,7 +56,7 @@ void main() {
           delay: 12,
           time: DateTime.utc(2026, 9, 18, 4, 30),
         ),
-      );
+      ]);
     }
   }
 
@@ -285,18 +285,16 @@ void main() {
       tester,
       const Offset(200, 400),
       200,
-      midway: () => container
-          .read(dnsQueriesProvider.notifier)
-          .addQuery(
-            DnsQuery(
-              domain: 'late.example',
-              type: 'A',
-              answers: const ['1.1.1.1'],
-              rcode: 'NOERROR',
-              delay: 12,
-              time: DateTime.utc(2026, 9, 18, 4, 31),
-            ),
-          ),
+      midway: () => container.read(dnsQueriesProvider.notifier).addQueries([
+        DnsQuery(
+          domain: 'late.example',
+          type: 'A',
+          answers: const ['1.1.1.1'],
+          rcode: 'NOERROR',
+          delay: 12,
+          time: DateTime.utc(2026, 9, 18, 4, 31),
+        ),
+      ]),
     );
 
     expect(held, closeTo(_tallTop + 200 - kTouchSlop, 2));
@@ -328,18 +326,16 @@ void main() {
 
     await flingSheet(tester, -120);
     await tester.pump(const Duration(milliseconds: 50));
-    container
-        .read(dnsQueriesProvider.notifier)
-        .addQuery(
-          DnsQuery(
-            domain: 'late.example',
-            type: 'A',
-            answers: const ['1.1.1.1'],
-            rcode: 'NOERROR',
-            delay: 12,
-            time: DateTime.utc(2026, 9, 18, 4, 31),
-          ),
-        );
+    container.read(dnsQueriesProvider.notifier).addQueries([
+      DnsQuery(
+        domain: 'late.example',
+        type: 'A',
+        answers: const ['1.1.1.1'],
+        rcode: 'NOERROR',
+        delay: 12,
+        time: DateTime.utc(2026, 9, 18, 4, 31),
+      ),
+    ]);
     expect(sheetTop(tester), greaterThan(_tallTop + 1));
     for (var frame = 0; frame < 20; frame++) {
       await tester.pump(const Duration(milliseconds: 16));

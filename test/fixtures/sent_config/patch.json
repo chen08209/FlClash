@@ -1,0 +1,37 @@
+{
+  "tun": {
+    "enable": true,
+    "device": "utun9",
+    "autoRoute": true
+  },
+  "allowLan": true,
+  "mixedPort": 7899,
+  "findProcessMode": "always",
+  "mode": "global",
+  "logLevel": "debug",
+  "ipv6": true,
+  "tcpConcurrent": false,
+  "externalController": "127.0.0.1:9090",
+  "secret": "sample",
+  "externalControllerCors": {
+    "allowOrigins": [],
+    "allowPrivateNetwork": false
+  },
+  "unifiedDelay": false,
+  "authentication": [
+    "user:pass"
+  ],
+  "geoAutoUpdate": true,
+  "geoUpdateInterval": 48,
+  "geoxUrl": {
+    "mmdb": "https://a.test/geoip.metadb",
+    "asn": "https://a.test/asn.mmdb",
+    "geosite": "https://a.test/geosite.dat"
+  },
+  "options": {
+    "testUrl": "https://a.test/generate_204",
+    "skipCertVerify": true,
+    "delayTestTimeout": 3000,
+    "mitmCapture": true
+  }
+}

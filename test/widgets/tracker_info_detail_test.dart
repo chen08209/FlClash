@@ -104,7 +104,7 @@ void main() {
         child: TestApp(
           child: TrackerPathSection(
             trackerInfo: TrackerInfo(
-              id: 'id',
+              id: 1,
               start: DateTime.utc(2026),
               metadata: const Metadata(network: 'tcp', host: 'example.com'),
               chains: const ['Tokyo 01', 'Auto'],

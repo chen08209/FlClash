@@ -213,12 +213,26 @@ void main() {
     });
   });
 
-  YamlList releaseSteps() {
+  YamlMap workflowJobs() {
     final workflow =
         loadYaml(File('.github/workflows/build.yaml').readAsStringSync())
             as YamlMap;
-    return workflow['jobs']['upload']['steps'] as YamlList;
+    return workflow['jobs'] as YamlMap;
   }
+
+  YamlList releaseSteps() => workflowJobs()['upload']['steps'] as YamlList;
+
+  test('a release waits for every check a push runs', () {
+    final jobs = workflowJobs();
+    final checks = jobs['dart']['if'];
+    final gated = [
+      for (final MapEntry(:key, :value) in jobs.entries)
+        if ((value as YamlMap)['if'] == checks) key,
+    ];
+
+    expect(gated, contains('rust-core'));
+    expect(jobs['upload']['needs'] as YamlList, containsAll(gated));
+  });
 
   test('a release is announced once its packages are out, and pruned last', () {
     final steps = [

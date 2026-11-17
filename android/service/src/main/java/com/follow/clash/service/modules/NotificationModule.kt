@@ -18,11 +18,11 @@ import com.follow.clash.common.startForeground
 import com.follow.clash.common.toPendingIntent
 import com.follow.clash.service.R
 import com.follow.clash.service.ServiceConfig
-import com.follow.clash.service.SpeedTextReader
+import com.follow.clash.service.TrafficMeter
+import com.follow.clash.service.whileScreenOn
 import com.follow.clash.service.models.NotificationParams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
@@ -37,23 +37,22 @@ private data class ExtendedNotificationParams(
     val contentText: String,
 )
 
+private fun NotificationParams.extended(meter: TrafficMeter) = ExtendedNotificationParams(
+    title,
+    stopText,
+    showStopAction,
+    meter.speedText(onlyStatisticsProxy),
+)
+
 internal class NotificationModule(
     private val service: Service,
     private val scope: CoroutineScope,
 ) : ServiceModule {
-    private val speedTexts = SpeedTextReader()
-
-    private val NotificationParams.extended: ExtendedNotificationParams
-        get() = ExtendedNotificationParams(
-            title,
-            stopText,
-            showStopAction,
-            speedTexts.read(onlyStatisticsProxy),
-        )
+    private val meter = TrafficMeter()
 
     override fun start() {
         service.ensureNotificationChannel()
-        update(ServiceConfig.notificationParams.value.extended)
+        update(ServiceConfig.notificationParams.value.extended(meter))
         scope.launch {
             // Some ROMs, vivo's among them, drop updates posted behind the
             // keyguard, so unlocking restarts the loop to post once more.
@@ -67,8 +66,7 @@ internal class NotificationModule(
                 intent.action != Intent.ACTION_SCREEN_OFF
             }.onStart {
                 emit(isScreenOn())
-            }.collectLatest { screenOn ->
-                if (!screenOn) return@collectLatest
+            }.whileScreenOn(meter) {
                 combine(
                     flow {
                         while (true) {
@@ -78,7 +76,7 @@ internal class NotificationModule(
                     },
                     ServiceConfig.notificationParams,
                 ) { _, params ->
-                    params.extended
+                    params.extended(meter)
                 }.distinctUntilChanged()
                     .collect(::update)
             }
@@ -127,6 +125,7 @@ internal class NotificationModule(
 
     @Suppress("DEPRECATION")
     override fun stop() {
+        meter.close()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             service.stopForeground(STOP_FOREGROUND_REMOVE)
         } else {

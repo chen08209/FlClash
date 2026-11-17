@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:fl_clash/core/core.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -31,13 +32,14 @@ const _exchangesRefreshInterval = Duration(seconds: 2);
 class MitmCa extends _$MitmCa {
   @override
   Future<MitmCertificate?> build() {
-    return ref.read(coreHandlerProvider).getMitmCertificate();
+    return ref.read(coreHandlerProvider).api.getMitmCertificate();
   }
 
   Future<void> generate() async {
     final certificate = await ref
         .read(coreHandlerProvider)
-        .generateMitmCertificate();
+        .api
+        .createMitmCertificate();
     if (!ref.mounted) {
       return;
     }
@@ -68,7 +70,7 @@ class MitmTrustState extends _$MitmTrustState {
       final core = ref.read(coreHandlerProvider);
       check = await store.check(
         ca,
-        () => core.issueMitmCertificate(mitmCheckHost),
+        () => core.api.issueMitmCertificate(mitmCheckHost),
       );
     }
     if (ref.mounted) {
@@ -191,9 +193,10 @@ class MitmTrustState extends _$MitmTrustState {
 /// Fetched again while shown, until the connection has closed and none of its
 /// requests is pending.
 @riverpod
-Future<MitmExchangeList> mitmExchanges(Ref ref, String connectionId) async {
+Future<MitmExchangeList> mitmExchanges(Ref ref, int connectionId) async {
   final list = await ref
       .read(coreHandlerProvider)
+      .api
       .getMitmExchanges(connectionId);
   final settled =
       list.closed && !list.exchanges.any((exchange) => exchange.pending);
@@ -206,7 +209,7 @@ Future<MitmExchangeList> mitmExchanges(Ref ref, String connectionId) async {
 
 @riverpod
 Future<MitmExchange?> mitmExchange(Ref ref, int id) async {
-  final exchange = await ref.read(coreHandlerProvider).getMitmExchange(id);
+  final exchange = await ref.read(coreHandlerProvider).api.getMitmExchange(id);
   if (exchange != null && exchange.pending && ref.mounted) {
     final timer = Timer(_exchangesRefreshInterval, ref.invalidateSelf);
     ref.onDispose(timer.cancel);
@@ -223,6 +226,7 @@ Future<MitmBodyContent?> mitmBody(
 }) async {
   final body = await ref
       .read(coreHandlerProvider)
+      .api
       .getMitmBody(id, response: response);
   if (body == null) {
     return null;
@@ -300,7 +304,7 @@ typedef _MitmLineCheck = ({
 });
 
 Future<_MitmLineCheck> _checkOf(Ref ref, MitmRules mitm) async {
-  final issues = await ref.read(coreHandlerProvider).validateMitm(mitm);
+  final check = await ref.read(coreHandlerProvider).api.checkMitmRules(mitm);
   Map<MitmList, Map<String, T>> byLine<T>(Map<MitmList, Map<int, T>> lists) => {
     for (final MapEntry(key: list, value: lines) in lists.entries)
       list: {
@@ -308,10 +312,7 @@ Future<_MitmLineCheck> _checkOf(Ref ref, MitmRules mitm) async {
           ?mitm.linesOf(list).elementAtOrNull(index): value,
       },
   };
-  return (
-    issues: byLine(issues),
-    views: const <MitmList, Map<String, MitmLineView>>{},
-  );
+  return (issues: byLine(check.issues), views: byLine(check.views));
 }
 
 /// A module that fails to read adds nothing, so the VPN can still start.

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:fl_clash/core/core.dart';
 import 'dart:collection';
 import 'dart:io';
 import 'dart:ui' show Locale;
@@ -105,12 +106,13 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
     value = change(state);
   }
 
-  void addRequest(TrackerInfo value) => _apply((log) => log.open([value]));
+  void addRequests(Iterable<TrackerInfo> values) =>
+      _apply((log) => log.open(values));
 
-  void updateTraffic(Map<String, RequestTraffic> traffic) =>
+  void updateTraffic(Map<int, RequestTraffic> traffic) =>
       _apply((log) => log.updateTraffic(traffic));
 
-  void close(Iterable<String> ids, {DateTime? at}) =>
+  void close(Iterable<int> ids, {DateTime? at}) =>
       _apply((log) => log.close(ids, at ?? DateTime.now()));
 
   void closeAll({DateTime? at}) =>
@@ -148,11 +150,11 @@ class DnsQueries extends _$DnsQueries with AutoDisposeNotifierMixin {
     return FixedList(maxDnsQueriesLength);
   }
 
-  void addQuery(DnsQuery value) {
+  void addQueries(Iterable<DnsQuery> values) {
     if (!ref.mounted) {
       return;
     }
-    this.value = state.append(value);
+    value = state.appendAll(values);
   }
 }
 
@@ -203,7 +205,7 @@ class Providers extends _$Providers with AutoDisposeNotifierMixin {
   }
 
   Future<void> syncProviders() async {
-    value = await ref.read(coreHandlerProvider).getExternalProviders();
+    value = await ref.read(coreHandlerProvider).api.getExternalProviders();
   }
 }
 

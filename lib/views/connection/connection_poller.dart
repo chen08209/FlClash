@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -27,11 +27,13 @@ class ConnectionPoller {
     final poll = pollAfter(_samples, log.slotGenerations);
     final requestedAt = DateTime.now();
     try {
-      final polled = reader != null
-          ? poll(await reader())
-          : ref.read(coreStatusProvider) == CoreStatus.connected
-          ? await ref.read(coreHandlerProvider).getConnectionsWith(poll)
-          : poll(const []);
+      final polled = poll(
+        reader != null
+            ? await reader()
+            : ref.read(coreStatusProvider) == CoreStatus.connected
+            ? ref.read(connectionBookProvider).list()
+            : const [],
+      );
       // A refresh after closing a connection can overlap a poll.
       if (read < _shownRead ||
           !mounted() ||

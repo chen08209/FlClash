@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:fl_clash/core/core.dart';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -233,7 +234,7 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
           load: () async => provider.isTextContent
               ? openEditorFile(await provider.path)
               : CodeForgeDocument.fromText(
-                  await core.dumpRuleSet(await provider.path),
+                  await core.api.dumpRules(await provider.path),
                 ),
           schema: EditorSchema.provider,
         ),

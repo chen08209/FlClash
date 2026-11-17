@@ -48,10 +48,8 @@ object ServiceController {
         Core.stopListener()
     }
 
-    fun invokeMethod(data: String, callback: (ByteArray) -> Unit): Result<Unit> = runCatching {
-        Core.invokeMethod(data) { result ->
-            callback(result ?: ByteArray(0))
-        }
+    fun sendFrame(data: ByteArray): Result<Unit> = runCatching {
+        Core.sendFrame(data)
     }
 
     suspend fun quickSetup(
@@ -61,7 +59,7 @@ object ServiceController {
         NetworkObserver.start()
         suspendCancellableCoroutine { continuation ->
             Core.quickSetup(initParams, setupParams) { result ->
-                continuation.resume(result.orEmpty())
+                continuation.resume(result)
             }
         }
     }

@@ -238,12 +238,12 @@ String trackerSpeedText(TrackerInfo trackerInfo) {
 }
 
 /// How many failed dials to the same target each merged row stands for.
-class TrackerRepeats extends InheritedModel<String> {
-  final Map<String, int> counts;
+class TrackerRepeats extends InheritedModel<int> {
+  final Map<int, int> counts;
 
   const TrackerRepeats({super.key, required this.counts, required super.child});
 
-  static int of(BuildContext context, String id) =>
+  static int of(BuildContext context, int id) =>
       InheritedModel.inheritFrom<TrackerRepeats>(
         context,
         aspect: id,
@@ -257,7 +257,7 @@ class TrackerRepeats extends InheritedModel<String> {
   @override
   bool updateShouldNotifyDependent(
     TrackerRepeats oldWidget,
-    Set<String> dependencies,
+    Set<int> dependencies,
   ) => dependencies.any((id) => counts[id] != oldWidget.counts[id]);
 }
 

@@ -428,7 +428,7 @@ final class RequestsProvider
   }
 }
 
-String _$requestsHash() => r'f212f4034a9e68265ef76296f78e0063b9a49c16';
+String _$requestsHash() => r'73b1eb3d79bae7c9fea179a877105ef275d29407';
 
 abstract class _$Requests extends $Notifier<ConnectionLog> {
   ConnectionLog build();
@@ -480,7 +480,7 @@ final class DnsQueriesProvider
   }
 }
 
-String _$dnsQueriesHash() => r'b6073d067db4fd19cc5724c5b79ecff2b0909796';
+String _$dnsQueriesHash() => r'9281a2f1772916403823d5dc13f742e26ddbd2ae';
 
 abstract class _$DnsQueries extends $Notifier<FixedList<DnsQuery>> {
   FixedList<DnsQuery> build();
@@ -684,7 +684,7 @@ final class ProvidersProvider
   }
 }
 
-String _$providersHash() => r'51d9bc898e1af8a7179c1c53145705b57d9a5996';
+String _$providersHash() => r'2bb0ac3c01a0954f89217c8dd54af35f3e0054f4';
 
 abstract class _$Providers extends $Notifier<List<ExternalProvider>> {
   List<ExternalProvider> build();

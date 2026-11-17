@@ -11,8 +11,8 @@ fn too_large() -> io::Error {
     )
 }
 
-/// Prefixes `payload` with its little-endian length, the layout `readFrame`
-/// in `core/server.go` expects.
+/// Prefixes `payload` with its little-endian length, the layout the Core's
+/// frame reader expects.
 pub fn encode(payload: &[u8]) -> io::Result<Vec<u8>> {
     if payload.len() > MAX_FRAME_SIZE {
         return Err(too_large());
