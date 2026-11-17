@@ -1243,6 +1243,88 @@ class _TicksPainter extends CustomPainter {
       oldDelegate.off != off;
 }
 
+class _BadgeHero extends StatelessWidget {
+  const _BadgeHero({
+    required this.color,
+    required this.glyph,
+    required this.glyphColor,
+    required this.chips,
+    this.fill,
+  });
+
+  final Color color;
+  final Glyph glyph;
+  final Color glyphColor;
+  final double? fill;
+  final List<Widget> chips;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 14,
+          children: [
+            SizedBox.square(
+              dimension: 60,
+              child: DecoratedBox(
+                decoration: ShapeDecoration(
+                  color: color,
+                  shape: AppShape.circle,
+                ),
+                child: Center(
+                  child: GlyphIcon(
+                    glyph,
+                    size: 28,
+                    fill: fill,
+                    color: glyphColor,
+                  ),
+                ),
+              ),
+            ),
+            Row(mainAxisSize: MainAxisSize.min, spacing: 8, children: chips),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroChip extends StatelessWidget {
+  const _HeroChip(this.text, {required this.color, this.emphasized = false});
+
+  final String text;
+  final Color color;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return DecoratedBox(
+      decoration: ShapeDecoration(
+        color: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
+        shape: AppShape.full,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyle.footnote
+              .of(context, emphasized: emphasized)
+              .copyWith(
+                color: color,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ReadyHero extends StatelessWidget {
   const _ReadyHero({required this.tag, required this.onDiscard});
 
@@ -1252,68 +1334,28 @@ class _ReadyHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final chipFill = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
-    Widget chip(String text, {Color? color, bool emphasized = false}) =>
-        DecoratedBox(
-          decoration: ShapeDecoration(color: chipFill, shape: AppShape.full),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-            child: Text(
-              text,
-              style: AppTextStyle.footnote
-                  .of(context, emphasized: emphasized)
-                  .copyWith(
-                    color: color,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-            ),
-          ),
-        );
     return Stack(
       children: [
-        Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 14,
-            children: [
-              SizedBox.square(
-                dimension: 60,
-                child: DecoratedBox(
-                  decoration: ShapeDecoration(
-                    color: colorScheme.success,
-                    shape: AppShape.circle,
-                  ),
-                  child: Center(
-                    child: GlyphIcon(
-                      AppGlyphs.check,
-                      size: 28,
-                      color: colorScheme.onSuccess,
-                    ),
-                  ),
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 8,
-                children: [
-                  chip(
-                    globalState.packageInfo.version,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  GlyphIcon(
-                    AppGlyphs.chevronForward,
-                    size: 16,
-                    color: colorScheme.onSuccessContainer,
-                  ),
-                  chip(
-                    tag.replaceFirst(RegExp('^v'), ''),
-                    color: colorScheme.success,
-                    emphasized: true,
-                  ),
-                ],
-              ),
-            ],
-          ),
+        _BadgeHero(
+          color: colorScheme.success,
+          glyph: AppGlyphs.check,
+          glyphColor: colorScheme.onSuccess,
+          chips: [
+            _HeroChip(
+              globalState.packageInfo.version,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            GlyphIcon(
+              AppGlyphs.chevronForward,
+              size: 16,
+              color: colorScheme.onSuccessContainer,
+            ),
+            _HeroChip(
+              tag.replaceFirst(RegExp('^v'), ''),
+              color: colorScheme.success,
+              emphasized: true,
+            ),
+          ],
         ),
         PositionedDirectional(
           top: 8,
@@ -1339,60 +1381,16 @@ class _ConsentHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final chipFill = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
-    final shown = names.take(_shownNames);
-    final rest = names.length - shown.length;
-    Widget chip(String text) => Flexible(
-      child: DecoratedBox(
-        decoration: ShapeDecoration(color: chipFill, shape: AppShape.full),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.footnote
-                .of(context)
-                .copyWith(color: colorScheme.onSurfaceVariant),
-          ),
-        ),
-      ),
-    );
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 14,
-          children: [
-            SizedBox.square(
-              dimension: 60,
-              child: DecoratedBox(
-                decoration: ShapeDecoration(
-                  color: colorScheme.warning,
-                  shape: AppShape.circle,
-                ),
-                child: Center(
-                  child: GlyphIcon(
-                    AppGlyphs.puzzle,
-                    size: 28,
-                    fill: 1,
-                    color: colorScheme.onWarning,
-                  ),
-                ),
-              ),
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 8,
-              children: [
-                for (final name in shown) chip(name),
-                if (rest > 0) chip('+$rest'),
-              ],
-            ),
-          ],
-        ),
-      ),
+    final rest = names.length - _shownNames;
+    return _BadgeHero(
+      color: colorScheme.warning,
+      glyph: AppGlyphs.puzzle,
+      glyphColor: colorScheme.onWarning,
+      fill: 1,
+      chips: [
+        for (final text in [...names.take(_shownNames), if (rest > 0) '+$rest'])
+          Flexible(child: _HeroChip(text, color: colorScheme.onSurfaceVariant)),
+      ],
     );
   }
 }
