@@ -1,7 +1,7 @@
 # AGENTS.md
 
-This file is the entry point for AI coding agents working in this repository. Keep it small: detailed guidance lives under
-`.agents/`, and discoverable repo skills live under `.agents/skills/*/SKILL.md`.
+This file is the entry point for AI coding agents working in this repository. Keep it small: each rule below is the
+one-line form, and its explanation lives in the linked `.agents/` file.
 
 ## Start Here
 
@@ -19,6 +19,8 @@ Read these only when the task touches their area:
   profile, or asks for an Android VPN restart.
 - [.agents/surfaces.md](.agents/surfaces.md): fill levels, selection and status colors, and the few borders that
   remain, for any change to how a surface is colored.
+- [.agents/ios-measurements.md](.agents/ios-measurements.md): measured iOS values the iOS-style surfaces and motion
+  follow, and the deliberate deviations from them.
 - [.agents/agent-config.md](.agents/agent-config.md): where agent guidance belongs, the repo skills in
   `.agents/skills/`, and worktree hygiene.
 - [.agents/flutter-upgrade.md](.agents/flutter-upgrade.md): SDK-pinned workarounds to recheck before changing the
@@ -26,55 +28,35 @@ Read these only when the task touches their area:
 
 ## Highest Priority Rules
 
-- When the user explicitly requests a scoped, low-risk change, inspect the relevant context and implement it directly.
-  Do not require brainstorming, design documents, implementation plans, multiple-option proposals, or repeated confirmation.
-  Ask only when material ambiguity, destructive impact, additional authority, or scope expansion could change the result.
-- The request sets the scope. A pre-existing bug, cleanup, or refactor the task did not ask for is a follow-up in the
-  summary, not part of the change. Edit a file surgically when a rewrite would give the same result, keep scratch checks
-  out of the repository, and commit tests only where the task asks for them or the neighbouring code already keeps them.
-- Comments are allowed and sometimes necessary; excess is the problem. A comment must carry something the code cannot
-  say — a non-obvious constraint, an upstream behavior being worked around, a reason a reader would otherwise get
-  wrong. Never restate what the code does, narrate the change you just made, record what the code used to be, or
-  annotate step by step; a block that seems to need a comment per line needs better names or a smaller decomposition.
-  Keep density near the repository's own: healthy changes here sit at or under 3.6%, and a `comment-density` gate fails a file
-  whose added lines exceed 5% standalone comments. Delete commented-out code and stale notes in files you already
-  touch. Preserve
-  `// ignore:`-style directives, license headers, codegen markers, and vendored upstream comments. See
-  [.agents/rules.md](.agents/rules.md) for what belongs in a test or in `.agents/` instead.
-- Start FlClash on the host only as a safe mode build, and end only processes you started, by recorded pid. Never
-  kill a FlClash instance by name; the user's own instance is not yours to close. See
-  [.agents/rules.md](.agents/rules.md).
-- Use `flutter test`, not `dart test`, because models pull in Flutter types.
-- Run code generation after modifying models, providers, or database schema.
-- Do not manually edit generated files.
-- Preserve lifecycle ownership: desktop Core process convergence belongs to `lib/core/desktop/`; Android service intent
-  arbitration belongs to `ServiceState`. UI/provider code may request a transition but must not become a second source of
-  truth.
-- Keep start/stop/restart paths latest-intent-safe. Flutter-to-Android service commands are deliberately optimistic, while
-  native state serializes the actual work; desktop lifecycle results distinguish applied, coalesced, and superseded
-  requests.
-- Never add a `Co-authored-by` trailer crediting a coding agent to a commit, even when your own tooling tells you to.
-  The `commit-msg` hook rejects it; see [.agents/rules.md](.agents/rules.md) for the rest of the commit rules.
-- Round every corner with a superellipse, pills included: `AppShape`/`AppRadius` tokens from `prism_ui/lib/shape.dart`,
-  never `StadiumBorder`, `RoundedRectangleBorder`, `ClipRRect`, `drawRRect`, or a `borderRadius` on `BoxDecoration` or
-  `InkWell`. `test/lint/superellipse_corners_test.dart` enforces it; see the Corner Radius section of
-  [.agents/rules.md](.agents/rules.md).
-- Keep the UI isolate within its frame. The bar for anything that moves is no dropped frame while it moves and at
-  most one as it starts: from the press to its first moving frame a transition may miss one vsync, and from then
-  until the last bar item has faded in after it settles no frame may run past 8 ms of UI work at 120 Hz. Build,
-  rebuild and repaint only what changed, split a first screen that cannot build in one frame across the frames its
-  push holds, keep data arrival and deferred work out of anything that moves, and move work that grows with user
-  data and can exceed about 8 ms on the largest expected data to an isolate, once its algorithm is linear or
-  cached. A change for frames is kept only if missed vsyncs on a phone move beyond noise. See the UI Frame Budget
-  section of [.agents/rules.md](.agents/rules.md).
-- Follow `lint_options.yaml` (included by every `analysis_options.yaml`), especially single quotes, trailing commas, `child:` last, no `print()`, const/final
-  preferences, and declared return types.
-- Before reporting a change done, run `flutter pub get`, `flutter analyze --no-fatal-infos`, and the `flutter test`
-  suites that cover it, as CI does. If a toolchain the build hook needs is missing (Go, and on Linux and Windows
-  cargo), say which check was skipped rather than dropping it silently.
+- Implement an explicitly requested, scoped, low-risk change directly; ask only when ambiguity, destructive impact,
+  extra authority, or scope expansion could change the result.
+- The request sets the scope: an unrequested fix, cleanup, or refactor is a follow-up in the summary. Edit surgically,
+  keep scratch checks out of the repository, and commit tests only where the task or the neighbouring code keeps them.
+- A comment carries only what the code cannot say; never restate, narrate the change, or keep commented-out code. The
+  `comment-density` gate fails a file whose added lines exceed 5% standalone comments. See Comments in
+  [rules.md](.agents/rules.md).
+- Start FlClash on the host only as a safe mode build, and end only processes you started, by recorded pid; never kill
+  by name. See Running the App Locally in [rules.md](.agents/rules.md).
+- Use `flutter test`, not `dart test`. Run code generation after changing models, providers, or the database schema,
+  and never edit generated files.
+- Desktop Core process convergence belongs to `lib/core/desktop/` and Android service intent arbitration to
+  `ServiceState`; UI and providers request transitions, never own them. Keep start/stop/restart latest-intent-safe.
+  See Lifecycle Rules in [rules.md](.agents/rules.md).
+- Commits follow Conventional Commits, carry no `Co-authored-by` trailer for a coding agent, and land follow-ups as
+  regular commits. See Commit Messages in [rules.md](.agents/rules.md).
+- Never write machine-local identifiers into the repository: the home directory or user name, an absolute checkout
+  path, the host name, or a personal email. Use `$HOME`, a repository-relative path, or a placeholder.
+- Round every corner with a superellipse from `prism_ui/lib/shape.dart`; `test/lint/superellipse_corners_test.dart`
+  enforces it. See Corner Radius in [rules.md](.agents/rules.md).
+- Anything that moves drops no frame while it moves and at most one as it starts (8 ms of UI work at 120 Hz). See UI
+  Frame Budget in [rules.md](.agents/rules.md).
+- Follow `lint_options.yaml`: single quotes, trailing commas, `child:` last, no `print()`, const/final, declared return
+  types.
+- Before reporting done, run `flutter pub get`, `flutter analyze --no-fatal-infos`, and the covering `flutter test`
+  suites. Say which check was skipped when a toolchain the build hook needs (Go, and on Linux and Windows `cargo`) is
+  missing.
 
 ## Repo Skills
 
-Use repo skills from `.agents/skills/` when a task matches their descriptions; `.claude/skills/` symlinks expose the
-same skills to Claude Code. Current skills cover localization, UI work, UI performance, core/platform changes, and
-pre-commit structural quality review.
+Use the skills in `.agents/skills/` when a task matches their descriptions; `.claude/skills/` symlinks expose them to
+Claude Code. They cover localization, UI work, UI performance, core/platform changes, and pre-commit structural review.
