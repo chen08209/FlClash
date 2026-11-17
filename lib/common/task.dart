@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/mitm_module.dart';
+import 'package:fl_clash/common/mitm_module_file.dart';
+import 'package:fl_clash/common/mitm_network.dart';
 import 'package:fl_clash/core/api/mapping.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -291,19 +292,34 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
       }
     }
   }
-  final mitm = mergeMitmModules(realPatchConfig.mitm.hostname, [
-    for (final module in data.mitmModules)
-      parseMitmModule(
-        module.content,
-        values: module.arguments,
-        resources: module.resources,
-      ),
-  ]);
-  rawConfig['mitm'] = realPatchConfig.mitm.coreJson(
-    mitm.mitm,
-    isAndroid: os == 'android',
-  );
-  mitm.network.applyToTun(tun);
+  final modules = data.mitmModules;
+  rawConfig['mitm'] = {
+    ...realPatchConfig.mitm.coreJson(
+      MitmRules(hostname: realPatchConfig.mitm.hostname),
+      isAndroid: os == 'android',
+    ),
+    if (realPatchConfig.mitm.enable) ...{
+      'modules': [
+        for (final module in modules)
+          {
+            'name': module.name,
+            'path': module.path,
+            if (!module.enabled) 'enabled': false,
+            if (module.arguments.isNotEmpty) 'arguments': module.arguments,
+            if (module.attachments.isNotEmpty)
+              'attachments': module.attachments,
+            if (module.adoptResources.isNotEmpty)
+              'adopt-resources': module.adoptResources,
+          },
+      ],
+      'module-language': mitmModuleLanguage,
+    },
+  };
+  MitmNetwork.merge(
+    modules
+        .where((module) => module.enabled)
+        .map((module) => MitmNetwork.fromCoreJson(module.network)),
+  ).applyToTun(tun);
   if (rawConfig['profile'] == null) {
     rawConfig['profile'] = {};
   }
@@ -321,25 +337,10 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
     };
   }
 
-  final attachedRuleSets = {
-    for (final MapEntry(:key, :value) in mitm.ruleProviders.entries)
-      if (value['type'] == 'file') key: value,
-  };
-  if (mitm.ruleProviders.length > attachedRuleSets.length) {
-    final providers = rawConfig['rule-providers'];
-    rawConfig['rule-providers'] = {
-      if (providers is Map) ...providers.cast<String, dynamic>(),
-      for (final MapEntry(:key, :value) in mitm.ruleProviders.entries)
-        if (!attachedRuleSets.containsKey(key)) key: value,
-    };
-  }
   confineProviders('proxy-providers', proxiesProviderDirectoryName);
   confineProviders('rule-providers', rulesProviderDirectoryName);
   injectUnconfinedProviders('proxy-providers', data.injectedProxyProviders);
-  injectUnconfinedProviders('rule-providers', {
-    ...data.injectedRuleProviders,
-    ...attachedRuleSets,
-  });
+  injectUnconfinedProviders('rule-providers', data.injectedRuleProviders);
   rawConfig['profile']['store-selected'] = false;
   rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
@@ -349,7 +350,6 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
   for (final host in realPatchConfig.hosts.entries) {
     rawConfig['hosts'][host.key] = host.value.splitByMultipleSeparators;
   }
-  (rawConfig['hosts'] as Map).addAll(mitm.network.hosts);
   var rawDns = rawConfig['dns'] is Map
       ? Map<String, dynamic>.from(rawConfig['dns'] as Map)
       : <String, dynamic>{};
@@ -365,7 +365,6 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
     rawDns,
     overrides.dns.overrideJson(overrides.dnsOverrideKeys),
   );
-  mitm.network.applyToDns(rawDns);
   rawConfig['dns'] = rawDns;
   final ntpOverride = overrides.ntp.overrideJson(overrides.ntpOverrideKeys);
   if (ntpOverride.isNotEmpty) {
@@ -426,18 +425,18 @@ Future<RealProfile> _makeRealProfileTask(MakeRealProfileState data) async {
         .map((item) => item.definition)
         .toList();
   }
-  final mitmRules = mitm.exits.isEmpty
-      ? mitm.rules
-      : mitmRulesWithExits(
-          mitm.rules,
-          mitm.exits,
-          exitTargetResolver(
-            targets: data.exitTargets,
-            outbounds: data.outboundNames ?? outboundNamesOf(rawConfig),
-            fallback: data.defaultExitTarget ?? lastMatchTarget(rules),
-          ),
-        );
-  rawConfig['rules'] = [...mitmRules, ...rules];
+  final policies = <String>{for (final module in modules) ...module.policies};
+  if (policies.isNotEmpty) {
+    final exitTarget = exitTargetResolver(
+      targets: data.exitTargets,
+      outbounds: data.outboundNames ?? outboundNamesOf(rawConfig),
+      fallback: data.defaultExitTarget ?? lastMatchTarget(rules),
+    );
+    (rawConfig['mitm'] as Map)['module-policy'] = {
+      for (final policy in policies) policy: exitTarget(policy),
+    };
+  }
+  rawConfig['rules'] = rules;
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
   return (
     yaml: yaml,

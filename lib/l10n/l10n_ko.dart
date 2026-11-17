@@ -3732,6 +3732,11 @@ class AppLocalizationsKo extends AppLocalizations {
       'URL-REGEX 및 USER-AGENT 규칙은 URL 재작성으로 동작하며, HTTPS는 목록의 호스트에만 적용됩니다.';
 
   @override
+  String mitmExtendedMatchingNote(Object count) {
+    return '이 중 $count개는 확장 매칭 사용';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return '$system용으로 작성되었습니다. 일부 줄은 이 기기의 앱과 맞지 않을 수 있습니다.';
   }
@@ -3807,10 +3812,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mitmSkipRule => '이 규칙 유형은 지원되지 않습니다';
 
   @override
-  String get mitmSkipHttpRulePolicy =>
-      'URL-REGEX 및 USER-AGENT 규칙은 REJECT 계열 정책만 사용할 수 있습니다';
-
-  @override
   String get mitmSkipFinalRule => '모듈 규칙은 맨 앞에 들어가므로 최종 규칙은 그 뒤의 모든 규칙을 가립니다';
 
   @override
@@ -3833,9 +3834,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mitmSkipReflect => 'FlClash는 패킷을 보낸 쪽으로 되돌려 보낼 수 없습니다';
 
   @override
-  String get mitmSkipConditional => '조건부 재작성은 지원되지 않습니다';
-
-  @override
   String get mitmSkipSkipVerifyAll => '모든 호스트에 대해 인증서 검증을 끌 수는 없습니다';
 
   @override
@@ -3843,10 +3841,60 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 줄이 가리키는 파일이 첨부되어 있지 않습니다. URL을 쓰거나 첨부하세요';
 
   @override
-  String get mitmSkipNotDownloaded => '파일이 아직 다운로드되지 않았습니다';
+  String get mitmSkipUnreadable => '이 줄을 읽을 수 없습니다';
 
   @override
-  String get mitmSkipUnreadable => '이 줄을 읽을 수 없습니다';
+  String get mitmSkipNoSection => '이 줄은 어느 섹션에도 속하지 않습니다';
+
+  @override
+  String get mitmSkipRequirementUnreadable => '이 줄의 요구 조건을 읽을 수 없습니다';
+
+  @override
+  String get mitmSkipPolicy => '이 규칙의 정책이 아무것도 가리키지 않습니다';
+
+  @override
+  String get mitmSkipNestedRuleSet => '규칙 집합 안에 다른 규칙 집합을 넣을 수 없습니다';
+
+  @override
+  String get mitmSkipCondition => '이 조건은 판별할 수 없습니다';
+
+  @override
+  String get mitmSkipRuntimeValue => '이 줄에는 처리 중인 요청에만 있는 값이 필요합니다';
+
+  @override
+  String get mitmResources => '원격 파일';
+
+  @override
+  String get mitmResourceOk => '다운로드됨';
+
+  @override
+  String get mitmResourceFetching => '다운로드 중';
+
+  @override
+  String get mitmResourceMissing => '아직 다운로드되지 않음';
+
+  @override
+  String get mitmFetchDns => '다운로드 실패: 호스트 이름을 확인할 수 없습니다';
+
+  @override
+  String get mitmFetchTls => '다운로드 실패: 보안 연결을 설정할 수 없습니다';
+
+  @override
+  String get mitmFetchTimeout => '다운로드 실패: 서버 응답이 너무 늦습니다';
+
+  @override
+  String get mitmFetchConnection => '다운로드 실패: 연결이 끊어졌습니다';
+
+  @override
+  String get mitmFetchOther => '다운로드 실패';
+
+  @override
+  String get mitmResourcesFetch => '다시 다운로드';
+
+  @override
+  String mitmFetchHttp(int status) {
+    return '다운로드 실패: 서버 응답 $status';
+  }
 
   @override
   String get mitmAddLocalFile => '로컬 파일 추가';
@@ -3883,6 +3931,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get mitmScriptGeneric => '일반';
+
+  @override
+  String get mitmScriptDns => 'DNS';
 
   @override
   String get mitmExcluded => '제외';
@@ -4044,6 +4095,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String coreStoppedWithReason(Object reason) {
     return '앱과 코어의 연결이 끊어졌습니다: $reason';
   }
+
+  @override
+  String get coreUnavailableTip => '코어가 실행되고 있지 않습니다. 시작된 뒤 다시 시도하세요.';
 
   @override
   String mixedPortReset(Object value, Object port) {

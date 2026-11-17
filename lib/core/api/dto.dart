@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+part 'module_dto.dart';
+
 typedef JsonMap = Map<String, Object?>;
 
 JsonMap _map(Object? value) =>
@@ -956,7 +958,7 @@ sealed class CoreEventDto {
   };
 }
 
-enum ResourceKind { proxyProvider, ruleProvider, geo }
+enum ResourceKind { proxyProvider, ruleProvider, geo, mitmModule }
 
 enum ResourcePhase { updating, updated, unchanged, failed }
 

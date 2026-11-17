@@ -5786,7 +5786,7 @@ $ProfileOverridesCopyWith<$Res> get overrides {
 /// @nodoc
 mixin _$MitmModuleSource {
 
- String get content; Map<String, String> get arguments; Map<String, String> get resources;
+ String get name; String get path; Map<String, String> get arguments; Map<String, String> get attachments; Map<String, String> get adoptResources; bool get enabled; Set<String> get policies; Map<String, Object?> get network;
 /// Create a copy of MitmModuleSource
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -5798,20 +5798,20 @@ $MitmModuleSourceCopyWith<MitmModuleSource> get copyWith => _$MitmModuleSourceCo
 @override
 bool operator ==(Object other) {
   final _this = this as MitmModuleSource;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmModuleSource&&(identical(other.content, _this.content) || other.content == _this.content)&&const DeepCollectionEquality().equals(other.arguments, _this.arguments)&&const DeepCollectionEquality().equals(other.resources, _this.resources));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmModuleSource&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.path, _this.path) || other.path == _this.path)&&const DeepCollectionEquality().equals(other.arguments, _this.arguments)&&const DeepCollectionEquality().equals(other.attachments, _this.attachments)&&const DeepCollectionEquality().equals(other.adoptResources, _this.adoptResources)&&(identical(other.enabled, _this.enabled) || other.enabled == _this.enabled)&&const DeepCollectionEquality().equals(other.policies, _this.policies)&&const DeepCollectionEquality().equals(other.network, _this.network));
 }
 
 
 @override
 int get hashCode {
   final _this = this as MitmModuleSource;
-  return Object.hash(runtimeType,_this.content,const DeepCollectionEquality().hash(_this.arguments),const DeepCollectionEquality().hash(_this.resources));
+  return Object.hash(runtimeType,_this.name,_this.path,const DeepCollectionEquality().hash(_this.arguments),const DeepCollectionEquality().hash(_this.attachments),const DeepCollectionEquality().hash(_this.adoptResources),_this.enabled,const DeepCollectionEquality().hash(_this.policies),const DeepCollectionEquality().hash(_this.network));
 }
 
 @override
 String toString() {
   final _this = this as MitmModuleSource;
-  return 'MitmModuleSource(content: ${_this.content}, arguments: ${_this.arguments}, resources: ${_this.resources})';
+  return 'MitmModuleSource(name: ${_this.name}, path: ${_this.path}, arguments: ${_this.arguments}, attachments: ${_this.attachments}, adoptResources: ${_this.adoptResources}, enabled: ${_this.enabled}, policies: ${_this.policies}, network: ${_this.network})';
 }
 
 
@@ -5822,7 +5822,7 @@ abstract mixin class $MitmModuleSourceCopyWith<$Res>  {
   factory $MitmModuleSourceCopyWith(MitmModuleSource value, $Res Function(MitmModuleSource) _then) = _$MitmModuleSourceCopyWithImpl;
 @useResult
 $Res call({
- String content, Map<String, String> arguments, Map<String, String> resources
+ String name, String path, Map<String, String> arguments, Map<String, String> attachments, Map<String, String> adoptResources, bool enabled, Set<String> policies, Map<String, Object?> network
 });
 
 
@@ -5839,12 +5839,17 @@ class _$MitmModuleSourceCopyWithImpl<$Res>
 
 /// Create a copy of MitmModuleSource
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? content = null,Object? arguments = null,Object? resources = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? path = null,Object? arguments = null,Object? attachments = null,Object? adoptResources = null,Object? enabled = null,Object? policies = null,Object? network = null,}) {
   return _then(MitmModuleSource(
-content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,arguments: null == arguments ? _self.arguments : arguments // ignore: cast_nullable_to_non_nullable
-as Map<String, String>,resources: null == resources ? _self.resources : resources // ignore: cast_nullable_to_non_nullable
-as Map<String, String>,
+as Map<String, String>,attachments: null == attachments ? _self.attachments : attachments // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,adoptResources: null == adoptResources ? _self.adoptResources : adoptResources // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,policies: null == policies ? _self.policies : policies // ignore: cast_nullable_to_non_nullable
+as Set<String>,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
+as Map<String, Object?>,
   ));
 }
 
@@ -5929,10 +5934,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String content,  Map<String, String> arguments,  Map<String, String> resources)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String path,  Map<String, String> arguments,  Map<String, String> attachments,  Map<String, String> adoptResources,  bool enabled,  Set<String> policies,  Map<String, Object?> network)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MitmModuleSource() when $default != null:
-return $default(_that.content,_that.arguments,_that.resources);case _:
+return $default(_that.name,_that.path,_that.arguments,_that.attachments,_that.adoptResources,_that.enabled,_that.policies,_that.network);case _:
   return orElse();
 
 }
@@ -5950,10 +5955,10 @@ return $default(_that.content,_that.arguments,_that.resources);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String content,  Map<String, String> arguments,  Map<String, String> resources)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String path,  Map<String, String> arguments,  Map<String, String> attachments,  Map<String, String> adoptResources,  bool enabled,  Set<String> policies,  Map<String, Object?> network)  $default,) {final _that = this;
 switch (_that) {
 case _MitmModuleSource():
-return $default(_that.content,_that.arguments,_that.resources);case _:
+return $default(_that.name,_that.path,_that.arguments,_that.attachments,_that.adoptResources,_that.enabled,_that.policies,_that.network);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -5970,10 +5975,10 @@ return $default(_that.content,_that.arguments,_that.resources);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String content,  Map<String, String> arguments,  Map<String, String> resources)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String path,  Map<String, String> arguments,  Map<String, String> attachments,  Map<String, String> adoptResources,  bool enabled,  Set<String> policies,  Map<String, Object?> network)?  $default,) {final _that = this;
 switch (_that) {
 case _MitmModuleSource() when $default != null:
-return $default(_that.content,_that.arguments,_that.resources);case _:
+return $default(_that.name,_that.path,_that.arguments,_that.attachments,_that.adoptResources,_that.enabled,_that.policies,_that.network);case _:
   return null;
 
 }
@@ -5985,10 +5990,11 @@ return $default(_that.content,_that.arguments,_that.resources);case _:
 
 
 class _MitmModuleSource implements MitmModuleSource {
-  const _MitmModuleSource({required this.content,  Map<String, String> arguments = const {},  Map<String, String> resources = const {}}): _arguments = arguments,_resources = resources;
+  const _MitmModuleSource({required this.name, required this.path,  Map<String, String> arguments = const {},  Map<String, String> attachments = const {},  Map<String, String> adoptResources = const {}, this.enabled = true,  Set<String> policies = const {},  Map<String, Object?> network = const {}}): _arguments = arguments,_attachments = attachments,_adoptResources = adoptResources,_policies = policies,_network = network;
   
 
-@override final  String content;
+@override final  String name;
+@override final  String path;
  final  Map<String, String> _arguments;
 @override@JsonKey() Map<String, String> get arguments {
   if (_arguments is EqualUnmodifiableMapView) return _arguments;
@@ -5996,11 +6002,33 @@ class _MitmModuleSource implements MitmModuleSource {
   return EqualUnmodifiableMapView(_arguments);
 }
 
- final  Map<String, String> _resources;
-@override@JsonKey() Map<String, String> get resources {
-  if (_resources is EqualUnmodifiableMapView) return _resources;
+ final  Map<String, String> _attachments;
+@override@JsonKey() Map<String, String> get attachments {
+  if (_attachments is EqualUnmodifiableMapView) return _attachments;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableMapView(_resources);
+  return EqualUnmodifiableMapView(_attachments);
+}
+
+ final  Map<String, String> _adoptResources;
+@override@JsonKey() Map<String, String> get adoptResources {
+  if (_adoptResources is EqualUnmodifiableMapView) return _adoptResources;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_adoptResources);
+}
+
+@override@JsonKey() final  bool enabled;
+ final  Set<String> _policies;
+@override@JsonKey() Set<String> get policies {
+  if (_policies is EqualUnmodifiableSetView) return _policies;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_policies);
+}
+
+ final  Map<String, Object?> _network;
+@override@JsonKey() Map<String, Object?> get network {
+  if (_network is EqualUnmodifiableMapView) return _network;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_network);
 }
 
 
@@ -6014,18 +6042,18 @@ _$MitmModuleSourceCopyWith<_MitmModuleSource> get copyWith => __$MitmModuleSourc
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmModuleSource&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other.arguments, _arguments)&&const DeepCollectionEquality().equals(other.resources, _resources));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmModuleSource&&(identical(other.name, name) || other.name == name)&&(identical(other.path, path) || other.path == path)&&const DeepCollectionEquality().equals(other.arguments, _arguments)&&const DeepCollectionEquality().equals(other.attachments, _attachments)&&const DeepCollectionEquality().equals(other.adoptResources, _adoptResources)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&const DeepCollectionEquality().equals(other.policies, _policies)&&const DeepCollectionEquality().equals(other.network, _network));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,content,const DeepCollectionEquality().hash(_arguments),const DeepCollectionEquality().hash(_resources));
+    return Object.hash(runtimeType,name,path,const DeepCollectionEquality().hash(_arguments),const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_adoptResources),enabled,const DeepCollectionEquality().hash(_policies),const DeepCollectionEquality().hash(_network));
 }
 
 @override
 String toString() {
-    return 'MitmModuleSource(content: $content, arguments: $arguments, resources: $resources)';
+    return 'MitmModuleSource(name: $name, path: $path, arguments: $arguments, attachments: $attachments, adoptResources: $adoptResources, enabled: $enabled, policies: $policies, network: $network)';
 }
 
 
@@ -6036,7 +6064,7 @@ abstract mixin class _$MitmModuleSourceCopyWith<$Res> implements $MitmModuleSour
   factory _$MitmModuleSourceCopyWith(_MitmModuleSource value, $Res Function(_MitmModuleSource) _then) = __$MitmModuleSourceCopyWithImpl;
 @override @useResult
 $Res call({
- String content, Map<String, String> arguments, Map<String, String> resources
+ String name, String path, Map<String, String> arguments, Map<String, String> attachments, Map<String, String> adoptResources, bool enabled, Set<String> policies, Map<String, Object?> network
 });
 
 
@@ -6053,12 +6081,17 @@ class __$MitmModuleSourceCopyWithImpl<$Res>
 
 /// Create a copy of MitmModuleSource
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? content = null,Object? arguments = null,Object? resources = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? path = null,Object? arguments = null,Object? attachments = null,Object? adoptResources = null,Object? enabled = null,Object? policies = null,Object? network = null,}) {
   return _then(_MitmModuleSource(
-content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,arguments: null == arguments ? _self._arguments : arguments // ignore: cast_nullable_to_non_nullable
-as Map<String, String>,resources: null == resources ? _self._resources : resources // ignore: cast_nullable_to_non_nullable
-as Map<String, String>,
+as Map<String, String>,attachments: null == attachments ? _self._attachments : attachments // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,adoptResources: null == adoptResources ? _self._adoptResources : adoptResources // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,policies: null == policies ? _self._policies : policies // ignore: cast_nullable_to_non_nullable
+as Set<String>,network: null == network ? _self._network : network // ignore: cast_nullable_to_non_nullable
+as Map<String, Object?>,
   ));
 }
 

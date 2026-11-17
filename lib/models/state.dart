@@ -228,13 +228,20 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
   }) = _MakeRealProfileState;
 }
 
-/// An enabled module as the profile build reads it.
+/// An enabled module as the Core is handed it in `mitm.modules`, with what
+/// the profile build still does from its reading: map its [policies] to
+/// outbounds and route the TUN by its [network].
 @freezed
 abstract class MitmModuleSource with _$MitmModuleSource {
   const factory MitmModuleSource({
-    required String content,
+    required String name,
+    required String path,
     @Default({}) Map<String, String> arguments,
-    @Default({}) Map<String, String> resources,
+    @Default({}) Map<String, String> attachments,
+    @Default({}) Map<String, String> adoptResources,
+    @Default(true) bool enabled,
+    @Default({}) Set<String> policies,
+    @Default({}) Map<String, Object?> network,
   }) = _MitmModuleSource;
 }
 

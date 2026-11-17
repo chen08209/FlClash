@@ -230,6 +230,7 @@ const concordKeyTiers = <String, Map<String, ConcordTier>>{
     'DSCP': ConcordTier.t1,
     'IN-NAME': ConcordTier.t1,
     'REMATCH-NAME': ConcordTier.t1,
+    'SCRIPT': ConcordTier.t1,
   },
   'proxy-types': {
     'direct': ConcordTier.t0,

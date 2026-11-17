@@ -3841,6 +3841,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'URL-REGEX and USER-AGENT rules run as URL rewrites, on HTTPS only for listed hosts.';
 
   @override
+  String mitmExtendedMatchingNote(Object count) {
+    return '$count use extended matching';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return 'Written for $system; some lines may not match apps on this device.';
   }
@@ -3917,10 +3922,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mitmSkipRule => 'This rule type is not supported';
 
   @override
-  String get mitmSkipHttpRulePolicy =>
-      'URL-REGEX and USER-AGENT rules only take a REJECT policy';
-
-  @override
   String get mitmSkipFinalRule =>
       'Module rules go first, so a final rule would hide every rule after it';
 
@@ -3949,9 +3950,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'FlClash cannot send packets back to their sender';
 
   @override
-  String get mitmSkipConditional => 'Conditional rewrites are not supported';
-
-  @override
   String get mitmSkipSkipVerifyAll =>
       'Certificate checks are not turned off for every host';
 
@@ -3960,10 +3958,65 @@ class AppLocalizationsEn extends AppLocalizations {
       'The file this line names is not attached; use a URL or attach it';
 
   @override
-  String get mitmSkipNotDownloaded => 'Its file has not been downloaded';
+  String get mitmSkipUnreadable => 'This line cannot be read';
 
   @override
-  String get mitmSkipUnreadable => 'This line cannot be read';
+  String get mitmSkipNoSection => 'This line is outside any section';
+
+  @override
+  String get mitmSkipRequirementUnreadable =>
+      'This line’s requirement cannot be read';
+
+  @override
+  String get mitmSkipPolicy => 'This rule’s policy names nothing';
+
+  @override
+  String get mitmSkipNestedRuleSet =>
+      'A rule set cannot include another rule set';
+
+  @override
+  String get mitmSkipCondition => 'This condition cannot be tested';
+
+  @override
+  String get mitmSkipRuntimeValue =>
+      'This line needs a value only the request at hand has';
+
+  @override
+  String get mitmResources => 'Remote files';
+
+  @override
+  String get mitmResourceOk => 'Downloaded';
+
+  @override
+  String get mitmResourceFetching => 'Downloading';
+
+  @override
+  String get mitmResourceMissing => 'Not downloaded yet';
+
+  @override
+  String get mitmFetchDns =>
+      'Download failed: the host name could not be resolved';
+
+  @override
+  String get mitmFetchTls =>
+      'Download failed: the secure connection could not be set up';
+
+  @override
+  String get mitmFetchTimeout => 'Download failed: the server took too long';
+
+  @override
+  String get mitmFetchConnection => 'Download failed: the connection was lost';
+
+  @override
+  String get mitmFetchOther => 'Download failed';
+
+  @override
+  String get mitmResourcesFetch => 'Download again';
+
+  @override
+  String mitmFetchHttp(int status) {
+    return 'Download failed: the server answered $status';
+  }
 
   @override
   String get mitmAddLocalFile => 'Add a local file';
@@ -4000,6 +4053,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mitmScriptGeneric => 'Generic';
+
+  @override
+  String get mitmScriptDns => 'DNS';
 
   @override
   String get mitmExcluded => 'Excluded';
@@ -4170,6 +4226,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String coreStoppedWithReason(Object reason) {
     return 'The app lost its connection to the core: $reason';
   }
+
+  @override
+  String get coreUnavailableTip =>
+      'The core is not running. Try again once it has started.';
 
   @override
   String mixedPortReset(Object value, Object port) {

@@ -3839,6 +3839,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Правила URL-REGEX и USER-AGENT работают как перезаписи URL, для HTTPS — только для хостов из списка.';
 
   @override
+  String mitmExtendedMatchingNote(Object count) {
+    return '$count используют расширенное сопоставление';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return 'Написан для $system; некоторые строки могут не подходить к приложениям на этом устройстве.';
   }
@@ -3915,10 +3920,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mitmSkipRule => 'Этот тип правила не поддерживается';
 
   @override
-  String get mitmSkipHttpRulePolicy =>
-      'Правила URL-REGEX и USER-AGENT допускают только политику REJECT';
-
-  @override
   String get mitmSkipFinalRule =>
       'Правила модуля идут первыми, поэтому финальное правило скрыло бы все последующие';
 
@@ -3947,9 +3948,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'FlClash не может отправить пакеты обратно отправителю';
 
   @override
-  String get mitmSkipConditional => 'Условные перезаписи не поддерживаются';
-
-  @override
   String get mitmSkipSkipVerifyAll =>
       'Проверку сертификатов нельзя отключить для всех хостов';
 
@@ -3958,10 +3956,65 @@ class AppLocalizationsRu extends AppLocalizations {
       'Файл из этой строки не прикреплён; укажите URL или прикрепите его';
 
   @override
-  String get mitmSkipNotDownloaded => 'Его файл ещё не загружен';
+  String get mitmSkipUnreadable => 'Эту строку не удалось прочитать';
 
   @override
-  String get mitmSkipUnreadable => 'Эту строку не удалось прочитать';
+  String get mitmSkipNoSection => 'Эта строка не входит ни в один раздел';
+
+  @override
+  String get mitmSkipRequirementUnreadable =>
+      'Не удалось прочитать условие этой строки';
+
+  @override
+  String get mitmSkipPolicy => 'Политика этого правила ни на что не указывает';
+
+  @override
+  String get mitmSkipNestedRuleSet =>
+      'Набор правил не может включать другой набор';
+
+  @override
+  String get mitmSkipCondition => 'Это условие нельзя проверить';
+
+  @override
+  String get mitmSkipRuntimeValue =>
+      'Этой строке нужно значение, которое есть только у текущего запроса';
+
+  @override
+  String get mitmResources => 'Удалённые файлы';
+
+  @override
+  String get mitmResourceOk => 'Загружено';
+
+  @override
+  String get mitmResourceFetching => 'Загрузка';
+
+  @override
+  String get mitmResourceMissing => 'Ещё не загружено';
+
+  @override
+  String get mitmFetchDns => 'Ошибка загрузки: не удалось разрешить имя хоста';
+
+  @override
+  String get mitmFetchTls =>
+      'Ошибка загрузки: не удалось установить защищённое соединение';
+
+  @override
+  String get mitmFetchTimeout =>
+      'Ошибка загрузки: сервер отвечал слишком долго';
+
+  @override
+  String get mitmFetchConnection => 'Ошибка загрузки: соединение прервано';
+
+  @override
+  String get mitmFetchOther => 'Ошибка загрузки';
+
+  @override
+  String get mitmResourcesFetch => 'Загрузить снова';
+
+  @override
+  String mitmFetchHttp(int status) {
+    return 'Ошибка загрузки: сервер ответил $status';
+  }
 
   @override
   String get mitmAddLocalFile => 'Добавить локальный файл';
@@ -3998,6 +4051,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mitmScriptGeneric => 'Общий';
+
+  @override
+  String get mitmScriptDns => 'DNS';
 
   @override
   String get mitmExcluded => 'Исключено';
@@ -4168,6 +4224,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String coreStoppedWithReason(Object reason) {
     return 'Приложение потеряло связь с ядром: $reason';
   }
+
+  @override
+  String get coreUnavailableTip =>
+      'Ядро не запущено. Повторите попытку после его запуска.';
 
   @override
   String mixedPortReset(Object value, Object port) {

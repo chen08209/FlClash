@@ -111,10 +111,13 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
   final profileType = profile?.type ?? ProfileType.file;
   final overrides = ref.watch(profileOverridesProvider(profileId));
   final allProfileProviders = ref.watch(profileProvidersProvider);
-  final mitmModules =
-      ref.watch(patchClashConfigProvider.select((state) => state.mitm.enable))
+  final mitmOn = ref.watch(
+    patchClashConfigProvider.select((state) => state.mitm.enable),
+  );
+  final installedMitmModules = mitmOn
       ? ref.watch(mitmModulesProvider.future)
       : null;
+  final mitmModules = ref.watch(enabledMitmModulesProvider.future);
   List<ProxyGroup> proxyGroups = [];
   List<Rule> rules = [];
   List<Rule> addedRules = [];
@@ -143,9 +146,10 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
     }
   }
   return SetupState(
-    mitmModules: mitmModules == null
-        ? const []
-        : await mitmModuleSources(await mitmModules),
+    mitmModules: mitmModuleSourcesOf(
+      await installedMitmModules ?? const [],
+      await mitmModules,
+    ),
     clashProviders: clashProviders,
     profileProviders: profileProviders,
     appProxies: appProxies,
@@ -162,30 +166,32 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
   );
 }
 
-/// A module whose content is not on disk yet adds nothing until it downloads.
-Future<List<MitmModuleSource>> mitmModuleSources(
-  Iterable<MitmModule> modules,
-) async {
-  final directory = await appPath.mitmModulesDirPath;
-  final sources = <MitmModuleSource>[];
-  for (final module in modules) {
-    if (!module.enabled) {
-      continue;
-    }
-    final file = File(join(directory, module.fileName));
-    if (!await file.exists()) {
-      continue;
-    }
-    sources.add(
-      MitmModuleSource(
-        content: await file.readAsString(),
-        arguments: module.arguments,
-        resources: module.resources,
-      ),
-    );
-  }
-  return sources;
+/// Every installed module, so that the Core keeps the files of those off.
+List<MitmModuleSource> mitmModuleSourcesOf(
+  List<MitmModule> installed,
+  List<({MitmModule module, MitmModuleDetails details})> read,
+) {
+  final reads = {for (final (:module, :details) in read) module.id: details};
+  return [
+    for (final module in installed)
+      mitmModuleSourceOf(module, reads[module.id]?.read),
+  ];
 }
+
+MitmModuleSource mitmModuleSourceOf(MitmModule module, MitmModuleRead? read) =>
+    MitmModuleSource(
+      name: '${module.id}',
+      path: '$mitmModulesDirectoryName/${module.fileName}',
+      arguments: module.arguments,
+      attachments: mitmAttachments(module),
+      adoptResources: {
+        for (final MapEntry(:key, :value) in module.resources.entries)
+          if (isMitmResourceUrl(key)) key: value,
+      },
+      enabled: read != null,
+      policies: read?.namedPolicies ?? const {},
+      network: read?.network ?? const {},
+    );
 
 /// Subscription profiles double as proxy providers for custom profiles.
 @riverpod

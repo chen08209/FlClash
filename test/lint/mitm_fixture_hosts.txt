@@ -5,3 +5,5 @@ lib/common/mitm_module.dart apple.com # Surge's built-in SYSTEM rule set, which 
 lib/common/mitm_module.dart apple.cn # Surge's built-in SYSTEM rule set, which modules name.
 lib/common/mitm_module.dart push-apple.com.akadns.net # Surge's built-in SYSTEM rule set, which modules name.
 test/common/mitm_module_test.dart link.stash.ws # Stash install links come from this host.
+lib/common/mitm_module_file.dart link.stash.ws # Stash install links come from this host.
+test/common/mitm_module_file_test.dart link.stash.ws # Stash install links come from this host.

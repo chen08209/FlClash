@@ -169,6 +169,17 @@ final Map<String, _Call> _calls = {
     await api.mitmBody(1, response: true);
     return api.mitmBody(1, response: false);
   },
+  'mitm.readModule': (api) => api.readMitmModule(
+    '[Rule]',
+    arguments: const {'a': '1'},
+    attachments: const {'a.js': 'f.js'},
+    language: 'zh-Hans',
+  ),
+  'mitm.moduleStatus': (api) => api.mitmModuleStatus(),
+  'mitm.fetchModule': (api) async {
+    await api.fetchMitmModule();
+    return api.fetchMitmModule(name: 'm');
+  },
 };
 
 void main() {

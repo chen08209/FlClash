@@ -1267,6 +1267,12 @@
   "mitmIgnoredLines": "Ignored lines",
   "mitmModuleRulesDesc": "Matched before the profile’s rules.",
   "mitmRequestRulesDesc": "URL-REGEX and USER-AGENT rules run as URL rewrites, on HTTPS only for listed hosts.",
+  "mitmExtendedMatchingNote": "{count} use extended matching",
+  "@mitmExtendedMatchingNote": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "mitmModuleSystemTip": "Written for {system}; some lines may not match apps on this device.",
   "mitmModuleRequirementTip": "The module requires {requirement}, which this device does not meet; it may not work as intended.",
   "mitmExitModules": "From modules: {modules}",
@@ -1285,7 +1291,6 @@
   "mitmSkipSetting": "This setting is not supported",
   "mitmSkipScriptType": "This script type is not supported",
   "mitmSkipRule": "This rule type is not supported",
-  "mitmSkipHttpRulePolicy": "URL-REGEX and USER-AGENT rules only take a REJECT policy",
   "mitmSkipFinalRule": "Module rules go first, so a final rule would hide every rule after it",
   "mitmSkipDeviceRule": "This rule needs device or network details FlClash cannot read",
   "mitmSkipRequirement": "This line’s requirement is not met on this device",
@@ -1293,11 +1298,33 @@
   "mitmSkipProxies": "A module cannot change proxies or proxy groups",
   "mitmSkipAppOnly": "A feature of the app this was written for that FlClash does not have",
   "mitmSkipReflect": "FlClash cannot send packets back to their sender",
-  "mitmSkipConditional": "Conditional rewrites are not supported",
   "mitmSkipSkipVerifyAll": "Certificate checks are not turned off for every host",
   "mitmSkipRelativeData": "The file this line names is not attached; use a URL or attach it",
-  "mitmSkipNotDownloaded": "Its file has not been downloaded",
   "mitmSkipUnreadable": "This line cannot be read",
+  "mitmSkipNoSection": "This line is outside any section",
+  "mitmSkipRequirementUnreadable": "This line’s requirement cannot be read",
+  "mitmSkipPolicy": "This rule’s policy names nothing",
+  "mitmSkipNestedRuleSet": "A rule set cannot include another rule set",
+  "mitmSkipCondition": "This condition cannot be tested",
+  "mitmSkipRuntimeValue": "This line needs a value only the request at hand has",
+  "mitmResources": "Remote files",
+  "mitmResourceOk": "Downloaded",
+  "mitmResourceFetching": "Downloading",
+  "mitmResourceMissing": "Not downloaded yet",
+  "mitmFetchDns": "Download failed: the host name could not be resolved",
+  "mitmFetchTls": "Download failed: the secure connection could not be set up",
+  "mitmFetchTimeout": "Download failed: the server took too long",
+  "mitmFetchConnection": "Download failed: the connection was lost",
+  "mitmFetchOther": "Download failed",
+  "mitmResourcesFetch": "Download again",
+  "mitmFetchHttp": "Download failed: the server answered {status}",
+  "@mitmFetchHttp": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
   "mitmAddLocalFile": "Add a local file",
   "mitmNewModule": "New module",
   "mitmAttachments": "Attachments",
@@ -1309,6 +1336,7 @@
   "mitmScriptCron": "Scheduled",
   "mitmScriptEvent": "Event",
   "mitmScriptGeneric": "Generic",
+  "mitmScriptDns": "DNS",
   "mitmExcluded": "Excluded",
   "mitmScriptNoOutput": "The script finished without output",
   "mitmScriptRiskTitle": "Run this module's scripts?",
@@ -1361,6 +1389,7 @@
   "coreStopped": "Core stopped",
   "coreStoppedDesc": "The app lost its connection to the core",
   "coreStoppedWithReason": "The app lost its connection to the core: {reason}",
+  "coreUnavailableTip": "The core is not running. Try again once it has started.",
   "mixedPortReset": "The mixed port cannot be {value}, so it was set back to {port}",
   "@mixedPortReset": {
     "placeholders": {

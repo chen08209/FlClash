@@ -648,7 +648,7 @@ class SetupAction extends _$SetupAction {
     final directory = await appPath.profilesPath;
     final hasCustomExit =
         setupState.addedRules.any((rule) => rule.customExit) ||
-        setupState.mitmModules.isNotEmpty;
+        setupState.mitmModules.any((module) => module.policies.isNotEmpty);
     final injected = await _resolveInjectedProviders(
       setupState,
       proxyGroups: proxyGroups,

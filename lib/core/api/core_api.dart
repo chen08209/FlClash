@@ -334,4 +334,15 @@ abstract interface class CoreApi {
   Future<Object?> mitmExchange(int id);
 
   Future<Object?> mitmBody(int id, {required bool response});
+
+  Future<JsonMap> readMitmModule(
+    String text, {
+    Map<String, String> arguments = const {},
+    Map<String, String> attachments = const {},
+    String language = '',
+  });
+
+  Future<JsonMap> mitmModuleStatus();
+
+  Future<void> fetchMitmModule({String? name});
 }

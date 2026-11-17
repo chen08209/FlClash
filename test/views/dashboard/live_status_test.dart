@@ -1,6 +1,5 @@
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/mitm_module.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -17,6 +16,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../helpers/glyph_finders.dart';
 import '../../helpers/host_scaffold.dart';
+import '../../helpers/module_reads.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 
@@ -335,9 +335,10 @@ void main() {
         overrides: [
           profilesProvider.overrideWith(() => TestProfiles([_profile])),
           for (final id in [1, 2])
-            mitmModuleContentProvider(
-              id,
-            ).overrideWith((ref) async => MitmModuleContent()),
+            mitmModuleContentProvider(id).overrideWith(
+              (ref) async =>
+                  moduleDetails('', moduleRead(declaredScripts: const [1])),
+            ),
         ],
       );
       globalState.container = container;

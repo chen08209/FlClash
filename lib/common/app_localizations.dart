@@ -155,6 +155,8 @@ String userFacingErrorMessage(Object error, AppLocalizations appLocalizations) {
           appLocalizations.ruleSetMixedTip,
         CoreMethodException(code: 'rule_set_invalid') =>
           appLocalizations.ruleSetInvalidTip,
+        CoreMethodException(isCoreUnavailable: true) =>
+          appLocalizations.coreUnavailableTip,
         CoreMethodException(:final message) => message,
         _ => error.toString(),
       };
