@@ -6642,6 +6642,12 @@ abstract class AppLocalizations {
   /// **'Its scripts read and change the traffic of the hosts they match, cookies and tokens included, and can send requests of their own. Turn it on only if you trust where it comes from. Once on, its updates take effect without asking again.'**
   String get mitmScriptRisk;
 
+  /// No description provided for @mitmModuleUnreadableRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'The module file could not be read, so what it changes is unknown. Turn it on only if you trust where it comes from.'**
+  String get mitmModuleUnreadableRisk;
+
   /// No description provided for @skipServerCertVerify.
   ///
   /// In en, this message translates to:

@@ -121,6 +121,7 @@ void main() {
     CoreController? core,
     MitmModulesAction Function()? action,
     MitmModuleContent? remoteContent,
+    Future<MitmModuleContent?> Function()? localContent,
     Map<MitmList, Map<String, String>> issues = const {
       MitmList.urlRewrite: {'bad line': 'unknown type'},
     },
@@ -143,7 +144,9 @@ void main() {
         mitmModuleContentProvider(
           _remote.id,
         ).overrideWith((ref) async => content),
-        mitmModuleContentProvider(_local.id).overrideWith((ref) async => null),
+        mitmModuleContentProvider(
+          _local.id,
+        ).overrideWith((ref) => localContent?.call() ?? Future.value()),
         mitmModuleDetailsProvider(_remote.id).overrideWith(
           (ref) async => (content: content, issues: issues, views: views),
         ),
@@ -180,7 +183,11 @@ void main() {
   });
 
   testWidgets('a module with scripts asks before it turns on', (tester) async {
-    await pump(tester, const MitmModulesView());
+    await pump(
+      tester,
+      const MitmModulesView(),
+      localContent: () async => MitmModuleContent(),
+    );
 
     await tester.tap(find.byType(Switch).last);
     await tester.pumpAndSettle();
@@ -226,6 +233,35 @@ void main() {
     expect(ads.accepted, isTrue);
     expect(ads.asksConsent, isTrue);
   });
+
+  for (final (reason, content) in [
+    ('is gone', () async => null),
+    ('does not parse', () => Future<MitmModuleContent?>.error(Exception())),
+  ]) {
+    testWidgets('turning on asks when the module file $reason', (tester) async {
+      await pump(tester, const MitmModulesView(), localContent: content);
+      container
+          .read(mitmModulesActionProvider.notifier)
+          .putModule(_local.copyWith(scripts: 0, accepted: null));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(Switch).last);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(currentAppLocalizations.mitmModuleRiskTitle),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          currentAppLocalizations.mitmModuleUnreadableRisk,
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+      expect((await stored()).last.enabled, isFalse);
+    });
+  }
 
   group('a change that turns a module off for consent', () {
     Future<void> expectAsked(WidgetTester tester) async {

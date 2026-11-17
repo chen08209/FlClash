@@ -3824,6 +3824,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ses scripts lisent et modifient le trafic des hôtes qu\'ils ciblent, cookies et jetons compris, et peuvent envoyer leurs propres requêtes. Ne l\'activez que si vous faites confiance à sa source. Une fois activé, ses mises à jour s\'appliquent sans nouvelle demande.';
 
   @override
+  String get mitmModuleUnreadableRisk =>
+      'Le fichier du module est illisible, on ne sait donc pas ce qu\'il modifie. Ne l\'activez que si vous faites confiance à sa source.';
+
+  @override
   String get skipServerCertVerify =>
       'Ignorer la vérification du certificat serveur';
 

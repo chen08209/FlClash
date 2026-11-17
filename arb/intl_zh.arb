@@ -1088,6 +1088,7 @@
   "mitmModuleTurnedOffDesc": "{name} 的更新带来了你未同意过的脚本或网络改动",
   "mitmModulesTurnedOffDesc": "{count, plural, other{{count} 个模块的更新带来了你未同意过的脚本或网络改动}}",
   "mitmScriptRisk": "它的脚本能读取并修改所匹配主机的流量，包括 Cookie 和令牌，还能自行发送请求。只在信任其来源时开启。开启后，它之后的更新会直接生效。",
+  "mitmModuleUnreadableRisk": "无法读取模块文件，不清楚它会改动什么。只在信任其来源时开启。",
   "skipServerCertVerify": "跳过服务器证书验证",
   "blockQuic": "阻止 QUIC",
   "http2": "HTTP/2",

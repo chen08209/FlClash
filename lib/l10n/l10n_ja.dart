@@ -3610,6 +3610,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'スクリプトは一致したホストの通信を読み取り、変更できます。Cookie やトークンも含まれ、独自にリクエストを送ることもできます。提供元を信頼できる場合にのみオンにしてください。オンにすると、以後の更新は確認なしで反映されます。';
 
   @override
+  String get mitmModuleUnreadableRisk =>
+      'モジュールファイルを読み取れないため、何が変更されるかわかりません。提供元を信頼できる場合にのみオンにしてください。';
+
+  @override
   String get skipServerCertVerify => 'サーバー証明書の検証をスキップ';
 
   @override

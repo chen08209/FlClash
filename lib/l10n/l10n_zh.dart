@@ -3566,6 +3566,9 @@ class AppLocalizationsZh extends AppLocalizations {
       '它的脚本能读取并修改所匹配主机的流量，包括 Cookie 和令牌，还能自行发送请求。只在信任其来源时开启。开启后，它之后的更新会直接生效。';
 
   @override
+  String get mitmModuleUnreadableRisk => '无法读取模块文件，不清楚它会改动什么。只在信任其来源时开启。';
+
+  @override
   String get skipServerCertVerify => '跳过服务器证书验证';
 
   @override

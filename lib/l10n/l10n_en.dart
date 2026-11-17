@@ -3783,6 +3783,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Its scripts read and change the traffic of the hosts they match, cookies and tokens included, and can send requests of their own. Turn it on only if you trust where it comes from. Once on, its updates take effect without asking again.';
 
   @override
+  String get mitmModuleUnreadableRisk =>
+      'The module file could not be read, so what it changes is unknown. Turn it on only if you trust where it comes from.';
+
+  @override
   String get skipServerCertVerify => 'Skip server certificate verification';
 
   @override

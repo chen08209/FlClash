@@ -64,13 +64,15 @@ Future<bool> answerMitmModule(WidgetRef ref, MitmModule module) async {
     mitmModuleContentProvider(module.id).future,
     (_, _) {},
   );
-  final MitmModuleContent? read;
+  MitmModuleContent? read;
   try {
     read = await content.read();
+  } catch (_) {
+    read = null;
   } finally {
     content.close();
   }
-  final asksConsent = read?.asksConsent ?? module.asksConsent;
+  final asksConsent = read?.asksConsent ?? true;
   if (!module.copyWith(asksConsent: asksConsent).asksBeforeTurningOn) {
     await action.recordConsent(module.id, asksConsent: asksConsent);
     return true;
@@ -105,6 +107,7 @@ Future<bool> answerMitmModule(WidgetRef ref, MitmModule module) async {
           ),
         TextSpan(
           text: [
+            if (read == null) appLocalizations.mitmModuleUnreadableRisk,
             if (scripts) appLocalizations.mitmScriptRisk,
             if (sources.isNotEmpty)
               appLocalizations.mitmClientSourceRisk(sources.join(', ')),

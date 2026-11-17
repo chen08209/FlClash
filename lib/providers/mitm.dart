@@ -504,7 +504,11 @@ Future<MitmModuleDetails?> mitmModuleDetails(Ref ref, int id) async {
   return (content: content, issues: check.issues, views: check.views);
 }
 
-@riverpod
+Duration? _noRetry(int retryCount, Object error) => null;
+
+/// A file that fails to parse fails again until it changes, which rebuilds
+/// this anyway.
+@Riverpod(retry: _noRetry)
 Future<MitmModuleContent?> mitmModuleContent(Ref ref, int id) async {
   final module = ref.watch(
     mitmModulesProvider.select(

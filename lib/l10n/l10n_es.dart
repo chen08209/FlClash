@@ -3822,6 +3822,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Sus scripts leen y modifican el tráfico de los hosts que coinciden, incluidas las cookies y los tokens, y pueden enviar sus propias solicitudes. Actívalo solo si confías en su origen. Una vez activado, sus actualizaciones se aplican sin volver a preguntar.';
 
   @override
+  String get mitmModuleUnreadableRisk =>
+      'No se pudo leer el archivo del módulo, así que no se sabe qué cambia. Actívalo solo si confías en su origen.';
+
+  @override
   String get skipServerCertVerify =>
       'Omitir la verificación del certificado del servidor';
 

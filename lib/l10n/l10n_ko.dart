@@ -3686,6 +3686,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '스크립트가 일치하는 호스트의 트래픽을 읽고 바꿀 수 있으며, 쿠키와 토큰도 포함되고 직접 요청을 보낼 수도 있습니다. 출처를 신뢰할 때만 켜세요. 켜면 이후 업데이트는 다시 묻지 않고 적용됩니다.';
 
   @override
+  String get mitmModuleUnreadableRisk =>
+      '모듈 파일을 읽을 수 없어 무엇을 바꾸는지 알 수 없습니다. 출처를 신뢰할 때만 켜세요.';
+
+  @override
   String get skipServerCertVerify => '서버 인증서 검증 건너뛰기';
 
   @override

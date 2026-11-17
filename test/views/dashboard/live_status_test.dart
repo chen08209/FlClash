@@ -1,5 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/mitm_module.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -333,7 +334,9 @@ void main() {
         overrides: [
           profilesProvider.overrideWith(() => TestProfiles([_profile])),
           for (final id in [1, 2])
-            mitmModuleContentProvider(id).overrideWith((ref) async => null),
+            mitmModuleContentProvider(
+              id,
+            ).overrideWith((ref) async => MitmModuleContent()),
         ],
       );
       globalState.container = container;

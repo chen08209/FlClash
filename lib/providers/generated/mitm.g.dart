@@ -900,8 +900,14 @@ final class MitmModuleDetailsFamily extends $Family
   String toString() => r'mitmModuleDetailsProvider';
 }
 
+/// A file that fails to parse fails again until it changes, which rebuilds
+/// this anyway.
+
 @ProviderFor(mitmModuleContent)
 final mitmModuleContentProvider = MitmModuleContentFamily._();
+
+/// A file that fails to parse fails again until it changes, which rebuilds
+/// this anyway.
 
 final class MitmModuleContentProvider
     extends
@@ -913,11 +919,13 @@ final class MitmModuleContentProvider
     with
         $FutureModifier<MitmModuleContent?>,
         $FutureProvider<MitmModuleContent?> {
+  /// A file that fails to parse fails again until it changes, which rebuilds
+  /// this anyway.
   MitmModuleContentProvider._({
     required MitmModuleContentFamily super.from,
     required int super.argument,
   }) : super(
-         retry: null,
+         retry: _noRetry,
          name: r'mitmModuleContentProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -957,18 +965,24 @@ final class MitmModuleContentProvider
   }
 }
 
-String _$mitmModuleContentHash() => r'a3318e2eff474fd737e362bf7864b5d9c6291640';
+String _$mitmModuleContentHash() => r'8d05136558342f475dec4642a78405585a471968';
+
+/// A file that fails to parse fails again until it changes, which rebuilds
+/// this anyway.
 
 final class MitmModuleContentFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<MitmModuleContent?>, int> {
   MitmModuleContentFamily._()
     : super(
-        retry: null,
+        retry: _noRetry,
         name: r'mitmModuleContentProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
+
+  /// A file that fails to parse fails again until it changes, which rebuilds
+  /// this anyway.
 
   MitmModuleContentProvider call(int id) =>
       MitmModuleContentProvider._(argument: id, from: this);
