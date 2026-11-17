@@ -31,7 +31,7 @@ Future<void> _setEnabled(WidgetRef ref, MitmModule module, bool enabled) async {
   if (enabled) {
     await answerMitmModule(ref, module);
   } else {
-    ref.read(mitmModulesActionProvider.notifier).turnOff(module.id);
+    await ref.read(mitmModulesActionProvider.notifier).turnOff(module.id);
   }
 }
 

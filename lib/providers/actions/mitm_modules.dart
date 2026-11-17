@@ -85,9 +85,13 @@ class MitmModulesAction extends _$MitmModulesAction {
     ref.read(mitmModulesProvider.notifier).put(module, first: first);
   }
 
-  void recordConsent(int id, {required bool asksConsent, bool? agreed}) {
-    final current = _loaded(id);
-    if (current == null) {
+  Future<void> recordConsent(
+    int id, {
+    required bool asksConsent,
+    bool? agreed,
+  }) async {
+    final current = await _current(id);
+    if (!ref.mounted || current == null) {
       return;
     }
     putModule(
@@ -100,9 +104,9 @@ class MitmModulesAction extends _$MitmModulesAction {
   }
 
   /// Turning a module off counts as declining it until it is turned on.
-  void turnOff(int id) {
-    final current = _loaded(id);
-    if (current != null) {
+  Future<void> turnOff(int id) async {
+    final current = await _current(id);
+    if (ref.mounted && current != null) {
       putModule(
         current.copyWith(enabled: false, accepted: current.accepted ?? false),
       );
@@ -114,11 +118,7 @@ class MitmModulesAction extends _$MitmModulesAction {
     for (final module in await database.mitmModulesDao.query().get()) {
       bool asksConsent;
       try {
-        final text = await File(await _pathOf(module)).readAsString();
-        asksConsent = (await compute(_parseMitmModule, (
-          text,
-          module.arguments,
-        ))).asksConsent;
+        asksConsent = (await _read(module, module.arguments)).asksConsent;
       } catch (_) {
         asksConsent = true;
       }
@@ -131,19 +131,12 @@ class MitmModulesAction extends _$MitmModulesAction {
     }
   }
 
-  MitmModule? _loaded(int id) => ref
-      .read(mitmModulesProvider)
-      .value
-      ?.where((item) => item.id == id)
-      .firstOrNull;
-
   /// Null once the module is gone; a module file that cannot be read throws.
   Future<MitmModule?> setArguments(
     MitmModule module,
     Map<String, String> arguments,
   ) async {
-    final text = await File(await _pathOf(module)).readAsString();
-    final content = await compute(_parseMitmModule, (text, arguments));
+    final content = await _read(module, arguments);
     final current = await _current(module.id);
     if (!ref.mounted || current == null) {
       return current;
@@ -235,6 +228,14 @@ class MitmModulesAction extends _$MitmModulesAction {
 
   Future<String> _pathOf(MitmModule module) async {
     return join(await appPath.mitmModulesDirPath, module.fileName);
+  }
+
+  Future<MitmModuleContent> _read(
+    MitmModule module,
+    Map<String, String> arguments,
+  ) async {
+    final text = await File(await _pathOf(module)).readAsString();
+    return compute(_parseMitmModule, (text, arguments));
   }
 
   Future<MitmModule?> _current(int id) async => (await ref.read(

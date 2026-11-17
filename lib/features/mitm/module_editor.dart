@@ -72,7 +72,7 @@ Future<bool> answerMitmModule(WidgetRef ref, MitmModule module) async {
   }
   final asksConsent = read?.asksConsent ?? module.asksConsent;
   if (!module.copyWith(asksConsent: asksConsent).asksBeforeTurningOn) {
-    action.recordConsent(module.id, asksConsent: asksConsent);
+    await action.recordConsent(module.id, asksConsent: asksConsent);
     return true;
   }
   final changes = read?.network.changes ?? const <MitmNetworkChange>[];
@@ -122,7 +122,11 @@ Future<bool> answerMitmModule(WidgetRef ref, MitmModule module) async {
   if (agreed == null) {
     return false;
   }
-  action.recordConsent(module.id, asksConsent: asksConsent, agreed: agreed);
+  await action.recordConsent(
+    module.id,
+    asksConsent: asksConsent,
+    agreed: agreed,
+  );
   return true;
 }
 
