@@ -10,6 +10,10 @@ class MitmModulesAction extends _$MitmModulesAction {
   /// Files written before a row or a line names them, which [clean] keeps.
   final _held = <String>[];
 
+  /// Deletions run one at a time: two at once can both find a file still there
+  /// and the later delete fails.
+  Future<void> _deleting = Future.value();
+
   @override
   void build() {}
 
@@ -165,9 +169,15 @@ class MitmModulesAction extends _$MitmModulesAction {
 
   Future<void> deleteModule(MitmModule module) async {
     ref.read(mitmModulesProvider.notifier).del(module.id);
-    await File(await _pathOf(module)).safeDelete();
-    await clean();
+    final path = await _pathOf(module);
+    await _oneDeletionAtATime(() async {
+      await File(path).safeDelete();
+      await _sweep();
+    });
   }
+
+  Future<void> _oneDeletionAtATime(Future<void> Function() delete) =>
+      _deleting = _deleting.then((_) {}, onError: (_) {}).then((_) => delete());
 
   Future<String> _pathOf(MitmModule module) async {
     return join(await appPath.mitmModulesDirPath, module.fileName);
@@ -302,7 +312,9 @@ class MitmModulesAction extends _$MitmModulesAction {
 
   /// Removes every file no module names, judged file by file so that what a
   /// save writes or names while it runs stays.
-  Future<void> clean() async {
+  Future<void> clean() => _oneDeletionAtATime(_sweep);
+
+  Future<void> _sweep() async {
     final stored = await database.mitmModulesDao.query().get();
     Future<void> sweep(
       String path,

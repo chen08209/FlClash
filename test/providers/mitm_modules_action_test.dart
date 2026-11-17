@@ -184,6 +184,18 @@ script-providers:
     );
   });
 
+  test('cleanings that overlap remove each stale file once', () async {
+    final resources = await appPath.mitmResourcesDirPath;
+    await Directory(resources).create(recursive: true);
+    for (var index = 0; index < 32; index++) {
+      await File(join(resources, 'stale$index.json')).writeAsString('{}');
+    }
+
+    await Future.wait([action().clean(), action().clean(), action().clean()]);
+
+    expect(await files(appPath.mitmResourcesDirPath), isEmpty);
+  });
+
   test(
     'a module with scripts is added off and keeps the user choice',
     () async {
