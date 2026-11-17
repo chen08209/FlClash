@@ -101,7 +101,8 @@ database once instead of watching them. Content is applied explicitly by whateve
 ## Restart
 
 `VpnService.handleStart` builds the tunnel once from `VpnOptions` and never reads them again.
-`ServiceController.start` uses `enable` to choose between `VpnService` and `ProxyService`.
+`ServiceController.start` uses `enable` and `rootTun` to choose between `VpnService`, `RootTunService` and
+`ProxyService`; a root run that cannot get root falls back to `VpnService` for that run only.
 
 `vpnOptionsProvider` derives the options the service would start with now. `runningVpnOptionsProvider` records what
 the last listener start handed it. The route list is subtracted in an isolate by `vpnRouteAddressProvider`, which
@@ -126,6 +127,7 @@ asks for nothing. The tap runs `SetupAction.restartVpn`: a stop, then a start, a
 | `routeAddress`         | `Tun.routeAddress` and `bypassPrivateRoute`                   | with the VPN                           |
 | `mtu`                  | `Tun`                                                         | with the VPN                           |
 | `congestionController` | `Tun`                                                         | with the VPN                           |
+| `rootTun`              | `VpnProps.rootTun`                                            | with the VPN                           |
 
 The service never reads the access list's sort and filter fields. `effective` resets them, along with every field
 the table does not mark as read, so changing them does not ask for a restart.

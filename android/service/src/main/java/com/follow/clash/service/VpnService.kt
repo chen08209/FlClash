@@ -21,7 +21,6 @@ import com.follow.clash.service.models.toCIDR
 import com.follow.clash.service.models.tunMtu
 import com.follow.clash.service.modules.ServiceModules
 import java.net.InetSocketAddress
-import java.util.concurrent.ConcurrentHashMap
 import android.net.VpnService as SystemVpnService
 
 class VpnService : SystemVpnService(), ManagedService {
@@ -41,7 +40,7 @@ class VpnService : SystemVpnService(), ManagedService {
     private val connectivity by lazy {
         getSystemService<ConnectivityManager>()
     }
-    private val uidPackageNameMap = ConcurrentHashMap<Int, String>()
+    private val packageNames by lazy { UidPackageNames(packageManager) }
 
     private fun resolveUid(
         protocol: Int,
@@ -53,26 +52,6 @@ class VpnService : SystemVpnService(), ManagedService {
         }
         return connectivity?.getConnectionOwnerUid(protocol, source, target) ?: -1
     }
-
-    private fun resolvePackage(uid: Int): String {
-        val cached = uidPackageNameMap[uid]
-        if (cached != null) return cached
-        val packageName = packageManager
-            .getPackagesForUid(uid)
-            ?.firstOrNull()
-            ?.takeIf { it.isNotEmpty() }
-            .orEmpty()
-        return uidPackageNameMap.putIfAbsent(uid, packageName) ?: packageName
-    }
-
-    private val VpnOptions.tunAddress
-        get(): String = buildString {
-            append(IPV4_ADDRESS)
-            if (ipv6) {
-                append(",")
-                append(IPV6_ADDRESS)
-            }
-        }
 
     private val VpnOptions.tunDns
         get(): List<String> {
@@ -120,6 +99,7 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     private fun handleStart(options: VpnOptions) {
+        RootTun.clearLeftovers(this)
         val fd = with(Builder()) {
             addAddressAndRoutes(options)
             addDnsServers(options)
@@ -154,13 +134,13 @@ class VpnService : SystemVpnService(), ManagedService {
                 // longer keeps its own sockets out of them: every connection
                 // then hangs until it times out. Tear the VPN down instead of
                 // reporting a start that only looks successful.
-                check(
-                    Core.startTun(
-                        fd = fd,
-                        protect = this::protect,
-                        resolveUid = this::resolveUid,
-                        resolvePackage = this::resolvePackage,
-                        stack = options.stack,
+                Core.startTun(
+                    fd = fd,
+                    protect = this::protect,
+                    resolveUid = this::resolveUid,
+                    resolvePackage = packageNames::resolve,
+                    options = TunOptions(
+                        mtu = options.tunMtu,
                         address = options.tunAddress,
                         dns = options.tunDns,
                         congestionController = options.congestionController,
@@ -292,11 +272,11 @@ class VpnService : SystemVpnService(), ManagedService {
     companion object {
         // mihomo's own TUN default: 198.18.0.0/15 is benchmarking space no LAN
         // uses, and its fake-ip pool starts at .4, past this /30.
-        private const val IPV4_ADDRESS = "198.18.0.1/30"
-        private const val IPV6_ADDRESS = "fdfe:dcba:9876::1/126"
+        internal const val IPV4_ADDRESS = "198.18.0.1/30"
+        internal const val IPV6_ADDRESS = "fdfe:dcba:9876::1/126"
         private const val DNS = "198.18.0.2"
         private const val DNS6 = "fdfe:dcba:9876::2"
-        private const val NET_ANY = "0.0.0.0"
+        internal const val NET_ANY = "0.0.0.0"
         private const val NET_ANY6 = "::"
         private const val LOCAL_HOST = "127.0.0.1"
     }

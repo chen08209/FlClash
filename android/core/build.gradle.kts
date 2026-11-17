@@ -176,6 +176,26 @@ abstract class CargoBuild : DefaultTask() {
                     environment(name, (listOfNotNull(System.getenv(name)) + fileMaps).joinToString(" "))
                 }
             }
+            val target = workspace.get().asFile.resolve("target")
+            val release = target.resolve("$triple/release")
+            execOperations.exec {
+                ndkEnvironment()
+                workingDir(workspace)
+                commandLine(cargoExecutable.get(), "build", "--release", "--locked", "--target", triple, "-p", "concord-android")
+            }
+            execOperations.exec {
+                ndkEnvironment()
+                workingDir(glue)
+                environment("CONCORD_LIB_DIR", release.path)
+                environment("CARGO_TARGET_DIR", target.path)
+                commandLine(cargoExecutable.get(), "build", "--release", "--locked", "--target", triple)
+            }
+            listOf("libconcord.so", "libcore_jni.so").forEach { library ->
+                release.resolve(library).copyTo(output.resolve("$abi/$library"), overwrite = true)
+            }
+            // Packaged as a library so the installer extracts it to the native library directory,
+            // the one place an app can execute a file from.
+            release.resolve("tun").copyTo(output.resolve("$abi/libtun.so"), overwrite = true)
         }
     }
 

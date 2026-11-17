@@ -46,6 +46,7 @@ import com.follow.clash.common.registerReceiverCompat
 import com.follow.clash.common.shortcutId
 import com.follow.clash.getPackageIconPath
 import com.follow.clash.packages.PackageResolver
+import com.follow.clash.service.RootTun
 import com.follow.clash.showToast
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -55,14 +56,14 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
+import java.io.File
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.IOException
 
 class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
 
@@ -282,6 +283,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             "hasRootAccess" -> reply(result) {
                 SystemCaStore.hasRootAccess(GlobalState.application)
             }
+
+            "hasSu" -> reply(result) { RootTun.suPath() != null }
 
             "removeCaCertificateWithRoot" -> reply(result) {
                 SystemCaStore.remove(

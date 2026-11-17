@@ -278,6 +278,7 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
     routeAddress: await routeAddress,
     mtu: tun.mtu,
     congestionController: tun.congestionController,
+    rootTun: vpnSetting.rootTun,
   );
 }
 

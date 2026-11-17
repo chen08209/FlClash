@@ -23,6 +23,11 @@ internal fun Service.notifyVpnRevoked() {
     BroadcastAction.VPN_REVOKED.sendBroadcast()
 }
 
+internal fun Service.notifyRootTunLost(reason: String) {
+    GlobalState.log("Root TUN lost: $reason")
+    BroadcastAction.ROOT_TUN_LOST.sendBroadcast()
+}
+
 // UI_HIDDEN reaches the services too, since they share the activity's process,
 // and Android 14 stopped delivering the running levels this answers to.
 @Suppress("DEPRECATION")

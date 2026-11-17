@@ -13,6 +13,8 @@ import com.follow.clash.core.Core
 import com.follow.clash.service.ManagedService
 import com.follow.clash.service.NetworkObserver
 import com.follow.clash.service.ProxyService
+import com.follow.clash.service.RootTunService
+import com.follow.clash.service.RootTunUnavailable
 import com.follow.clash.service.ServiceConfig
 import com.follow.clash.service.VpnService
 import com.follow.clash.service.models.VpnOptions
@@ -68,12 +70,12 @@ object ServiceController {
         Core.updateEventListener(callback)
     }
 
-    suspend fun start(options: VpnOptions): Boolean = lock.withLock {
+    internal suspend fun start(options: VpnOptions): ServiceStart = lock.withLock {
         ServiceConfig.updateVpnOptions(options)
-        val nextIntent = if (options.enable) {
-            VpnService::class.intent
-        } else {
-            ProxyService::class.intent
+        val nextIntent = when {
+            options.enable && options.rootTun -> RootTunService::class.intent
+            options.enable -> VpnService::class.intent
+            else -> ProxyService::class.intent
         }
 
         if (binding?.component != nextIntent.component) {
@@ -88,20 +90,25 @@ object ServiceController {
             nextBinding.bind().onFailure { error ->
                 GlobalState.log("Unable to bind background service: $error")
                 release()
-                return@withLock false
+                return@withLock ServiceStart.Failed
             }
         }
 
-        val currentBinding = binding ?: return@withLock false
+        val currentBinding = binding ?: return@withLock ServiceStart.Failed
         val result = currentBinding.useService { service -> service.start() }
         if (result.isFailure) {
-            GlobalState.log("Unable to start background service: ${result.exceptionOrNull()}")
+            val error = result.exceptionOrNull()
+            GlobalState.log("Unable to start background service: $error")
             currentBinding.stopIfConnected()
-                .onFailure { error ->
-                    GlobalState.log("Unable to clean up failed background service start: $error")
+                .onFailure { cleanupError ->
+                    GlobalState.log("Unable to clean up failed background service start: $cleanupError")
                 }
             release()
-            return@withLock false
+            return@withLock if (error is RootTunUnavailable) {
+                ServiceStart.RootUnavailable(error.message.orEmpty())
+            } else {
+                ServiceStart.Failed
+            }
         }
 
         Core.startListener()
@@ -109,7 +116,7 @@ object ServiceController {
             vpn = options.enable,
             startedAtMillis = runtime?.startedAtMillis ?: System.currentTimeMillis(),
         )
-        true
+        ServiceStart.Started
     }
 
     suspend fun stop() = lock.withLock {
@@ -130,7 +137,11 @@ object ServiceController {
     // after the process was killed — outlives every binding this process holds, so
     // unbinding alone leaves the tunnel up while the app reports it stopped.
     private fun stopServices() {
-        listOf(VpnService::class.intent, ProxyService::class.intent).forEach { intent ->
+        listOf(
+            VpnService::class.intent,
+            RootTunService::class.intent,
+            ProxyService::class.intent,
+        ).forEach { intent ->
             runCatching { GlobalState.application.stopService(intent) }
                 .onFailure { error ->
                     GlobalState.log("Unable to stop ${intent.component?.className}: $error")
@@ -220,6 +231,7 @@ private class ManagedServiceBinding(
             when (binder) {
                 is VpnService.LocalBinder -> binder.service
                 is ProxyService.LocalBinder -> binder.service
+                is RootTunService.LocalBinder -> binder.service
                 null -> error("Binder is empty")
                 else -> error("Unsupported service binder: ${binder.javaClass.name}")
             }

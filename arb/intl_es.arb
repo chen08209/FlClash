@@ -1144,5 +1144,9 @@
   "faultPermissionDenied": "Permiso denegado.",
   "tunStartFailed": "TUN no pudo iniciarse y no se volverá a intentar en esta ejecución.",
   "vpnPermissionNotGranted": "No se concedió el permiso de VPN, así que la VPN no se inició. Una VPN siempre activa configurada en otra app también lo impide.",
-  "vpnServiceStartFailed": "No se pudo iniciar el servicio VPN."
+  "vpnServiceStartFailed": "No se pudo iniciar el servicio VPN.",
+  "rootTun": "Modo root",
+  "rootTunDesc": "Usa root en lugar de la VPN del sistema.",
+  "rootTunUnavailable": "No se encontró root en este dispositivo",
+  "rootTunFallback": "Root no está disponible ({reason}), así que esta sesión usa la VPN del sistema."
 }

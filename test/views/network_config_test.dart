@@ -326,6 +326,112 @@ void main() {
       expect(outboundItems(isDesktop: true, isLinux: true), hasLength(4));
     });
   });
+
+  group('root mode', () {
+    Future<void> pumpVpn(
+      WidgetTester tester, {
+      required bool su,
+      required bool rootTun,
+    }) async {
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          suInstalledProvider.overrideWith((ref) async => su),
+        ],
+      );
+      globalState.container = container;
+      container.read(viewSizeProvider.notifier).value = const Size(1200, 1000);
+      container
+          .read(vpnSettingProvider.notifier)
+          .update((state) => state.copyWith(rootTun: rootTun));
+      await pumpItem(tester, const VpnSections());
+    }
+
+    bool enabled(WidgetTester tester, Type row) =>
+        tester
+            .widget<Switch>(
+              find.descendant(
+                of: find.byType(row),
+                matching: find.byType(Switch),
+              ),
+            )
+            .onChanged !=
+        null;
+
+    String footer(WidgetTester tester) => tester
+        .widget<Text>(
+          find.textContaining(currentAppLocalizations.bypassDomainDesc),
+        )
+        .data!;
+
+    testWidgets('off: the row comes last and the footer ends with it', (
+      tester,
+    ) async {
+      await pumpVpn(tester, su: true, rootTun: false);
+      final l = currentAppLocalizations;
+
+      double top(Type row) => tester.getTopLeft(find.byType(row)).dy;
+      for (final row in [
+        VpnSystemProxyItem,
+        BypassDomainItem,
+        AllowBypassItem,
+        Ipv6Item,
+        DNSHijackingItem,
+      ]) {
+        expect(top(RootTunItem), greaterThan(top(row)), reason: '$row');
+      }
+      expect(find.text(l.rootTunUnavailable), findsNothing);
+      expect(footer(tester).split('\n').last, l.rootTunDesc);
+      for (final row in [
+        VpnSystemProxyItem,
+        AllowBypassItem,
+        Ipv6Item,
+        DNSHijackingItem,
+        RootTunItem,
+      ]) {
+        expect(enabled(tester, row), isTrue, reason: '$row');
+      }
+    });
+
+    testWidgets('on: rows of the VPN service turn grey', (tester) async {
+      await pumpVpn(tester, su: true, rootTun: true);
+      final l = currentAppLocalizations;
+
+      for (final row in [
+        VpnSystemProxyItem,
+        AllowBypassItem,
+        DNSHijackingItem,
+      ]) {
+        expect(enabled(tester, row), isFalse, reason: '$row');
+      }
+      expect(enabled(tester, Ipv6Item), isTrue);
+      expect(enabled(tester, RootTunItem), isTrue);
+      expect(
+        tester.widget<BypassDomainItem>(find.byType(BypassDomainItem)).enabled,
+        isFalse,
+      );
+      expect(footer(tester).split('\n').last, l.rootTunDesc);
+      expect(container.read(vpnSettingProvider).systemProxy, isTrue);
+    });
+
+    testWidgets('without su the row says so and still turns on', (
+      tester,
+    ) async {
+      await pumpVpn(tester, su: false, rootTun: false);
+      final l = currentAppLocalizations;
+
+      expect(find.text(l.rootTunUnavailable), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(RootTunItem),
+          matching: find.byType(Switch),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(container.read(vpnSettingProvider).rootTun, isTrue);
+    });
+  });
 }
 
 String _interfaceNameModeLabel(InterfaceNameMode mode) {

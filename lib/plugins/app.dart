@@ -329,6 +329,10 @@ class App {
     return await methodChannel.invokeMethod<bool>('hasRootAccess') ?? false;
   }
 
+  Future<bool> hasSu() async {
+    return await methodChannel.invokeMethod<bool>('hasSu') ?? false;
+  }
+
   Future<bool> removeCaCertificateWithRoot(List<int> der) async {
     final removed = await methodChannel.invokeMethod<bool>(
       'removeCaCertificateWithRoot',

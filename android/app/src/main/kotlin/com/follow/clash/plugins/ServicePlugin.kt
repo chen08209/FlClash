@@ -167,6 +167,12 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         }
     }
 
+    internal fun notifyRootFallback(reason: String) {
+        scope.launch(Dispatchers.Main) {
+            channel.invokeMethod("rootFallback", reason)
+        }
+    }
+
     private fun sendEvent(value: ByteArray) {
         val message = StandardMethodCodec.INSTANCE.encodeMethodCall(MethodCall("event", value))
         scope.launch(Dispatchers.Main) {

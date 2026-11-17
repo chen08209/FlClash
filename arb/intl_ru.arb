@@ -1144,5 +1144,9 @@
   "faultPermissionDenied": "Нет разрешения.",
   "tunStartFailed": "Не удалось запустить TUN, в этом запуске попыток больше не будет.",
   "vpnPermissionNotGranted": "Разрешение на VPN не выдано, поэтому VPN не запущен. Постоянная VPN, заданная для другого приложения, тоже мешает запуску.",
-  "vpnServiceStartFailed": "Не удалось запустить службу VPN."
+  "vpnServiceStartFailed": "Не удалось запустить службу VPN.",
+  "rootTun": "Режим root",
+  "rootTunDesc": "Использует root вместо системного VPN.",
+  "rootTunUnavailable": "Root на устройстве не найден",
+  "rootTunFallback": "Root недоступен ({reason}), поэтому сейчас используется системный VPN."
 }

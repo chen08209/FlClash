@@ -31,6 +31,15 @@ Future<bool> rootAccess(Ref ref) async {
   return app!.hasRootAccess();
 }
 
+/// Android: an su binary is installed, whether or not it grants FlClash.
+@Riverpod(keepAlive: true)
+Future<bool> suInstalled(Ref ref) async {
+  if (!system.isAndroid || app == null) {
+    return false;
+  }
+  return app!.hasSu();
+}
+
 @Riverpod(keepAlive: true)
 class AuthorizedTunEnable extends _$AuthorizedTunEnable
     with AutoDisposeNotifierMixin {

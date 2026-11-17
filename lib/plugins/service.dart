@@ -13,6 +13,8 @@ import 'package:flutter/services.dart';
 
 abstract mixin class ServiceListener {
   void onServiceStopped([ServiceStartFailure? failure]) {}
+
+  void onRootTunFallback(String reason) {}
 }
 
 class Service {
@@ -70,6 +72,13 @@ class Service {
           _dispatch(
             'stop report',
             (listener) => listener.onServiceStopped(failure),
+          );
+          break;
+        case 'rootFallback':
+          final reason = call.arguments as String;
+          _dispatch(
+            'root fallback',
+            (listener) => listener.onRootTunFallback(reason),
           );
           break;
         default:

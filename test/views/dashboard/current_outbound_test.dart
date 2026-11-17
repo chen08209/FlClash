@@ -192,6 +192,18 @@ double _cloverTurn(WidgetTester tester) => tester
     )
     .rotation;
 
+double _rootGlow(WidgetTester tester) {
+  final paint = tester.widget<CustomPaint>(
+    find
+        .ancestor(
+          of: find.byType(DashboardCard),
+          matching: find.byType(CustomPaint),
+        )
+        .first,
+  );
+  return (paint.painter! as dynamic).opacity as double;
+}
+
 DashboardChip _chip(WidgetTester tester, String label) =>
     tester.widget<DashboardChip>(
       find.ancestor(of: find.text(label), matching: find.byType(DashboardChip)),
@@ -201,7 +213,7 @@ void main() {
   setUpAll(() => registerFallbackValue(const OutboundIpParams(timeout: 0)));
 
   group('root access', () {
-    testWidgets('fades in a border and names it only to a screen reader', (
+    testWidgets('fades in a glow and names it only to a screen reader', (
       tester,
     ) async {
       final semantics = tester.ensureSemantics();
@@ -209,13 +221,11 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 150));
 
-      final midway = tester.widget<DashboardCard>(find.byType(DashboardCard));
-      expect(midway.side.color.a, inExclusiveRange(0, 1));
+      expect(_rootGlow(tester), inExclusiveRange(0, 1));
 
       await tester.pump(commonDuration);
 
-      final card = tester.widget<DashboardCard>(find.byType(DashboardCard));
-      expect(card.side.color.a, closeTo(1, 0.01));
+      expect(_rootGlow(tester), 1);
       expect(find.text('Root'), findsNothing);
       expect(find.bySemanticsLabel(RegExp('Status Root')), findsOneWidget);
       semantics.dispose();
@@ -225,8 +235,7 @@ void main() {
       await tester.pumpWidget(_app((_, _) async => _residential));
       await tester.pump(commonDuration);
 
-      final card = tester.widget<DashboardCard>(find.byType(DashboardCard));
-      expect(card.side, BorderSide.none);
+      expect(_rootGlow(tester), 0);
     });
   });
 

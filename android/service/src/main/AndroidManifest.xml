@@ -26,6 +26,15 @@
                 android:value="proxy" />
         </service>
 
+        <service
+            android:name=".RootTunService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="vpn" />
+        </service>
+
         <provider
             android:name=".FilesProvider"
             android:authorities="${applicationId}.files"

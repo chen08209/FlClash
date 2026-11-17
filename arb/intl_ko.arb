@@ -1144,5 +1144,9 @@
   "faultPermissionDenied": "권한이 없습니다.",
   "tunStartFailed": "TUN을 시작하지 못했습니다. 이번 실행에서는 다시 시도하지 않습니다.",
   "vpnPermissionNotGranted": "VPN 권한이 허용되지 않아 VPN을 시작하지 않았습니다. 다른 앱이 상시 사용 VPN으로 설정되어 있어도 시작할 수 없습니다.",
-  "vpnServiceStartFailed": "VPN 서비스를 시작하지 못했습니다."
+  "vpnServiceStartFailed": "VPN 서비스를 시작하지 못했습니다.",
+  "rootTun": "Root 모드",
+  "rootTunDesc": "시스템 VPN 대신 root를 사용합니다.",
+  "rootTunUnavailable": "이 기기에서 root를 찾지 못했습니다",
+  "rootTunFallback": "Root를 사용할 수 없어({reason}) 이번에는 시스템 VPN을 사용합니다."
 }

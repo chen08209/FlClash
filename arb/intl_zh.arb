@@ -1144,5 +1144,9 @@
   "faultPermissionDenied": "没有权限。",
   "tunStartFailed": "虚拟网卡启动失败，本次运行不再尝试。",
   "vpnPermissionNotGranted": "未获得 VPN 权限，VPN 没有启动。其他应用设为始终开启的 VPN 时也会如此。",
-  "vpnServiceStartFailed": "VPN 服务无法启动。"
+  "vpnServiceStartFailed": "VPN 服务无法启动。",
+  "rootTun": "Root 模式",
+  "rootTunDesc": "不占用系统 VPN，需要 root 权限。",
+  "rootTunUnavailable": "未检测到 root",
+  "rootTunFallback": "Root 不可用（{reason}），本次使用系统 VPN。"
 }

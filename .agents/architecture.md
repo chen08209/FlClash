@@ -312,7 +312,7 @@ Android deliberately keeps Flutter requests optimistic and the native layer auth
   flight, the latest intent, and `ServiceController.runtime`. A service that is up under a stop intent reads `STOPPING`, a
   start still waiting on a permission reads `STOPPED`, and `STARTED` needs both a running intent and a runtime. The tile
   and `getRunTime` both read this one value, so they cannot disagree with the service.
-- `ServiceController` owns exactly one `ManagedServiceBinding`, selects `VpnService` or `ProxyService` from `VpnOptions`,
+- `ServiceController` owns exactly one `ManagedServiceBinding`, selects `VpnService`, `RootTunService` or `ProxyService` from `VpnOptions`,
   binds with a five-second connection timeout, and invokes `ManagedService.start()`/`stop()` off the main thread. The
   binding and `runtime` (which service runs, and since when) are set and cleared together, by a stop, a failed start, or
   a lost connection and by nothing else. Flutter's `shutdown` only clears the Core event listener: Android keeps an
@@ -330,6 +330,14 @@ Android deliberately keeps Flutter requests optimistic and the native layer auth
   newer request has claimed the service. A failed start therefore always ends in `STOPPED`, whichever step refused it.
   The one start that mints no request is a repeat on a settled run of the same kind, which Flutter sends every time it
   reattaches: a request refused at a permission prompt there would stop a service that was running fine.
+- Root mode (`VpnOptions.rootTun`) runs `RootTunService`: `RootTun` starts `libtun.so` through `su`, which opens the
+  device and installs its policy routes with Concord's `concord_tun_provision`, passes the descriptor back over an
+  abstract socket that accepts only uid 0, and answers socket owner lookups, since `getConnectionOwnerUid` answers only
+  the VPN owner. The helper keeps the routes only while that connection is open, so a dead app leaves none; a lost
+  helper sends `ROOT_TUN_LOST`, which stops the run like a revoke. A start that cannot get root returns
+  `ServiceStart.RootUnavailable`, and `ServiceStateMachine` falls back to `VpnService` for that run, asking for the VPN
+  permission and telling the user why; the setting stays on. The app's own uid is excluded from the routes, which is
+  what keeps the in-process Core's sockets off the device.
 - Generic service creation/destruction is lifecycle evidence, not user intent. New commands must flow through
   `ServiceState.requestStart()`/`requestStop()` or the explicit system-action handlers instead of inferring intent from a
   callback.
