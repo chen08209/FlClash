@@ -53,6 +53,9 @@ class Scaffold extends StatefulWidget {
   final bool isLoading;
   final List<Widget>? actions;
 
+  /// Reports of the page's state that stand before its buttons and never fold.
+  final List<Widget> statusActions;
+
   final IconButtonData? primaryAction;
 
   /// Folded into the overflow menu once the bar would hold more than three
@@ -90,6 +93,7 @@ class Scaffold extends StatefulWidget {
     this.titleWidget,
     this.titleMenuItems = const [],
     this.actions,
+    this.statusActions = const [],
     this.backAction,
     this.isLoading = false,
     this.searchState,
@@ -583,7 +587,8 @@ class ScaffoldState extends State<Scaffold>
         ...widget.iconActions,
       ],
       confirmation: atFoot ? null : widget.confirmationAction,
-      widgetCount: widgets.length + selection.slots,
+      widgetCount:
+          widget.statusActions.length + widgets.length + selection.slots,
       menuItems: widget.menuItems,
     );
     final shown = [?lead, ...fold.shown];
@@ -630,7 +635,10 @@ class ScaffoldState extends State<Scaffold>
         ),
       );
     }
-    return genActions(actions, edge: AppBarActionEdge.container);
+    return genActions([
+      for (final action in widget.statusActions) ElasticPress(child: action),
+      ...actions,
+    ], edge: AppBarActionEdge.container);
   }
 
   Widget _buildBarSearch({required bool fills}) {

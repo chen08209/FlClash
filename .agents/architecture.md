@@ -674,7 +674,8 @@ select all included. Two text buttons are filled buttons in `actions`: the custo
 multi-selection, such as delete and select all, go into `selectionActions` instead: the bar keeps them in sight as
 one button group that takes a single slot beside the search button, so they never fold. A sheet's close button
 always leads its bar, whatever actions follow, as SwiftUI places a close in `.cancellationAction`; a pushed page puts
-its back button there instead.
+its back button there instead. A report of the page's state, such as the dashboard's config warnings count, goes in
+`statusActions`, which stand before every button and never fold, so an action such as edit keeps the bar's end.
 
 The search button opens its field in place, as iOS 27 does on a page above a tab bar, measured in the simulator: the
 button's group grows into the field on one spring while what it covers fades out, and the selection and
