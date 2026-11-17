@@ -117,19 +117,21 @@ class MitmTrustState extends _$MitmTrustState {
     if (ca == null || store == null || ref.read(safeModeProvider)) {
       return null;
     }
-    final MitmInstallOutcome outcome;
+    MitmInstallOutcome? outcome;
     try {
       outcome = await store.install(ca);
+      return outcome;
     } finally {
       if (store is AndroidMitmTrustStore && ref.mounted) {
         ref.invalidate(rootAccessProvider);
       }
+      if (ref.mounted &&
+          (outcome == null ||
+              outcome == MitmInstallOutcome.installed ||
+              outcome == MitmInstallOutcome.untilReboot)) {
+        await refresh();
+      }
     }
-    if (outcome == MitmInstallOutcome.installed ||
-        outcome == MitmInstallOutcome.untilReboot) {
-      await refresh();
-    }
-    return outcome;
   }
 
   Future<MitmRemoveOutcome?> remove() async {
