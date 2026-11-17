@@ -11,6 +11,7 @@ ServiceItem serviceItem(
   String name, {
   String status = 'available',
   String region = '',
+  String ip = '',
   int delay = 0,
   List<String> chains = const [],
   int checkedAt = 0,
@@ -21,6 +22,7 @@ ServiceItem serviceItem(
   name: name,
   status: status,
   region: region,
+  ip: ip,
   delay: delay,
   chains: chains,
   checkedAt: checkedAt,

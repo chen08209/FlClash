@@ -120,7 +120,7 @@ void main() {
         stubCheckServices(mocks.api, (sweep) async {
           sent = sweep;
           return [
-            serviceItem('claude', delay: 40),
+            serviceItem('claude', delay: 40, ip: '198.51.100.9'),
             serviceItem('gemini', status: 'unsupported-region'),
           ];
         });
@@ -142,6 +142,8 @@ void main() {
           checks[ServiceTarget.gemini]?.status,
           ServiceProbeStatus.unsupportedRegion,
         );
+        expect(checks[ServiceTarget.claude]?.ip, '198.51.100.9');
+        expect(checks[ServiceTarget.gemini]?.ip, isNull);
       },
     );
 

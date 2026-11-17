@@ -2171,7 +2171,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tunAuthorizationFailed =>
-      'TUN could not be authorized, so it was turned off.';
+      'TUN could not be authorized, so it is not used in this run.';
 
   @override
   String get sudoPasswordTitle => 'Enter your password for sudo';
@@ -4219,6 +4219,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get forceRestartCore => 'Force restart';
+
+  @override
+  String get configWarnings => 'Config warnings';
+
+  @override
+  String configWarningsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count warnings from loading the config',
+      one: '1 warning from loading the config',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get httpPort => 'HTTP port';
+
+  @override
+  String get dnsServer => 'DNS server';
+
+  @override
+  String get serviceFaults => 'Services not started';
+
+  @override
+  String get faultAddressInUse => 'The address is already in use.';
+
+  @override
+  String get faultAddressNotAvailable =>
+      'The address is not available on this device.';
+
+  @override
+  String get faultPermissionDenied => 'Permission denied.';
+
+  @override
+  String get tunStartFailed =>
+      'TUN could not start and will not be tried again in this run.';
 
   @override
   String get vpnPermissionNotGranted =>

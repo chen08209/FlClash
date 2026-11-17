@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:prism_ui/prism_ui.dart';
 
 import 'live_status_deck.dart';
+import 'status_badge.dart';
 
 /// What is happening now and still needs the user: one card each in the deck,
 /// in this order of importance.
@@ -33,6 +34,12 @@ final class CoreLiveStatus extends LiveStatus {
   const CoreLiveStatus(this.phase, {super.preview});
 
   final CoreStatus phase;
+}
+
+final class WarningsStatus extends LiveStatus {
+  const WarningsStatus(this.items, {super.preview});
+
+  final List<ConfigWarning> items;
 }
 
 final class UpdateStatus extends LiveStatus {
@@ -57,6 +64,7 @@ List<LiveStatus> watchLiveStatuses(
   required bool separateCore,
 }) {
   final core = ref.watch(heldCoreStatusProvider);
+  final warnings = ref.watch(liveConfigWarningsProvider);
   final download = ref.watch(updateDownloadStateProvider);
   final awaitingConsent = ref.watch(mitmModulesToAgreeProvider);
   return [
@@ -67,6 +75,7 @@ List<LiveStatus> watchLiveStatuses(
     if (download is UpdateDownloading) UpdateStatus(download),
     if (awaitingConsent.isNotEmpty)
       MitmConsentStatus([for (final module in awaitingConsent) module.name]),
+    if (warnings.isNotEmpty) WarningsStatus(warnings),
     if (separateCore && core == CoreStatus.connected)
       const CoreLiveStatus(CoreStatus.connected),
   ];
@@ -80,6 +89,33 @@ void showLiveStatusPreview(BuildContext context) {
   final anchor = Rect.fromLTWH(overlay.size.width - 60, top + 8, 44, 44);
   const tag = 'v9.9.9';
   const mb = 1024 * 1024;
+  const warnings = [
+    ConfigWarning(
+      level: ConfigWarningLevel.warning,
+      path: 'proxies[12]',
+      message: 'masque is not supported, the proxy was removed',
+    ),
+    ConfigWarning(
+      level: ConfigWarningLevel.warning,
+      path: 'sniffer.override',
+      message: 'unknown key',
+    ),
+    ConfigWarning(
+      level: ConfigWarningLevel.warning,
+      path: 'rules[48]',
+      message: 'the rule names a missing group and goes to DIRECT instead',
+    ),
+    ConfigWarning(
+      level: ConfigWarningLevel.warning,
+      path: 'tun.stack',
+      message: 'mixed runs as the userspace stack',
+    ),
+    ConfigWarning(
+      level: ConfigWarningLevel.warning,
+      path: 'external-ui',
+      message: 'key is not supported by this core and is ignored',
+    ),
+  ];
   unawaited(
     navigator.push(
       LiveStatusRoute(
@@ -96,6 +132,7 @@ void showLiveStatusPreview(BuildContext context) {
             preview: 'downloading',
           ),
           MitmConsentStatus(['Ads', 'Scripts'], preview: 'consent'),
+          WarningsStatus(warnings, preview: 'warnings'),
           CoreLiveStatus(CoreStatus.connected, preview: 'running'),
         ],
       ),
@@ -168,19 +205,12 @@ class _RunningCoreButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final fill = colorScheme.successContainer;
-    final pane = TonalButtonTheme.glassOf(context)
-        ? LiquidGlassStyle.tinted(colorScheme, fill)
-        : null;
     return IconButton.filled(
       tooltip: context.appLocalizations.liveStatus,
-      style: ButtonStyle.from(
-        backgroundColor: pane == null ? fill : Colors.transparent,
-        foregroundColor: colorScheme.onSuccessContainer,
-        backgroundBuilder: pane == null
-            ? null
-            : LiquidGlass.buttonBackground((_) => pane),
-        pressLook: PressLook.none,
+      style: statusBadgeStyle(
+        context,
+        background: colorScheme.successContainer,
+        foreground: colorScheme.onSuccessContainer,
       ),
       onPressed: onPressed,
       icon: const GlyphIcon(AppGlyphs.check, fill: 1),
@@ -188,8 +218,9 @@ class _RunningCoreButton extends StatelessWidget {
   }
 }
 
-/// The top status's glyph and one number: an update's progress, or how many
-/// statuses there are beside others; the cards say the rest.
+/// The most important status as its glyph and one number: an update's
+/// progress, else a count of all the statuses when there are others, or of
+/// the warnings when they are alone. The cards say the rest.
 class _LiveStatusPill extends StatelessWidget {
   const _LiveStatusPill({
     super.key,
@@ -211,6 +242,10 @@ class _LiveStatusPill extends StatelessWidget {
         colorScheme.errorContainer,
         colorScheme.onErrorContainer,
       ),
+      WarningsStatus() => (
+        colorScheme.warningContainer,
+        colorScheme.onWarningContainer,
+      ),
       UpdateStatus(download: UpdateReady()) => (
         colorScheme.successContainer,
         colorScheme.onSuccessContainer,
@@ -225,6 +260,7 @@ class _LiveStatusPill extends StatelessWidget {
       CoreLiveStatus(phase: CoreStatus.disconnected) =>
         appLocalizations.coreStopped,
       CoreLiveStatus() => appLocalizations.connecting,
+      WarningsStatus() => appLocalizations.configWarnings,
       UpdateStatus(download: UpdateReady()) => appLocalizations.updateReady,
       UpdateStatus() => appLocalizations.downloadingUpdate,
       MitmConsentStatus() => appLocalizations.mitmModulesTurnedOff,
@@ -237,6 +273,7 @@ class _LiveStatusPill extends StatelessWidget {
           AppGlyphs.error,
           fill: 1,
         ),
+        WarningsStatus() => const GlyphIcon(AppGlyphs.warning, fill: 1),
         CoreLiveStatus() => Builder(
           builder: (context) =>
               ActivityIndicator(color: IconTheme.of(context).color),
@@ -259,18 +296,13 @@ class _LiveStatusPill extends StatelessWidget {
       ) =>
         total > 0 ? '${received * 100 ~/ total}%' : received.traffic.show,
       _ when count > 1 => '$count',
+      WarningsStatus(:final items) => '${items.length}',
       _ => null,
     };
-    final pane = TonalButtonTheme.glassOf(context) && fill != null
-        ? LiquidGlassStyle.tinted(colorScheme, fill)
-        : null;
-    final style = ButtonStyle.from(
-      backgroundColor: pane == null ? fill : Colors.transparent,
-      foregroundColor: content,
-      backgroundBuilder: pane == null
-          ? null
-          : LiquidGlass.buttonBackground((_) => pane),
-      pressLook: PressLook.none,
+    final style = statusBadgeStyle(
+      context,
+      background: fill,
+      foreground: content,
     );
     return Semantics(
       label: shown == null ? label : '$label, $shown',

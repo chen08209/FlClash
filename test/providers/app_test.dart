@@ -4,6 +4,7 @@ import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -636,6 +637,65 @@ void main() {
   group('CoreStatus provider', () {
     test('default is disconnected', () {
       expect(container.read(coreStatusProvider), CoreStatus.disconnected);
+    });
+  });
+  group('ConfigWarningsState provider', () {
+    const warning = ConfigWarning(
+      level: ConfigWarningLevel.warning,
+      path: 'proxies[1]',
+      message: 'removed',
+    );
+
+    test('live warnings follow logs without discarding the core report', () {
+      container.listen(appSettingProvider, (_, _) {});
+      container.listen(liveConfigWarningsProvider, (_, _) {});
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      const note = ConfigWarning(
+        level: ConfigWarningLevel.info,
+        path: 'experimental',
+        message: 'ignored',
+      );
+      container.read(configWarningsStateProvider.notifier).report([
+        warning,
+        note,
+      ]);
+      expect(container.read(liveConfigWarningsProvider), isEmpty);
+      final settings = container.read(appSettingProvider.notifier);
+      settings.value = settings.value.copyWith(openLogs: true);
+      expect(container.read(liveConfigWarningsProvider), [warning]);
+      settings.value = settings.value.copyWith(openLogs: false);
+      expect(container.read(liveConfigWarningsProvider), isEmpty);
+      expect(container.read(configWarningsStateProvider), [warning, note]);
+    });
+
+    test('the warnings end with the connection to the core', () {
+      container.read(configWarningsStateProvider);
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      container.read(configWarningsStateProvider.notifier).value = [warning];
+      expect(container.read(configWarningsStateProvider), [warning]);
+
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
+
+      expect(container.read(configWarningsStateProvider), isEmpty);
+    });
+
+    test('warnings that land once the core stopped are not kept', () {
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      container.read(coreStatusProvider.notifier).value =
+          CoreStatus.disconnected;
+
+      container.read(configWarningsStateProvider.notifier).report([warning]);
+
+      expect(container.read(configWarningsStateProvider), isEmpty);
+    });
+
+    test('a starting core keeps the warnings of its setup', () {
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
+
+      container.read(configWarningsStateProvider.notifier).report([warning]);
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+
+      expect(container.read(configWarningsStateProvider), [warning]);
     });
 
     test('why the core stopped is kept until it starts again', () {

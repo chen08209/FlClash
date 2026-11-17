@@ -70,21 +70,16 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final editing = _editing;
     final gap = cardSpacingOf(context, ref.watch(viewModeProvider));
     final appLocalizations = context.appLocalizations;
+    // The bar folds its icon actions by the number of status actions, shown or not.
+    final faults = ref.watch(serviceFaultsProvider);
     return Scaffold(
       backgroundColor: DashboardColors.of(context).page,
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
-      actions: [
+      statusActions: [
+        if (!editing && faults.isNotEmpty) ServiceFaultsButton(faults),
         if (!editing) const LiveStatusButton(),
-        if (editable && !editing)
-          AppBarActionButton(
-            data: IconButtonData(
-              glyph: AppGlyphs.edit,
-              tooltip: appLocalizations.editDashboard,
-              onPressed: () => _setEditing(true),
-            ),
-          ),
       ],
       confirmationAction: editing
           ? IconButtonData(
@@ -93,6 +88,14 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               onPressed: () => _setEditing(false),
             )
           : null,
+      iconActions: [
+        if (editable && !editing)
+          IconButtonData(
+            glyph: AppGlyphs.edit,
+            tooltip: appLocalizations.editDashboard,
+            onPressed: () => _setEditing(true),
+          ),
+      ],
       // The providers learn a resize a frame late, too late for the cards.
       body: LayoutBuilder(
         builder: (context, constraints) {

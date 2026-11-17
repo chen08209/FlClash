@@ -6,9 +6,11 @@ ConfigPatch updateParams(Ref ref) {
     networkSettingProvider.select((state) => state.authentication),
   );
   final options = ref.watch(coreOptionsProvider);
+  final tunDisabled = ref.watch(tunDisabledThisRunProvider);
   return ref.watch(
     patchClashConfigProvider.select(
-      (state) => state.toUpdateParams(
+      (state) => configPatchOf(
+        tunDisabled ? state.copyWith.tun(enable: false) : state,
         authentication: authentication.credentials,
         options: options,
       ),

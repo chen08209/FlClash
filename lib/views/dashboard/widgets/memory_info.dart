@@ -213,15 +213,18 @@ class _MemorySummary extends StatelessWidget {
     final figure = mobile ? AppTextStyle.title1 : AppTextStyle.title2;
     final parts = [
       (
-        label: appLocalizations.app,
+        label: memory.coreInProcess
+            ? appLocalizations.memoryAppShared
+            : appLocalizations.app,
         bytes: memory.app,
         color: colorScheme.primary,
       ),
-      (
-        label: appLocalizations.core,
-        bytes: memory.coreTotal,
-        color: DashboardColors.of(context).series2,
-      ),
+      if (!memory.coreInProcess || memory.coreTotal > 0)
+        (
+          label: appLocalizations.core,
+          bytes: memory.coreTotal,
+          color: DashboardColors.of(context).series2,
+        ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -540,7 +543,7 @@ class _MemoryOverview extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            snapshot.coreInProcess
+            snapshot.coreInProcess && snapshot.coreTotal > 0
                 ? appLocalizations.memoryEstimateSharedDesc
                 : appLocalizations.memoryEstimateDesc,
             style: AppTextStyle.footnote
