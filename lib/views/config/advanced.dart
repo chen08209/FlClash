@@ -43,7 +43,7 @@ class AdvancedConfigView extends StatelessWidget {
         leading: const GlyphIcon(AppGlyphs.code),
         widget: const ScriptsView(),
       ),
-      if (mitmFeature)
+      if (rsFeature)
         ListItem.open(
           title: Text(appLocalizations.mitm),
           leading: const GlyphIcon(AppGlyphs.lockOpen),

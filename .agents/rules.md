@@ -713,6 +713,16 @@ while `schemaVersion` at the last release tag is below its number; a schema chan
 step of its own. Every operation in it checks the shape it finds, a missing table or column or a column under its old
 name, so it can run again on a database that went through part of it. Its tests start from the released shape.
 
+## rsFeature
+
+`rsFeature` (`lib/common/constant.dart`) keeps off what only the rs line's Concord core serves, such as MITM. The rs
+line does not turn it on: `tool/strip_rs_feature.dart` removes every check, so a check takes one of three forms,
+`if (rsFeature) element` in a collection, `rsFeature && x`, or `if (rsFeature) { ... }` with no else. Anything else,
+a negation or an else branch included, fails `test/lint/rs_feature_forms_test.dart`. Only a feature dev does not have
+otherwise goes behind it; code that replaces something dev already has stays on the rs line. A test that needs the
+feature on runs inside `if (rsFeature) { ... }`. `make strip-check`, which CI runs, strips a scratch copy and analyzes
+it.
+
 ## Generated Code
 
 Do not manually edit generated files under:

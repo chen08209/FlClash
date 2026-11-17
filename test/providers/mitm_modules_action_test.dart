@@ -20,11 +20,6 @@ import '../helpers/app_paths.dart';
 /// Real downloads over loopback: the test binding answers every request with a
 /// 400, so its override is lifted while a test runs.
 void main() {
-  setUp(() {
-    mitmFeature = true;
-    addTearDown(() => mitmFeature = false);
-  });
-
   late HttpServer server;
   late Map<String, String> bodies;
   late Directory home;
@@ -272,17 +267,23 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
       expect(await enabledAfterUpdate(ads), isTrue);
     });
 
-    test('an auto update that turns it off leaves it off', () async {
-      final ads = await accepted();
-      bodies['/ads.js'] = 'two';
-      action().putModule(ads.copyWith(lastUpdateTime: DateTime.utc(2000)));
-      container.read(patchClashConfigProvider.notifier).value =
-          const PatchClashConfig(mitm: Mitm(enable: true), geoAutoUpdate: true);
+    if (rsFeature) {
+      test('an auto update that turns it off leaves it off', () async {
+        final ads = await accepted();
+        bodies['/ads.js'] = 'two';
+        action().putModule(ads.copyWith(lastUpdateTime: DateTime.utc(2000)));
+        container
+            .read(patchClashConfigProvider.notifier)
+            .value = const PatchClashConfig(
+          mitm: Mitm(enable: true),
+          geoAutoUpdate: true,
+        );
 
-      await action().autoUpdate();
+        await action().autoUpdate();
 
-      expect((await stored()).single.enabled, isFalse);
-    });
+        expect((await stored()).single.enabled, isFalse);
+      });
+    }
   });
 
   test('values that declare a new script turn a module off to offer', () async {
@@ -419,13 +420,15 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
     bool recent(DateTime time) =>
         DateTime.now().difference(time) < const Duration(minutes: 1);
 
-    test('a module past the interval updates', () async {
-      final time = await updatedAfter(
-        autoUpdate: true,
-        age: const Duration(hours: 25),
-      );
-      expect(recent(time), isTrue);
-    });
+    if (rsFeature) {
+      test('a module past the interval updates', () async {
+        final time = await updatedAfter(
+          autoUpdate: true,
+          age: const Duration(hours: 25),
+        );
+        expect(recent(time), isTrue);
+      });
+    }
 
     test('a module within the interval waits', () async {
       final time = await updatedAfter(
@@ -443,23 +446,27 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
       expect(recent(time), isFalse);
     });
 
-    test('auto update off still brings back missing content', () async {
-      bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-      final added = await action().addFromUrl(urlOf('/ads.sgmodule'));
-      await stored();
-      container
-          .read(patchClashConfigProvider.notifier)
-          .update(
-            (state) => state.copyWith(
-              geoAutoUpdate: false,
-              mitm: state.mitm.copyWith(enable: true),
-            ),
-          );
-      final file = File(join(await appPath.mitmModulesDirPath, added.fileName));
-      await file.delete();
-      await action().autoUpdate();
-      expect(await file.exists(), isTrue);
-    });
+    if (rsFeature) {
+      test('auto update off still brings back missing content', () async {
+        bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
+        final added = await action().addFromUrl(urlOf('/ads.sgmodule'));
+        await stored();
+        container
+            .read(patchClashConfigProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                geoAutoUpdate: false,
+                mitm: state.mitm.copyWith(enable: true),
+              ),
+            );
+        final file = File(
+          join(await appPath.mitmModulesDirPath, added.fileName),
+        );
+        await file.delete();
+        await action().autoUpdate();
+        expect(await file.exists(), isTrue);
+      });
+    }
   });
 
   test('deleting a module removes its content', () async {

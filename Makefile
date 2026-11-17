@@ -22,7 +22,7 @@ COMMENT_FILES = $(or $(FILES),$(shell git diff HEAD --name-only --diff-filter=d;
 
 .PHONY: help setup submodules pub-get doctor hooks worktrees \
 	gen gen-watch l10n status-icons frb site \
-	fmt fmt-check analyze test coverage lint hooks-test comment-density plugins-check setup-hooks-test \
+	fmt fmt-check analyze test coverage lint strip-check hooks-test comment-density plugins-check setup-hooks-test \
 	rust-check changelog-verify check \
 	core-check core-test \
 	package package-android package-windows package-macos package-linux package-dry manifest \
@@ -94,6 +94,9 @@ coverage: ## Run every test with coverage and hold it to CI's 75% floor
 
 lint: ## Run the repository lint suite in test/lint
 	flutter test test/lint
+
+strip-check: ## Strip the rsFeature checks in a scratch copy and analyze what the rs line builds on
+	bash tool/strip_check.sh
 
 hooks-test: ## Test the git hook scripts in tool/hooks
 	bash tool/hooks/test.sh

@@ -35,7 +35,7 @@ CoreOptions coreOptions(Ref ref) {
     testUrl: testUrl,
     skipCertVerify: !checkCertificate,
     delayTestTimeout: delayTestTimeout,
-    mitmCapture: mitmFeature && mitmCapture,
+    mitmCapture: rsFeature && mitmCapture,
   );
 }
 

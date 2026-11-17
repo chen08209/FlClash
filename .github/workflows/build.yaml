@@ -65,6 +65,9 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
+      - name: Analyze with the rsFeature checks stripped
+        run: bash tool/strip_check.sh
+
       - name: Skip the Go core build hook
         run: |
           yq -i '.hooks.user_defines.setup.build_assets = false' pubspec.yaml

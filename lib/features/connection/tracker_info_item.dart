@@ -404,7 +404,7 @@ class TrackerInfoDetailView extends ConsumerWidget {
             _buildChains(context),
           ],
         ),
-        if (mitmFeature) _MitmHostSection(metadata: metadata),
+        if (rsFeature) _MitmHostSection(metadata: metadata),
       ],
     );
   }

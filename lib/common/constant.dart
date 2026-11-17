@@ -32,9 +32,10 @@ const watchExecution = false;
 
 const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
 
-/// The bundled core has no MITM, so this stays off until one that has it ships.
-/// Not const so tests can cover both states.
-bool mitmFeature = const bool.fromEnvironment('FEATURE_MITM');
+/// Gates what only the Concord core of the rs line can serve, such as MITM.
+/// The rs line strips each check with `tool/strip_rs_feature.dart` instead of
+/// turning it on, so a check must take a form that tool reads.
+const rsFeature = false;
 
 const disclaimerVersion = 1;
 

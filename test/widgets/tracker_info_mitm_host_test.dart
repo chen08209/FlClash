@@ -37,11 +37,6 @@ TrackerInfo _tracker({
 }
 
 void main() {
-  setUp(() {
-    mitmFeature = true;
-    addTearDown(() => mitmFeature = false);
-  });
-
   late ProviderContainer container;
 
   Mitm saved() => container.read(patchClashConfigProvider).mitm;
@@ -82,61 +77,59 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('no MITM section shows while the feature is off', (tester) async {
-    mitmFeature = false;
-    await pumpDetail(
+  if (rsFeature) {
+    testWidgets('a host not yet listed is added ahead of the list', (
       tester,
-      _tracker(),
-      mitm: const Mitm(enable: true, hostname: ['other.example.com']),
-    );
+    ) async {
+      await pumpDetail(
+        tester,
+        _tracker(),
+        mitm: const Mitm(enable: true, hostname: ['other.example.com']),
+      );
 
-    expect(find.text(currentAppLocalizations.mitmDecryptHost), findsNothing);
-  });
+      await confirm(tester, currentAppLocalizations.mitmDecryptHost);
 
-  testWidgets('a host not yet listed is added ahead of the list', (
-    tester,
-  ) async {
-    await pumpDetail(
+      expect(saved().hostname, ['app.example.com', 'other.example.com']);
+      expect(
+        find.text(currentAppLocalizations.mitmExcludeHost),
+        findsOneWidget,
+      );
+    });
+  }
+
+  if (rsFeature) {
+    testWidgets('a refused host says so and is excluded ahead of the list', (
       tester,
-      _tracker(),
-      mitm: const Mitm(enable: true, hostname: ['other.example.com']),
-    );
+    ) async {
+      await pumpDetail(
+        tester,
+        _tracker(mitmRefused: true),
+        mitm: const Mitm(enable: true, hostname: ['*.example.com']),
+      );
 
-    await confirm(tester, currentAppLocalizations.mitmDecryptHost);
+      expect(
+        find.text(currentAppLocalizations.mitmClientRefusedCertificate),
+        findsOneWidget,
+      );
+      await confirm(tester, currentAppLocalizations.mitmExcludeHost);
 
-    expect(saved().hostname, ['app.example.com', 'other.example.com']);
-    expect(find.text(currentAppLocalizations.mitmExcludeHost), findsOneWidget);
-  });
+      expect(saved().hostname, ['-app.example.com', '*.example.com']);
+    });
+  }
 
-  testWidgets('a refused host says so and is excluded ahead of the list', (
-    tester,
-  ) async {
-    await pumpDetail(
-      tester,
-      _tracker(mitmRefused: true),
-      mitm: const Mitm(enable: true, hostname: ['*.example.com']),
-    );
+  if (rsFeature) {
+    testWidgets('an excluded host can be decrypted again', (tester) async {
+      await pumpDetail(
+        tester,
+        _tracker(mitm: true),
+        mitm: const Mitm(enable: true, hostname: ['-app.example.com']),
+      );
 
-    expect(
-      find.text(currentAppLocalizations.mitmClientRefusedCertificate),
-      findsOneWidget,
-    );
-    await confirm(tester, currentAppLocalizations.mitmExcludeHost);
+      await confirm(tester, currentAppLocalizations.mitmDecryptHost);
 
-    expect(saved().hostname, ['-app.example.com', '*.example.com']);
-  });
-
-  testWidgets('an excluded host can be decrypted again', (tester) async {
-    await pumpDetail(
-      tester,
-      _tracker(mitm: true),
-      mitm: const Mitm(enable: true, hostname: ['-app.example.com']),
-    );
-
-    await confirm(tester, currentAppLocalizations.mitmDecryptHost);
-
-    expect(saved().hostname, ['app.example.com']);
-  });
+      expect(saved().hostname, ['app.example.com']);
+    });
+  }
 
   testWidgets('nothing is offered without MITM, a host, or TCP', (
     tester,

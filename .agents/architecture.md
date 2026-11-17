@@ -225,8 +225,8 @@ re-applies the profile; keep-alive is forced off on Android, and only Linux hono
 The bundled core has no MITM: it stays private, on `feature/mitm` in FlClash-internal and `feature/mitm-latest` in
 Clash.Meta-internal, with the architecture notes of that version. The core keeps the `mitm.*` method names and answers
 them `not_implemented`, and `SetMitmPressure` does nothing. The app keeps its pages, modules and trust stores behind
-`mitmFeature` (`FEATURE_MITM`, off by default), which closes every entry and sends the core no modules or capture.
-Turn it on only with a core that has MITM.
+`rsFeature`, a const that is false here and that the rs line strips instead of turning on, so it closes every entry
+and sends the core no modules or capture. Tests that need MITM on run inside `if (rsFeature) { ... }`.
 
 Consent to a module's scripts covers `mitmScriptScope`: every line declaring a script, as written, and every line run
 now, which names its script by a hash of the content. An update that adds to that scope turns the module off until the
