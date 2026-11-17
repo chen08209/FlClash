@@ -367,26 +367,45 @@ void main() {
     when(
       () => mocks.api.runMitmScript('Daily', guard: any(named: 'guard')),
     ).thenAnswer((_) => run.future);
-    await pump(tester, MitmModuleView(id: _remote.id), core: mocks.controller);
+    final scripts = parseMitmModule(_module, resources: _resources).mitm.script;
+    await pump(
+      tester,
+      MitmModuleView(id: _remote.id),
+      core: mocks.controller,
+      views: {
+        MitmList.script: {
+          scripts[0]: const MitmLineView.script(
+            name: 'Ads',
+            kind: 'httpResponse',
+            pattern: r'^https://example\.com/b',
+          ),
+          scripts[1]: const MitmLineView.script(
+            name: 'Daily',
+            kind: 'cron',
+            cronexp: '0 8 * * *',
+          ),
+        },
+      },
+    );
     container.listen(patchClashConfigProvider, (_, _) {});
     container.read(patchClashConfigProvider.notifier).value =
         const PatchClashConfig(mitm: Mitm(enable: true));
 
     await tester.tap(find.text(MitmList.script.label));
     await tester.pumpAndSettle();
-    await tester.longPress(find.textContaining('Ads = '));
+    await tester.longPress(find.text('Ads'));
     await tester.pumpAndSettle();
     expect(find.text(currentAppLocalizations.mitmRunScript), findsNothing);
     await tester.tap(find.text(currentAppLocalizations.confirm));
     await tester.pumpAndSettle();
 
-    await tester.longPress(find.textContaining('Daily = '));
+    await tester.longPress(find.text('Daily'));
     await tester.pumpAndSettle();
     await tester.tap(find.text(currentAppLocalizations.mitmRunScript));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.byType(ActivityIndicator), findsOneWidget);
-    await tester.longPress(find.textContaining('Daily = '));
+    await tester.longPress(find.text('Daily'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.text(currentAppLocalizations.mitmRunScript), findsNothing);
@@ -496,6 +515,8 @@ void main() {
     const url = r'^https://example\.com/old https://example.com/new 302';
     const hosts = '*.example.com, -login.example.com:8443, bad host';
     const script = 'Daily = type=cron,cronexp="0 8 * * *",script-path=d.js';
+    const mapLocal =
+        r'^https://example\.com/a data="a.json" header="X-A:1|X-B:2"';
     await pump(
       tester,
       MitmModuleView(id: _remote.id),
@@ -503,6 +524,7 @@ void main() {
         urlRewrite: [url],
         hostname: [hosts],
         script: [script],
+        mapLocal: [mapLocal],
       ),
       issues: {
         MitmList.hostname: {hosts: 'unsupported character'},
@@ -531,7 +553,23 @@ void main() {
           script: const MitmLineView.script(
             name: 'Daily',
             kind: 'cron',
+            path: 'd.js',
             cronexp: '0 8 * * *',
+            requiresBody: true,
+            timeoutMs: 1500,
+          ),
+        },
+        MitmList.mapLocal: {
+          mapLocal: const MitmLineView.mapLocal(
+            pattern: r'^https://example\.com/a',
+            dataType: 'file',
+            data: 'a.json',
+            status: 200,
+            headers: [
+              MitmHeader(name: 'X-A', value: '1'),
+              MitmHeader(name: 'X-B', value: '2'),
+            ],
+            contentType: 'application/json',
           ),
         },
       },
@@ -579,7 +617,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Daily'), findsOneWidget);
     expect(find.text('0 8 * * *'), findsOneWidget);
+    expect(find.text('d.js'), findsOneWidget);
+    expect(find.text('requires-body  timeout 1.5s'), findsOneWidget);
     expect(find.text(l10n.mitmScriptCron), findsOneWidget);
+    await back();
+
+    await tester.tap(find.text(MitmList.mapLocal.label));
+    await tester.pumpAndSettle();
+    expect(find.text(r'^https://example\.com/a'), findsOneWidget);
+    expect(find.text('a.json'), findsOneWidget);
+    expect(find.text('Content-Type: application/json'), findsOneWidget);
+    expect(find.text('X-A: 1  +1'), findsOneWidget);
   });
 
   testWidgets('a line opens in full, its issue below it', (tester) async {

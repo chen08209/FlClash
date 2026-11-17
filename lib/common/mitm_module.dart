@@ -1029,20 +1029,6 @@ Map<String, String>? _scriptParams(String text) {
   );
 }
 
-/// The name the Core runs a cron, event or generic script line by, for the
-/// user to run it now; null for any other line.
-String? mitmTaskName(String line) {
-  final parsed = _scriptLine(line.trim());
-  if (parsed == null ||
-      !const {'cron', 'event', 'generic'}.contains(parsed.type)) {
-    return null;
-  }
-  final name = parsed.name.isNotEmpty
-      ? parsed.name
-      : p.url.basename(parsed.params['script-path'] ?? '');
-  return name.isEmpty ? null : name;
-}
-
 String _scriptValue(String value) =>
     RegExp(r'[\s,"=\[\](){}]').hasMatch(value) ? _quoted(value) : value;
 

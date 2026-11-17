@@ -36,10 +36,17 @@ Future<void> _setEnabled(WidgetRef ref, MitmModule module, bool enabled) async {
   }
 }
 
+/// The name the Core runs a cron, event or generic script line by; null for
+/// any other line.
+String? _taskName(MitmLineView? view) => switch (view) {
+  MitmScriptView(:final name, kind: 'cron' || 'event' || 'generic') => name,
+  _ => null,
+};
+
 /// Runs a cron, event or generic script line now; any other line, any while
 /// decryption is off, and a task still running have none.
-PopupMenuItem? mitmRunScriptItem(WidgetRef ref, String line) {
-  final name = mitmTaskName(line);
+PopupMenuItem? mitmRunScriptItem(WidgetRef ref, MitmLineView? view) {
+  final name = _taskName(view);
   if (name == null ||
       !ref.read(patchClashConfigProvider).mitm.enable ||
       ref.read(updatingKeysProvider).contains(_runKey(name))) {
@@ -55,14 +62,14 @@ PopupMenuItem? mitmRunScriptItem(WidgetRef ref, String line) {
 String _runKey(String name) => 'mitm_script_$name';
 
 class MitmTaskRunning extends ConsumerWidget {
-  const MitmTaskRunning({super.key, required this.line, required this.builder});
+  const MitmTaskRunning({super.key, required this.view, required this.builder});
 
-  final String line;
+  final MitmLineView? view;
   final Widget Function(bool running) builder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final name = mitmTaskName(line);
+    final name = _taskName(view);
     return builder(
       name != null && ref.watch(isUpdatingProvider(_runKey(name))),
     );
@@ -709,7 +716,12 @@ class MitmModuleView extends ConsumerWidget {
                                   : null,
                               menuItemsOf:
                                   list == MitmList.script && module.enabled
-                                  ? (line) => [?mitmRunScriptItem(ref, line)]
+                                  ? (line) => [
+                                      ?mitmRunScriptItem(
+                                        ref,
+                                        views[list]?[line],
+                                      ),
+                                    ]
                                   : null,
                             ),
                         if (content.rules.isNotEmpty)
@@ -860,7 +872,7 @@ class _MitmModuleLinesView extends StatelessWidget {
 
   Widget _lineRow(BuildContext context, String line, String? issue) {
     return MitmTaskRunning(
-      line: line,
+      view: views[line],
       builder: (running) => ContextMenuRegion(
         menuItems: menuItemsOf?.call(line),
         child: switch (views[line]) {
@@ -971,6 +983,12 @@ class _MitmModuleLinesView extends StatelessWidget {
   }
 }
 
+const _requiresBodyKey = 'requires-body';
+const _timeoutKey = 'timeout';
+const _contentTypeHeader = 'Content-Type';
+
+String _seconds(int ms) => ms % 1000 == 0 ? '${ms ~/ 1000}s' : '${ms / 1000}s';
+
 /// A line the Core reads, laid out as a rule row is: what it matches on top,
 /// what it does below, and the kind of action at the trailing edge.
 class _MitmLineParts {
@@ -1051,6 +1069,13 @@ class _MitmLineParts {
             'text' || 'file' when view.data.isNotEmpty => view.data,
             final dataType => dataType,
           },
+          if (view.contentType.isNotEmpty)
+            '$_contentTypeHeader: ${view.contentType}',
+          if (view.headers case [final first, ...final rest])
+            [
+              '${first.name}: ${first.value}',
+              if (rest.isNotEmpty) '+${rest.length}',
+            ].join('  '),
           ...heads(view.requestHead, null),
         ],
         tag: view.status?.toString() ?? view.dataType,
@@ -1058,7 +1083,17 @@ class _MitmLineParts {
       final MitmScriptView view => _MitmLineParts(
         primary: view.name,
         code: false,
-        details: [?(view.pattern ?? view.cronexp ?? view.event)],
+        details: [
+          ?(view.pattern ?? view.cronexp ?? view.event),
+          if (view.path.isNotEmpty) view.path,
+          if ([
+                if (view.requiresBody) _requiresBodyKey,
+                if (view.timeoutMs case final ms?)
+                  '$_timeoutKey ${_seconds(ms)}',
+              ]
+              case final flags when flags.isNotEmpty)
+            flags.join('  '),
+        ],
         tag: switch (view.kind) {
           'httpRequest' => appLocalizations.request,
           'httpResponse' => appLocalizations.response,

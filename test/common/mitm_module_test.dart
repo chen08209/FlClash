@@ -1327,25 +1327,6 @@ $line
         expect(parseMitmModule(module).declaredScripts, 1, reason: line);
       }
     });
-
-    test('the lines the user can run are named as the Core names them', () {
-      expect(
-        mitmTaskName(
-          'cron.js = type=cron,cronexp="0 8 * * *",script-path=cron0.js',
-        ),
-        'cron.js',
-      );
-      expect(
-        mitmTaskName('cron "0 8 * * *" script-path=https://cdn.test/daily.js'),
-        'daily.js',
-      );
-      expect(mitmTaskName('generic script-path=t.js, tag=Tool'), 'Tool');
-      expect(mitmTaskName('network-changed script-path=n.js'), 'n.js');
-      expect(
-        mitmTaskName('Ads = type=http-response,pattern=a,script-path=a.js'),
-        isNull,
-      );
-    });
   });
 
   group('a Quantumult X snippet', () {

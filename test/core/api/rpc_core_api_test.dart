@@ -47,6 +47,37 @@ void main() {
                   'view': {'type': 'fromALaterCore'},
                 },
               ],
+              'script': [
+                {
+                  'index': 0,
+                  'view': {
+                    'type': 'script',
+                    'name': 'n',
+                    'kind': 'httpResponse',
+                    'path': 'n.js',
+                    'pattern': '^https://a',
+                    'requiresBody': true,
+                    'binaryBody': false,
+                    'timeoutMs': 10000,
+                  },
+                },
+              ],
+              'map-local': [
+                {
+                  'index': 0,
+                  'view': {
+                    'type': 'mapLocal',
+                    'pattern': '^https://b',
+                    'dataType': 'text',
+                    'data': '{}',
+                    'status': 200,
+                    'headers': [
+                      {'name': 'X-A', 'value': '1'},
+                    ],
+                    'contentType': 'application/json',
+                  },
+                },
+              ],
             },
           });
         case 'mitm.body':
@@ -74,6 +105,8 @@ void main() {
       const MitmRules(
         hostname: ['-a.example.com, a.example.com:x'],
         urlRewrite: ['', 'later'],
+        script: ['n'],
+        mapLocal: ['b'],
       ),
     );
 
@@ -86,6 +119,26 @@ void main() {
       ),
     });
     expect(check.views[MitmList.urlRewrite], isEmpty);
+    expect(check.views[MitmList.script], {
+      0: const MitmLineView.script(
+        name: 'n',
+        kind: 'httpResponse',
+        path: 'n.js',
+        pattern: '^https://a',
+        requiresBody: true,
+        timeoutMs: 10000,
+      ),
+    });
+    expect(check.views[MitmList.mapLocal], {
+      0: const MitmLineView.mapLocal(
+        pattern: '^https://b',
+        dataType: 'text',
+        data: '{}',
+        status: 200,
+        headers: [MitmHeader(name: 'X-A', value: '1')],
+        contentType: 'application/json',
+      ),
+    });
   });
 
   test('an MITM record the Core has dropped reads as null', () async {
