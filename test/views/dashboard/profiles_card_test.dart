@@ -14,6 +14,7 @@ import 'package:fl_clash/views/profiles/custom/rules.dart';
 import 'package:fl_clash/views/profiles/profiles.dart';
 import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +22,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
 
 import '../../helpers/app_paths.dart';
 import '../../helpers/test_app.dart';
+import '../../helpers/test_database_providers.dart';
 import '../../helpers/test_profiles.dart';
 import '../../helpers/host_scaffold.dart';
 
@@ -469,6 +471,40 @@ void main() {
         findsOneWidget,
       );
     }
+  });
+
+  testWidgets('a long script name ends in an ellipsis beside its label', (
+    tester,
+  ) async {
+    const name =
+        'a_script_whose_name_runs_on_without_any_spaces_'
+        '远远超出这一行的宽度_and_keeps_going_until_it_is_cut.js';
+    await writeAppliedConfig(tester);
+    setUpProfiles(
+      [_profile(1).copyWith(scriptId: 9)],
+      overrides: [
+        scriptsProvider.overrideWith(
+          () => TestScripts([
+            Script(id: 9, label: name, lastUpdateTime: DateTime(2026)),
+          ]),
+        ),
+      ],
+    );
+    await pumpCard(tester);
+
+    await openDetail(tester);
+
+    expect(tester.takeException(), isNull);
+    final value = tester.renderObject<RenderParagraph>(find.text(name));
+    expect(value.didExceedMaxLines, isTrue);
+    final label = tester.renderObject<RenderParagraph>(
+      find.text('Extend script'),
+    );
+    expect(label.didExceedMaxLines, isFalse);
+    expect(
+      tester.getRect(find.text(name)).left,
+      greaterThan(tester.getRect(find.text('Extend script')).right),
+    );
   });
 
   testWidgets('tapping a custom profile edits it in a sheet, built as it '
