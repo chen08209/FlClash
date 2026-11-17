@@ -14,6 +14,9 @@ cp "$root/core/Clash.Meta/component/ca/ca-certificates.crt" \
   "$scratch/core/Clash.Meta/component/ca/" 2>/dev/null || true
 
 cd "$scratch"
+# `dart run` runs the build hooks, and the Go core they build is left out above.
+perl -pi -e 's/build_assets: true/build_assets: false/' pubspec.yaml
+flutter pub get
 dart run tool/strip_rs_feature.dart
 dart run build_runner build --delete-conflicting-outputs
 flutter gen-l10n
