@@ -228,8 +228,8 @@ What those suites own:
 - `test/providers/action_test.dart`: Core start/restart orchestration and overlapping restart requests.
 - `test/providers/system_action_test.dart`: ordered, idempotent exit cleanup and watchdog behavior.
 - `test/views/dashboard/live_status_test.dart`: 600-millisecond starting presentation hold, immediate failure display,
-  the order of the live status deck, where it sits, a list opening in place, and the confirmation before a force
-  restart.
+  the order of the live status deck, where it sits, a list opening in place, config warnings, and the confirmation
+  before a force restart.
 
 ## Native Component Verification
 

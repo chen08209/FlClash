@@ -364,7 +364,7 @@ class _NumberItem extends ConsumerWidget {
 
 // Android's VPN service starts from these rows; the desktop TUN takes the
 // same keys as overrides, so a profile's own values apply unless picked.
-List<Widget> tunItems({required bool isMipsStack}) {
+List<Widget> tunItems() {
   return [
     _NumberItem(
       title: (l) => 'MTU',
@@ -373,18 +373,18 @@ List<Widget> tunItems({required bool isMipsStack}) {
       select: (state) => state.tun.mtu,
       update: (state, value) => state.copyWith.tun(mtu: value),
     ),
-    if (isMipsStack)
-      ConfigOptionsItem<String>(
-        title: (l) => l.congestionController,
-        options: congestionControllers,
-        textBuilder: (value) => value,
-        selector: patchClashConfigProvider.select(
-          (state) => state.tun.congestionController,
-        ),
-        onChanged: _tunWriter(
-          (state, value) => state.copyWith.tun(congestionController: value),
-        ),
+    ConfigOptionsItem<String>(
+      title: (l) => l.congestionController,
+      options: congestionControllers,
+      available: tunCongestionAvailable,
+      textBuilder: (value) => value,
+      selector: patchClashConfigProvider.select(
+        (state) => state.tun.congestionController,
       ),
+      onChanged: _tunWriter(
+        (state, value) => state.copyWith.tun(congestionController: value),
+      ),
+    ),
     const BypassPrivateRouteItem(),
     const RouteAddressItem(),
     ConfigListEditItem(
@@ -417,15 +417,7 @@ class TunSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     if (!isDesktop) {
-      final isMipsStack = ref.watch(
-        patchClashConfigProvider.select(
-          (state) => state.tun.stack == TunStack.mips,
-        ),
-      );
-      return generateSection(
-        title: appLocalizations.tun,
-        items: tunItems(isMipsStack: isMipsStack),
-      );
+      return generateSection(title: appLocalizations.tun, items: tunItems());
     }
     return OverrideSection(
       title: appLocalizations.tun,

@@ -443,6 +443,54 @@ abstract class _$ConfigWarningsState extends $Notifier<List<ConfigWarning>> {
   }
 }
 
+@ProviderFor(liveConfigWarnings)
+final liveConfigWarningsProvider = LiveConfigWarningsProvider._();
+
+final class LiveConfigWarningsProvider
+    extends
+        $FunctionalProvider<
+          List<ConfigWarning>,
+          List<ConfigWarning>,
+          List<ConfigWarning>
+        >
+    with $Provider<List<ConfigWarning>> {
+  LiveConfigWarningsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'liveConfigWarningsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$liveConfigWarningsHash();
+
+  @$internal
+  @override
+  $ProviderElement<List<ConfigWarning>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  List<ConfigWarning> create(Ref ref) {
+    return liveConfigWarnings(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<ConfigWarning> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<ConfigWarning>>(value),
+    );
+  }
+}
+
+String _$liveConfigWarningsHash() =>
+    r'8e3b1b36554096e55241117e05da8460e30ead08';
+
 @ProviderFor(CoreStopReason)
 final coreStopReasonProvider = CoreStopReasonProvider._();
 

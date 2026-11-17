@@ -437,12 +437,13 @@ listener exceptions so one faulty observer does not prevent the remaining events
 
 ## User-Facing Core And Delay Feedback
 
-`LiveStatusButton` in `lib/views/dashboard/widgets/live_status.dart` is the dashboard's one status surface, shown
-outside edit mode. It wears the most important live status (the Core's phase, an update, resources updating) and opens
-the deck of them in `live_status_deck.dart`. The deck takes an alert's scrim and motion through
-`AlertMotionRouteMixin.scaleOrigin`; its front card sits where a phone's alert sits, or under the bar at the right edge
-on a desktop, and a card with a list opens it in place while the rest of the deck steps away. A Core in its own process (`coreLib == null`) adds its starting and running
-phases; an in-app Core only ever shows having stopped:
+`LiveStatusButton` in `lib/views/dashboard/widgets/live_status.dart` is the dashboard's status surface beside the
+service faults badge, shown outside edit mode. It wears the most important live status (the Core's phase, an update,
+resources updating, config warnings) and opens the deck of them in `live_status_deck.dart`. The deck takes an alert's
+scrim and motion through `AlertMotionRouteMixin.scaleOrigin`; its front card sits where a phone's alert sits, or under
+the bar at the right edge on a desktop, and a card with a list opens it in place while the rest of the deck steps away.
+A Core in its own process (`coreLib == null`) adds its starting and running phases; an in-app Core only ever shows
+having stopped:
 
 - Provider state remains authoritative. The button keeps a separate display-only hold so a fast
   `connecting -> connected` transition still shows at least 600 milliseconds of progress instead of flashing.

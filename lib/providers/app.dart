@@ -1,15 +1,17 @@
 import 'dart:async';
-import 'package:fl_clash/core/core.dart';
 import 'dart:collection';
 import 'dart:io';
 import 'dart:ui' show Locale;
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'generated/app.g.dart';
@@ -38,6 +40,14 @@ class AuthorizedTunEnable extends _$AuthorizedTunEnable
   }
 }
 
+/// Never saved, so the next launch tries TUN again.
+@Riverpod(keepAlive: true)
+class TunDisabledThisRun extends _$TunDisabledThisRun
+    with AutoDisposeNotifierMixin {
+  @override
+  bool build() => false;
+}
+
 @Riverpod(keepAlive: true)
 class UpdateDownloadState extends _$UpdateDownloadState
     with AutoDisposeNotifierMixin {
@@ -54,6 +64,37 @@ class CoreCapabilitiesState extends _$CoreCapabilitiesState
 
 /// The warnings of the config the Core last set up; they end with the Core.
 @Riverpod(keepAlive: true)
+class ConfigWarningsState extends _$ConfigWarningsState
+    with AutoDisposeNotifierMixin {
+  @override
+  List<ConfigWarning> build() {
+    ref.listen(coreStatusProvider, (_, next) {
+      if (next != CoreStatus.connected && state.isNotEmpty) {
+        state = const [];
+      }
+    });
+    return const [];
+  }
+
+  void report(List<ConfigWarning> warnings) {
+    if (ref.read(coreStatusProvider) == CoreStatus.disconnected) {
+      return;
+    }
+    state = warnings;
+  }
+}
+
+@riverpod
+List<ConfigWarning> liveConfigWarnings(Ref ref) {
+  final openLogs = ref.watch(
+    appSettingProvider.select((settings) => settings.openLogs),
+  );
+  return openLogs
+      ? ref.watch(configWarningsStateProvider.select((items) => items.warnings))
+      : const [];
+}
+
+@Riverpod(keepAlive: true)
 class CoreStopReason extends _$CoreStopReason with AutoDisposeNotifierMixin {
   @override
   String? build() {
@@ -63,6 +104,19 @@ class CoreStopReason extends _$CoreStopReason with AutoDisposeNotifierMixin {
       }
     });
     return null;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class ServiceFaults extends _$ServiceFaults with AutoDisposeNotifierMixin {
+  @override
+  List<ServiceFault> build() {
+    ref.listen(coreStatusProvider, (_, next) {
+      if (next != CoreStatus.connected && state.isNotEmpty) {
+        state = const [];
+      }
+    });
+    return const [];
   }
 }
 

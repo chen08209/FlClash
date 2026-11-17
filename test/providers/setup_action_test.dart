@@ -952,22 +952,94 @@ void main() {
       );
     });
 
-    test('a failed authorization turns tun off and asks again on the next '
-        'enable', () async {
+    test('a failed authorization keeps the tun setting, pushes tun off and '
+        'does not ask again in this run', () async {
       loadAppLocalizations(const Locale('en'));
-      container
+      final mocks = coreMocks();
+      when(() => mocks.api.patchConfig(any())).thenAnswer((_) async => 1);
+      final scopedAction = TestSetupAction()
+        ..authorizeResult = AuthorizeCode.error;
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          setupActionProvider.overrideWith(() => scopedAction),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      scoped.read(setupActionProvider.notifier);
+      scoped
           .read(patchClashConfigProvider.notifier)
           .update((state) => state.copyWith.tun(enable: true));
-      action.authorizeResult = AuthorizeCode.error;
 
-      expect(await action.requestAdmin(true), isTrue);
-      expect(container.read(patchClashConfigProvider).tun.enable, isFalse);
+      await scopedAction.updateConfig();
+      await scopedAction.updateConfig();
+
+      final patches = verify(
+        () => mocks.api.patchConfig(captureAny()),
+      ).captured.cast<ConfigPatch>();
+      expect(patches.map((patch) => patch.tun?.enable), [false, false]);
+      expect(scoped.read(patchClashConfigProvider).tun.enable, isTrue);
+      expect(scoped.read(tunDisabledThisRunProvider), isTrue);
       expect(
-        container.read(authorizedTunEnableProvider),
+        scoped.read(authorizedTunEnableProvider),
         TunAuthorizationState.none,
       );
+      expect(await scopedAction.requestAdmin(true), isTrue);
+      expect(scopedAction.authorizeCalls, 1);
 
-      action.authorizeResult = AuthorizeCode.success;
+      final restarted = ProviderContainer();
+      addTearDown(restarted.dispose);
+      expect(restarted.read(tunDisabledThisRunProvider), isFalse);
+    });
+  });
+
+  group('a backup restored on another platform', () {
+    Config restored(Config backup) => Config.fromJson(
+      jsonDecode(jsonEncode(backup.toJson())) as Map<String, Object?>,
+    );
+
+    Future<
+      ({
+        ProviderContainer scoped,
+        TestSetupAction action,
+        List<ConfigPatch> patches,
+        List<String> banners,
+      })
+    >
+    updateOn(Config backup, {required bool desktop}) async {
+      loadAppLocalizations(const Locale('en'));
+      final printed = <String>[];
+      final previousPrint = debugPrint;
+      debugPrint = (message, {wrapWidth}) => printed.add(message ?? '');
+      addTearDown(() => debugPrint = previousPrint);
+      final mocks = coreMocks();
+      when(() => mocks.api.patchConfig(any())).thenAnswer((_) async => 1);
+      final scopedAction = TestSetupAction()
+        ..desktop = desktop
+        ..authorizeResult = AuthorizeCode.error;
+      final scoped = ProviderContainer(
+        overrides: [
+          ...buildConfigOverrides(restored(backup)),
+          profilesProvider.overrideWith(TestProfiles.new),
+          setupActionProvider.overrideWith(() => scopedAction),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      scoped.read(setupActionProvider.notifier);
+
+      await scopedAction.updateConfig();
+
+      return (
+        scoped: scoped,
+        action: scopedAction,
+        patches: verify(
+          () => mocks.api.patchConfig(captureAny()),
+        ).captured.cast<ConfigPatch>(),
+        banners: printed.where((line) => line.contains('banner:')).toList(),
+      );
+    }
 
     const desktopBackup = Config(
       themeProps: defaultThemeProps,
@@ -1418,7 +1490,156 @@ void main() {
             .applyProfile(force: true);
 
         expect(succeeded, isTrue);
-        verify(() => core.setupConfig(any())).called(1);
+        verify(() => _applied(mocks.api)).called(1);
+      },
+    );
+
+    test('a config the Core took is followed by the external controller, '
+        'which the Core never reads from the profile', () async {
+      final profile = Profile.normal(label: 'p', url: 'http://127.0.0.1:9/');
+      final mocks = coreMocks();
+      when(() => _applied(mocks.api)).thenAnswer((_) async => const []);
+      when(() => mocks.api.lastWarnings()).thenAnswer((_) async => const []);
+      when(() => mocks.api.patchConfig(any())).thenAnswer((_) async => 1);
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      scoped.listen(patchClashConfigProvider, (_, _) {});
+      scoped
+          .read(patchClashConfigProvider.notifier)
+          .value = const PatchClashConfig(
+        externalController: ExternalControllerStatus.open,
+        secret: 's',
+      );
+
+      expect(
+        await scoped
+            .read(setupActionProvider.notifier)
+            .applyProfile(force: true),
+        isTrue,
+      );
+
+      final patch =
+          verify(() => mocks.api.patchConfig(captureAny())).captured.single
+              as ConfigPatch;
+      expect(patch.externalController, '127.0.0.1:9090');
+      expect(patch.secret, 's');
+      expect(patch.mode, isNull);
+    });
+
+    test('the warnings of a setup are kept, whether the Core took it or '
+        'rejected it', () async {
+      final profile = Profile.normal(label: 'p', url: 'http://127.0.0.1:9/');
+      final mocks = coreMocks();
+      const warningInfo = WarningInfo(
+        level: 'warning',
+        path: 'proxies[1]',
+        message: 'unsupported',
+      );
+      const warning = ConfigWarning(
+        level: ConfigWarningLevel.warning,
+        path: 'proxies[1]',
+        message: 'unsupported',
+      );
+      var rejecting = false;
+      when(() => _applied(mocks.api)).thenAnswer((_) async {
+        if (rejecting) {
+          throw const CoreMethodException(
+            code: 'config_rejected',
+            message: 'rejected',
+          );
+        }
+        return const [];
+      });
+      when(
+        () => mocks.api.lastWarnings(),
+      ).thenAnswer((_) async => [warningInfo]);
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      scoped.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      final setupAction = scoped.read(setupActionProvider.notifier);
+      final warnings = configWarningsStateProvider.notifier;
+
+      expect(await setupAction.applyProfile(force: true), isTrue);
+      expect(scoped.read(configWarningsStateProvider), [warning]);
+
+      scoped.read(warnings).value = const [];
+      rejecting = true;
+      expect(await setupAction.applyProfile(force: true), isFalse);
+      expect(scoped.read(configWarningsStateProvider), [warning]);
+    });
+
+    test('a setup against a Core marked stopped leaves no warnings beside '
+        'it', () async {
+      final profile = Profile.normal(label: 'p', url: 'http://127.0.0.1:9/');
+      final mocks = coreMocks();
+      when(() => _applied(mocks.api)).thenAnswer((_) async => const []);
+      when(() => mocks.api.lastWarnings()).thenAnswer(
+        (_) async => const [
+          WarningInfo(level: 'warning', path: 'proxies[1]', message: 'x'),
+        ],
+      );
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+
+      expect(
+        await scoped.read(setupActionProvider.notifier).applyProfile(),
+        isTrue,
+      );
+      expect(scoped.read(coreStatusProvider), CoreStatus.disconnected);
+      expect(scoped.read(configWarningsStateProvider), isEmpty);
+    });
+
+    test(
+      'a Core that cannot report warnings leaves the setup applied',
+      () async {
+        final profile = Profile.normal(label: 'p', url: 'http://127.0.0.1:9/');
+        final mocks = coreMocks();
+        when(() => _applied(mocks.api)).thenAnswer((_) async => const []);
+        when(() => mocks.api.lastWarnings()).thenThrow(
+          const CoreMethodException(code: 'core_unavailable', message: 'gone'),
+        );
+        final scoped = ProviderContainer(
+          overrides: [
+            profilesProvider.overrideWith(() => TestProfiles([profile])),
+            currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+            setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
+            coreHandlerProvider.overrideWithValue(mocks.controller),
+            setupActionProvider.overrideWith(SetupAction.new),
+          ],
+        );
+        addTearDown(scoped.dispose);
+
+        expect(
+          await scoped
+              .read(setupActionProvider.notifier)
+              .applyProfile(force: true),
+          isTrue,
+        );
+        expect(scoped.read(configWarningsStateProvider), isEmpty);
       },
     );
 

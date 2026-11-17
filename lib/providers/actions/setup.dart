@@ -47,6 +47,18 @@ class SetupAction extends _$SetupAction {
   var _lastPushDuration = Duration.zero;
   var _pendingForceApply = false;
 
+  Future<void> _loadConfigWarnings() async {
+    try {
+      final warnings = await _core.getConfigWarnings();
+      ref.read(configWarningsStateProvider.notifier).report(warnings);
+    } catch (error) {
+      commonPrint.log(
+        'config warnings unavailable: ${compactError(error)}',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
+  }
+
   bool get _isRunning => _startTime != null && _startTime!.isBeforeNow;
 
   @override
@@ -743,7 +755,10 @@ class SetupAction extends _$SetupAction {
         TunAuthorizationState.authorized;
     return patchConfig.copyWith(
       tun: patchConfig.tun.copyWith(
-        enable: patchConfig.tun.enable && authorized,
+        enable:
+            patchConfig.tun.enable &&
+            authorized &&
+            !ref.read(tunDisabledThisRunProvider),
       ),
       externalController: patchConfig.secret.isEmpty
           ? ExternalControllerStatus.close
@@ -784,7 +799,10 @@ class SetupAction extends _$SetupAction {
 
   @visibleForTesting
   Future<bool> requestAdmin(bool enableTun) async {
-    if (!enableTun || ref.read(safeModeProvider)) {
+    if (!enableTun ||
+        !tunNeedsAuthorization ||
+        ref.read(safeModeProvider) ||
+        ref.read(tunDisabledThisRunProvider)) {
       return true;
     }
     final authorizationState = ref.read(authorizedTunEnableProvider);
@@ -808,9 +826,7 @@ class SetupAction extends _$SetupAction {
         return true;
       case AuthorizeCode.error:
         authorizationNotifier.value = TunAuthorizationState.none;
-        ref
-            .read(patchClashConfigProvider.notifier)
-            .update((state) => state.copyWith.tun(enable: false));
+        ref.read(tunDisabledThisRunProvider.notifier).value = true;
         dialogs.showBanner(
           currentAppLocalizations.tunAuthorizationFailed,
           level: BannerLevel.error,

@@ -74,11 +74,55 @@ class _LostRecordingSetupAction extends SetupAction {
   void onCoreLost() => lostCount++;
 }
 
-_MockCoreHandlerInterface _coreInterface() {
-  final coreInterface = _MockCoreHandlerInterface();
-  when(() => coreInterface.startLog()).thenAnswer((_) async {});
-  when(() => coreInterface.stopLog()).thenAnswer((_) async {});
-  return coreInterface;
+class _Feeds {
+  final crashes = StreamController<String>.broadcast();
+  final dns = StreamController<List<DnsEntry>>.broadcast();
+  final events = StreamController<List<CoreEventDto>>.broadcast();
+  final connections = StreamController<ConnectionUpdate>.broadcast();
+  final proxies = StreamController<ProxyUpdate>.broadcast();
+  final logs = StreamController<List<LogEntry>>.broadcast();
+  final engine = StreamController<EngineStatus>.broadcast();
+
+  Future<void> close() => Future.wait([
+    crashes.close(),
+    dns.close(),
+    events.close(),
+    connections.close(),
+    proxies.close(),
+    logs.close(),
+    engine.close(),
+  ]);
+}
+
+typedef _Harness = ({CoreMocks mocks, _Feeds feeds});
+
+_Harness _harness() {
+  final mocks = coreMocks();
+  final feeds = _Feeds();
+  addTearDown(feeds.close);
+  stubSilentFeeds(mocks.api);
+  when(() => mocks.backend.crashes).thenAnswer((_) => feeds.crashes.stream);
+  when(() => mocks.api.watchDns()).thenAnswer((_) => feeds.dns.stream);
+  when(
+    () => mocks.api.watchEvents(delays: true, state: true),
+  ).thenAnswer((_) => feeds.events.stream);
+  when(
+    () => mocks.api.watchConnections(
+      maxBatchMs: 250,
+      counters: any(named: 'counters'),
+    ),
+  ).thenAnswer((_) => feeds.connections.stream);
+  when(() => mocks.api.watchProxies()).thenAnswer((_) => feeds.proxies.stream);
+  when(() => mocks.api.watchLogs()).thenAnswer((_) => feeds.logs.stream);
+  when(
+    () => mocks.api.watchEngineStatus(),
+  ).thenAnswer((_) => feeds.engine.stream);
+  when(() => mocks.api.lastWarnings()).thenAnswer((_) async => const []);
+  when(() => mocks.api.providers()).thenAnswer((_) async => const []);
+  when(
+    () => mocks.api.proxyGroups(),
+  ).thenAnswer((_) async => const ProxyGroupsDto());
+  return (mocks: mocks, feeds: feeds);
 }
 
 ConnectionInfo _connection(int id, {int upload = 0, int download = 0}) =>
@@ -810,6 +854,137 @@ void main() {
       find.text(currentAppLocalizations.dialerProxyLoopStopped('loop-node')),
       findsOneWidget,
     );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('services that did not start are kept until they start', (
+    tester,
+  ) async {
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
+    const fault = ServiceFault(
+      service: FaultService.mixed,
+      address: '127.0.0.1:7890',
+      reason: FaultReason.addressInUse,
+      message: 'address in use',
+    );
+
+    harness.feeds.engine.add(
+      const EngineStatus(state: EngineState.running, faults: [fault]),
+    );
+    await tester.pump();
+    expect(container.read(serviceFaultsProvider), [fault]);
+
+    harness.feeds.engine.add(const EngineStatus(state: EngineState.running));
+    await tester.pump();
+    expect(container.read(serviceFaultsProvider), isEmpty);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a TUN that does not start stays off for the run, reported '
+      'once, and keeps the tun setting', (tester) async {
+    final harness = _harness();
+    final setupAction = _ApplyRecordingSetupAction();
+    final container = await _pumpConnected(
+      tester,
+      harness,
+      overrides: [setupActionProvider.overrideWith(() => setupAction)],
+    );
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith.tun(enable: true));
+    await tester.pump();
+    final updatesBefore = setupAction.updates;
+    const failed = EngineStatus(
+      state: EngineState.running,
+      faults: [
+        ServiceFault(
+          service: FaultService.tun,
+          reason: FaultReason.other,
+          message: 'Start TUN listening error: no device',
+        ),
+      ],
+    );
+    final banner = find.text(
+      '${currentAppLocalizations.tunStartFailed}\n'
+      'Start TUN listening error: no device',
+    );
+
+    harness.feeds.engine
+      ..add(failed)
+      ..add(failed)
+      ..add(const EngineStatus(state: EngineState.running))
+      ..add(failed);
+    await tester.pump();
+    await tester.pump();
+
+    expect(container.read(patchClashConfigProvider).tun.enable, isTrue);
+    expect(container.read(tunDisabledThisRunProvider), isTrue);
+    expect(container.read(updateParamsProvider).tun?.enable, isFalse);
+    expect(setupAction.updates, updatesBefore + 1);
+    expect(container.read(serviceFaultsProvider), failed.faults);
+    expect(banner, findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 10));
+  });
+
+  testWidgets('geo events are forwarded to the geo resource action', (
+    tester,
+  ) async {
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
+    final key = GeoResource.MMDB.updatingKey;
+    final subscription = container.listen<bool>(
+      isUpdatingProvider(key),
+      (_, _) {},
+    );
+    addTearDown(subscription.close);
+
+    harness.feeds.events.add(const [
+      ResourceUpdateEvent(
+        kind: ResourceKind.geo,
+        name: 'MMDB',
+        phase: ResourcePhase.updating,
+      ),
+    ]);
+    await tester.pump();
+
+    expect(container.read(isUpdatingProvider(key)), isTrue);
+
+    harness.feeds.events.add(const [
+      ResourceUpdateEvent(
+        kind: ResourceKind.geo,
+        name: 'MMDB',
+        phase: ResourcePhase.failed,
+        error: 'background failure',
+      ),
+    ]);
+    await tester.pump();
+
+    expect(container.read(isUpdatingProvider(key)), isFalse);
+    expect(find.text('background failure'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('non-geo Core errors retain global notifications', (
+    tester,
+  ) async {
+    final harness = _harness();
+    final container = await _pumpConnected(tester, harness);
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(openLogs: true));
+    await tester.pump();
+
+    harness.feeds.logs.add(const [
+      LogEntry(level: 'error', time: 1, text: 'core failure'),
+    ]);
+    await tester.pump();
     await tester.pump();
 
     expect(find.text('core failure'), findsOneWidget);

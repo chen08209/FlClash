@@ -110,7 +110,91 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     }, fireImmediately: true);
   }
 
-  void _syncLogStream() {
+  void _feed<T>(String name, Stream<T> stream, void Function(T value) onData) {
+    unawaited(_feeds.remove(name)?.cancel());
+    _feeds[name] = stream.listen(
+      (value) {
+        if (mounted) {
+          onData(value);
+        }
+      },
+      onError: (Object error) => commonPrint.log(
+        '$name feed: ${compactError(error)}',
+        logLevel: coreFailureLogLevel(error),
+      ),
+    );
+  }
+
+  void _openFeeds() {
+    _closeFeeds();
+    final api = _core.api;
+    ref.read(connectionBookProvider).clear();
+    _feed('dns', api.watchDns(), (entries) {
+      ref
+          .read(dnsQueriesProvider.notifier)
+          .addQueries(entries.map(dnsQueryOf).toList());
+      ref
+          .read(dnsQueryCountProvider.notifier)
+          .update((count) => count + entries.length);
+    });
+    _sync
+      ..reset()
+      ..onApplied = _resyncState;
+    _feed('events', api.watchEvents(delays: true, state: true), (events) {
+      events.forEach(_onEvent);
+    });
+    unawaited(_resyncState());
+    _feed('engine', api.watchEngineStatus(), _onEngineStatus);
+    _openConnections();
+    _feed('proxies', api.watchProxies(), (_) {
+      ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
+    });
+    _syncLogFeed();
+  }
+
+  void _openConnections() {
+    _countersOpen = _demand.wanted;
+    _feed(
+      'connections',
+      _core.api.watchConnections(maxBatchMs: 250, counters: _countersOpen),
+      _onConnections,
+    );
+    if (_away) {
+      _feeds['connections']?.pause();
+    }
+  }
+
+  void _syncConnectionCounters() {
+    if (_feeds.containsKey('connections') && _demand.wanted != _countersOpen) {
+      _openConnections();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final away =
+        _pausesInBackground &&
+        (state == AppLifecycleState.paused ||
+            state == AppLifecycleState.hidden);
+    if (away == _away) {
+      return;
+    }
+    _away = away;
+    if (away) {
+      _feeds['connections']?.pause();
+    } else {
+      _feeds['connections']?.resume();
+    }
+  }
+
+  void _closeFeeds() {
+    for (final feed in _feeds.values) {
+      unawaited(feed.cancel());
+    }
+    _feeds.clear();
+  }
+
+  void _syncLogFeed() {
     if (ref.read(coreStatusProvider) != CoreStatus.connected) {
       return;
     }
@@ -246,8 +330,26 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     }
   }
 
-  @override
-  void onDialerLoop(String proxyName) {
+  void _onEngineStatus(EngineStatus status) {
+    ref.read(serviceFaultsProvider.notifier).value = status.faults;
+    final tunFault = status.faults
+        .where((fault) => fault.service == FaultService.tun)
+        .firstOrNull;
+    final tunDisabled = ref.read(tunDisabledThisRunProvider.notifier);
+    if (tunFault == null ||
+        system.isAndroid ||
+        tunDisabled.value ||
+        !ref.read(patchClashConfigProvider).tun.enable) {
+      return;
+    }
+    tunDisabled.value = true;
+    dialogs.showBanner(
+      '${currentAppLocalizations.tunStartFailed}\n${tunFault.reasonLabel}',
+      level: BannerLevel.error,
+    );
+  }
+
+  void _onDialerLoop(String proxyName) {
     throttler.call(
       FunctionTag.dialerLoopNotifier,
       () => dialogs.showBanner(
