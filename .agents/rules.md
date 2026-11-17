@@ -746,7 +746,7 @@ versions still resolves to it.
 
 Labels for enum values go through the exhaustive switches in `lib/common/l10n_labels.dart`, never
 `Intl.message(<runtime string>)`. A key built from an enum name or a stored string is invisible to the analyzer, and
-`Intl.message` has no messages to look up since generation moved to `gen-l10n`, so it returns the key itself and ships
+`Intl.message` has no messages to look up under `gen-l10n`, so it returns the key itself and ships
 `routeMode_config` in the UI rather than throwing.
 `test/lint/dynamic_message_key_test.dart` fails on any `Intl.message(` in `lib` outside the generated code, and checks
 that every locale carries the same keys and has a display name.

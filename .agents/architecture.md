@@ -156,7 +156,7 @@ an editable row, which refuses an empty value.
 The loopback listener takes local connections without authentication by default: mandatory credentials would lock out
 every external local consumer a proxy client exists for. The binding only guarantees traffic originates on the device;
 it does not isolate programs already running there, so on Android any app holding `INTERNET` can use the proxy and learn
-the outbound IP (#1934). The opt-in answer is the local authentication setting (`NetworkProps.authentication`), which spans
+the outbound IP. The opt-in answer is the local authentication setting (`NetworkProps.authentication`), which spans
 four paths that must stay in sync: `_makeRealProfileTask` writes the credentials into `authentication` and force-clears
 `skip-auth-prefixes` so a profile cannot silently exempt loopback; `UpdateParams.authentication` applies the same list
 to a running core; `FlClashHttpOverrides` sends the credentials with the app's own proxied requests; and `sharedState`
@@ -320,7 +320,7 @@ Android deliberately keeps Flutter requests optimistic and the native layer auth
 - The Core listens exactly while `runtime` is set: a successful start ends in `Core.startListener()` and every path
   that clears `runtime` calls `Core.stopListener()`. Both return at once when the Core is already there, which is the
   usual case, since `startTun`/`stopTun` and Flutter's own `startListener`/`stopListener` got there first. They matter
-  when nothing else does: a proxy-only run stopped from the tile used to keep the mixed port open with nothing
+  when nothing else does: without them a proxy-only run stopped from the tile keeps the mixed port open with nothing
   reported as running. A start closes after itself the same way: Flutter's `startListener` and the native `quickSetup`
   both open the ports before any service exists, so a start that ends without a `runtime`, refused or cancelled, stops
   the empty service once more, without passing through `STOPPING`. Flutter may be gone by then and never see the
@@ -777,9 +777,9 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   5.7 pixels from a copy shrunk to what the layer covers, so a band clears all of its rect before its slots draw: when
   it covered only its content, a slot growing or shrinking by a pixel as its pane moved, or one cut off by the screen's
   edge, shrank that copy by other than half, and at density 3 the docked search's standard frost jumped by 1.5/255 every
-  1.3 dp it moved. Each picture also lands on a whole pixel of the capture, as text rounds each line to one: a list
-  under the glass moving by part of a pixel jumped its lines one at a time while their rows glided, and the frost
-  shimmered every frame (up to 3.6/255 at density 2), where now it steps once a pixel of the capture, by under 0.7.
+  1.3 dp it moved. Each picture also lands on a whole pixel of the capture, as text rounds each line to one: otherwise a
+  list under the glass moving by part of a pixel jumps its lines one at a time while their rows glide, and the frost
+  shimmers every frame (up to 3.6/255 at density 2); rounded, it steps once a pixel of the capture, by under 0.7.
 - Measured on an Android emulator rendering in software (SwiftShader, 1080×2400 at density 420), as raster-thread time a
   frame counting the captures that FrameTiming's raster span leaves out, median of three runs, each capture against
   none in a run of its own: scrolling Tools takes 43 ms with none, 6 more with a sigma over one pixel of the capture and
@@ -1177,7 +1177,7 @@ by the simulator's touch injection, logging the presented view's presentation la
 - Where the keyboard starts or stops carrying the sheet, that function rounds its corner (`_rounded`), so the sheet's
   speed changes smoothly. With a sharp corner a sheet stood still while the keyboard slid over the blank below short
   content and then jumped, and on the way down halted in mid-flight; the tallest detent hit the peek at the keyboard's
-  full speed. Short content now eases into the rise over half its blank, which can leave the sheet up to an eighth of
+  full speed. Short content instead eases into the rise over half its blank, which can leave the sheet up to an eighth of
   the blank higher than its content needs, and the tallest detent slows into the peek over as much keyboard again as
   it takes to get there, up to `_peakEase`.
 - Below its tallest detent a sheet floats as a card, as iOS 27's medium sheet does: it shrinks about its top to leave
@@ -2130,7 +2130,7 @@ shows its unavailable state when `RustLib` is not initialized rather than loadin
 returns the JSON the script produced. Nothing about the script runs in Dart.
 
 - QuickJS is compiled from source for the target being built, which is what removed the prebuilt `quickjs-c-bridge`
-  binaries: `flutter_js` shipped x64 Windows and desktop-only libraries, so Windows ARM64 could not start (#2361).
+  binaries: `flutter_js` shipped x64 Windows and desktop-only libraries, so Windows ARM64 could not start.
 - `rquickjs` carries pre-generated bindings for every target this project builds except the Android ones, so Android
   builds enable its `bindgen` feature. That needs the NDK's own libclang and sysroot: `native_toolchain_rust` exports
   the sysroot through `BINDGEN_EXTRA_CLANG_ARGS_<target>`, and `hook/build.dart` adds `LIBCLANG_PATH` from the NDK

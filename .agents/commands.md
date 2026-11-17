@@ -189,9 +189,9 @@ dart run tool/test.dart -- --reporter expanded --coverage
 ```
 
 Plain `flutter test` compiles each file into its own program and starts an engine for it, one file after another, and
-that dominates a full run: 329 files took 128 s on a 12-core Mac with at most four running at once. `tool/test.dart`
-imports the files into 32 generated entrypoints under `.dart_tool/test_bundles/` and runs those with one worker per
-core: about 60 s for the same run, and 67 s instead of 180–213 s with `--coverage`. Files in one entrypoint share an
+that dominates a full run. `tool/test.dart` imports the files into 32 generated entrypoints under
+`.dart_tool/test_bundles/` and runs those with one worker per core, about half the time of a plain run, and less than
+a third with `--coverage`. Files in one entrypoint share an
 isolate, so a test can see state a file before it left behind; the script runs every file that failed there again on
 its own, lets that run decide, and names the files that only failed together. See the Shared Test Isolate section of
 `rules.md` before fixing one.
@@ -300,7 +300,7 @@ rebuilds prerelease N after a fix; the `version` job rejects any other `v*` tag.
 `pubspec.yaml` for the build and upload jobs, with a build number of the tag run's UTC `YYYYMMDDHH`, raised above the
 committed one when that is not already larger, because Android refuses an update with a lower versionCode. The app's
 version name stays `X.Y.Z` for a prerelease too: `compareVersions` reads only numbers. The build number in
-`pubspec.yaml` therefore no longer moves with releases; a local build that must install over a CI one passes its own
+`pubspec.yaml` stays fixed; a local build that must install over a CI one passes its own
 `--build-number`.
 
 Push the tag by name. Every release tag here is lightweight, and `--follow-tags` carries annotated tags only: it skips a
@@ -330,8 +330,7 @@ in `CHANGELOG.md`, and are never regenerated.
 
 `verify` compares a version only when its tag is reachable from `HEAD`, because that is the same scope the builder walks
 (`git tag --merged`). A branch cut before the newest release cannot derive that version at all, so `verify` names it as
-skipped and moves on instead of reporting drift that does not exist. Checking mere tag existence is what made every such
-branch fail on an unrelated release.
+skipped and moves on instead of reporting drift that does not exist.
 
 Prerelease tags (`v0.8.96-pre.N[+M]`) skip the release commit, and CI renders their notes with `build --unreleased` for
 the Telegram post. They publish no GitHub release, so the update dialog never sees them. `build --unreleased` reads the
@@ -405,15 +404,14 @@ only once every build and every check job passes.
 `bash tool/check_plugins.sh` is that plugin gate, and CI runs the same script.
 It discovers every `plugins/*/pubspec.yaml`, analyzes each package, and runs
 `flutter test` wherever `test/*_test.dart` exists. Adding a plugin package needs
-no workflow edit; enumerating packages by hand in the workflow is what
-previously left `plugins/tray` unanalyzed and untested.
+no workflow edit.
 
 ### CI Caches
 
 A run restores only cache entries saved on its own branch or tag, or on the default branch (`main`), and the
 repository holds 10 GB before evicting the least recently used entries. Every release is a new tag that no later run
-reads from, so `BRANCH_CACHE` turns caching off in tag runs: one release used to write about 9 GB of such entries and
-evict everything `dev` had saved. Release builds therefore start cold; branch runs, chiefly `dev`, keep the caches.
+reads from, so `BRANCH_CACHE` turns caching off in tag runs, whose entries would evict what `dev` saved. Release
+builds therefore start cold; branch runs, chiefly `dev`, keep the caches.
 
 - setup-go keys its entry on the `cache-dependency-path` files alone and saves only on a miss, so jobs listing the
   same files share one entry holding the build cache of whichever finished first. `desktop` and `android` each add
