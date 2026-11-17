@@ -32,6 +32,13 @@ class FixedList<T> {
     return FixedList._(maxLength, _list, _revision + 1);
   }
 
+  FixedList<T> appendAll(Iterable<T> items) {
+    items.forEach(_list.add);
+    _list.truncate(maxLength);
+    _snapshot = null;
+    return FixedList._(maxLength, _list, _revision + 1);
+  }
+
   FixedList<T> replace(Map<int, T> items) {
     items.forEach((index, item) => _list[index] = item);
     _snapshot = null;
