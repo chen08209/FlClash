@@ -699,6 +699,21 @@ void main() {
       expect(find.text(currentAppLocalizations.outboundExit), findsNothing);
     });
 
+    testWidgets('the exits line up with the rows above them', (tester) async {
+      await pumpExits(
+        tester,
+        profile: Profile.normal(),
+        global: [exitRule(1, 'Media')],
+      );
+
+      final global = tester.getRect(
+        exitRow(currentAppLocalizations.controlGlobalAddedRules),
+      );
+      final exit = tester.getRect(exitRow('Media'));
+      expect(exit.left, global.left);
+      expect(exit.right, global.right);
+    });
+
     testWidgets('the global added rules row sits under the header as a first '
         'row does, and a section gap apart from the profile own rules', (
       tester,
