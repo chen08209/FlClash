@@ -197,10 +197,20 @@ class _BytesImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = IconTheme.of(context).size ?? 24;
     return isSvg
-        ? SvgPicture.memory(bytes, errorBuilder: (_, _, _) => _buildFallback())
+        ? SvgPicture.memory(
+            bytes,
+            width: size,
+            height: size,
+            fit: BoxFit.scaleDown,
+            errorBuilder: (_, _, _) => _buildFallback(),
+          )
         : Image(
             image: _iconImage(bytes),
+            width: size,
+            height: size,
+            fit: BoxFit.scaleDown,
             gaplessPlayback: true,
             errorBuilder: (_, _, _) => _buildFallback(),
           );

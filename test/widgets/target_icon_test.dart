@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -169,6 +170,51 @@ void main() {
       expect(imageCache.currentSize, 1);
     });
 
+    for (final (kind, src, bytes) in [
+      ('a raster icon', 'https://example.com/small.png', _onePixelPng),
+      ('an svg icon', 'https://example.com/star.svg', _svg),
+      ('an unreadable icon', 'https://example.com/broken.png', _broken),
+    ]) {
+      testWidgets('$kind keeps the icon size from loading to loaded', (
+        tester,
+      ) async {
+        final load = StreamController<Uint8List>();
+        readRemoteIcon = (_) => load.stream;
+        await _pump(
+          tester,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CommonTargetIcon(src: src, fallback: const GroupMonogram('p')),
+              const Text('name'),
+            ],
+          ),
+        );
+        final name = tester.getTopLeft(find.text('name'));
+        void expectSteady(String phase) {
+          expect(
+            tester.getSize(find.byType(CommonTargetIcon)),
+            const Size.square(32),
+            reason: phase,
+          );
+          expect(tester.getTopLeft(find.text('name')), name, reason: phase);
+        }
+
+        expectSteady('loading');
+        load.add(Uint8List.fromList(bytes));
+        await tester.pump();
+        expectSteady('read, not decoded');
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+        await tester.pump();
+        expectSteady('decoded');
+        await load.close();
+        await tester.pump();
+        expectSteady('loaded');
+      });
+    }
+
     testWidgets('shows the fallback once a load ends without an image', (
       tester,
     ) async {
@@ -200,6 +246,13 @@ Future<Uint8List> _squarePng(int size) async {
   final data = await image.toByteData(format: ui.ImageByteFormat.png);
   return data!.buffer.asUint8List();
 }
+
+final _svg = utf8.encode(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+  '<rect width="24" height="24"/></svg>',
+);
+
+final _broken = Uint8List.fromList([1, 2, 3]);
 
 final _onePixelPng = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
