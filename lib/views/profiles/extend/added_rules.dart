@@ -515,13 +515,6 @@ class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
     return Scaffold(
       title: appLocalizations.editGlobalRules,
       searchState: AppBarSearchState(onSearch: _handleSearch),
-      iconActions: [
-        IconButtonData(
-          glyph: AppGlyphs.edit,
-          tooltip: appLocalizations.goToConfigureAddedRules,
-          onPressed: _handleToAddedRules,
-        ),
-      ],
       body: NullStatusSwitcher(
         isLoading: rulesState.isLoading || disabledRuleIdsState.isLoading,
         isEmpty: rules.isEmpty,
@@ -540,10 +533,25 @@ class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
           child: Builder(
             builder: (context) => CustomScrollView(
               slivers: [
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.contentTopPadding),
+                ),
+                if (_query.isEmpty) ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverToBoxAdapter(
+                      child: generateGroup([
+                        ListItem.open(
+                          title: Text(appLocalizations.goToConfigureAddedRules),
+                          widget: const AddedRulesView(),
+                        ),
+                      ]),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: ListSectionGap()),
+                ],
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                  ).copyWith(top: context.contentTopPadding),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverFixedExtentList.builder(
                     itemExtent: ruleItemHeight,
                     itemBuilder: (context, index) {

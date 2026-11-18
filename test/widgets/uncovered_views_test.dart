@@ -923,7 +923,7 @@ void main() {
     expect(tester.takeException(), null);
   });
   testWidgets('the global added rules row counts the ones this profile keeps '
-      'and the page opens their editor from its bar', (tester) async {
+      'and the page opens their editor from a row', (tester) async {
     final profile = Profile.normal();
     const rules = [
       Rule(id: 1, ruleAction: RuleAction.DOMAIN, content: 'a.com'),
@@ -967,8 +967,8 @@ void main() {
     await tester.tap(find.text(l10n.controlGlobalAddedRules));
     await tester.pumpAndSettle();
     expect(find.text(l10n.editGlobalRules), findsOneWidget);
-    expect(find.text(l10n.goToConfigureAddedRules), findsNothing);
-    await tester.tap(find.byTooltip(l10n.goToConfigureAddedRules));
+    expect(find.byTooltip(l10n.goToConfigureAddedRules), findsNothing);
+    await tester.tap(find.text(l10n.goToConfigureAddedRules));
     await tester.pumpAndSettle();
 
     expect(find.byType(AddedRulesView), findsOneWidget);
