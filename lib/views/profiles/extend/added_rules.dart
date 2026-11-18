@@ -181,12 +181,12 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
                 .read(profileRulesProvider(_profileId).notifier)
                 .order,
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: generateSection(
-                items: [_GlobalAddedRulesItem(_profileId)],
-              ),
+          if (addedRules.isNotEmpty)
+            const SliverToBoxAdapter(child: ListSectionGap()),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverToBoxAdapter(
+              child: generateGroup([_GlobalAddedRulesItem(_profileId)]),
             ),
           ),
           SliverPadding(

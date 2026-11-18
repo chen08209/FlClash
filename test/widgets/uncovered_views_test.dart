@@ -699,6 +699,31 @@ void main() {
       expect(find.text(currentAppLocalizations.outboundExit), findsNothing);
     });
 
+    testWidgets('the global added rules row sits under the header as a first '
+        'row does, and a section gap apart from the profile own rules', (
+      tester,
+    ) async {
+      final global = currentAppLocalizations.controlGlobalAddedRules;
+      await pumpExits(tester, profile: Profile.normal());
+
+      expect(
+        tester.getRect(exitRow(global)).top,
+        tester.getRect(find.byType(ListHeader)).bottom,
+      );
+
+      await pumpExits(
+        tester,
+        profile: Profile.normal(),
+        own: [Rule.parse('DOMAIN,plain.example,DIRECT', id: 1)],
+      );
+
+      expect(
+        tester.getRect(exitRow(global)).top,
+        tester.getRect(find.byType(RuleItem)).bottom +
+            tester.getSize(find.byType(ListSectionGap)).height,
+      );
+    });
+
     testWidgets('a group of its name is where a default exit goes, while a '
         'picked target holds until it is put back on default', (tester) async {
       final l10n = currentAppLocalizations;
