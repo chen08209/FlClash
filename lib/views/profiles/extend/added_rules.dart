@@ -189,8 +189,10 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
               ),
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          SliverToBoxAdapter(child: ExitsSection(_profileId)),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverToBoxAdapter(child: ExitsSection(_profileId)),
+          ),
         ],
       ),
     );
