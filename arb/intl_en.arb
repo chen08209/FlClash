@@ -402,6 +402,7 @@
   "ruleTarget": "Rule target",
   "exitDefault": "Default",
   "customExit": "Custom exit",
+  "inputExitName": "Enter the exit name",
   "scriptFailed": "The script failed",
   "sourceIp": "Source IP",
   "noResolve": "Don't resolve IP",

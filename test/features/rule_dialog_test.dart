@@ -191,6 +191,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(InputDialog), findsNothing);
     expect(find.byType(TextFormField), findsNWidgets(2));
+    expect(find.text(l10n.inputExitName), findsOneWidget);
 
     await tester.tap(find.widgetWithText(TextButton, l10n.save));
     await tester.pumpAndSettle();

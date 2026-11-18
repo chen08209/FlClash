@@ -2526,6 +2526,12 @@ abstract class AppLocalizations {
   /// **'Custom exit'**
   String get customExit;
 
+  /// No description provided for @inputExitName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the exit name'**
+  String get inputExitName;
+
   /// No description provided for @scriptFailed.
   ///
   /// In en, this message translates to:

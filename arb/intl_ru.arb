@@ -402,6 +402,7 @@
   "ruleTarget": "Цель правила",
   "exitDefault": "По умолчанию",
   "customExit": "Свой выход",
+  "inputExitName": "Введите название выхода",
   "scriptFailed": "Не удалось выполнить скрипт",
   "sourceIp": "IP источника",
   "noResolve": "Не разрешать IP",

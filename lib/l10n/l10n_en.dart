@@ -1283,6 +1283,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customExit => 'Custom exit';
 
   @override
+  String get inputExitName => 'Enter the exit name';
+
+  @override
   String get scriptFailed => 'The script failed';
 
   @override

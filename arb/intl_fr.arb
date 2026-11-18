@@ -402,6 +402,7 @@
   "ruleTarget": "Cible de la règle",
   "exitDefault": "Par défaut",
   "customExit": "Sortie personnalisée",
+  "inputExitName": "Saisissez le nom de la sortie",
   "scriptFailed": "Le script a échoué",
   "sourceIp": "IP source",
   "noResolve": "Ne pas résoudre l’IP",

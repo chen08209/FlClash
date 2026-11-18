@@ -1255,6 +1255,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customExit => 'カスタム出口';
 
   @override
+  String get inputExitName => '出口名を入力してください';
+
+  @override
   String get scriptFailed => 'スクリプトの実行に失敗しました';
 
   @override

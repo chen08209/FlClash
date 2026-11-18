@@ -1298,6 +1298,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get customExit => 'Salida personalizada';
 
   @override
+  String get inputExitName => 'Introduce el nombre de la salida';
+
+  @override
   String get scriptFailed => 'El script falló';
 
   @override

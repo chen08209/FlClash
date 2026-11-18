@@ -454,7 +454,7 @@ class _RuleFormState extends State<RuleForm> {
                 invalid: issue?.field == _RuleField.exit,
                 trailing: FormRowTextField(
                   controller: _exitController,
-                  hintText: appLocalizations.customExit,
+                  hintText: appLocalizations.inputExitName,
                   autofocus: true,
                   autocorrect: false,
                   inputFormatters: [

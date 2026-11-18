@@ -402,6 +402,7 @@
   "ruleTarget": "规则目标",
   "exitDefault": "默认",
   "customExit": "自定义出口",
+  "inputExitName": "输入出口名称",
   "scriptFailed": "脚本运行失败",
   "sourceIp": "源IP",
   "noResolve": "不解析IP",

@@ -1281,6 +1281,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get customExit => 'Свой выход';
 
   @override
+  String get inputExitName => 'Введите название выхода';
+
+  @override
   String get scriptFailed => 'Не удалось выполнить скрипт';
 
   @override

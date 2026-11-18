@@ -1245,6 +1245,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customExit => '自定义出口';
 
   @override
+  String get inputExitName => '输入出口名称';
+
+  @override
   String get scriptFailed => '脚本运行失败';
 
   @override

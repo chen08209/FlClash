@@ -402,6 +402,7 @@
   "ruleTarget": "ルールターゲット",
   "exitDefault": "デフォルト",
   "customExit": "カスタム出口",
+  "inputExitName": "出口名を入力してください",
   "scriptFailed": "スクリプトの実行に失敗しました",
   "sourceIp": "送信元IP",
   "noResolve": "IPを解決しない",

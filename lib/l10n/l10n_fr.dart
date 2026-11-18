@@ -1298,6 +1298,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get customExit => 'Sortie personnalisée';
 
   @override
+  String get inputExitName => 'Saisissez le nom de la sortie';
+
+  @override
   String get scriptFailed => 'Le script a échoué';
 
   @override
