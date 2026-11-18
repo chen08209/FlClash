@@ -378,53 +378,65 @@ class PackageIcon extends StatefulWidget {
   State<PackageIcon> createState() => _PackageIconState();
 }
 
-class _PackageIconState extends State<PackageIcon> {
-  ImageProvider? _icon;
-  int _generation = 0;
+class _PackageIconState extends State<PackageIcon>
+    with _PackageIconLoader<PackageIcon> {
+  @override
+  String packageNameOf(PackageIcon widget) => widget.packageName;
 
   @override
-  void initState() {
-    super.initState();
-    _showCachedIcon();
-    _loadIcon();
-  }
-
-  @override
-  void didUpdateWidget(covariant PackageIcon oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.packageName != widget.packageName) {
-      _showCachedIcon();
-      _loadIcon();
-    }
-  }
-
-  void _showCachedIcon() {
-    _generation++;
-    _icon = app?.getCachedPackageIcon(widget.packageName);
-  }
-
-  void _loadIcon() {
-    final generation = _generation;
-    app?.getPackageIcon(widget.packageName).then((icon) {
-      if (!mounted ||
-          generation != _generation ||
-          icon == null ||
-          icon == _icon) {
-        return;
-      }
-      setState(() {
-        _icon = icon;
-      });
-    });
-  }
+  (ImageProvider?, Future<ImageProvider?>?) lookUp(String packageName) => (
+    app?.getCachedPackageIcon(packageName),
+    app?.getPackageIcon(packageName),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final icon = _icon;
+    final icon = this.icon;
     if (icon == null) {
       return SizedBox(width: widget.size, height: widget.size);
     }
     return packageIconImage(icon, widget.size);
+  }
+}
+
+/// Shows a package's cached icon at once and the one [lookUp] loads once it
+/// lands, unless the widget has moved to another package by then.
+mixin _PackageIconLoader<T extends StatefulWidget> on State<T> {
+  ImageProvider? icon;
+  var _generation = 0;
+
+  String packageNameOf(T widget);
+
+  (ImageProvider?, Future<ImageProvider?>?) lookUp(String packageName);
+
+  @override
+  void initState() {
+    super.initState();
+    _resolve();
+  }
+
+  @override
+  void didUpdateWidget(covariant T oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (packageNameOf(oldWidget) != packageNameOf(widget)) {
+      _resolve();
+    }
+  }
+
+  void _resolve() {
+    final generation = ++_generation;
+    final (cached, load) = lookUp(packageNameOf(widget));
+    icon = cached;
+    load?.then((loaded) {
+      if (mounted &&
+          generation == _generation &&
+          loaded != null &&
+          loaded != icon) {
+        setState(() {
+          icon = loaded;
+        });
+      }
+    });
   }
 }
 
@@ -450,43 +462,24 @@ class OwnPackageIcon extends ConsumerStatefulWidget {
   ConsumerState<OwnPackageIcon> createState() => _OwnPackageIconState();
 }
 
-class _OwnPackageIconState extends ConsumerState<OwnPackageIcon> {
-  ImageProvider? _icon;
-  int _generation = 0;
+class _OwnPackageIconState extends ConsumerState<OwnPackageIcon>
+    with _PackageIconLoader<OwnPackageIcon> {
+  @override
+  String packageNameOf(OwnPackageIcon widget) => widget.packageName;
 
   @override
-  void initState() {
-    super.initState();
-    _resolve();
-  }
-
-  @override
-  void didUpdateWidget(covariant OwnPackageIcon oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.packageName != widget.packageName) {
-      _resolve();
-    }
-  }
-
-  void _resolve() {
-    final generation = ++_generation;
+  (ImageProvider?, Future<ImageProvider?>?) lookUp(String packageName) {
     final source = ref.read(packageIconSourceProvider);
-    _icon = source?.getCachedOwnPackageIcon(widget.packageName);
-    if (source == null || _icon != null) {
-      return;
-    }
-    source.getOwnPackageIcon(widget.packageName).then((icon) {
-      if (mounted && generation == _generation && icon != null) {
-        setState(() {
-          _icon = icon;
-        });
-      }
-    });
+    final cached = source?.getCachedOwnPackageIcon(packageName);
+    return (
+      cached?.icon,
+      cached == null ? source?.getOwnPackageIcon(packageName) : null,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final icon = _icon;
+    final icon = this.icon;
     return widget.builder(
       context,
       icon == null ? null : packageIconImage(icon, widget.size),

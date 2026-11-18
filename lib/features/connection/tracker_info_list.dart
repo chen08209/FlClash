@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/common/common.dart';
@@ -220,7 +222,7 @@ class TrackerInfoGroupedList extends ConsumerStatefulWidget {
 class _TrackerInfoGroupedListState
     extends ConsumerState<TrackerInfoGroupedList> {
   Map<String, TrackerInfo>? _byId;
-  final _iconRequests = <String>{};
+  final _leadings = <String, Widget>{};
 
   @override
   void didUpdateWidget(TrackerInfoGroupedList oldWidget) {
@@ -231,18 +233,16 @@ class _TrackerInfoGroupedListState
   }
 
   Widget? _leadingOf(App icons, String packageName) {
-    final icon = icons.getCachedOwnPackageIcon(packageName);
-    if (icon != null) {
-      return packageIconImage(icon, 24);
+    final cached = icons.getCachedOwnPackageIcon(packageName);
+    if (cached == null) {
+      unawaited(icons.getOwnPackageIcon(packageName));
+      return null;
     }
-    if (packageName.isNotEmpty && _iconRequests.add(packageName)) {
-      icons.getOwnPackageIcon(packageName).then((icon) {
-        if (icon != null && mounted) {
-          setState(() {});
-        }
-      });
+    final icon = cached.icon;
+    if (icon == null) {
+      return null;
     }
-    return null;
+    return _leadings[packageName] ??= packageIconImage(icon, 24);
   }
 
   TrackerInfo _latest(TrackerInfo trackerInfo) =>
@@ -265,7 +265,7 @@ class _TrackerInfoGroupedListState
         ? ref.watch(packageIconSourceProvider)
         : null;
     final showsTraffic = isLive || table != null;
-    return RecordGroupedList<TrackerInfo>(
+    Widget list() => RecordGroupedList<TrackerInfo>(
       groups: widget.groups,
       grouping: grouping,
       controller: widget.controller,
@@ -304,6 +304,13 @@ class _TrackerInfoGroupedListState
           },
         );
       },
+    );
+    if (icons == null) {
+      return list();
+    }
+    return ListenableBuilder(
+      listenable: icons.ownPackageIconsLoaded,
+      builder: (_, _) => list(),
     );
   }
 
