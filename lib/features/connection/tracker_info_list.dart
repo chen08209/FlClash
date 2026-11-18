@@ -1,7 +1,8 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
@@ -219,6 +220,7 @@ class TrackerInfoGroupedList extends ConsumerStatefulWidget {
 class _TrackerInfoGroupedListState
     extends ConsumerState<TrackerInfoGroupedList> {
   Map<String, TrackerInfo>? _byId;
+  final _iconRequests = <String>{};
 
   @override
   void didUpdateWidget(TrackerInfoGroupedList oldWidget) {
@@ -226,6 +228,21 @@ class _TrackerInfoGroupedListState
     if (!identical(oldWidget.groups, widget.groups)) {
       _byId = null;
     }
+  }
+
+  Widget? _leadingOf(App icons, String packageName) {
+    final icon = icons.getCachedOwnPackageIcon(packageName);
+    if (icon != null) {
+      return packageIconImage(icon, 24);
+    }
+    if (packageName.isNotEmpty && _iconRequests.add(packageName)) {
+      icons.getOwnPackageIcon(packageName).then((icon) {
+        if (icon != null && mounted) {
+          setState(() {});
+        }
+      });
+    }
+    return null;
   }
 
   TrackerInfo _latest(TrackerInfo trackerInfo) =>
@@ -244,15 +261,9 @@ class _TrackerInfoGroupedListState
       :table,
       :onClose,
     ) = widget;
-    final showIcon =
-        grouping == RecordGrouping.app &&
-        ref.watch(
-          patchClashConfigProvider.select(
-            (state) =>
-                state.findProcessMode == FindProcessMode.always &&
-                system.isAndroid,
-          ),
-        );
+    final icons = grouping == RecordGrouping.app
+        ? ref.watch(packageIconSourceProvider)
+        : null;
     final showsTraffic = isLive || table != null;
     return RecordGroupedList<TrackerInfo>(
       groups: widget.groups,
@@ -260,9 +271,7 @@ class _TrackerInfoGroupedListState
       controller: widget.controller,
       padding: widget.padding,
       estimatedItemExtent: table?.rowHeight ?? recordListEstimatedExtent,
-      leadingOf: (group) => showIcon && group.key.isNotEmpty
-          ? PackageIcon(packageName: group.key, size: 24)
-          : null,
+      leadingOf: icons == null ? null : (group) => _leadingOf(icons, group.key),
       trailingOf: isLive ? (group) => _buildSpeed(context, group.items) : null,
       itemBuilder: (_, trackerInfo, index) {
         final striped = index.isOdd;

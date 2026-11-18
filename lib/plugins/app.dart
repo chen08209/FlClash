@@ -136,6 +136,26 @@ class App {
     return _packageIconTasks[packageName] ??= _loadPackageIcon(packageName);
   }
 
+  // getPackageIconPath answers a package without an icon as it answers ''.
+  ImageProvider? getCachedOwnPackageIcon(String packageName) {
+    final icon = _packageIcons[packageName];
+    if (icon == null || !_packageIcons.containsKey('')) {
+      return null;
+    }
+    return icon == _packageIcons[''] ? null : icon;
+  }
+
+  Future<ImageProvider?> getOwnPackageIcon(String packageName) async {
+    if (packageName.isEmpty) {
+      return null;
+    }
+    final (icon, fallback) = await (
+      getPackageIcon(packageName),
+      getPackageIcon(''),
+    ).wait;
+    return icon == fallback ? null : icon;
+  }
+
   Future<ImageProvider?> _loadPackageIcon(String packageName) async {
     var icon = await _requestPackageIcon(packageName);
     if (icon == null && packageName.isNotEmpty) {

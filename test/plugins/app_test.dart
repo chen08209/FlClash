@@ -74,6 +74,28 @@ void main() {
     },
   );
 
+  test('a package Android answers with the default icon has none of its '
+      'own', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          final packageName = call.arguments['packageName'] as String;
+          return packageName == 'com.own'
+              ? '/icons/com.own.webp'
+              : '/icons/default_icon.webp';
+        });
+
+    final app = App();
+
+    expect(app.getCachedOwnPackageIcon('com.own'), isNull);
+    final own = await app.getOwnPackageIcon('com.own');
+    expect(own, isNotNull);
+    expect(own, isNot(await app.getPackageIcon('')));
+    expect(app.getCachedOwnPackageIcon('com.own'), same(own));
+    expect(await app.getOwnPackageIcon('com.gone'), isNull);
+    expect(app.getCachedOwnPackageIcon('com.gone'), isNull);
+    expect(await app.getOwnPackageIcon(''), isNull);
+  });
+
   test(
     'asks Android for a bounded number of package icons at a time',
     () async {

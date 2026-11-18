@@ -49,6 +49,52 @@ final class SafeModeProvider extends $FunctionalProvider<bool, bool, bool>
 
 String _$safeModeHash() => r'3ef07344f5a8dbf775ccf0a4861c0317ec8b2266';
 
+/// Only Android draws the icon of the app behind a connection.
+
+@ProviderFor(packageIconSource)
+final packageIconSourceProvider = PackageIconSourceProvider._();
+
+/// Only Android draws the icon of the app behind a connection.
+
+final class PackageIconSourceProvider
+    extends $FunctionalProvider<App?, App?, App?>
+    with $Provider<App?> {
+  /// Only Android draws the icon of the app behind a connection.
+  PackageIconSourceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'packageIconSourceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$packageIconSourceHash();
+
+  @$internal
+  @override
+  $ProviderElement<App?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  App? create(Ref ref) {
+    return packageIconSource(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(App? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<App?>(value),
+    );
+  }
+}
+
+String _$packageIconSourceHash() => r'b9b233f207f9dce3809537c3458e7a70192dd52d';
+
 /// Android: su is there and granted FlClash's last request.
 
 @ProviderFor(rootAccess)

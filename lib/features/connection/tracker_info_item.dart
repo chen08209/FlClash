@@ -74,7 +74,7 @@ List<PopupMenuItem> trackerInfoMenuItems(
   ];
 }
 
-class TrackerInfoItem extends ConsumerWidget {
+class TrackerInfoItem extends StatelessWidget {
   final TrackerInfo trackerInfo;
   final bool isLive;
   final ValueChanged<TrackerInfo>? onClose;
@@ -93,13 +93,7 @@ class TrackerInfoItem extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, ref) {
-    final showIcon = ref.watch(
-      patchClashConfigProvider.select(
-        (state) =>
-            state.findProcessMode == FindProcessMode.always && system.isAndroid,
-      ),
-    );
+  Widget build(BuildContext context) {
     return ContextMenuRegion(
       menuItems: trackerInfoMenuItems(context, trackerInfo, onClose: onClose),
       child: RecordListItem(
@@ -109,7 +103,7 @@ class TrackerInfoItem extends ConsumerWidget {
           detailTitle,
         ),
         header: _buildHeader(context),
-        body: _TrackerInfoBody(trackerInfo: trackerInfo, showIcon: showIcon),
+        body: _TrackerInfoBody(trackerInfo: trackerInfo),
       ),
     );
   }
@@ -162,9 +156,8 @@ class TrackerInfoItem extends ConsumerWidget {
 
 class _TrackerInfoBody extends StatelessWidget {
   final TrackerInfo trackerInfo;
-  final bool showIcon;
 
-  const _TrackerInfoBody({required this.trackerInfo, required this.showIcon});
+  const _TrackerInfoBody({required this.trackerInfo});
 
   Widget _buildTitle(BuildContext context, RecordTextStyles styles) {
     final metadata = trackerInfo.metadata;
@@ -184,21 +177,27 @@ class _TrackerInfoBody extends StatelessWidget {
       ),
     );
     final process = metadata.process;
-    if (!showIcon || process.isEmpty) {
+    if (process.isEmpty) {
       return title;
     }
-    return Row(
-      spacing: 8,
-      children: [
-        GestureDetector(
-          onTap: () => RecordFilterScope.add(
-            context,
-            RecordFilter(RecordFacetKind.app, process),
-          ),
-          child: PackageIcon(packageName: process, size: 24),
-        ),
-        Flexible(child: title),
-      ],
+    return OwnPackageIcon(
+      packageName: process,
+      size: 24,
+      builder: (context, icon) => icon == null
+          ? title
+          : Row(
+              spacing: 8,
+              children: [
+                GestureDetector(
+                  onTap: () => RecordFilterScope.add(
+                    context,
+                    RecordFilter(RecordFacetKind.app, process),
+                  ),
+                  child: icon,
+                ),
+                Flexible(child: title),
+              ],
+            ),
     );
   }
 
