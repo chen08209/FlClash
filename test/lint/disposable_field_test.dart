@@ -22,10 +22,12 @@ const _allowed = {
   // `CoreEventManager` is a private-constructor singleton that fans core events
   // out for the whole run; closing its controller would end event delivery.
   'lib/core/event.dart#_controller',
-  // `App` is the process-wide Android plugin; the notifier relays keyboard
-  // state from the platform channel for the whole run.
+  // `App` is the process-wide Android plugin; the notifiers relay keyboard
+  // state from the platform channel and the icons its cache loads for the
+  // whole run.
   'lib/plugins/app.dart#floatingKeyboard',
   'lib/plugins/app.dart#_networkChanges',
+  'lib/plugins/app.dart#ownPackageIconsLoaded',
 };
 
 final _declaration = RegExp(
