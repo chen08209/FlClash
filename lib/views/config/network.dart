@@ -545,13 +545,13 @@ class VpnSections extends ConsumerWidget {
             const AllowBypassItem(),
             const Ipv6Item(),
             const DNSHijackingItem(),
-            const RootTunItem(),
+            if (rootTunOffered) const RootTunItem(),
           ],
           footer: [
             if (authenticationEnable)
               appLocalizations.authenticationSystemProxyDesc,
             appLocalizations.bypassDomainDesc,
-            appLocalizations.rootTunDesc,
+            if (rootTunOffered) appLocalizations.rootTunDesc,
           ].join('\n'),
         ),
       ],

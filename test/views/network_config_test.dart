@@ -332,6 +332,7 @@ void main() {
       WidgetTester tester, {
       required bool su,
       required bool rootTun,
+      Widget item = const VpnSections(),
     }) async {
       container.dispose();
       container = ProviderContainer(
@@ -345,7 +346,7 @@ void main() {
       container
           .read(vpnSettingProvider.notifier)
           .update((state) => state.copyWith(rootTun: rootTun));
-      await pumpItem(tester, const VpnSections());
+      await pumpItem(tester, item);
     }
 
     bool enabled(WidgetTester tester, Type row) =>
@@ -365,60 +366,31 @@ void main() {
         )
         .data!;
 
-    testWidgets('off: the row comes last and the footer ends with it', (
-      tester,
-    ) async {
+    testWidgets('the VPN section offers no root mode', (tester) async {
       await pumpVpn(tester, su: true, rootTun: false);
       final l = currentAppLocalizations;
 
-      double top(Type row) => tester.getTopLeft(find.byType(row)).dy;
-      for (final row in [
-        VpnSystemProxyItem,
-        BypassDomainItem,
-        AllowBypassItem,
-        Ipv6Item,
-        DNSHijackingItem,
-      ]) {
-        expect(top(RootTunItem), greaterThan(top(row)), reason: '$row');
-      }
-      expect(find.text(l.rootTunUnavailable), findsNothing);
-      expect(footer(tester).split('\n').last, l.rootTunDesc);
+      expect(find.byType(RootTunItem), findsNothing);
+      expect(footer(tester), isNot(contains(l.rootTunDesc)));
       for (final row in [
         VpnSystemProxyItem,
         AllowBypassItem,
         Ipv6Item,
         DNSHijackingItem,
-        RootTunItem,
       ]) {
         expect(enabled(tester, row), isTrue, reason: '$row');
       }
     });
 
-    testWidgets('on: rows of the VPN service turn grey', (tester) async {
-      await pumpVpn(tester, su: true, rootTun: true);
-      final l = currentAppLocalizations;
-
-      for (final row in [
-        VpnSystemProxyItem,
-        AllowBypassItem,
-        DNSHijackingItem,
-      ]) {
-        expect(enabled(tester, row), isFalse, reason: '$row');
-      }
-      expect(enabled(tester, Ipv6Item), isTrue);
-      expect(enabled(tester, RootTunItem), isTrue);
-      expect(
-        tester.widget<BypassDomainItem>(find.byType(BypassDomainItem)).enabled,
-        isFalse,
-      );
-      expect(footer(tester).split('\n').last, l.rootTunDesc);
-      expect(container.read(vpnSettingProvider).systemProxy, isTrue);
-    });
-
     testWidgets('without su the row says so and still turns on', (
       tester,
     ) async {
-      await pumpVpn(tester, su: false, rootTun: false);
+      await pumpVpn(
+        tester,
+        su: false,
+        rootTun: false,
+        item: const RootTunItem(),
+      );
       final l = currentAppLocalizations;
 
       expect(find.text(l.rootTunUnavailable), findsOneWidget);
