@@ -745,7 +745,7 @@ The project has no design library: `material_ui`, `cupertino_ui` and the SDK's
 neither package. Widgets come from `package:flutter/widgets.dart` and components, the
 `ThemeData` and the `ColorScheme` from `prism_ui`.
 
-Strings live in `arb/intl_{en,zh,ja,ru,fr,es,ko}.arb` — flat JSON. Add a key to all seven, then regenerate with
+Strings live in `arb/intl_{en,zh,ja,ru,fr,es,ko,sk}.arb` — flat JSON. Add a key to every locale, then regenerate with
 `flutter gen-l10n`. A key missing from a locale is generated with its English text and reported as untranslated, so add
 the translation rather than leaving it out. The only metadata is in `intl_en.arb`: a message with more than one
 placeholder declares them in the order the text first uses them, under `@key.placeholders`, since `gen-l10n` otherwise

@@ -134,6 +134,7 @@ extension LocaleL10n on Locale {
       'ja' => appLocalizations.ja,
       'ko' => appLocalizations.ko,
       'ru' => appLocalizations.ru,
+      'sk' => appLocalizations.sk,
       'zh' => appLocalizations.zhCN,
       final code => code,
     };

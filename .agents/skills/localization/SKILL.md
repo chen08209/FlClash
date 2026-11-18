@@ -29,6 +29,7 @@ Do not use this for README translation sync or manual edits to generated localiz
    - `arb/intl_fr.arb`
    - `arb/intl_es.arb`
    - `arb/intl_ko.arb`
+   - `arb/intl_sk.arb`
 4. Replace inline strings with existing project accessors:
    - Widgets with `BuildContext`: `context.appLocalizations.key` from `lib/common/context.dart`.
    - Controllers/providers/non-widget code: `currentAppLocalizations.key` from `lib/common/app_localizations.dart`.
