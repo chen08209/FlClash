@@ -322,20 +322,52 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
-    testWidgets('leaves no room for an app without its own icon, or where no '
-        'icon can be read', (tester) async {
+    testWidgets('leaves no room where no icon can be read, or for an app '
+        'already known to have none of its own', (tester) async {
       await pumpRow(tester, '', source: App());
       final bare = titleInset(tester);
-
-      await pumpRow(tester, 'com.plain', source: App());
-      expect(find.byType(Image), findsNothing);
-      expect(titleInset(tester), bare);
 
       await pumpRow(tester, 'com.own');
       expect(find.byType(Image), findsNothing);
       expect(titleInset(tester), bare);
 
+      await tester.runAsync(() => App().getOwnPackageIcon('com.plain'));
+      await pumpRow(tester, 'com.plain', source: App());
+      expect(find.byType(Image), findsNothing);
+      expect(titleInset(tester), bare);
+
       await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a row holds the room of an icon still loading, and keeps it '
+        'with the generic app icon where none of its own arrives', (
+      tester,
+    ) async {
+      await pumpRow(tester, '', source: App());
+      final bare = titleInset(tester);
+
+      for (final (process, icon) in [
+        ('com.own', 'com.own.png'),
+        ('com.plain', 'default.png'),
+      ]) {
+        held[process] = Completer();
+        await pumpRow(tester, process, source: App());
+        expect(find.byType(Image), findsNothing, reason: process);
+        expect(titleInset(tester), bare + 24 + 8, reason: process);
+
+        held[process]!.complete();
+        await tester.pump();
+        await tester.pump();
+        expect(
+          (tester.widget<Image>(find.byType(Image)).image as FileImage)
+              .file
+              .path,
+          endsWith(icon),
+          reason: process,
+        );
+        expect(titleInset(tester), bare + 24 + 8, reason: process);
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
     });
 
     testWidgets('rows of one app ask Android for its icon once', (
@@ -390,7 +422,10 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.byType(Image), findsNothing);
+      expect(
+        (tester.widget<Image>(find.byType(Image)).image as FileImage).file.path,
+        endsWith('default.png'),
+      );
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(const SizedBox.shrink());
@@ -450,8 +485,10 @@ void main() {
     double labelStart(WidgetTester tester, String label) =>
         tester.getTopLeft(find.textContaining(label).first).dx;
 
-    testWidgets('an app group heads with its icon only where the app has '
-        'one, leaving no room where it has none', (tester) async {
+    testWidgets('an app group heads with its icon, or the generic one where '
+        'the app has none, leaving no room for connections of no app', (
+      tester,
+    ) async {
       await pumpGroups(tester);
 
       expect(
@@ -460,10 +497,10 @@ void main() {
       );
       expect(
         find.descendant(of: header('com.plain'), matching: find.byType(Image)),
-        findsNothing,
+        findsOneWidget,
       );
       final bare = labelStart(tester, otherLabel(tester));
-      expect(labelStart(tester, 'com.plain'), bare);
+      expect(labelStart(tester, 'com.plain'), bare + 24 + 8);
       expect(labelStart(tester, 'com.own'), bare + 24 + 8);
 
       await tester.pumpWidget(const SizedBox.shrink());
@@ -482,7 +519,10 @@ void main() {
       };
       addTearDown(() => debugOnRebuildDirtyWidget = null);
       await pumpGroups(tester);
-      expect(find.byType(Image), findsNothing);
+      expect(
+        find.descendant(of: header('com.own'), matching: find.byType(Image)),
+        findsNothing,
+      );
       rebuilt.clear();
 
       held['com.own']!.complete();

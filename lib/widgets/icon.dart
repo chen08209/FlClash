@@ -438,24 +438,25 @@ mixin _PackageIconLoader<T extends StatefulWidget> on State<T> {
     final (cached, load) = lookUp(packageNameOf(widget));
     icon = cached;
     load?.then((loaded) {
-      if (mounted &&
-          generation == _generation &&
-          loaded != null &&
-          loaded != icon) {
-        setState(() {
-          icon = loaded;
-        });
+      if (mounted && generation == _generation) {
+        onLoaded(loaded);
       }
     });
+  }
+
+  void onLoaded(ImageProvider? loaded) {
+    if (loaded != null && loaded != icon) {
+      setState(() {
+        icon = loaded;
+      });
+    }
   }
 }
 
 Widget packageIconImage(ImageProvider icon, double size) =>
     Image(image: icon, gaplessPlayback: true, width: size, height: size);
 
-/// Builds with the icon [packageName] draws itself, or with null until it has
-/// loaded and where there is none, so a row lays out without an icon rather
-/// than around an empty slot.
+/// Null only where the app is known to have no icon; else holds the icon room.
 class OwnPackageIcon extends ConsumerStatefulWidget {
   final String packageName;
   final double size;
@@ -474,6 +475,9 @@ class OwnPackageIcon extends ConsumerStatefulWidget {
 
 class _OwnPackageIconState extends ConsumerState<OwnPackageIcon>
     with _PackageIconLoader<OwnPackageIcon> {
+  var _holdsRoom = false;
+  ImageProvider? _fallback;
+
   @override
   String packageNameOf(OwnPackageIcon widget) => widget.packageName;
 
@@ -481,18 +485,34 @@ class _OwnPackageIconState extends ConsumerState<OwnPackageIcon>
   (ImageProvider?, Future<ImageProvider?>?) lookUp(String packageName) {
     final source = ref.read(packageIconSourceProvider);
     final cached = source?.getCachedOwnPackageIcon(packageName);
-    return (
-      cached?.icon,
-      cached == null ? source?.getOwnPackageIcon(packageName) : null,
-    );
+    final load = cached == null ? source?.getOwnPackageIcon(packageName) : null;
+    _holdsRoom = load != null;
+    _fallback = null;
+    return (cached?.icon, load);
+  }
+
+  @override
+  void onLoaded(ImageProvider? loaded) {
+    if (loaded != null) {
+      super.onLoaded(loaded);
+      return;
+    }
+    setState(() {
+      _fallback = ref.read(packageIconSourceProvider)?.getCachedPackageIcon('');
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final icon = this.icon;
+    final size = widget.size;
+    final shown = icon ?? _fallback;
     return widget.builder(
       context,
-      icon == null ? null : packageIconImage(icon, widget.size),
+      shown != null
+          ? packageIconImage(shown, size)
+          : _holdsRoom
+          ? SizedBox.square(dimension: size)
+          : null,
     );
   }
 }
