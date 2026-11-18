@@ -546,7 +546,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recentRequests => 'Последние запросы';
 
   @override
-  String get findProcessMode => 'Поиск процесса';
+  String get alwaysFindProcess => 'Всегда искать процесс';
 
   @override
   String get init => 'Инициализация';

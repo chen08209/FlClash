@@ -530,7 +530,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recentRequests => '最近のリクエスト';
 
   @override
-  String get findProcessMode => 'プロセス検出';
+  String get alwaysFindProcess => '常にプロセスを検出';
 
   @override
   String get init => '初期化';

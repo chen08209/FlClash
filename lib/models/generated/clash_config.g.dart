@@ -880,9 +880,9 @@ _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
           $enumDecodeNullable(
             _$FindProcessModeEnumMap,
             json['find-process-mode'],
-            unknownValue: FindProcessMode.off,
+            unknownValue: FindProcessMode.strict,
           ) ??
-          FindProcessMode.off,
+          FindProcessMode.strict,
       interfaceNameMode:
           $enumDecodeNullable(
             _$InterfaceNameModeEnumMap,
@@ -1008,7 +1008,7 @@ const _$LogLevelEnumMap = {
 
 const _$FindProcessModeEnumMap = {
   FindProcessMode.always: 'always',
-  FindProcessMode.off: 'off',
+  FindProcessMode.strict: 'strict',
 };
 
 const _$InterfaceNameModeEnumMap = {

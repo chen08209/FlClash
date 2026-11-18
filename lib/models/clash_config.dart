@@ -2143,8 +2143,11 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     @Default(false) @JsonKey(name: 'allow-lan') bool allowLan,
     @Default(LogLevel.error) @JsonKey(name: 'log-level') LogLevel logLevel,
     @Default(false) bool ipv6,
-    @Default(FindProcessMode.off)
-    @JsonKey(name: 'find-process-mode', unknownEnumValue: FindProcessMode.off)
+    @Default(FindProcessMode.strict)
+    @JsonKey(
+      name: 'find-process-mode',
+      unknownEnumValue: FindProcessMode.strict,
+    )
     FindProcessMode findProcessMode,
     @Default(InterfaceNameMode.clear)
     @JsonKey(

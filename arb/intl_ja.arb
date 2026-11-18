@@ -169,7 +169,7 @@
   "geodataLoader": "Geo低メモリモード",
   "requests": "リクエスト",
   "recentRequests": "最近のリクエスト",
-  "findProcessMode": "プロセス検出",
+  "alwaysFindProcess": "常にプロセスを検出",
   "init": "初期化",
   "infiniteTime": "無期限",
   "connections": "接続",

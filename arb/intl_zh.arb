@@ -169,7 +169,7 @@
   "geodataLoader": "Geo低内存模式",
   "requests": "请求",
   "recentRequests": "最近请求",
-  "findProcessMode": "查找进程",
+  "alwaysFindProcess": "始终查找进程",
   "init": "初始化",
   "infiniteTime": "长期有效",
   "connections": "连接",

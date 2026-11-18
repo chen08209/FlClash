@@ -169,7 +169,7 @@
   "geodataLoader": "Geo low-memory mode",
   "requests": "Requests",
   "recentRequests": "Recent requests",
-  "findProcessMode": "Find process",
+  "alwaysFindProcess": "Always find process",
   "init": "Init",
   "infiniteTime": "Never expires",
   "connections": "Connections",

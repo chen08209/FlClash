@@ -530,7 +530,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recentRequests => '최근 요청';
 
   @override
-  String get findProcessMode => '프로세스 찾기';
+  String get alwaysFindProcess => '항상 프로세스 찾기';
 
   @override
   String get init => '초기화';

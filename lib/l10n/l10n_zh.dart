@@ -526,7 +526,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recentRequests => '最近请求';
 
   @override
-  String get findProcessMode => '查找进程';
+  String get alwaysFindProcess => '始终查找进程';
 
   @override
   String get init => '初始化';

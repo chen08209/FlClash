@@ -169,7 +169,7 @@
   "geodataLoader": "Mode Geo à faible mémoire",
   "requests": "Requêtes",
   "recentRequests": "Requêtes récentes",
-  "findProcessMode": "Recherche de processus",
+  "alwaysFindProcess": "Toujours rechercher le processus",
   "init": "Initialisation",
   "infiniteTime": "N’expire jamais",
   "connections": "Connexions",

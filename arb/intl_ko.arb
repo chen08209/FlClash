@@ -169,7 +169,7 @@
   "geodataLoader": "Geo 저메모리 모드",
   "requests": "요청",
   "recentRequests": "최근 요청",
-  "findProcessMode": "프로세스 찾기",
+  "alwaysFindProcess": "항상 프로세스 찾기",
   "init": "초기화",
   "infiniteTime": "만료되지 않음",
   "connections": "연결",

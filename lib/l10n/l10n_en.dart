@@ -547,7 +547,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentRequests => 'Recent requests';
 
   @override
-  String get findProcessMode => 'Find process';
+  String get alwaysFindProcess => 'Always find process';
 
   @override
   String get init => 'Init';

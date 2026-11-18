@@ -169,7 +169,7 @@
   "geodataLoader": "Geo: экономия памяти",
   "requests": "Запросы",
   "recentRequests": "Последние запросы",
-  "findProcessMode": "Поиск процесса",
+  "alwaysFindProcess": "Всегда искать процесс",
   "init": "Инициализация",
   "infiniteTime": "Бессрочно",
   "connections": "Соединения",

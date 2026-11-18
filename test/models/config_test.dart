@@ -666,6 +666,18 @@ void main() {
 
       expect(restored.interfaceNameMode, InterfaceNameMode.clear);
     });
+
+    test('find process defaults to strict and a saved off reads as strict', () {
+      expect(const PatchClashConfig().findProcessMode, FindProcessMode.strict);
+      for (final saved in ['off', 'strict']) {
+        final restored = PatchClashConfig.fromJson({
+          'find-process-mode': saved,
+        });
+        expect(restored.findProcessMode, FindProcessMode.strict, reason: saved);
+      }
+      final always = PatchClashConfig.fromJson({'find-process-mode': 'always'});
+      expect(always.findProcessMode, FindProcessMode.always);
+    });
   });
 
   group('PatchClashConfig mixed port', () {

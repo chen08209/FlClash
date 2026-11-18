@@ -1128,11 +1128,11 @@ abstract class AppLocalizations {
   /// **'Recent requests'**
   String get recentRequests;
 
-  /// No description provided for @findProcessMode.
+  /// No description provided for @alwaysFindProcess.
   ///
   /// In en, this message translates to:
-  /// **'Find process'**
-  String get findProcessMode;
+  /// **'Always find process'**
+  String get alwaysFindProcess;
 
   /// No description provided for @init.
   ///
