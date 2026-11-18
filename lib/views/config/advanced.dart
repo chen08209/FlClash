@@ -87,21 +87,20 @@ class AdvancedConfigView extends ConsumerWidget {
             title: appLocalizations.customResources,
             items: customItems,
           ),
-          if (rsFeature)
-            generateSection(
-              title: appLocalizations.mitm,
-              footer: isAndroid ? appLocalizations.mitmAndroidRootDesc : null,
-              items: [
-                const MitmEnableItem(),
-                const MitmModulesItem(),
-                const MitmHostnameItem(),
-                ListItem.open(
-                  title: Text(appLocalizations.options),
-                  leading: const GlyphIcon(AppGlyphs.sliders),
-                  widget: MitmOptionsView(isAndroid: isAndroid),
-                ),
-              ],
-            ),
+          generateSection(
+            title: appLocalizations.mitm,
+            footer: isAndroid ? appLocalizations.mitmAndroidRootDesc : null,
+            items: [
+              const MitmEnableItem(),
+              const MitmModulesItem(),
+              const MitmHostnameItem(),
+              ListItem.open(
+                title: Text(appLocalizations.options),
+                leading: const GlyphIcon(AppGlyphs.sliders),
+                widget: MitmOptionsView(isAndroid: isAndroid),
+              ),
+            ],
+          ),
         ],
       ),
     );

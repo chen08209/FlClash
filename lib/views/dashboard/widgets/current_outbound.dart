@@ -70,8 +70,7 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard> {
     );
     final isStart = ref.watch(isStartProvider);
     final suspended = isStart && ref.watch(suspendProvider);
-    final rootAccess =
-        rsFeature && (ref.watch(rootAccessProvider).value ?? false);
+    final rootAccess = (ref.watch(rootAccessProvider).value ?? false);
     final entry = ref.watch(
       outboundIpProbeProvider.select((state) => state.entryOf(routedOutbound)),
     );
