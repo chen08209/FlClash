@@ -21,6 +21,7 @@
   "authentication": [
     "user:pass"
   ],
+  "hostCredential": "host:secret",
   "geoAutoUpdate": true,
   "geoUpdateInterval": 48,
   "geoxUrl": {

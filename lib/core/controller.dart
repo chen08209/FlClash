@@ -174,6 +174,7 @@ extension type CoreController._(CoreBackend _backend) implements CoreBackend {
       overlay: base?.overlay,
       selection: params.selectedMap,
       options: coreOptionsArgOf(params.options),
+      host: params.host,
     );
     if (preloadInvoke == null) {
       await apply;

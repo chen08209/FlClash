@@ -6,12 +6,14 @@ ConfigPatch updateParams(Ref ref) {
     networkSettingProvider.select((state) => state.authentication),
   );
   final options = ref.watch(coreOptionsProvider);
+  final hostCredential = ref.watch(hostCredentialProvider);
   final tunDisabled = ref.watch(tunDisabledThisRunProvider);
   return ref.watch(
     patchClashConfigProvider.select(
       (state) => configPatchOf(
         tunDisabled ? state.copyWith.tun(enable: false) : state,
         authentication: authentication.credentials,
+        hostCredential: hostCredential,
         options: options,
       ),
     ),
@@ -197,6 +199,8 @@ SharedState sharedState(Ref ref) {
   );
   final currentProfileName = currentProfile.label;
   final selectedMap = currentProfile.selectedMap;
+  final hostCredential = ref.watch(hostCredentialProvider);
+  final safeMode = ref.watch(safeModeProvider);
   final onlyStatisticsProxy = appSetting.onlyStatisticsProxy;
   return SharedState(
     currentProfileName: currentProfileName,
@@ -208,6 +212,15 @@ SharedState sharedState(Ref ref) {
     setupParams: SetupParams(
       selectedMap: selectedMap,
       options: ref.watch(coreOptionsProvider),
+      host: ref.watch(
+        patchClashConfigProvider.select(
+          (config) => hostSettingsOf(
+            config,
+            credential: hostCredential,
+            safeMode: safeMode,
+          ),
+        ),
+      ),
     ),
     vpnOptions: ref.watch(vpnOptionsProvider).value,
     mitm: ref.watch(

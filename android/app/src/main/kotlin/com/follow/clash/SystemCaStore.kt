@@ -43,6 +43,9 @@ object SystemCaStore {
         )
     }
 
+    /** What the app's own check counts as ready: the CA is in the user or the system store. */
+    fun trusts(pem: String): Boolean = locate(pem.toByteArray()).let { it["user"] == true || it["system"] == true }
+
     /** "installed", "untilReboot" when no root manager took the module, or "denied". */
     fun install(context: Context, der: ByteArray): String {
         return withScripts(context, der) { work, cert ->

@@ -21,7 +21,12 @@ T roundTrip<T>(
 ConfigPatch _patchOf(
   PatchClashConfig config, [
   CoreOptions options = const CoreOptions(testUrl: ''),
-]) => configPatchOf(config, authentication: const [], options: options);
+]) => configPatchOf(
+  config,
+  authentication: const [],
+  hostCredential: 'host:secret',
+  options: options,
+);
 
 void main() {
   group('GeoResource JSON', () {

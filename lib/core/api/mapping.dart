@@ -197,11 +197,33 @@ ControllerCorsArg controllerCorsOf(bool allowed) => ControllerCorsArg(
   allowPrivateNetwork: allowed,
 );
 
+ExternalControllerStatus effectiveControllerOf(
+  models.PatchClashConfig config, {
+  required bool safeMode,
+}) => safeMode || config.secret.isEmpty
+    ? ExternalControllerStatus.close
+    : config.externalController;
+
+/// What a host-driven Core takes only from its host, never from a profile.
+JsonMap hostSettingsOf(
+  models.PatchClashConfig config, {
+  required String credential,
+  required bool safeMode,
+}) => {
+  'externalController': effectiveControllerOf(config, safeMode: safeMode).value,
+  'secret': config.secret,
+  'externalControllerCors': controllerCorsOf(
+    config.externalControllerCors,
+  ).toJson(),
+  'hostCredential': credential,
+};
+
 /// What the general overrides leave of [config], as the live patch. A field
 /// the user did not pick for override is left null so the profile keeps its own.
 ConfigPatch configPatchOf(
   models.PatchClashConfig config, {
   required List<String> authentication,
+  required String hostCredential,
   required models.CoreOptions options,
 }) {
   T? picked<T>(GeneralOverrideKey key, T value) =>
@@ -227,6 +249,7 @@ ConfigPatch configPatchOf(
     externalControllerCors: controllerCorsOf(config.externalControllerCors),
     unifiedDelay: picked(GeneralOverrideKey.unifiedDelay, config.unifiedDelay),
     authentication: authentication,
+    hostCredential: hostCredential,
     geoAutoUpdate: config.geoAutoUpdate,
     geoUpdateInterval: config.geoUpdateInterval,
     geoxUrl: config.geoXUrl.raw,

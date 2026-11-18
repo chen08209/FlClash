@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:flutter/services.dart';
@@ -45,11 +45,8 @@ class FlClashHttpOverrides extends HttpOverrides {
     final mixedPort = read(
       patchClashConfigProvider.select((state) => state.mixedPort),
     );
-    final authentication = read(
-      networkSettingProvider.select((state) => state.authentication),
-    );
-    final credentials = authentication.credentials;
-    final userInfo = credentials.isNotEmpty ? '${credentials.first}@' : '';
+    final credential = read(hostCredentialProvider);
+    final userInfo = credential.isNotEmpty ? '$credential@' : '';
     return 'PROXY ${userInfo}localhost:$mixedPort';
   }
 
