@@ -113,7 +113,7 @@ void main() {
     verify(
       () => api.crateApiLaunchSetAutostart(
         id: sideBySideName,
-        displayName: sideBySideName,
+        displayName: packageDisplayName,
         executable: executable,
         enabled: true,
       ),

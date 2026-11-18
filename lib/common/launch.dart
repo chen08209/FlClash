@@ -25,7 +25,7 @@ class _SystemAutostartEntry implements AutostartEntry {
   @override
   Future<bool> setEnabled(bool enabled) => rust_api.setAutostart(
     id: sideBySideName,
-    displayName: sideBySideName,
+    displayName: packageDisplayName,
     executable: Platform.resolvedExecutable,
     enabled: enabled,
   );
