@@ -85,8 +85,6 @@ void main() {
         });
 
     final app = App();
-    final loaded = app.ownPackageIconsLoaded.value;
-
     expect(app.getCachedOwnPackageIcon('com.own'), isNull);
     final own = await app.getOwnPackageIcon('com.own');
     expect(own, isNotNull);
@@ -98,7 +96,6 @@ void main() {
     expect(app.getCachedOwnPackageIcon('com.gone'), isNotNull);
     expect(app.getCachedOwnPackageIcon('com.gone')?.icon, isNull);
     expect(await app.getOwnPackageIcon(''), isNull);
-    expect(app.ownPackageIconsLoaded.value, loaded + 1);
   });
 
   test(

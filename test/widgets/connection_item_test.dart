@@ -416,18 +416,17 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
-    testWidgets('an app group heads with its icon only where the app has '
-        'one', (tester) async {
-      final groups = [
-        RecordGroup('com.own', [_tracker(process: 'com.own')]),
-        RecordGroup('com.plain', [_tracker(process: 'com.plain')]),
-      ];
+    Future<void> pumpGroups(WidgetTester tester) async {
       await tester.pumpWidget(
         TestApp(
           overrides: [packageIconSourceProvider.overrideWithValue(App())],
           homeBuilder: (child) => HostScaffold(body: child),
           child: TrackerInfoGroupedList(
-            groups: groups,
+            groups: [
+              RecordGroup('com.own', [_tracker(process: 'com.own')]),
+              RecordGroup('com.plain', [_tracker(process: 'com.plain')]),
+              RecordGroup('', [_tracker(process: '')]),
+            ],
             grouping: RecordGrouping.app,
             isLive: false,
             detailTitle: 'detail',
@@ -436,11 +435,25 @@ void main() {
       );
       await tester.pump();
       await tester.pump();
+    }
 
-      Finder header(String app) => find.ancestor(
-        of: find.textContaining(app).first,
-        matching: find.byType(CollapsibleHeader),
-      );
+    Finder header(String label) => find.ancestor(
+      of: find.textContaining(label).first,
+      matching: find.byType(CollapsibleHeader),
+    );
+
+    String otherLabel(WidgetTester tester) => tester
+        .element(find.byType(TrackerInfoGroupedList))
+        .appLocalizations
+        .other;
+
+    double labelStart(WidgetTester tester, String label) =>
+        tester.getTopLeft(find.textContaining(label).first).dx;
+
+    testWidgets('an app group heads with its icon only where the app has '
+        'one, leaving no room where it has none', (tester) async {
+      await pumpGroups(tester);
+
       expect(
         find.descendant(of: header('com.own'), matching: find.byType(Image)),
         findsOneWidget,
@@ -448,6 +461,47 @@ void main() {
       expect(
         find.descendant(of: header('com.plain'), matching: find.byType(Image)),
         findsNothing,
+      );
+      final bare = labelStart(tester, otherLabel(tester));
+      expect(labelStart(tester, 'com.plain'), bare);
+      expect(labelStart(tester, 'com.own'), bare + 24 + 8);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('an app\'s icon arriving rebuilds nothing but the icon in '
+        'its own group\'s header', (tester) async {
+      held['com.own'] = Completer();
+      final built = Expando<bool>();
+      final rebuilt = <Element>[];
+      debugOnRebuildDirtyWidget = (element, _) {
+        if (built[element] ?? false) {
+          rebuilt.add(element);
+        }
+        built[element] = true;
+      };
+      addTearDown(() => debugOnRebuildDirtyWidget = null);
+      await pumpGroups(tester);
+      expect(find.byType(Image), findsNothing);
+      rebuilt.clear();
+
+      held['com.own']!.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(rebuilt.map((element) => element.widget.runtimeType), [
+        OwnPackageIcon,
+      ]);
+      expect(
+        find.descendant(
+          of: header('com.own'),
+          matching: find.byWidget(rebuilt.single.widget),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        labelStart(tester, 'com.own'),
+        labelStart(tester, otherLabel(tester)) + 24 + 8,
       );
 
       await tester.pumpWidget(const SizedBox.shrink());

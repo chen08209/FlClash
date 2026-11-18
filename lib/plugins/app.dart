@@ -139,8 +139,6 @@ class App {
   final Map<String, ImageProvider?> _ownPackageIcons = {};
   final Map<String, Future<ImageProvider?>> _ownPackageIconTasks = {};
 
-  final ownPackageIconsLoaded = ValueNotifier(0);
-
   ({ImageProvider? icon})? getCachedOwnPackageIcon(String packageName) {
     if (!_ownPackageIcons.containsKey(packageName)) {
       return null;
@@ -169,9 +167,6 @@ class App {
     }
     _ownPackageIcons[packageName] = own;
     unawaited(_ownPackageIconTasks.remove(packageName));
-    if (own != null) {
-      ownPackageIconsLoaded.value++;
-    }
     return own;
   }
 

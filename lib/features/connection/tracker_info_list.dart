@@ -1,9 +1,6 @@
-import 'dart:async';
-
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -232,17 +229,15 @@ class _TrackerInfoGroupedListState
     }
   }
 
-  Widget? _leadingOf(App icons, String packageName) {
-    final cached = icons.getCachedOwnPackageIcon(packageName);
-    if (cached == null) {
-      unawaited(icons.getOwnPackageIcon(packageName));
+  Widget? _leadingOf(String packageName) {
+    if (packageName.isEmpty) {
       return null;
     }
-    final icon = cached.icon;
-    if (icon == null) {
-      return null;
-    }
-    return _leadings[packageName] ??= packageIconImage(icon, 24);
+    return _leadings[packageName] ??= OwnPackageIcon(
+      packageName: packageName,
+      size: 24,
+      builder: (_, icon) => icon ?? const SizedBox.shrink(),
+    );
   }
 
   TrackerInfo _latest(TrackerInfo trackerInfo) =>
@@ -261,17 +256,17 @@ class _TrackerInfoGroupedListState
       :table,
       :onClose,
     ) = widget;
-    final icons = grouping == RecordGrouping.app
-        ? ref.watch(packageIconSourceProvider)
-        : null;
+    final showsIcons =
+        grouping == RecordGrouping.app &&
+        ref.watch(packageIconSourceProvider) != null;
     final showsTraffic = isLive || table != null;
-    Widget list() => RecordGroupedList<TrackerInfo>(
+    return RecordGroupedList<TrackerInfo>(
       groups: widget.groups,
       grouping: grouping,
       controller: widget.controller,
       padding: widget.padding,
       estimatedItemExtent: table?.rowHeight ?? recordListEstimatedExtent,
-      leadingOf: icons == null ? null : (group) => _leadingOf(icons, group.key),
+      leadingOf: showsIcons ? (group) => _leadingOf(group.key) : null,
       trailingOf: isLive ? (group) => _buildSpeed(context, group.items) : null,
       itemBuilder: (_, trackerInfo, index) {
         final striped = index.isOdd;
@@ -304,13 +299,6 @@ class _TrackerInfoGroupedListState
           },
         );
       },
-    );
-    if (icons == null) {
-      return list();
-    }
-    return ListenableBuilder(
-      listenable: icons.ownPackageIconsLoaded,
-      builder: (_, _) => list(),
     );
   }
 
