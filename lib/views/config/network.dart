@@ -141,6 +141,44 @@ class Ipv6Item extends ConsumerWidget {
   }
 }
 
+class VpnIpv4AddressItem extends ConsumerWidget {
+  const VpnIpv4AddressItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return ConfigTextItem(
+      title: (l) => '${l.ipAddress} (IPv4)',
+      maxLength: TextInputLimits.cidr,
+      resetValue: defaultVpnIpv4Address,
+      normalize: (value) => value.trim(),
+      validator: validateTunIpv4Cidr,
+      selector: vpnSettingProvider.select((state) => state.ipv4Address),
+      onChanged: _vpnWriter(
+        (state, value) => state.copyWith(ipv4Address: value),
+      ),
+    );
+  }
+}
+
+class VpnIpv6AddressItem extends ConsumerWidget {
+  const VpnIpv6AddressItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return ConfigTextItem(
+      title: (l) => '${l.ipAddress} (IPv6)',
+      maxLength: TextInputLimits.cidr,
+      resetValue: defaultVpnIpv6Address,
+      normalize: (value) => value.trim(),
+      validator: validateTunIpv6Cidr,
+      selector: vpnSettingProvider.select((state) => state.ipv6Address),
+      onChanged: _vpnWriter(
+        (state, value) => state.copyWith(ipv6Address: value),
+      ),
+    );
+  }
+}
+
 class AutoSetSystemDnsItem extends ConsumerWidget {
   const AutoSetSystemDnsItem({super.key});
 
@@ -480,17 +518,20 @@ class VpnSections extends ConsumerWidget {
     final authenticationEnable = ref.watch(
       networkSettingProvider.select((state) => state.authentication.enable),
     );
+    final ipv6 = ref.watch(vpnSettingProvider.select((state) => state.ipv6));
     return Column(
       children: [
         generateSection(items: const [VPNItem()]),
         generateSection(
           title: 'VPN',
-          items: const [
-            VpnSystemProxyItem(),
-            BypassDomainItem(),
-            AllowBypassItem(),
-            Ipv6Item(),
-            DNSHijackingItem(),
+          items: [
+            const VpnSystemProxyItem(),
+            const BypassDomainItem(),
+            const AllowBypassItem(),
+            const VpnIpv4AddressItem(),
+            const Ipv6Item(),
+            if (ipv6) const VpnIpv6AddressItem(),
+            const DNSHijackingItem(),
           ],
           footer: [
             if (authenticationEnable)

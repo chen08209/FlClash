@@ -13,10 +13,15 @@ import com.follow.clash.common.GlobalState
 import com.follow.clash.common.R as CommonR
 import com.follow.clash.core.Core
 import com.follow.clash.service.models.CIDR
+import com.follow.clash.service.models.NET_ANY
+import com.follow.clash.service.models.NET_ANY6
 import com.follow.clash.service.models.VpnOptions
 import com.follow.clash.service.models.getIpv4RouteAddress
 import com.follow.clash.service.models.getIpv6RouteAddress
-import com.follow.clash.service.models.toCIDR
+import com.follow.clash.service.models.tunAddress
+import com.follow.clash.service.models.tunDns
+import com.follow.clash.service.models.tunIpv4Cidr
+import com.follow.clash.service.models.tunIpv6Cidr
 import com.follow.clash.service.models.tunMtu
 import com.follow.clash.service.models.tunOptions
 import com.follow.clash.service.modules.ServiceModules
@@ -64,29 +69,6 @@ class VpnService : SystemVpnService(), ManagedService {
             .orEmpty()
         return uidPackageNameMap.putIfAbsent(uid, packageName) ?: packageName
     }
-
-    private val VpnOptions.tunAddress
-        get(): String = buildString {
-            append(IPV4_ADDRESS)
-            if (ipv6) {
-                append(",")
-                append(IPV6_ADDRESS)
-            }
-        }
-
-    private val VpnOptions.tunDns
-        get(): String {
-            if (dnsHijacking) {
-                return NET_ANY
-            }
-            return buildString {
-                append(DNS)
-                if (ipv6) {
-                    append(",")
-                    append(DNS6)
-                }
-            }
-        }
 
     override fun onLowMemory() {
         lowCoreMemory()
@@ -177,7 +159,7 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     private fun Builder.addAddressAndRoutes(options: VpnOptions) {
-        val ipv4Address = IPV4_ADDRESS.toCIDR()
+        val ipv4Address = options.tunIpv4Cidr
         addAddress(ipv4Address.address, ipv4Address.prefixLength)
         addRoutes(
             routes = options::getIpv4RouteAddress,
@@ -187,7 +169,7 @@ class VpnService : SystemVpnService(), ManagedService {
 
         if (options.ipv6) {
             try {
-                val ipv6Address = IPV6_ADDRESS.toCIDR()
+                val ipv6Address = options.tunIpv6Cidr
                 addAddress(ipv6Address.address, ipv6Address.prefixLength)
             } catch (_: Exception) {
                 GlobalState.log("IPv6 VPN address is not supported")
@@ -222,9 +204,9 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     private fun Builder.addDnsServers(options: VpnOptions) {
-        addDnsServer(DNS)
+        addDnsServer(options.tunIpv4Cidr.peerInetAddress)
         if (options.ipv6) {
-            addDnsServer(DNS6)
+            addDnsServer(options.tunIpv6Cidr.peerInetAddress)
         }
     }
 
@@ -293,14 +275,6 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     companion object {
-        // mihomo's own TUN default: 198.18.0.0/15 is benchmarking space no LAN
-        // uses, and its fake-ip pool starts at .4, past this /30.
-        private const val IPV4_ADDRESS = "198.18.0.1/30"
-        private const val IPV6_ADDRESS = "fdfe:dcba:9876::1/126"
-        private const val DNS = "198.18.0.2"
-        private const val DNS6 = "fdfe:dcba:9876::2"
-        private const val NET_ANY = "0.0.0.0"
-        private const val NET_ANY6 = "::"
         private const val LOCAL_HOST = "127.0.0.1"
     }
 }

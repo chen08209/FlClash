@@ -347,6 +347,19 @@ extension WindowPropsExt on WindowProps {
   Size get size => savedSize ?? defaultWindowSize;
 }
 
+const defaultVpnIpv4Address = '198.18.0.1/30';
+const defaultVpnIpv6Address = 'fdfe:dcba:9876::1/126';
+
+String _vpnIpv4AddressFromJson(Object? value) {
+  final text = value is String ? value.trim() : '';
+  return text.isEmpty ? defaultVpnIpv4Address : text;
+}
+
+String _vpnIpv6AddressFromJson(Object? value) {
+  final text = value is String ? value.trim() : '';
+  return text.isEmpty ? defaultVpnIpv6Address : text;
+}
+
 @freezed
 abstract class VpnProps with _$VpnProps {
   const factory VpnProps({
@@ -355,6 +368,12 @@ abstract class VpnProps with _$VpnProps {
     @Default(false) bool ipv6,
     @Default(true) bool allowBypass,
     @Default(false) bool dnsHijacking,
+    @JsonKey(fromJson: _vpnIpv4AddressFromJson)
+    @Default(defaultVpnIpv4Address)
+    String ipv4Address,
+    @JsonKey(fromJson: _vpnIpv6AddressFromJson)
+    @Default(defaultVpnIpv6Address)
+    String ipv6Address,
     @Default(defaultAccessControlProps) AccessControlProps accessControlProps,
   }) = _VpnProps;
 

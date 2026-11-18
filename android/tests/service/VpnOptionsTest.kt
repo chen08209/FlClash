@@ -169,4 +169,36 @@ class TunOptionsTest {
 
         assertEquals("", json["congestion-controller"].asString)
     }
+
+    @Test
+    fun `uses default TUN subnets and peer DNS addresses when unset`() {
+        val options = optionsWithRoutes(emptyList())
+
+        assertEquals("198.18.0.1/30,fdfe:dcba:9876:0:0:0:0:1/126", options.tunAddress)
+        assertEquals("198.18.0.2,fdfe:dcba:9876:0:0:0:0:2", options.tunDns)
+        assertEquals("198.18.0.1/30", options.copy(ipv6 = false).tunAddress)
+        assertEquals("198.18.0.2", options.copy(ipv6 = false).tunDns)
+    }
+
+    @Test
+    fun `applies custom IPv4 and IPv6 TUN subnets and derives peer DNS addresses`() {
+        val options = optionsWithRoutes(emptyList()).copy(
+            ipv4Address = "172.19.0.1/30",
+            ipv6Address = "fd00::1/126",
+        )
+
+        assertEquals("172.19.0.1/30,fd00:0:0:0:0:0:0:1/126", options.tunAddress)
+        assertEquals("172.19.0.2,fd00:0:0:0:0:0:0:2", options.tunDns)
+    }
+
+    @Test
+    fun `falls back to default TUN subnets on invalid or network addresses`() {
+        val invalid = optionsWithRoutes(emptyList()).copy(
+            ipv4Address = "172.19.0.0/30",
+            ipv6Address = "fd00::/126",
+        )
+
+        assertEquals("198.18.0.1/30", invalid.tunIpv4Cidr.cidrString)
+        assertEquals("fdfe:dcba:9876:0:0:0:0:1/126", invalid.tunIpv6Cidr.cidrString)
+    }
 }

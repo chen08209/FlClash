@@ -101,6 +101,8 @@ void main() {
         options.copyWith(routeAddress: const ['10.0.0.0/8']),
         options.copyWith(mtu: 1500),
         options.copyWith(congestionController: 'bbr'),
+        options.copyWith(ipv4Address: '172.19.0.1/30'),
+        options.copyWith(ipv6: true, ipv6Address: 'fd00::1/126'),
         options.copyWith(
           accessControlProps: options.accessControlProps.copyWith(
             acceptList: const ['c.app'],
@@ -112,6 +114,13 @@ void main() {
       for (final changed in changes) {
         expect(changed.effective, isNot(options.effective));
       }
+    });
+
+    test('ignores the IPv6 address while IPv6 is off', () {
+      expect(
+        options.copyWith(ipv6Address: 'fd00::1/126').effective,
+        options.effective,
+      );
     });
 
     test('ignores how the app list is shown and the list not applied', () {

@@ -289,6 +289,39 @@ void main() {
       expect(outboundItems(isDesktop: true, isLinux: false), hasLength(3));
       expect(outboundItems(isDesktop: true, isLinux: true), hasLength(4));
     });
+
+    testWidgets('VPN IPv4 and IPv6 items validate host CIDRs and reset', (
+      tester,
+    ) async {
+      await pumpItem(tester, const VpnSections());
+      final l = currentAppLocalizations;
+      final ipv4Label = '${l.ipAddress} (IPv4)';
+      final ipv6Label = '${l.ipAddress} (IPv6)';
+      expect(find.text(ipv4Label), findsOneWidget);
+      expect(find.text(ipv6Label), findsNothing);
+
+      await tester.tap(find.text(ipv4Label));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '172.19.0.1/30');
+      await tester.tap(find.text(l.submit));
+      await tester.pumpAndSettle();
+      expect(container.read(vpnSettingProvider).ipv4Address, '172.19.0.1/30');
+
+      await tester.tap(find.text(ipv4Label));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l.reset));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(vpnSettingProvider).ipv4Address,
+        defaultVpnIpv4Address,
+      );
+
+      container
+          .read(vpnSettingProvider.notifier)
+          .update((state) => state.copyWith(ipv6: true));
+      await tester.pumpAndSettle();
+      expect(find.text(ipv6Label), findsOneWidget);
+    });
   });
 }
 

@@ -20,6 +20,18 @@ String? validateCidr(String? value, AppLocalizations appLocalizations) {
   return isCidr(value ?? '') ? null : appLocalizations.invalidCidrContent;
 }
 
+String? validateTunIpv4Cidr(String? value, AppLocalizations appLocalizations) {
+  return isTunCidr(value ?? '', isIpv6: false)
+      ? null
+      : appLocalizations.invalidCidrContent;
+}
+
+String? validateTunIpv6Cidr(String? value, AppLocalizations appLocalizations) {
+  return isTunCidr(value ?? '', isIpv6: true)
+      ? null
+      : appLocalizations.invalidCidrContent;
+}
+
 /// The sniffer's address lists also take mihomo's geoip: and rule-set: items.
 String? validateIpMatcher(String? value, AppLocalizations appLocalizations) {
   final lower = value?.toLowerCase() ?? '';
@@ -183,6 +195,7 @@ class ConfigTextItem extends _ConfigItem<String> {
     this.keyboardType,
     this.validator,
     this.normalize,
+    this.resetValue,
     this.allowEmpty = false,
     super.leading,
   });
@@ -191,6 +204,7 @@ class ConfigTextItem extends _ConfigItem<String> {
   final TextInputType? keyboardType;
   final ConfigValidator? validator;
   final String Function(String value)? normalize;
+  final String? resetValue;
   final bool allowEmpty;
 
   String? _normalize(String? value) {
@@ -215,6 +229,7 @@ class ConfigTextItem extends _ConfigItem<String> {
       subtitle: value.isEmpty ? null : Text(value),
       dialogTitle: label,
       value: value,
+      resetValue: resetValue,
       maxLength: maxLength,
       keyboardType: keyboardType,
       validator: (text) {
