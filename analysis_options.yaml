@@ -3,6 +3,10 @@ include: lint_options.yaml
 analyzer:
   exclude:
     - build/**
+    - core/**
+    - services/**
+    - dist/**
+    - concord/**
     - lib/l10n/**
     - lib/**/generated/**
     - plugins/**
