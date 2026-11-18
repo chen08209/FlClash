@@ -33,7 +33,7 @@ class ScriptContent extends ConsumerWidget {
           title: appLocalizations.script,
           actions: [
             IconButtonData(
-              glyph: AppGlyphs.edit,
+              glyph: AppGlyphs.code,
               tooltip: appLocalizations.goToConfigureScript,
               onPressed: () {
                 showNestedSheet<void>(
