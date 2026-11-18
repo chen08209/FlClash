@@ -77,6 +77,19 @@ class Preferences {
     }
   }
 
+  /// Stored apart from the config, so a backup never carries it and a
+  /// restored install makes its own.
+  Future<String> getHostCredential() async {
+    final preferences = await _store.value;
+    final stored = preferences?.getString(hostCredentialKey);
+    if (stored != null && stored.isNotEmpty) {
+      return stored;
+    }
+    final created = '${generateRandomSecret(16)}:${generateRandomSecret(32)}';
+    await preferences?.setString(hostCredentialKey, created);
+    return created;
+  }
+
   Future<Map<String, Object?>?> getConfigMap() async {
     try {
       final preferences = await _store.value;

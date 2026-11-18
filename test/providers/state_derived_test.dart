@@ -634,6 +634,43 @@ void main() {
     expect(vpnOptions.systemProxy, isFalse);
   });
 
+  test('the shared state carries the host settings a native start applies, '
+      'and safe mode keeps the controller closed', () {
+    loadAppLocalizations(const Locale('en'));
+    ProviderContainer scopedWith({required bool safeMode}) {
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          safeModeProvider.overrideWithValue(safeMode),
+          hostCredentialProvider.overrideWithValue('h:s'),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      scoped.listen(sharedStateProvider, (_, _) {});
+      scoped
+          .read(patchClashConfigProvider.notifier)
+          .update(
+            (state) => state.copyWith(
+              externalController: ExternalControllerStatus.open,
+              secret: 's',
+            ),
+          );
+      return scoped;
+    }
+
+    final host = scopedWith(
+      safeMode: false,
+    ).read(sharedStateProvider).setupParams!.host!;
+    expect(host['externalController'], '127.0.0.1:9090');
+    expect(host['secret'], 's');
+    expect(host['hostCredential'], 'h:s');
+    final safe = scopedWith(
+      safeMode: true,
+    ).read(sharedStateProvider).setupParams!.host!;
+    expect(safe['externalController'], '');
+    expect(safe['hostCredential'], 'h:s');
+  });
+
   test('selection and delay providers resolve groups and profile state', () {
     final profile = Profile.normal().copyWith(
       selectedMap: {'Selector': 'Leaf'},

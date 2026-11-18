@@ -22,11 +22,17 @@ void main() {
         await channel.close();
       });
       const options = CoreOptions(testUrl: 'http://t');
+      final host = hostSettingsOf(
+        const PatchClashConfig(secret: 's'),
+        credential: 'h:s',
+        safeMode: false,
+      );
 
       await RpcCoreApi(client).applyConfig(
         overlay: const {},
         selection: const {'g': 'p'},
         options: coreOptionsArgOf(options),
+        host: host,
       );
 
       final written =
@@ -35,13 +41,18 @@ void main() {
       final sent =
           jsonDecode(
                 jsonEncode(
-                  const SetupParams(selectedMap: {'g': 'p'}, options: options),
+                  SetupParams(
+                    selectedMap: const {'g': 'p'},
+                    options: options,
+                    host: host,
+                  ),
                 ),
               )
               as Map<String, Object?>;
-      expect(sent.keys.toSet(), {'selection', 'options'});
+      expect(sent.keys.toSet(), {'selection', 'options', 'host'});
       expect(written.keys, containsAll(sent.keys));
       expect((sent['options']! as Map).keys.toSet(), writtenOptions);
+      expect(sent['host'], written['host']);
       expect(options.toJson().keys.toSet(), writtenOptions);
     },
   );

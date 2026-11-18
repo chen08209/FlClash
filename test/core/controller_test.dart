@@ -287,6 +287,7 @@ void main() {
             overlay: any(named: 'overlay'),
             selection: any(named: 'selection'),
             options: any(named: 'options'),
+            host: any(named: 'host'),
           ),
         ).thenAnswer((_) async => const []);
       }
@@ -314,6 +315,29 @@ void main() {
                 'http://x.com',
               ),
             ),
+          ),
+        ).called(1);
+      });
+
+      test('hands the host settings on with the apply', () async {
+        stubApply();
+        const host = {'secret': 's', 'hostCredential': 'h:s'};
+
+        await controller.setupConfig(
+          params: const SetupParams(
+            selectedMap: {},
+            options: _options,
+            host: host,
+          ),
+        );
+
+        verify(
+          () => api.applyConfig(
+            profilePath: null,
+            overlay: null,
+            selection: const {},
+            options: any(named: 'options'),
+            host: host,
           ),
         ).called(1);
       });

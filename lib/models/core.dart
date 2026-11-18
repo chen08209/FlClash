@@ -12,6 +12,9 @@ abstract class SetupParams with _$SetupParams {
     @JsonKey(includeToJson: false, includeFromJson: false) SetupBase? base,
     @JsonKey(name: 'selection') required Map<String, String> selectedMap,
     required CoreOptions options,
+
+    /// As `config.apply` takes it, since Android hands these params on as they are.
+    @JsonKey(includeIfNull: false) Map<String, Object?>? host,
   }) = _SetupParams;
 
   factory SetupParams.fromJson(Map<String, dynamic> json) =>

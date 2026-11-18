@@ -111,6 +111,7 @@ final class RpcCoreApi implements CoreApi {
     JsonMap? overlay,
     Map<String, String> selection = const {},
     required CoreOptionsArg options,
+    JsonMap? host,
   }) {
     return _call(
       'config.apply',
@@ -120,6 +121,7 @@ final class RpcCoreApi implements CoreApi {
         'overlay': ?overlay,
         'selection': selection,
         'options': options.toJson(),
+        'host': ?host,
       },
     );
   }

@@ -44,9 +44,10 @@ To move a setting onto this path:
    `setupOnly` resets it.
 3. Keep writing it in `_makeRealProfileTask`, so a full apply hands the Core the same value. A general override is
    written there through `generalOverrideJson` and sent by `configPatchOf` only while picked, so both paths leave an
-   unpicked one to the profile. `external-controller` and `secret` are the exception: a hosted Core takes them only
-   from `config.patch` and warns about any it finds in a config, so the task writes them empty and `SetupAction`
-   patches them in after every apply.
+   unpicked one to the profile. `external-controller` and `secret` are the exception: a hosted Core takes them,
+   with the host credential, only from its host and warns about any it finds in a config, so the task writes them
+   empty. Every apply carries them as `config.apply`'s `host` (`hostSettingsOf`), `SharedState` keeps the same
+   object so a native start on Android applies them too, and a resume that applies nothing patches them in.
 
 Prefer update whenever the Core has a setter for the setting, because an apply reloads the whole config.
 

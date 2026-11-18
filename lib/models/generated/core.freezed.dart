@@ -16,7 +16,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SetupParams {
 
-@JsonKey(includeToJson: false, includeFromJson: false) SetupBase? get base;@JsonKey(name: 'selection') Map<String, String> get selectedMap; CoreOptions get options;
+@JsonKey(includeToJson: false, includeFromJson: false) SetupBase? get base;@JsonKey(name: 'selection') Map<String, String> get selectedMap; CoreOptions get options;/// As `config.apply` takes it, since Android hands these params on as they are.
+@JsonKey(includeIfNull: false) Map<String, Object?>? get host;
 /// Create a copy of SetupParams
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +31,20 @@ $SetupParamsCopyWith<SetupParams> get copyWith => _$SetupParamsCopyWithImpl<Setu
 @override
 bool operator ==(Object other) {
   final _this = this as SetupParams;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SetupParams&&(identical(other.base, _this.base) || other.base == _this.base)&&const DeepCollectionEquality().equals(other.selectedMap, _this.selectedMap)&&(identical(other.options, _this.options) || other.options == _this.options));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SetupParams&&(identical(other.base, _this.base) || other.base == _this.base)&&const DeepCollectionEquality().equals(other.selectedMap, _this.selectedMap)&&(identical(other.options, _this.options) || other.options == _this.options)&&const DeepCollectionEquality().equals(other.host, _this.host));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as SetupParams;
-  return Object.hash(runtimeType,_this.base,const DeepCollectionEquality().hash(_this.selectedMap),_this.options);
+  return Object.hash(runtimeType,_this.base,const DeepCollectionEquality().hash(_this.selectedMap),_this.options,const DeepCollectionEquality().hash(_this.host));
 }
 
 @override
 String toString() {
   final _this = this as SetupParams;
-  return 'SetupParams(base: ${_this.base}, selectedMap: ${_this.selectedMap}, options: ${_this.options})';
+  return 'SetupParams(base: ${_this.base}, selectedMap: ${_this.selectedMap}, options: ${_this.options}, host: ${_this.host})';
 }
 
 
@@ -54,7 +55,7 @@ abstract mixin class $SetupParamsCopyWith<$Res>  {
   factory $SetupParamsCopyWith(SetupParams value, $Res Function(SetupParams) _then) = _$SetupParamsCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(includeToJson: false, includeFromJson: false) SetupBase? base,@JsonKey(name: 'selection') Map<String, String> selectedMap, CoreOptions options
+@JsonKey(includeToJson: false, includeFromJson: false) SetupBase? base,@JsonKey(name: 'selection') Map<String, String> selectedMap, CoreOptions options,@JsonKey(includeIfNull: false) Map<String, Object?>? host
 });
 
 
@@ -71,12 +72,13 @@ class _$SetupParamsCopyWithImpl<$Res>
 
 /// Create a copy of SetupParams
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? base = freezed,Object? selectedMap = null,Object? options = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? base = freezed,Object? selectedMap = null,Object? options = null,Object? host = freezed,}) {
   return _then(SetupParams(
 base: freezed == base ? _self.base : base // ignore: cast_nullable_to_non_nullable
 as SetupBase?,selectedMap: null == selectedMap ? _self.selectedMap : selectedMap // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,options: null == options ? _self.options : options // ignore: cast_nullable_to_non_nullable
-as CoreOptions,
+as CoreOptions,host: freezed == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
+as Map<String, Object?>?,
   ));
 }
 /// Create a copy of SetupParams
@@ -182,10 +184,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false, includeFromJson: false)  SetupBase? base, @JsonKey(name: 'selection')  Map<String, String> selectedMap,  CoreOptions options)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false, includeFromJson: false)  SetupBase? base, @JsonKey(name: 'selection')  Map<String, String> selectedMap,  CoreOptions options, @JsonKey(includeIfNull: false)  Map<String, Object?>? host)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SetupParams() when $default != null:
-return $default(_that.base,_that.selectedMap,_that.options);case _:
+return $default(_that.base,_that.selectedMap,_that.options,_that.host);case _:
   return orElse();
 
 }
@@ -203,10 +205,10 @@ return $default(_that.base,_that.selectedMap,_that.options);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false, includeFromJson: false)  SetupBase? base, @JsonKey(name: 'selection')  Map<String, String> selectedMap,  CoreOptions options)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false, includeFromJson: false)  SetupBase? base, @JsonKey(name: 'selection')  Map<String, String> selectedMap,  CoreOptions options, @JsonKey(includeIfNull: false)  Map<String, Object?>? host)  $default,) {final _that = this;
 switch (_that) {
 case _SetupParams():
-return $default(_that.base,_that.selectedMap,_that.options);case _:
+return $default(_that.base,_that.selectedMap,_that.options,_that.host);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -223,10 +225,10 @@ return $default(_that.base,_that.selectedMap,_that.options);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeToJson: false, includeFromJson: false)  SetupBase? base, @JsonKey(name: 'selection')  Map<String, String> selectedMap,  CoreOptions options)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeToJson: false, includeFromJson: false)  SetupBase? base, @JsonKey(name: 'selection')  Map<String, String> selectedMap,  CoreOptions options, @JsonKey(includeIfNull: false)  Map<String, Object?>? host)?  $default,) {final _that = this;
 switch (_that) {
 case _SetupParams() when $default != null:
-return $default(_that.base,_that.selectedMap,_that.options);case _:
+return $default(_that.base,_that.selectedMap,_that.options,_that.host);case _:
   return null;
 
 }
@@ -238,7 +240,7 @@ return $default(_that.base,_that.selectedMap,_that.options);case _:
 @JsonSerializable()
 
 class _SetupParams implements SetupParams {
-  const _SetupParams({@JsonKey(includeToJson: false, includeFromJson: false) this.base, @JsonKey(name: 'selection') required  Map<String, String> selectedMap, required this.options}): _selectedMap = selectedMap;
+  const _SetupParams({@JsonKey(includeToJson: false, includeFromJson: false) this.base, @JsonKey(name: 'selection') required  Map<String, String> selectedMap, required this.options, @JsonKey(includeIfNull: false)  Map<String, Object?>? host}): _selectedMap = selectedMap,_host = host;
   factory _SetupParams.fromJson(Map<String, dynamic> json) => _$SetupParamsFromJson(json);
 
 @override@JsonKey(includeToJson: false, includeFromJson: false) final  SetupBase? base;
@@ -250,6 +252,17 @@ class _SetupParams implements SetupParams {
 }
 
 @override final  CoreOptions options;
+/// As `config.apply` takes it, since Android hands these params on as they are.
+ final  Map<String, Object?>? _host;
+/// As `config.apply` takes it, since Android hands these params on as they are.
+@override@JsonKey(includeIfNull: false) Map<String, Object?>? get host {
+  final value = _host;
+  if (value == null) return null;
+  if (_host is EqualUnmodifiableMapView) return _host;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(value);
+}
+
 
 /// Create a copy of SetupParams
 /// with the given fields replaced by the non-null parameter values.
@@ -264,18 +277,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SetupParams&&(identical(other.base, base) || other.base == base)&&const DeepCollectionEquality().equals(other.selectedMap, _selectedMap)&&(identical(other.options, options) || other.options == options));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SetupParams&&(identical(other.base, base) || other.base == base)&&const DeepCollectionEquality().equals(other.selectedMap, _selectedMap)&&(identical(other.options, options) || other.options == options)&&const DeepCollectionEquality().equals(other.host, _host));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,base,const DeepCollectionEquality().hash(_selectedMap),options);
+    return Object.hash(runtimeType,base,const DeepCollectionEquality().hash(_selectedMap),options,const DeepCollectionEquality().hash(_host));
 }
 
 @override
 String toString() {
-    return 'SetupParams(base: $base, selectedMap: $selectedMap, options: $options)';
+    return 'SetupParams(base: $base, selectedMap: $selectedMap, options: $options, host: $host)';
 }
 
 
@@ -286,7 +299,7 @@ abstract mixin class _$SetupParamsCopyWith<$Res> implements $SetupParamsCopyWith
   factory _$SetupParamsCopyWith(_SetupParams value, $Res Function(_SetupParams) _then) = __$SetupParamsCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(includeToJson: false, includeFromJson: false) SetupBase? base,@JsonKey(name: 'selection') Map<String, String> selectedMap, CoreOptions options
+@JsonKey(includeToJson: false, includeFromJson: false) SetupBase? base,@JsonKey(name: 'selection') Map<String, String> selectedMap, CoreOptions options,@JsonKey(includeIfNull: false) Map<String, Object?>? host
 });
 
 
@@ -303,12 +316,13 @@ class __$SetupParamsCopyWithImpl<$Res>
 
 /// Create a copy of SetupParams
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? base = freezed,Object? selectedMap = null,Object? options = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? base = freezed,Object? selectedMap = null,Object? options = null,Object? host = freezed,}) {
   return _then(_SetupParams(
 base: freezed == base ? _self.base : base // ignore: cast_nullable_to_non_nullable
 as SetupBase?,selectedMap: null == selectedMap ? _self._selectedMap : selectedMap // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,options: null == options ? _self.options : options // ignore: cast_nullable_to_non_nullable
-as CoreOptions,
+as CoreOptions,host: freezed == host ? _self._host : host // ignore: cast_nullable_to_non_nullable
+as Map<String, Object?>?,
   ));
 }
 

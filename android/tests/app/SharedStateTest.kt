@@ -16,7 +16,8 @@ class SharedStateTest {
 
     @Test
     fun `setup params reach the Core exactly as Flutter wrote them`() {
-        val params = """{"selected-map":{"GLOBAL":"auto"},"options":{"test-url":"t","skip-cert-verify":true}}"""
+        val params = """{"selected-map":{"GLOBAL":"auto"},"options":{"test-url":"t","skip-cert-verify":true},""" +
+            """"host":{"externalController":"127.0.0.1:9090","secret":"s","hostCredential":"h:s"}}"""
 
         val state = gson.fromJson("""{"setupParams":$params}""", SharedState::class.java)
 

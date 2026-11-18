@@ -157,6 +157,7 @@ Future<List<WarningInfo>> _applied(MockCoreApi api) => api.applyConfig(
   overlay: any(named: 'overlay'),
   selection: any(named: 'selection'),
   options: any(named: 'options'),
+  host: any(named: 'host'),
 );
 
 ProfileInspect _inspected({
@@ -1577,8 +1578,61 @@ void main() {
       },
     );
 
-    test('a config the Core took is followed by the external controller, '
-        'which the Core never reads from the profile', () async {
+    test(
+      'a config the Core took carries the external controller and the '
+      'host credential, which the Core never reads from the profile',
+      () async {
+        final profile = Profile.normal(label: 'p', url: 'http://127.0.0.1:9/');
+        final mocks = coreMocks();
+        when(() => _applied(mocks.api)).thenAnswer((_) async => const []);
+        when(() => mocks.api.lastWarnings()).thenAnswer((_) async => const []);
+        when(() => mocks.api.patchConfig(any())).thenAnswer((_) async => 1);
+        final scoped = ProviderContainer(
+          overrides: [
+            profilesProvider.overrideWith(() => TestProfiles([profile])),
+            currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+            setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
+            coreHandlerProvider.overrideWithValue(mocks.controller),
+            setupActionProvider.overrideWith(SetupAction.new),
+            hostCredentialProvider.overrideWithValue('h:s'),
+          ],
+        );
+        addTearDown(scoped.dispose);
+        scoped.listen(patchClashConfigProvider, (_, _) {});
+        scoped
+            .read(patchClashConfigProvider.notifier)
+            .value = const PatchClashConfig(
+          externalController: ExternalControllerStatus.open,
+          secret: 's',
+        );
+
+        expect(
+          await scoped
+              .read(setupActionProvider.notifier)
+              .applyProfile(force: true),
+          isTrue,
+        );
+
+        final host =
+            verify(
+                  () => mocks.api.applyConfig(
+                    profilePath: any(named: 'profilePath'),
+                    overlay: any(named: 'overlay'),
+                    selection: any(named: 'selection'),
+                    options: any(named: 'options'),
+                    host: captureAny(named: 'host'),
+                  ),
+                ).captured.single
+                as Map<String, Object?>;
+        expect(host['externalController'], '127.0.0.1:9090');
+        expect(host['secret'], 's');
+        expect(host['hostCredential'], 'h:s');
+        verifyNever(() => mocks.api.patchConfig(any()));
+      },
+    );
+
+    test('a resume that finds the config already applied still hands the '
+        'Core the external controller and the host credential', () async {
       final profile = Profile.normal(label: 'p', url: 'http://127.0.0.1:9/');
       final mocks = coreMocks();
       when(() => _applied(mocks.api)).thenAnswer((_) async => const []);
@@ -1591,6 +1645,7 @@ void main() {
           setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
           coreHandlerProvider.overrideWithValue(mocks.controller),
           setupActionProvider.overrideWith(SetupAction.new),
+          hostCredentialProvider.overrideWithValue('h:s'),
         ],
       );
       addTearDown(scoped.dispose);
@@ -1601,20 +1656,24 @@ void main() {
         externalController: ExternalControllerStatus.open,
         secret: 's',
       );
+      final action = scoped.read(setupActionProvider.notifier);
+      expect(await action.applyProfile(force: true), isTrue);
+      clearInteractions(mocks.api);
 
-      expect(
-        await scoped
-            .read(setupActionProvider.notifier)
-            .applyProfile(force: true),
-        isTrue,
-      );
+      expect(await action.applyProfile(), isTrue);
 
+      verifyNever(() => _applied(mocks.api));
       final patch =
           verify(() => mocks.api.patchConfig(captureAny())).captured.single
               as ConfigPatch;
       expect(patch.externalController, '127.0.0.1:9090');
       expect(patch.secret, 's');
-      expect(patch.mode, isNull);
+      expect(patch.hostCredential, 'h:s');
+      expect(
+        (patch.toJson()['options']! as Map).containsKey('mitmTrustedCa'),
+        isFalse,
+        reason: 'options without it give the CA trust back to the config',
+      );
     });
 
     test('the warnings of a setup are kept, whether the Core took it or '
@@ -1665,6 +1724,45 @@ void main() {
       rejecting = true;
       expect(await setupAction.applyProfile(force: true), isFalse);
       expect(scoped.read(configWarningsStateProvider), [warning]);
+    });
+
+    test('a resume that finds the config already applied still shows the '
+        'warnings the Core kept from it', () async {
+      final profile = Profile.normal(label: 'p', url: 'http://127.0.0.1:9/');
+      final mocks = coreMocks();
+      when(() => _applied(mocks.api)).thenAnswer((_) async => const []);
+      when(() => mocks.api.patchConfig(any())).thenAnswer((_) async => 1);
+      when(() => mocks.api.lastWarnings()).thenAnswer(
+        (_) async => const [
+          WarningInfo(level: 'warning', path: 'proxies[1]', message: 'x'),
+        ],
+      );
+      final scoped = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([profile])),
+          currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
+          setupStateProvider.overrideWith((_, _) => nullProfileSetupState),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      scoped.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      final action = scoped.read(setupActionProvider.notifier);
+      expect(await action.applyProfile(force: true), isTrue);
+      scoped.read(configWarningsStateProvider.notifier).value = const [];
+      clearInteractions(mocks.api);
+
+      expect(await action.applyProfile(), isTrue);
+
+      verifyNever(() => _applied(mocks.api));
+      expect(scoped.read(configWarningsStateProvider), const [
+        ConfigWarning(
+          level: ConfigWarningLevel.warning,
+          path: 'proxies[1]',
+          message: 'x',
+        ),
+      ]);
     });
 
     test('a setup against a Core marked stopped leaves no warnings beside '

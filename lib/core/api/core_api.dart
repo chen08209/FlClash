@@ -71,6 +71,7 @@ final class ConfigPatch {
   final ControllerCorsArg? externalControllerCors;
   final bool? unifiedDelay;
   final List<String>? authentication;
+  final String? hostCredential;
   final bool? geoAutoUpdate;
   final int? geoUpdateInterval;
   final Map<String, String>? geoxUrl;
@@ -90,6 +91,7 @@ final class ConfigPatch {
     this.externalControllerCors,
     this.unifiedDelay,
     this.authentication,
+    this.hostCredential,
     this.geoAutoUpdate,
     this.geoUpdateInterval,
     this.geoxUrl,
@@ -110,6 +112,7 @@ final class ConfigPatch {
     'externalControllerCors': ?externalControllerCors?.toJson(),
     'unifiedDelay': ?unifiedDelay,
     'authentication': ?authentication,
+    'hostCredential': ?hostCredential,
     'geoAutoUpdate': ?geoAutoUpdate,
     'geoUpdateInterval': ?geoUpdateInterval,
     if (geoxUrl != null && geoxUrl!.isNotEmpty) 'geoxUrl': geoxUrl,
@@ -188,11 +191,13 @@ abstract interface class CoreApi {
   Future<void> stopEngine();
 
   /// A null [profilePath] applies the config.yaml already in the home directory.
+  /// A null [host] keeps the host settings in force; [hostSettingsOf] makes one.
   Future<List<WarningInfo>> applyConfig({
     String? profilePath,
     JsonMap? overlay,
     Map<String, String> selection = const {},
     required CoreOptionsArg options,
+    JsonMap? host,
   });
 
   /// Answers the `seq` of the change it made, or of the last change when it

@@ -216,6 +216,7 @@ Future<List<WarningInfo>> _applied(MockCoreApi api) => api.applyConfig(
   overlay: any(named: 'overlay'),
   selection: any(named: 'selection'),
   options: any(named: 'options'),
+  host: any(named: 'host'),
 );
 
 void main() {

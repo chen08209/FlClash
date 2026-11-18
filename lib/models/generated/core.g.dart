@@ -9,12 +9,14 @@ part of '../core.dart';
 _SetupParams _$SetupParamsFromJson(Map<String, dynamic> json) => _SetupParams(
   selectedMap: Map<String, String>.from(json['selection'] as Map),
   options: CoreOptions.fromJson(json['options'] as Map<String, dynamic>),
+  host: json['host'] as Map<String, dynamic>?,
 );
 
 Map<String, dynamic> _$SetupParamsToJson(_SetupParams instance) =>
     <String, dynamic>{
       'selection': instance.selectedMap,
       'options': instance.options,
+      'host': ?instance.host,
     };
 
 _CoreOptions _$CoreOptionsFromJson(Map<String, dynamic> json) => _CoreOptions(
