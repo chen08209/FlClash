@@ -7,6 +7,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -153,6 +154,7 @@ class _LogsViewState extends ConsumerState<LogsView>
   }
 
   Widget _buildList(BuildContext context, LogsState state, List<Log> logs) {
+    final selectable = !ViewScope.isMobileOf(context);
     final padding = EdgeInsets.only(
       top: context.contentTopPadding,
       bottom: 16 + context.bottomInset,
@@ -186,8 +188,8 @@ class _LogsViewState extends ConsumerState<LogsView>
             gap: recordListGap,
             estimatedItemExtent: recordListEstimatedExtent,
             itemBuilder: (log, _, _) => MemoBuilder(
-              inputs: [log],
-              builder: (_) => LogItem(log: log),
+              inputs: [log, selectable],
+              builder: (_) => LogItem(log: log, selectable: selectable),
             ),
           ),
         ),
@@ -199,7 +201,12 @@ class _LogsViewState extends ConsumerState<LogsView>
 class LogItem extends StatelessWidget {
   final Log log;
 
-  const LogItem({super.key, required this.log});
+  /// Whether the text is selected in place; otherwise a tap opens the log's
+  /// details, where a phone can select and copy it without fighting the
+  /// list's scroll.
+  final bool selectable;
+
+  const LogItem({super.key, required this.log, this.selectable = true});
 
   @override
   Widget build(BuildContext context) {
@@ -210,7 +217,7 @@ class LogItem extends StatelessWidget {
     };
     final payload = log.parsed;
     return RecordListItem(
-      onTap: () {},
+      onTap: selectable ? () {} : () => _showLogDetail(context, log),
       header: RecordHeader(
         children: [
           RecordTimestamp(log.dateTime),
@@ -224,7 +231,11 @@ class LogItem extends StatelessWidget {
           ),
         ],
       ),
-      body: _LogBody(payload: payload, errorColor: tone.accentColor(context)),
+      body: _LogBody(
+        payload: payload,
+        errorColor: tone.accentColor(context),
+        selectable: selectable,
+      ),
     );
   }
 }
@@ -232,8 +243,13 @@ class LogItem extends StatelessWidget {
 class _LogBody extends StatelessWidget {
   final LogPayload payload;
   final Color? errorColor;
+  final bool selectable;
 
-  const _LogBody({required this.payload, this.errorColor});
+  const _LogBody({
+    required this.payload,
+    required this.selectable,
+    this.errorColor,
+  });
 
   String get _sourceText => [
     payload.tag,
@@ -248,35 +264,105 @@ class _LogBody extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SelectableText(payload.message, style: styles.primary),
+          selectable
+              ? SelectableText(payload.message, style: styles.primary)
+              : Text(payload.message, style: styles.primary),
           if (payload.tag.isNotEmpty)
             Text(payload.tag, style: styles.secondary),
         ],
       );
     }
-    return SelectableText.rich(
-      TextSpan(
-        children: [
-          TextSpan(text: route.destination, style: styles.title),
-          if (route.error.isNotEmpty)
-            TextSpan(
-              text: '\n${route.error}',
-              style: styles.secondary.copyWith(color: errorColor),
-            ),
-          const TextSpan(text: '\n'),
-          if (route.rule.isNotEmpty) ...[
-            TextSpan(text: route.rule, style: styles.secondary),
-            TextSpan(text: ' \u2192 ', style: styles.secondary.toJetBrainsMono),
-          ],
+    final text = TextSpan(
+      children: [
+        TextSpan(text: route.destination, style: styles.title),
+        if (route.error.isNotEmpty)
           TextSpan(
-            text: route.proxy,
-            style: AppTextStyle.footnote
-                .of(context, emphasized: true)
-                .copyWith(color: context.colorScheme.primary),
+            text: '\n${route.error}',
+            style: styles.secondary.copyWith(color: errorColor),
           ),
-          TextSpan(text: '\n$_sourceText', style: styles.secondary),
+        const TextSpan(text: '\n'),
+        if (route.rule.isNotEmpty) ...[
+          TextSpan(text: route.rule, style: styles.secondary),
+          TextSpan(text: ' \u2192 ', style: styles.secondary.toJetBrainsMono),
         ],
+        TextSpan(
+          text: route.proxy,
+          style: AppTextStyle.footnote
+              .of(context, emphasized: true)
+              .copyWith(color: context.colorScheme.primary),
+        ),
+        TextSpan(text: '\n$_sourceText', style: styles.secondary),
+      ],
+    );
+    return selectable ? SelectableText.rich(text) : Text.rich(text);
+  }
+}
+
+void _showLogDetail(BuildContext context, Log log) {
+  final appLocalizations = context.appLocalizations;
+  showNestedSheet<void>(
+    context,
+    builder: (context) => Scaffold(
+      title: appLocalizations.details(appLocalizations.log),
+      iconActions: [
+        IconButtonData(
+          glyph: AppGlyphs.copy,
+          tooltip: appLocalizations.copy,
+          onPressed: () => _copyLog(context, log),
+        ),
+      ],
+      body: _LogDetailView(log: log),
+    ),
+  );
+}
+
+Future<void> _copyLog(BuildContext context, Log log) async {
+  final copySuccess = context.appLocalizations.copySuccess;
+  await Clipboard.setData(
+    ClipboardData(
+      text: '${log.dateTime} [${log.logLevel.name}] ${log.payload}',
+    ),
+  );
+  dialogs.showBanner(copySuccess);
+}
+
+class _LogDetailView extends StatelessWidget {
+  final Log log;
+
+  const _LogDetailView({required this.log});
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        bottom: 20 + context.bottomInset,
+        top: context.sectionsTopPadding,
       ),
+      children: [
+        generateSection(
+          title: appLocalizations.basicInfo,
+          items: [
+            DetailRow.text(title: appLocalizations.time, value: log.dateTime),
+            DetailRow.text(
+              title: appLocalizations.logLevel,
+              value: log.logLevel.name,
+            ),
+          ],
+        ),
+        generateSection(
+          title: appLocalizations.content,
+          items: [
+            DecorationListItem(
+              minVerticalPadding: 14,
+              title: SelectableText(
+                log.payload,
+                style: AppTextStyle.subheadline.of(context),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
