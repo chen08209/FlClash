@@ -218,6 +218,8 @@ abstract class VpnOptions with _$VpnOptions {
     @Default([]) List<String> routeAddress,
     @Default(0) int mtu,
     @Default('') String congestionController,
+    @Default(defaultVpnIpv4Address) String ipv4Address,
+    @Default(defaultVpnIpv6Address) String ipv6Address,
   }) = _VpnOptions;
 
   factory VpnOptions.fromJson(Map<String, Object?> json) =>
@@ -245,6 +247,7 @@ extension VpnOptionsExt on VpnOptions {
     return copyWith(
       port: systemProxy ? port : 0,
       bypassDomain: systemProxy ? bypassDomain : const [],
+      ipv6Address: ipv6 ? ipv6Address : defaultVpnIpv6Address,
       accessControlProps: accessControl.enable
           ? AccessControlProps(
               enable: true,

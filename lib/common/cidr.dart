@@ -78,6 +78,30 @@ bool isCidr(String value) {
   return int.parse(prefix) <= bits;
 }
 
+bool isTunCidr(String value, {required bool isIpv6}) {
+  if (!isCidr(value) || value.contains(':') != isIpv6) {
+    return false;
+  }
+  final slash = value.indexOf('/');
+  final address = InternetAddress.tryParse(value.substring(0, slash));
+  final prefix = int.tryParse(value.substring(slash + 1));
+  if (address == null || prefix == null) {
+    return false;
+  }
+  final raw = address.rawAddress;
+  final bits = raw.length * 8;
+  if (prefix < 1 || prefix > bits - 2) {
+    return false;
+  }
+  var hostValue = BigInt.zero;
+  for (final byte in raw) {
+    hostValue = (hostValue << 8) | BigInt.from(byte);
+  }
+  final mask = (BigInt.one << (bits - prefix)) - BigInt.one;
+  final hostBits = hostValue & mask;
+  return hostBits > BigInt.zero && hostBits < mask;
+}
+
 Map<int, List<_Range>> _parseAll(Iterable<String> cidrs) {
   final ranges = <int, List<_Range>>{};
   for (final cidr in cidrs) {
