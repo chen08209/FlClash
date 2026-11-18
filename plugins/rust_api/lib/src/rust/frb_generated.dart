@@ -211,7 +211,7 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateApiInitInitApp();
 
   Future<bool> crateApiLaunchIsAutostartEnabled({
-    required String name,
+    required String id,
     required String executable,
   });
 
@@ -236,7 +236,8 @@ abstract class RustLibApi extends BaseApi {
   Future<WifiSsidPermission> crateApiWifiRequestWifiSsidPermission();
 
   Future<bool> crateApiLaunchSetAutostart({
-    required String name,
+    required String id,
+    required String displayName,
     required String executable,
     required bool enabled,
   });
@@ -1412,14 +1413,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<bool> crateApiLaunchIsAutostartEnabled({
-    required String name,
+    required String id,
     required String executable,
   }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(name, serializer);
+          sse_encode_String(id, serializer);
           sse_encode_String(executable, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
@@ -1433,7 +1434,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateApiLaunchIsAutostartEnabledConstMeta,
-        argValues: [name, executable],
+        argValues: [id, executable],
         apiImpl: this,
       ),
     );
@@ -1442,7 +1443,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiLaunchIsAutostartEnabledConstMeta =>
       const TaskConstMeta(
         debugName: "is_autostart_enabled",
-        argNames: ["name", "executable"],
+        argNames: ["id", "executable"],
       );
 
   @override
@@ -1655,7 +1656,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<bool> crateApiLaunchSetAutostart({
-    required String name,
+    required String id,
+    required String displayName,
     required String executable,
     required bool enabled,
   }) {
@@ -1663,7 +1665,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(name, serializer);
+          sse_encode_String(id, serializer);
+          sse_encode_String(displayName, serializer);
           sse_encode_String(executable, serializer);
           sse_encode_bool(enabled, serializer);
           pdeCallFfi(
@@ -1678,7 +1681,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateApiLaunchSetAutostartConstMeta,
-        argValues: [name, executable, enabled],
+        argValues: [id, displayName, executable, enabled],
         apiImpl: this,
       ),
     );
@@ -1686,7 +1689,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiLaunchSetAutostartConstMeta => const TaskConstMeta(
     debugName: "set_autostart",
-    argNames: ["name", "executable", "enabled"],
+    argNames: ["id", "displayName", "executable", "enabled"],
   );
 
   @override

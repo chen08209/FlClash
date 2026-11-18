@@ -1510,13 +1510,13 @@ fn wire__crate__api__launch__is_autostart_enabled_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_name = <String>::sse_decode(&mut deserializer);
+            let api_id = <String>::sse_decode(&mut deserializer);
             let api_executable = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Ok::<_, ()>(crate::api::launch::is_autostart_enabled(
-                        api_name,
+                        api_id,
                         api_executable,
                     ))?;
                     std::result::Result::Ok(output_ok)
@@ -1790,14 +1790,16 @@ fn wire__crate__api__launch__set_autostart_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_name = <String>::sse_decode(&mut deserializer);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            let api_display_name = <String>::sse_decode(&mut deserializer);
             let api_executable = <String>::sse_decode(&mut deserializer);
             let api_enabled = <bool>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Ok::<_, ()>(crate::api::launch::set_autostart(
-                        api_name,
+                        api_id,
+                        api_display_name,
                         api_executable,
                         api_enabled,
                     ))?;

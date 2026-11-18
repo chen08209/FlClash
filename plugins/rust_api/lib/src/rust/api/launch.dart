@@ -7,19 +7,23 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 Future<bool> isAutostartEnabled({
-  required String name,
+  required String id,
   required String executable,
 }) => RustLib.instance.api.crateApiLaunchIsAutostartEnabled(
-  name: name,
+  id: id,
   executable: executable,
 );
 
+/// `id` names the registration, the Windows Run value or the Linux autostart
+/// file; a Linux session lists the entry under the display name.
 Future<bool> setAutostart({
-  required String name,
+  required String id,
+  required String displayName,
   required String executable,
   required bool enabled,
 }) => RustLib.instance.api.crateApiLaunchSetAutostart(
-  name: name,
+  id: id,
+  displayName: displayName,
   executable: executable,
   enabled: enabled,
 );

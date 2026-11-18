@@ -11,11 +11,11 @@ fn status(service: &SMAppService) -> SMAppServiceStatus {
     unsafe { service.status() }
 }
 
-pub fn autostart_enabled(_name: &str, _executable: &str) -> bool {
+pub fn autostart_enabled(_id: &str, _executable: &str) -> bool {
     main_app().is_some_and(|service| status(&service) == SMAppServiceStatus::Enabled)
 }
 
-pub fn set_autostart(_name: &str, _executable: &str, enabled: bool) -> bool {
+pub fn set_autostart(_id: &str, _display_name: &str, _executable: &str, enabled: bool) -> bool {
     let Some(service) = main_app() else {
         return false;
     };

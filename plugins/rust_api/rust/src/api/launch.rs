@@ -1,11 +1,13 @@
 use flutter_rust_bridge::frb;
 
-pub fn is_autostart_enabled(name: String, executable: String) -> bool {
-    crate::launch::autostart_enabled(&name, &executable)
+pub fn is_autostart_enabled(id: String, executable: String) -> bool {
+    crate::launch::autostart_enabled(&id, &executable)
 }
 
-pub fn set_autostart(name: String, executable: String, enabled: bool) -> bool {
-    crate::launch::set_autostart(&name, &executable, enabled)
+/// `id` names the registration, the Windows Run value or the Linux autostart
+/// file; a Linux session lists the entry under the display name.
+pub fn set_autostart(id: String, display_name: String, executable: String, enabled: bool) -> bool {
+    crate::launch::set_autostart(&id, &display_name, &executable, enabled)
 }
 
 pub fn register_url_scheme(scheme: String, executable: String) -> bool {

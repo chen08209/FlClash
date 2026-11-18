@@ -14,28 +14,28 @@ use super::entries::{
     STARTUP_APPROVED_KEY, URL_COMMAND_KEY, URL_PROTOCOL_VALUE,
 };
 
-pub fn autostart_enabled(name: &str, executable: &str) -> bool {
+pub fn autostart_enabled(id: &str, executable: &str) -> bool {
     let registered = Key::open(HKEY_CURRENT_USER, RUN_KEY)
-        .and_then(|key| key.string(name))
+        .and_then(|key| key.string(id))
         .is_some_and(|value| value == run_value(executable));
     registered
         && startup_approved(
             Key::open(HKEY_CURRENT_USER, STARTUP_APPROVED_KEY)
-                .and_then(|key| key.binary(name))
+                .and_then(|key| key.binary(id))
                 .as_deref(),
         )
 }
 
-pub fn set_autostart(name: &str, executable: &str, enabled: bool) -> bool {
+pub fn set_autostart(id: &str, _display_name: &str, executable: &str, enabled: bool) -> bool {
     if enabled {
         Key::create(HKEY_CURRENT_USER, RUN_KEY)
-            .is_some_and(|key| key.set_string(name, run_value(executable)))
+            .is_some_and(|key| key.set_string(id, run_value(executable)))
             && Key::create(HKEY_CURRENT_USER, STARTUP_APPROVED_KEY)
-                .is_some_and(|key| key.set(name, REG_BINARY, &STARTUP_APPROVED_ENABLED))
+                .is_some_and(|key| key.set(id, REG_BINARY, &STARTUP_APPROVED_ENABLED))
     } else {
-        let run = Key::open_writable(HKEY_CURRENT_USER, RUN_KEY).is_none_or(|key| key.delete(name));
+        let run = Key::open_writable(HKEY_CURRENT_USER, RUN_KEY).is_none_or(|key| key.delete(id));
         let approved = Key::open_writable(HKEY_CURRENT_USER, STARTUP_APPROVED_KEY)
-            .is_none_or(|key| key.delete(name));
+            .is_none_or(|key| key.delete(id));
         run && approved
     }
 }

@@ -18,21 +18,26 @@ use windows as platform;
 
 #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
 mod platform {
-    pub fn autostart_enabled(_name: &str, _executable: &str) -> bool {
+    pub fn autostart_enabled(_id: &str, _executable: &str) -> bool {
         false
     }
 
-    pub fn set_autostart(_name: &str, _executable: &str, _enabled: bool) -> bool {
+    pub fn set_autostart(
+        _id: &str,
+        _display_name: &str,
+        _executable: &str,
+        _enabled: bool,
+    ) -> bool {
         false
     }
 }
 
-pub fn autostart_enabled(name: &str, executable: &str) -> bool {
-    platform::autostart_enabled(name, executable)
+pub fn autostart_enabled(id: &str, executable: &str) -> bool {
+    platform::autostart_enabled(id, executable)
 }
 
-pub fn set_autostart(name: &str, executable: &str, enabled: bool) -> bool {
-    platform::set_autostart(name, executable, enabled)
+pub fn set_autostart(id: &str, display_name: &str, executable: &str, enabled: bool) -> bool {
+    platform::set_autostart(id, display_name, executable, enabled)
 }
 
 pub fn register_url_scheme(scheme: &str, executable: &str) -> bool {
