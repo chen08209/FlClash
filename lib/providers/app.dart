@@ -16,7 +16,6 @@ part 'generated/app.g.dart';
 @Riverpod(keepAlive: true)
 bool safeMode(Ref ref) => safeModeBuild;
 
-/// Only Android draws the icon of the app behind a connection.
 @Riverpod(keepAlive: true)
 App? packageIconSource(Ref ref) => app;
 

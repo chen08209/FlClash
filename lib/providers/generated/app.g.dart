@@ -49,17 +49,12 @@ final class SafeModeProvider extends $FunctionalProvider<bool, bool, bool>
 
 String _$safeModeHash() => r'3ef07344f5a8dbf775ccf0a4861c0317ec8b2266';
 
-/// Only Android draws the icon of the app behind a connection.
-
 @ProviderFor(packageIconSource)
 final packageIconSourceProvider = PackageIconSourceProvider._();
-
-/// Only Android draws the icon of the app behind a connection.
 
 final class PackageIconSourceProvider
     extends $FunctionalProvider<App?, App?, App?>
     with $Provider<App?> {
-  /// Only Android draws the icon of the app behind a connection.
   PackageIconSourceProvider._()
     : super(
         from: null,
