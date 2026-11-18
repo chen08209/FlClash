@@ -76,24 +76,14 @@ object Core {
         }
     }
 
-    fun startListener() = ifEngine(running = false, "engine.start")
+    fun startListener(): Result<Unit> = client.startEngine()
 
-    fun stopListener() = ifEngine(running = true, "engine.stop")
-
-    private fun ifEngine(
-        running: Boolean,
-        method: String,
-    ) {
+    fun stopListener() {
         try {
-            if (engineRunning() == running) client.call(method)
+            if (client.engineRunning()) client.call("engine.stop")
         } catch (error: CoreCallException) {
-            Log.w(TAG, "$method failed: ${error.message}")
+            Log.w(TAG, "engine.stop failed: ${error.message}")
         }
-    }
-
-    private fun engineRunning(): Boolean {
-        val opened = client.snapshot("engine.state", emptyMap())
-        return opened?.getAsJsonObject("snapshot")?.get("state")?.asString == "running"
     }
 
     fun watchTraffic(
@@ -113,16 +103,12 @@ object Core {
     fun quickSetup(
         initParams: String,
         setupParams: String,
+        trustsCa: (String) -> Boolean,
         callback: (String) -> Unit,
     ) {
         val steps: CompletableFuture<JsonElement?> =
             try {
-                val init = JsonParser.parseString(initParams)
-                val setup = JsonParser.parseString(setupParams)
-                client
-                    .callAsync("core.init", init)
-                    .thenCompose { client.callAsync("config.apply", setup) }
-                    .thenCompose { client.callAsync("engine.start") }
+                client.quickSetup(JsonParser.parseString(initParams), JsonParser.parseString(setupParams), trustsCa)
             } catch (error: Exception) {
                 CompletableFuture.failedFuture(error)
             }
@@ -179,3 +165,15 @@ object Core {
     private const val TAG = "FlClash"
     private const val TRAFFIC_INTERVAL_MILLIS = 1000
 }
+
+// The certificate's answer completes on the Core's frame thread, and the trust check reads the device's key store.
+internal fun CoreClient.quickSetup(
+    init: JsonElement,
+    setup: JsonElement,
+    trustsCa: (String) -> Boolean,
+): CompletableFuture<JsonElement?> =
+    callAsync("core.init", init)
+        .thenCompose { callAsync("mitm.certificate").exceptionally { null } }
+        .thenApplyAsync { answer -> withTrustedCa(setup, answer, trustsCa) }
+        .thenCompose { params -> callAsync("config.apply", params) }
+        .thenCompose { callAsync("engine.start") }

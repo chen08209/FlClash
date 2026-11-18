@@ -79,11 +79,17 @@ class SetupAction extends _$SetupAction {
   SetupParams get _setupParams => SetupParams(
     selectedMap: ref.read(selectedMapProvider),
     options: ref.read(coreOptionsProvider),
+    host: hostSettingsOf(
+      ref.read(patchClashConfigProvider),
+      credential: ref.read(hostCredentialProvider),
+      safeMode: ref.read(safeModeProvider),
+    ),
   );
 
-  // The selection reaches the Core through changeProxy, not through an apply.
+  // The selection reaches the Core through changeProxy and the host settings
+  // through a patch, not through an apply.
   SetupParams get _appliedParams =>
-      _setupParams.copyWith(selectedMap: const {});
+      _setupParams.copyWith(selectedMap: const {}, host: null);
 
   Future<bool> fullSetup() async {
     if (!ref.read(initProvider)) return true;
@@ -400,6 +406,7 @@ class SetupAction extends _$SetupAction {
         configPatchOf(
           _effectivePatchConfig(patchConfig),
           authentication: networkSetting.authentication.credentials,
+          hostCredential: ref.read(hostCredentialProvider),
           options: ref.read(coreOptionsProvider),
         ),
       );
@@ -787,15 +794,15 @@ class SetupAction extends _$SetupAction {
             authorized &&
             !ref.read(tunDisabledThisRunProvider),
       ),
-      externalController: patchConfig.secret.isEmpty
-          ? ExternalControllerStatus.close
-          : patchConfig.externalController,
+      externalController: effectiveControllerOf(patchConfig, safeMode: false),
     );
   }
 
-  /// The Core ignores the profile's `external-controller` and `secret` while
-  /// a host drives it and opens the controller from a patch only.
-  Future<void> _openController(PatchClashConfig config) async {
+  /// An apply carries the host settings; a resume that applies nothing sends
+  /// them too, for a Core that started from params saved before they did, and
+  /// the options, which hand the CA trust a native start checked back to the
+  /// app's own check.
+  Future<void> _patchHostSettings(PatchClashConfig config) async {
     try {
       await _core.updateConfig(
         ConfigPatch(
@@ -804,11 +811,13 @@ class SetupAction extends _$SetupAction {
           externalControllerCors: controllerCorsOf(
             config.externalControllerCors,
           ),
+          hostCredential: ref.read(hostCredentialProvider),
+          options: coreOptionsArgOf(ref.read(coreOptionsProvider)),
         ),
       );
     } catch (error) {
       commonPrint.log(
-        'external controller: ${compactError(error)}',
+        'host settings: ${compactError(error)}',
         logLevel: coreFailureLogLevel(error),
       );
     }
@@ -928,6 +937,8 @@ class SetupAction extends _$SetupAction {
       _appliedInputs = inputs;
       globalState.lastConfigCounts = realProfile.counts;
       await preloadInvoke?.call();
+      await _loadConfigWarnings();
+      await _patchHostSettings(realPatchConfig);
       return _SetupTaskResult.completed;
     }
     // Go answers a config it rejects by running its built-in default, which
@@ -996,7 +1007,6 @@ class SetupAction extends _$SetupAction {
         globalState.lastConfigCounts =
             realProfile?.counts ?? configCountsOf(const {});
         _appliedInputs = inputs;
-        await _openController(realPatchConfig);
         if (system.isAndroid) {
           await preferences.saveAppliedConfigMd5(yamlMd5);
         }

@@ -48,7 +48,7 @@ final class UpdateParamsProvider
   }
 }
 
-String _$updateParamsHash() => r'33ff114f768d5113413f8f7deb93a0177fc52d72';
+String _$updateParamsHash() => r'5fd57ac0367e819679f998b431f82077d99d7192';
 
 @ProviderFor(coreOptions)
 final coreOptionsProvider = CoreOptionsProvider._();
@@ -436,7 +436,7 @@ final class SharedStateProvider
   }
 }
 
-String _$sharedStateHash() => r'133f99c0f0ed2d0dcc2811c2a4d00fb9a18fc4f0';
+String _$sharedStateHash() => r'c17e27e4c88f230b2c5f267057486f3cffe61221';
 
 @ProviderFor(vpnRouteAddress)
 final vpnRouteAddressProvider = VpnRouteAddressProvider._();
@@ -513,7 +513,7 @@ final class VpnOptionsProvider
   }
 }
 
-String _$vpnOptionsHash() => r'cb60357f2706d545ce4b78b38c2af2f8f1ad9f32';
+String _$vpnOptionsHash() => r'9defd158beb047b441d029c3feff09f5277b16bb';
 
 @ProviderFor(AccessControlState)
 final accessControlStateProvider = AccessControlStateProvider._();

@@ -285,6 +285,7 @@ void main() {
     final patch = configPatchOf(
       _patch,
       authentication: const ['user:pass'],
+      hostCredential: 'host:secret',
       options: const CoreOptions(
         testUrl: 'https://a.test/generate_204',
         skipCertVerify: true,

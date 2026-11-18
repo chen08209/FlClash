@@ -56,6 +56,15 @@ final Map<String, _Call> _calls = {
       delayTestTimeout: 3000,
       mitmCapture: true,
     ),
+    host: const {
+      'externalController': '127.0.0.1:9090',
+      'secret': 's',
+      'externalControllerCors': {
+        'allowOrigins': ['*'],
+        'allowPrivateNetwork': true,
+      },
+      'hostCredential': 'h:s',
+    },
   ),
   'config.patch': (api) => api.patchConfig(
     const ConfigPatch(
@@ -75,6 +84,7 @@ final Map<String, _Call> _calls = {
       ),
       unifiedDelay: true,
       authentication: ['u:p'],
+      hostCredential: 'h:s',
       geoAutoUpdate: true,
       geoUpdateInterval: 24,
       geoxUrl: {'geoip': 'http://g'},

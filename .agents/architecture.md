@@ -340,6 +340,10 @@ Quick Settings, notification, revoke, and Always-on VPN paths converge on the sa
   because only Flutter can apply the current profile. Without Flutter, native code claims the intent, restores
   `SharedState` from preferences, runs `quickSetup`, checks VPN permission, and runs the start; claiming first is what
   makes a second action during the setup toggle that start off instead of racing a second setup against it.
+  Such a start only runs the takeover on the config last applied, host settings included, and checks the MITM CA
+  against the device's stores itself (`withTrustedCa`), so a CA the user removed is not decrypted under; what
+  needs the app, such as pausing on an excluded Wi-Fi or updating subscriptions, rule sets and modules, waits until
+  it opens.
 - An engine that attaches to a run the service already has, started that way or outliving the last engine, adopts it:
   `SetupAction.initStatus` restores the md5 of the config.yaml the Core last accepted and pushes the profile only when it
   now builds differently. Pushing the same config again rebuilds every proxy group, and a url-test group starts over on

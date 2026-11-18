@@ -23,6 +23,11 @@ bool safeMode(Ref ref) => safeModeBuild;
 @Riverpod(keepAlive: true)
 AppIconSource? packageIconSource(Ref ref) => app ?? DesktopAppIconSource();
 
+/// The `user:password` this app's own requests present to the Core's proxy
+/// listeners; the Core never intercepts a request that carries it.
+@Riverpod(keepAlive: true)
+String hostCredential(Ref ref) => '';
+
 /// Android: su is there and granted FlClash's last request.
 @Riverpod(keepAlive: true)
 Future<bool> rootAccess(Ref ref) async {

@@ -23,6 +23,7 @@ private class FakeCore(
     var refuseOpen = false
     var refuseSend = false
     var loseAfterAnswering: String? = null
+    val delivering: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
     private var receiver: FrameReceiver? = null
 
     override fun open(receiver: FrameReceiver): Long {
@@ -51,7 +52,12 @@ private class FakeCore(
     }
 
     fun push(json: String) {
-        receiver!!.onFrame(json.toByteArray())
+        delivering.set(true)
+        try {
+            receiver!!.onFrame(json.toByteArray())
+        } finally {
+            delivering.set(false)
+        }
     }
 
     fun methods() = sent.map { it.get("method").asString }
@@ -133,6 +139,26 @@ class CoreClientTest {
     }
 
     @Test
+    fun `a quick setup checks the CA off the thread that delivers the Core's answers`() {
+        val core = FakeCore { method, _ -> if (method == "mitm.certificate") null else RESULT }
+        var checkedWhileDelivering: Boolean? = null
+
+        val setup =
+            CoreClient(core).quickSetup(JsonObject(), JsonParser.parseString("""{"options":{}}""")) { pem ->
+                checkedWhileDelivering = core.delivering.get()
+                pem == "P"
+            }
+        val certificate = core.sent.single { it.get("method").asString == "mitm.certificate" }.get("id").asLong
+        core.push("""{"jsonrpc":"2.0","id":$certificate,"result":{"certificate":{"pem":"P","fingerprint":"F"}}}""")
+        setup.get(5, TimeUnit.SECONDS)
+
+        assertEquals(false, checkedWhileDelivering)
+        val apply = core.sent.single { it.get("method").asString == "config.apply" }
+        assertEquals("F", apply.getAsJsonObject("params").getAsJsonObject("options").get("mitmTrustedCa").asString)
+        assertEquals("engine.start", core.methods().last())
+    }
+
+    @Test
     fun `a lost session fails what waits and the next call opens another`() {
         val core = FakeCore()
         val client = CoreClient(core)
@@ -163,6 +189,23 @@ class CoreClientTest {
         val credit = core.sent.last()
         assertEquals("${'$'}/credit", credit.get("method").asString)
         assertEquals(7, credit.getAsJsonObject("params").get("sub").asInt)
+    }
+
+    @Test
+    fun `a listener the Core refuses to start fails the start`() {
+        val core =
+            FakeCore { method, _ ->
+                when (method) {
+                    "engine.state" -> """"result":{"sub":7,"snapshot":{"state":"stopped"}}"""
+                    "engine.start" -> """"error":{"code":-32000,"message":"address in use","data":{"kind":"internal"}}"""
+                    else -> RESULT
+                }
+            }
+
+        val started = CoreClient(core).startEngine()
+
+        assertTrue(started.isFailure)
+        assertEquals("address in use", started.exceptionOrNull()!!.message)
     }
 
     @Test

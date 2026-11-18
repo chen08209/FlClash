@@ -39,6 +39,18 @@ void main() {
     });
   });
 
+  group('host credential', () {
+    test('is made once, kept, and stays out of the config', () async {
+      final made = await preferences.getHostCredential();
+      final [user, password] = made.split(':');
+      expect(user, hasLength(16));
+      expect(password, hasLength(32));
+      expect(await preferences.getHostCredential(), made);
+
+      expect(store.getKeys(), {hostCredentialKey});
+    });
+  });
+
   group('version', () {
     test('defaults to 0 when never written', () async {
       expect(await preferences.getVersion(), 0);

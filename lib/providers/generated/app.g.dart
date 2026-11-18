@@ -90,6 +90,55 @@ final class PackageIconSourceProvider
 
 String _$packageIconSourceHash() => r'382b2ece75e0827f4f89f37861cc228cb7f5936c';
 
+/// The `user:password` this app's own requests present to the Core's proxy
+/// listeners; the Core never intercepts a request that carries it.
+
+@ProviderFor(hostCredential)
+final hostCredentialProvider = HostCredentialProvider._();
+
+/// The `user:password` this app's own requests present to the Core's proxy
+/// listeners; the Core never intercepts a request that carries it.
+
+final class HostCredentialProvider
+    extends $FunctionalProvider<String, String, String>
+    with $Provider<String> {
+  /// The `user:password` this app's own requests present to the Core's proxy
+  /// listeners; the Core never intercepts a request that carries it.
+  HostCredentialProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'hostCredentialProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$hostCredentialHash();
+
+  @$internal
+  @override
+  $ProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  String create(Ref ref) {
+    return hostCredential(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$hostCredentialHash() => r'0d794c42d6a603928abcdbe2bb6ca5faba9bde78';
+
 /// Android: su is there and granted FlClash's last request.
 
 @ProviderFor(rootAccess)

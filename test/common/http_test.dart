@@ -43,7 +43,10 @@ void main() {
     bool checkCertificate = true,
   }) {
     final container = ProviderContainer(
-      overrides: [excludeSSIDsProvider.overrideWithValue(excludeSSIDs)],
+      overrides: [
+        excludeSSIDsProvider.overrideWithValue(excludeSSIDs),
+        hostCredentialProvider.overrideWithValue('host:secret'),
+      ],
     );
     addTearDown(container.dispose);
     container.read(runTimeProvider.notifier).value = running ? 1 : null;
@@ -74,11 +77,11 @@ void main() {
 
     expect(
       FlClashHttpOverrides.findProxyFor(container, remote),
-      'PROXY localhost:7891',
+      'PROXY host:secret@localhost:7891',
     );
   });
 
-  test('carries credentials when local authentication is enabled', () {
+  test('carries the host credential, never a local user\'s', () {
     final container = buildContainer();
     container.read(networkSettingProvider.notifier).value = const NetworkProps()
         .copyWith(
@@ -91,7 +94,7 @@ void main() {
 
     expect(
       FlClashHttpOverrides.findProxyFor(container, remote),
-      'PROXY user:pass@localhost:7890',
+      'PROXY host:secret@localhost:7890',
     );
 
     container.read(networkSettingProvider.notifier).value = const NetworkProps()
@@ -103,7 +106,7 @@ void main() {
         );
     expect(
       FlClashHttpOverrides.findProxyFor(container, remote),
-      'PROXY localhost:7890',
+      'PROXY host:secret@localhost:7890',
     );
   });
 
@@ -130,7 +133,7 @@ void main() {
 
     expect(
       FlClashHttpOverrides.findProxyFor(container, remote),
-      'PROXY localhost:7890',
+      'PROXY host:secret@localhost:7890',
     );
   });
 
