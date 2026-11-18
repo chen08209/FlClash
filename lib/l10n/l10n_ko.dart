@@ -144,6 +144,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get ru => '러시아어';
 
   @override
+  String get sk => '슬로바키아어';
+
+  @override
   String get zhCN => '중국어 간체';
 
   @override

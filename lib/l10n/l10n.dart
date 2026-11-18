@@ -11,6 +11,7 @@ import 'l10n_fr.dart';
 import 'l10n_ja.dart';
 import 'l10n_ko.dart';
 import 'l10n_ru.dart';
+import 'l10n_sk.dart';
 import 'l10n_zh.dart';
 
 // ignore_for_file: type=lint
@@ -105,6 +106,7 @@ abstract class AppLocalizations {
     Locale('ja'),
     Locale('ko'),
     Locale('ru'),
+    Locale('sk'),
     Locale('zh'),
   ];
 
@@ -377,6 +379,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Russian'**
   String get ru;
+
+  /// No description provided for @sk.
+  ///
+  /// In en, this message translates to:
+  /// **'Slovak'**
+  String get sk;
 
   /// No description provided for @zhCN.
   ///
@@ -6960,6 +6968,7 @@ class _AppLocalizationsDelegate
     'ja',
     'ko',
     'ru',
+    'sk',
     'zh',
   ].contains(locale.languageCode);
 
@@ -6982,6 +6991,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsKo();
     case 'ru':
       return AppLocalizationsRu();
+    case 'sk':
+      return AppLocalizationsSk();
     case 'zh':
       return AppLocalizationsZh();
   }

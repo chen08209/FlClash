@@ -144,6 +144,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ru => 'Russian';
 
   @override
+  String get sk => 'Slovak';
+
+  @override
   String get zhCN => 'Simplified Chinese';
 
   @override
