@@ -77,7 +77,7 @@ void main() {
 
       expect(
         (result.stdout as String).trim().split(RegExp(r'\s+')).join(' '),
-        'dart run tool/package.dart linux --arch arm64 --targets deb,rpm '
+        'dart tool/package.dart linux --arch arm64 --targets deb,rpm '
         '--dry-run --env stable --tag v1.2.3',
       );
     });

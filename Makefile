@@ -15,7 +15,7 @@ SHELL := /bin/bash
 CARGO := env -u all_proxy -u ALL_PROXY CARGO_INCREMENTAL=0 cargo
 KIND ?= pre
 
-PACKAGE := dart run tool/package.dart
+PACKAGE := dart tool/package.dart
 PACKAGE_FLAGS = $(if $(ARCH),--arch $(ARCH)) $(if $(FORM),--targets $(FORM)) \
 	$(if $(filter 1,$(DRY)),--dry-run) $(if $(APP_ENV),--env $(APP_ENV)) $(if $(TAG),--tag $(TAG)) $(ARGS)
 COMMENT_FILES = $(or $(FILES),$(shell git diff HEAD --name-only --diff-filter=d; git ls-files --others --exclude-standard))

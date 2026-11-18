@@ -15,12 +15,13 @@ git submodule update --init --recursive
 ```
 
 Full package build, including Go core, Flutter, and packaging, runs through `tool/package.dart` (`make package`,
-`make package-android`, with `ARCH=`, `FORM=` and `DRY=1`):
+`make package-android`, with `ARCH=`, `FORM=` and `DRY=1`). Run it with `dart`, not `dart run`, which first runs
+every build hook for the host:
 
 ```bash
-dart run tool/package.dart                 # this host: dmg, exe + zip, or deb + AppImage + rpm
-dart run tool/package.dart android         # every ABI; --arch arm64 for one
-dart run tool/package.dart linux --dry-run --arch arm64   # names and steps only, any platform
+dart tool/package.dart                     # this host: dmg, exe + zip, or deb + AppImage + rpm
+dart tool/package.dart android             # every ABI; --arch arm64 for one
+dart tool/package.dart linux --dry-run --arch arm64   # names and steps only, any platform
 ```
 
 Artifacts land in `dist/` as `FlClash-<line>-<version>-<os>-<arch>[-<form>].<ext>`, with `manifest.json` and

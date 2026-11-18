@@ -62,8 +62,8 @@ ArgParser createPackageArgParser() {
 
 void _usage(ArgParser parser) {
   stderr
-    ..writeln('Usage: dart run tool/package.dart [platform] [options]')
-    ..writeln('       dart run tool/package.dart merge <dir>... [--out dist]')
+    ..writeln('Usage: dart tool/package.dart [platform] [options]')
+    ..writeln('       dart tool/package.dart merge <dir>... [--out dist]')
     ..writeln()
     ..writeln('Platform: the host platform (default) or android.')
     ..writeln(parser.usage);
