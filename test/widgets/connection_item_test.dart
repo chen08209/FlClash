@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -248,6 +249,8 @@ void main() {
   group('the app icon of a connection', () {
     const channel = MethodChannel('$packageName/app');
     late Directory icons;
+    late List<String> requested;
+    late Map<String, Completer<void>> held;
 
     setUp(() {
       icons = Directory.systemTemp.createTempSync('icons');
@@ -258,9 +261,13 @@ void main() {
         File('${icons.path}/$name.png').writeAsBytesSync(png);
       }
       App().clearPackageIconCache();
+      requested = [];
+      held = {};
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (call) async {
             final name = call.arguments['packageName'] as String;
+            requested.add(name);
+            await held[name]?.future;
             return '${icons.path}/${name == 'com.own' ? name : 'default'}.png';
           });
     });
@@ -327,6 +334,84 @@ void main() {
       await pumpRow(tester, 'com.own');
       expect(find.byType(Image), findsNothing);
       expect(titleInset(tester), bare);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('rows of one app ask Android for its icon once', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        TestApp(
+          overrides: [packageIconSourceProvider.overrideWithValue(App())],
+          homeBuilder: (child) => HostScaffold(body: child),
+          child: Column(
+            children: [
+              for (var index = 0; index < 3; index++)
+                TrackerInfoItem(
+                  trackerInfo: _tracker(process: 'com.own'),
+                  detailTitle: 'detail',
+                ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(Image), findsNWidgets(3));
+      expect(requested.where((name) => name == 'com.own'), hasLength(1));
+      expect(requested.where((name) => name.isEmpty), hasLength(1));
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a row gone before its icon loads takes no update', (
+      tester,
+    ) async {
+      held['com.own'] = Completer();
+      await pumpRow(tester, 'com.own', source: App());
+      await tester.pumpWidget(const SizedBox.shrink());
+
+      held['com.own']!.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a row moved to another app does not take the icon its last '
+        'app loads late', (tester) async {
+      held['com.own'] = Completer();
+      await pumpRow(tester, 'com.own', source: App());
+      await pumpRow(tester, 'com.plain', source: App());
+
+      held['com.own']!.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(Image), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a row of an app whose icon is cached shows it in its first '
+        'frame', (tester) async {
+      final app = App();
+      await tester.runAsync(() => app.getOwnPackageIcon('com.own'));
+      await tester.pumpWidget(
+        TestApp(
+          overrides: [packageIconSourceProvider.overrideWithValue(app)],
+          homeBuilder: (child) => HostScaffold(body: child),
+          child: TrackerInfoItem(
+            trackerInfo: _tracker(process: 'com.own'),
+            detailTitle: 'detail',
+          ),
+        ),
+      );
+
+      expect(find.byType(Image), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
     });
