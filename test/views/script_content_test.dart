@@ -81,21 +81,17 @@ void main() {
     expect(find.text(currentAppLocalizations.none), findsOneWidget);
     expect(find.text('alpha'), findsNothing);
     expect(
-      find.byTooltip(currentAppLocalizations.goToConfigureScript),
+      find.text(currentAppLocalizations.goToConfigureScript),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the header action opens the scripts in a sheet over it', (
-    tester,
-  ) async {
+  testWidgets('the configure row opens the scripts', (tester) async {
     container = buildContainer(scripts: [_script(10, 'alpha')]);
 
     await pumpScriptContent(tester);
-    await tester.tap(
-      find.byTooltip(currentAppLocalizations.goToConfigureScript),
-    );
+    await tester.tap(find.text(currentAppLocalizations.goToConfigureScript));
     await tester.pumpAndSettle();
 
     expect(find.byType(ScriptsView), findsOneWidget);
