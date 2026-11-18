@@ -309,6 +309,21 @@ hooks:
     expect(spec, contains('\n%postun\nupdate-mime-database'));
   });
 
+  test('the deb postrm removes the launcher link even when it is gone', () {
+    final context = _context(ReleaseOs.linux);
+    final binary = context.linuxBinaryName;
+    final files = debFiles(context, context.makeConfig('deb'));
+
+    expect(
+      files['DEBIAN/postinst'],
+      contains('\nln -s /opt/$binary/$binary /usr/bin/$binary\n'),
+    );
+    final postrm = files['DEBIAN/postrm']!;
+    expect(postrm, contains('\nrm -f /usr/bin/$binary\n'));
+    expect(postrm, isNot(contains('\nrm /usr/bin/')));
+    expect(postrm, endsWith('\nexit 0'));
+  });
+
   test('desktop entries name the GTK application id as their window class', () {
     final context = _context(ReleaseOs.linux);
     final wmClass = 'StartupWMClass=${context.linuxApplicationId}';

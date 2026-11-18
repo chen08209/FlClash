@@ -76,7 +76,7 @@ Map<String, String> debFiles(
     ].join('\n'),
     'DEBIAN/postrm': [
       '#!/usr/bin/env sh',
-      'rm /usr/bin/$binary',
+      'rm -f /usr/bin/$binary',
       ...stringList(config['postuninstall_scripts']),
       'exit 0',
     ].join('\n'),
