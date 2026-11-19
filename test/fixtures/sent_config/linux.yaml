@@ -148,7 +148,6 @@ dns:
   enhanced-mode: "redir-host"
   nameserver:
     - "https://1.1.1.1/dns-query"
-    - "system://"
   listen: "127.0.0.1:1053"
   listen-routing-mark: 0
   use-hosts: true
@@ -183,6 +182,7 @@ dns:
     geosite: []
     ipcidr: []
     domain: []
+  append-system: true
 ntp:
   enable: true
   server: "ntp.a.test"

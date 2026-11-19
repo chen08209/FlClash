@@ -12,6 +12,7 @@ reports through `concord -t`, not this table.
 | `allow-lan` | general | android, macos, windows, linux | T0 | `false` |
 | `authentication` | network | android, macos, windows, linux | T0 | `[]` |
 | `disable-keep-alive` | general | android, macos, windows, linux | T0 | `false` |
+| `dns.append-system` | fixed | android, macos, windows, linux | T0 |  |
 | `dns.cache-algorithm` | DNS override | android, macos, windows, linux | T1 | `""` |
 | `dns.cache-max-size` | DNS override | android, macos, windows, linux | T1 | `0` |
 | `dns.default-nameserver` | DNS override | android, macos, windows, linux | T0 | `["114.114.114.114","223.5.5.5","8.8.8.8","1.0.0.1"]` |
