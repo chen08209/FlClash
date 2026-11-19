@@ -1,5 +1,6 @@
 // Holds issues to the forms in .github/ISSUE_TEMPLATE: labels an incomplete one `needs-info` with a comment,
-// closes it 7 days later, and locks every issue 30 days after it closed. Run by .github/workflows/issue-gate.yaml.
+// closes it 7 days later, and locks every issue 30 days after it closed. Issues opened or closed before GATE_SINCE,
+// the day the gate reached main, are left as they were. Run by .github/workflows/issue-gate.yaml.
 const fs = require('fs');
 const path = require('path');
 
@@ -11,6 +12,7 @@ const UNRELEASED_COMMIT_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const EXEMPT = ['OWNER', 'MEMBER', 'COLLABORATOR'];
 const EMPTY = '_No response_';
+const GATE_SINCE = '2026-11-20';
 const RELEASE = /^v?(\d+)\.(\d+)\.(\d+)$/;
 
 function unquote(text) {
@@ -173,6 +175,7 @@ function message(problems, newIssueUrl) {
 async function check({ github, context, root }) {
   const issue = context.payload.issue;
   if (issue.pull_request || issue.state !== 'open' || EXEMPT.includes(issue.author_association)) return;
+  if (issue.created_at < GATE_SINCE) return;
   const repo = context.repo;
   const problems = await problemsOf(github, repo, issue, loadForms(root));
   const labelled = issue.labels.some((label) => label.name === NEEDS_INFO);
@@ -216,9 +219,10 @@ async function sweep({ github, context, now = Date.now() }) {
       state_reason: 'not_planned',
     });
   }
-  const before = new Date(now - LOCK_AFTER_DAYS * DAY_MS).toISOString().slice(0, 10);
+  const last = new Date(now - (LOCK_AFTER_DAYS + 1) * DAY_MS).toISOString().slice(0, 10);
+  if (last < GATE_SINCE) return;
   const stale = await github.paginate(github.rest.search.issuesAndPullRequests, {
-    q: `repo:${repo.owner}/${repo.repo} is:issue is:closed is:unlocked closed:<${before}`,
+    q: `repo:${repo.owner}/${repo.repo} is:issue is:closed is:unlocked closed:${GATE_SINCE}..${last}`,
   });
   for (const issue of stale) {
     await github.rest.issues.lock({ ...repo, issue_number: issue.number });
