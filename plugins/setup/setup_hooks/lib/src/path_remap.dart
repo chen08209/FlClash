@@ -5,7 +5,10 @@ import 'package:path/path.dart' as p;
 import 'util.dart';
 
 /// `strip` leaves panic locations and C `__FILE__` in rodata, and
-/// `profile.*.trim-paths` is unstable on the pinned toolchains.
+/// `profile.*.trim-paths` is unstable on the pinned toolchains. C code also
+/// gets `NDEBUG`, as BoringSSL, AWS-LC and quickjs-ng release builds do: cc
+/// never defines it and cmake-rs drops it under Visual Studio, and a live
+/// `assert` aborts the whole core.
 Map<String, String> trimmedPathEnvironment({
   required String checkoutDir,
   required String toolchainDir,
@@ -22,13 +25,14 @@ Map<String, String> trimmedPathEnvironment({
     ..._rustflags(env, targetTriple, [
       for (final (from, to) in prefixes) '--remap-path-prefix=$from=$to',
     ]),
-    if (!targetTriple.endsWith('-msvc'))
-      for (final name in const ['CFLAGS', 'CXXFLAGS'])
-        _targetVariable(name, targetTriple): [
-          ?env[_targetVariable(name, targetTriple)],
+    for (final name in const ['CFLAGS', 'CXXFLAGS'])
+      _targetVariable(name, targetTriple): [
+        ?env[_targetVariable(name, targetTriple)],
+        if (!targetTriple.endsWith('-msvc'))
           for (final (from, to) in prefixes)
             if (!_splitsOnWhitespace(from)) '-ffile-prefix-map=$from=$to',
-        ].join(' '),
+        '-DNDEBUG',
+      ].join(' '),
   };
 }
 
