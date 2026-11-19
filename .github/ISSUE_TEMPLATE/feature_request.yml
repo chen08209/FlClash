@@ -1,42 +1,54 @@
 name: 功能请求 / Feature request
+description: 提出 FlClash 还没有的功能 / Ask for something FlClash does not do yet
 title: "[Feature] "
-description: 提出你的功能请求 / Propose your feature request
-
+labels: [enhancement]
 body:
   - type: markdown
     attributes:
       value: |
-        ## 在提交问题之前，请确认以下事项：
-        1. 请务必给issue填写一个简洁明了的标题，以便他人快速检索
-        2. 请确保[已有的问题](https://github.com/chen08209/FlClash/issues?q=is%3Aissue) 中没有人提交过相似issue，否则请在已有的issue下进行讨论
-        3. 请务必按照模板规范详细描述问题，否则issue将会被直接关闭
-        ## Before submitting the issue, please make sure of the following checklist:
-        1. Please be sure to fill in a concise and clear title for the issue so that others can quickly search
-        2. Please make sure there is no similar issue in the [existing issues](https://github.com/chen08209/FlClash/issues?q=is%3Aissue), otherwise please discuss under the existing issue
-        3. Please describe the problem in detail according to the template specification, otherwise issue will be closed directly.
-
+        先在最新版里找一下，很多功能在“工具 → 进阶配置”里。一个 issue 只提一个功能。/ Look in the latest release first; many features are under "Tools → Advanced configuration". One feature per issue.
   - type: textarea
-    id: description
+    id: problem
     attributes:
-      label: 功能描述 / Feature description
-      description: 详细清晰地描述你的功能请求 / A clear and concise description of what the feature is
+      label: 要解决的问题 / Problem
+      description: >-
+        你在做什么、现在卡在哪一步、现在怎么绕过。写问题，不要只写“加个按钮”。/
+        What you are doing, where it gets in the way and how you work around it today. Describe the problem, not just
+        "add a button".
     validations:
       required: true
   - type: textarea
+    id: proposal
     attributes:
-      label: 使用场景 / Use case
-      description: 请描述你的功能请求的使用场景 / Please describe the use case of your feature request
+      label: 期望的行为 / Proposed behavior
+      description: 加上之后，你会在哪个页面怎么操作、看到什么。/ With the feature, which page you would use, what you would do and what you would see.
+    validations:
+      required: true
+  - type: textarea
+    id: reference
+    attributes:
+      label: 别的客户端的做法 / In other clients
+      description: 可选。已有客户端这样做的，写名字并附链接或截图。/ Optional. A client that already does this, with a link or screenshot.
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: 适用平台 / Platforms
+      multiple: true
+      options:
+        - Android
+        - Windows
+        - macOS
+        - Linux
     validations:
       required: true
   - type: checkboxes
-    id: os-labels
+    id: checks
     attributes:
-      label: 适用系统 / Target OS
-      description: 请选择该功能适用的操作系统（至少选择一个） / Please select the operating system(s) for this feature request (select at least one)
+      label: 确认 / Checks
       options:
-        - label: Android
-        - label: Windows
-        - label: MacOS
-        - label: Linux
-    validations:
-      required: true
+        - label: 我在最新版里找过，没有这个功能。/ I looked in the latest release and it does not have this.
+          required: true
+        - label: 我搜索过已有 issue（包括已关闭的），没有相同的请求。/ I searched the existing issues, open and closed, and found no same request.
+          required: true
+        - label: 这个 issue 只提一个功能。/ This issue asks for one feature.
+          required: true

@@ -1,57 +1,178 @@
 name: 问题反馈 / Bug report
+description: FlClash 出错、闪退或不能正常代理 / FlClash fails, crashes or does not proxy as it should
 title: "[BUG] "
-description: 反馈你遇到的问题 / Report the issue you are experiencing
-
+labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
-        ## 在提交问题之前，请确认以下事项：
-        1. 请务必给issue填写一个简洁明了的标题，以便他人快速检索
-        2. 请确保[已有的问题](https://github.com/chen08209/FlClash/issues?q=is%3Aissue) 中没有人提交过相似issue，否则请在已有的issue下进行讨论
-        3. 请务必按照模板规范详细描述问题，否则issue将会被直接关闭
-        ## Before submitting the issue, please make sure of the following checklist:
-        1. Please be sure to fill in a concise and clear title for the issue so that others can quickly search
-        2. Please make sure there is no similar issue in the [existing issues](https://github.com/chen08209/FlClash/issues?q=is%3Aissue), otherwise please discuss under the existing issue
-        3. Please describe the problem in detail according to the template specification, otherwise issue will be closed directly.
-  - type: textarea
-    id: description
+        这些不在本仓库处理 / Not handled here:
+        - 使用方法、机场或节点的问题，请到 Telegram 群交流 / Usage, subscription-provider and node problems: ask in the Telegram group.
+        - 手机系统或安全软件拦截安装、报毒、停掉 VPN，FlClash 无法改变 / A phone's system or security app blocking the install, flagging it or stopping the VPN is outside FlClash's control.
+
+        缺项的 issue 会被标记 `needs-info`，7 天内未补全会被关闭。/ An incomplete issue is labelled `needs-info` and closed after 7 days.
+  - type: input
+    id: version
     attributes:
-      label: 问题描述 / Describe the bug
-      description: 详细清晰地描述你遇到的问题，并配合截图 / Describe the problem you encountered in detail and clearly, and provide screenshots
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: 软件版本 / Version
-      description: 请提供FlClash的具体版本 / Please provide the specific version of FlClash.
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: 复现步骤 / To Reproduce
-      description: 请提供复现问题的步骤 / Steps to reproduce the behavior
-    validations:
-      required: true
-  - type: dropdown
-    attributes:
-      label: 操作系统 / OS
-      options:
-        - Android
-        - Windows
-        - MacOS
-        - Linux
+      label: 版本 / Version
+      description: >-
+        工具 → 关于，图标下方的版本号，如 `v0.9.3`；不要写“最新版”。/
+        Tools → About, the version under the icon, such as `v0.9.3`; not "latest".
+      placeholder: v0.9.3
     validations:
       required: true
   - type: input
+    id: last-good-version
     attributes:
-      label: 操作系统版本 / OS Version
-      description: 请提供你的操作系统版本，Linux请额外提供桌面环境及窗口系统 / Please provide your OS version, for Linux, please also provide the desktop environment and window system
+      label: 最后正常的版本 / Last version that worked
+      description: 升级后才出现的问题，填此前正常的版本；不知道就留空。/ For a problem that started after an update, the version before it; leave empty if unknown.
+      placeholder: v0.9.2
+  - type: dropdown
+    id: package
+    attributes:
+      label: 安装包 / Package
+      description: >-
+        从 Releases 下载的文件名里有架构，如 `FlClash-0.9.3-windows-amd64-setup.exe`。/
+        The file name from Releases carries the architecture, such as `FlClash-0.9.3-windows-amd64-setup.exe`.
+      options:
+        - Android APK arm64-v8a
+        - Android APK armeabi-v7a
+        - Android APK x86_64
+        - Android F-Droid
+        - Windows amd64 安装版 / installer (setup.exe)
+        - Windows amd64 便携版 / portable (zip)
+        - Windows arm64 安装版 / installer (setup.exe)
+        - Windows arm64 便携版 / portable (zip)
+        - macOS Apple 芯片 / Apple silicon (arm64 dmg)
+        - macOS Intel (amd64 dmg)
+        - macOS Homebrew
+        - Linux amd64 deb
+        - Linux amd64 rpm
+        - Linux amd64 AppImage
+        - Linux arm64 deb
+        - Linux arm64 rpm
+        - Linux arm64 AppImage
+        - 其他：第三方打包或自行编译 / Other packaging or a self-built copy
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: 系统及版本 / OS and version
+      description: >-
+        Android 写系统版本和机型；Linux 另写发行版、桌面环境和 X11 或 Wayland。/
+        Android: OS version and phone model. Linux: also the distribution, desktop environment and X11 or Wayland.
+      placeholder: Android 16, Pixel 9 / Windows 11 24H2 / macOS 26.1 / Fedora 45, KDE Plasma 6.5, Wayland
+    validations:
+      required: true
+  - type: dropdown
+    id: takeover
+    attributes:
+      label: 运行方式 / How traffic is taken over
+      description: >-
+        仪表盘上打开的开关，可多选。Android 是“VPN”；桌面在“网络接管”卡片里，是“系统代理”和“虚拟网卡”。/
+        The switches that are on in the Dashboard; pick all that apply. Android has "VPN"; on desktop the "Traffic
+        takeover" card has "System proxy" and "TUN".
+      multiple: true
+      options:
+        - VPN（Android）
+        - 系统代理 / System proxy（桌面 / desktop）
+        - 虚拟网卡 / TUN（桌面 / desktop）
+        - 都没开，只用代理端口 / None, only the proxy port
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 问题出在哪 / Area
+      options:
+        - 安装、启动或闪退 / Install, launch or crash
+        - 界面显示或操作 / Interface
+        - 连接：打不开网站、断流、速度 / Connections, dropouts, speed
+        - 订阅或配置的导入、更新 / Importing or updating a profile
+        - DNS
+        - VPN、虚拟网卡或系统代理开不了、关不掉 / VPN, TUN or system proxy will not turn on or off
+        - 规则与分流 / Rules and routing
+        - CPU、内存或耗电 / CPU, memory or battery
+        - 备份与恢复 / Backup and restore
+        - 其他 / Other
+    validations:
+      required: true
+  - type: dropdown
+    id: reproducible
+    attributes:
+      label: 能否稳定复现 / Reproducible
+      options:
+        - 每次都会 / Every time
+        - 有时会 / Sometimes
+        - 只出现过一次 / Only once
     validations:
       required: true
   - type: textarea
+    id: steps
     attributes:
-      label: 日志(勿上传日志文件，请粘贴日志内容) / Log (Do not upload the log file, paste the log content directly)
-      description: 请提供完整或相关部分的Debug日志（请在“软件左侧菜单”->“设置”->“日志等级”调整到debug / Please provide a complete or relevant Debug log (please adjust it to debug in the left menu of software-> Settings-> Log Level)
+      label: 复现步骤 / Steps to reproduce
+      description: 从打开 FlClash 开始，按顺序写每一步点了哪里。/ From opening FlClash, each step in order and what you tapped or clicked.
+      placeholder: |
+        1. 在“配置”页导入订阅 / Import a subscription on the Profiles page
+        2. 在仪表盘打开“虚拟网卡” / Turn on TUN in the Dashboard
+        3. ...
     validations:
       required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果 / Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果 / Actual behavior
+      description: 包括界面上的报错原文。/ Include any error message shown, word for word.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: 日志 / Log
+      description: |
+        1. 工具 → 常规 → 日志与诊断：打开“日志捕获”，“日志等级”选 debug。/ Tools → General → Logs and diagnostics: turn on "Logcat" and set "Log level" to debug.
+        2. 复现一次问题。/ Reproduce the problem once.
+        3. 打开“日志”页（桌面在侧边栏，手机在“工具”页顶部），点右上角“导出日志”，用文本编辑器打开导出的文件，把问题前后的部分粘贴在这里。/ Open the "Logs" page (the sidebar on desktop, the top of "Tools" on a phone), press "Export logs" at the top right, open the file in a text editor and paste the part around the problem here.
+
+        不要贴截图；粘贴前删掉节点域名和 IP。Android 闪退后日志为空时，贴 `adb logcat -b crash -d` 的输出。/ No screenshots; remove node domains and IP addresses first. When Android crashes and the log is empty, paste the output of `adb logcat -b crash -d`.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: 相关配置 / Relevant configuration
+      description: >-
+        可选。“配置”页长按（桌面右键）配置 → 更多 → 运行时配置，只复制和问题有关的部分（某个节点、策略组、规则或 dns），把 server、password、uuid
+        和订阅地址改成 `xxx`。/
+        Optional. On the Profiles page, long-press (right-click on desktop) the profile → More → Runtime config; copy only
+        the part involved (a node, a proxy group, a rule or dns), with server, password, uuid and subscription URLs
+        replaced by `xxx`.
+      render: yaml
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图或录屏 / Screenshots or recording
+      description: 可选，界面问题最好附上。/ Optional; helps with interface problems.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确认 / Checks
+      options:
+        - label: 我已更新到最新版，问题仍然存在。/ I updated to the latest release and the problem is still there.
+          required: true
+        - label: 我搜索过已有 issue（包括已关闭的），没有相同的。/ I searched the existing issues, open and closed, and found no duplicate.
+          required: true
+        - label: 我已删掉订阅链接、服务器地址、密码和 UUID。/ I removed subscription URLs, server addresses, passwords and UUIDs.
+          required: true
+        - label: 这个 issue 只报告一个问题。/ This issue reports one problem.
+          required: true
+        - label: 换别的节点，或在别的客户端用同一节点对比过，不是机场或节点本身的问题。/ I compared with another node, or the same node in another client, and it is not a problem of the subscription provider or the node.
+          required: true
