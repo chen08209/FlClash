@@ -3893,6 +3893,11 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String mitmActionModule(Object module) {
+    return 'De $module';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return 'Escrito para $system; algunas líneas pueden no coincidir con las apps de este dispositivo.';
   }

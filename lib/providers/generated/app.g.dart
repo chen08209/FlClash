@@ -2366,6 +2366,68 @@ abstract class _$CoreStatus extends $Notifier<CoreStatus> {
   }
 }
 
+/// How many Core sessions have ended; each session numbers its connections
+/// and requests from one again.
+
+@ProviderFor(EndedCoreSessions)
+final endedCoreSessionsProvider = EndedCoreSessionsProvider._();
+
+/// How many Core sessions have ended; each session numbers its connections
+/// and requests from one again.
+final class EndedCoreSessionsProvider
+    extends $NotifierProvider<EndedCoreSessions, int> {
+  /// How many Core sessions have ended; each session numbers its connections
+  /// and requests from one again.
+  EndedCoreSessionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'endedCoreSessionsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$endedCoreSessionsHash();
+
+  @$internal
+  @override
+  EndedCoreSessions create() => EndedCoreSessions();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$endedCoreSessionsHash() => r'9ed0ed2637ff67eb6bd048482c2dc6b4c91256f7';
+
+/// How many Core sessions have ended; each session numbers its connections
+/// and requests from one again.
+
+abstract class _$EndedCoreSessions extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(Query)
 final queryProvider = QueryFamily._();
 

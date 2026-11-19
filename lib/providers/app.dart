@@ -638,6 +638,21 @@ class _CoreStatus extends _$CoreStatus with AutoDisposeNotifierMixin {
   }
 }
 
+/// How many Core sessions have ended; each session numbers its connections
+/// and requests from one again.
+@Riverpod(keepAlive: true)
+class EndedCoreSessions extends _$EndedCoreSessions {
+  @override
+  int build() {
+    ref.listen(coreStatusProvider, (previous, next) {
+      if (previous == CoreStatus.connected && next != CoreStatus.connected) {
+        state++;
+      }
+    });
+    return 0;
+  }
+}
+
 @riverpod
 class Query extends _$Query with AutoDisposeNotifierMixin {
   @override

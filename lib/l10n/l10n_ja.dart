@@ -3666,6 +3666,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String mitmActionModule(Object module) {
+    return '$module から';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return '$system 向けに書かれています。一部の行はこのデバイスのアプリに一致しない場合があります。';
   }

@@ -285,6 +285,7 @@ abstract class MitmAction with _$MitmAction {
       _$MitmActionFromJson(json);
 }
 
+/// The rule that decided a request and the chain it left through, exit first.
 @freezed
 abstract class MitmRoute with _$MitmRoute {
   const factory MitmRoute({

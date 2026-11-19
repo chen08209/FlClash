@@ -5,7 +5,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 TrackerInfo _tracker(
-  String id, {
+  int id, {
   int upload = 0,
   int download = 0,
   String host = 'example.com',
@@ -26,7 +26,7 @@ void main() {
   final t0 = DateTime.utc(2026, 1, 1, 12);
   DateTime at(double seconds) =>
       t0.add(Duration(milliseconds: (seconds * 1000).round()));
-  List<String> ids(ConnectionPoll poll) =>
+  List<int> ids(ConnectionPoll poll) =>
       poll.fresh.map((trackerInfo) => trackerInfo.id).toList();
 
   ConnectionPoll placed(ConnectionPoll poll) {
@@ -38,7 +38,7 @@ void main() {
 
   test('reports no speed on the first sample', () {
     final poll = pollTrackerInfos(
-      [_tracker('a', download: 10)],
+      [_tracker(1, download: 10)],
       TrackerSamples.empty,
       t0,
     );
@@ -48,10 +48,10 @@ void main() {
 
   test('derives speed from the delta over the elapsed time', () {
     final first = placed(
-      pollTrackerInfos([_tracker('a')], TrackerSamples.empty, t0),
+      pollTrackerInfos([_tracker(1)], TrackerSamples.empty, t0),
     );
     final second = pollTrackerInfos(
-      [_tracker('a', upload: 1000, download: 4000)],
+      [_tracker(1, upload: 1000, download: 4000)],
       first.samples,
       at(2),
     );
@@ -64,15 +64,15 @@ void main() {
     'a sample taken too soon keeps the last speed and takes the traffic',
     () {
       final first = placed(
-        pollTrackerInfos([_tracker('a')], TrackerSamples.empty, t0),
+        pollTrackerInfos([_tracker(1)], TrackerSamples.empty, t0),
       );
       final second = pollTrackerInfos(
-        [_tracker('a', download: 1000)],
+        [_tracker(1, download: 1000)],
         first.samples,
         at(1),
       );
       final third = pollTrackerInfos(
-        [_tracker('a', download: 1010)],
+        [_tracker(1, download: 1010)],
         second.samples,
         at(1.01),
       );
@@ -80,7 +80,7 @@ void main() {
       expect(third.samples.downloadAt(0), 1010);
 
       final fourth = pollTrackerInfos(
-        [_tracker('a', download: 3000)],
+        [_tracker(1, download: 3000)],
         third.samples,
         at(2),
       );
@@ -90,39 +90,39 @@ void main() {
 
   test('sends in full only what is new, changed, or not yet placed', () {
     final first = pollTrackerInfos(
-      [_tracker('a'), _tracker('b')],
+      [_tracker(1), _tracker(2)],
       TrackerSamples.empty,
       t0,
     );
-    expect(ids(first), ['a', 'b']);
+    expect(ids(first), [1, 2]);
     first.samples.slots[0] = 0;
 
     final second = pollTrackerInfos(
       [
-        _tracker('c'),
-        _tracker('a', download: 100),
-        _tracker('b', host: 'moved.test'),
+        _tracker(3),
+        _tracker(1, download: 100),
+        _tracker(2, host: 'moved.test'),
       ],
       first.samples,
       at(1),
     );
 
-    expect(ids(second), ['c', 'b']);
+    expect(ids(second), [3, 2]);
     expect(second.freshAt, [0, 2]);
     expect(second.samples.slots, [-1, 0, -1]);
   });
 
   test('polls in another isolate from what the last poll kept', () async {
     final first = placed(
-      pollTrackerInfos([_tracker('a')], TrackerSamples.empty, t0),
+      pollTrackerInfos([_tracker(1)], TrackerSamples.empty, t0),
     );
     final poll = pollAfter(first.samples, Int32List(1));
 
     final second = await Isolate.run(
-      () => poll([_tracker('a', download: 10), _tracker('b')]),
+      () => poll([_tracker(1, download: 10), _tracker(2)]),
     );
 
-    expect(ids(second), ['b']);
+    expect(ids(second), [2]);
     expect(second.samples.downloadAt(0), 10);
   });
 }

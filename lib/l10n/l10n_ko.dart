@@ -3742,6 +3742,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String mitmActionModule(Object module) {
+    return '$module에서';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return '$system용으로 작성되었습니다. 일부 줄은 이 기기의 앱과 맞지 않을 수 있습니다.';
   }

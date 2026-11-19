@@ -25,7 +25,7 @@ void main() {
     final height = ValueNotifier(900.0);
     addTearDown(height.dispose);
     final trackerInfo = TrackerInfo(
-      id: 'id',
+      id: 1,
       start: DateTime.utc(2026),
       metadata: const Metadata(
         network: 'tcp',

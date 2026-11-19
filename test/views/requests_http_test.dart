@@ -1,6 +1,4 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
@@ -15,13 +13,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 const _paneSize = Size(1400, 1000);
 const _phoneSize = Size(400, 860);
@@ -52,7 +48,7 @@ MitmExchangeSummary _summary(
   actionKinds: actionKinds,
   responseSize: 2048,
   duration: 35,
-  connectionId: 'c1',
+  connectionId: 1,
   app: MitmApp(process: process),
 );
 
@@ -81,7 +77,7 @@ Future<MitmQueryPage> _query({
 );
 
 TrackerInfo _connection() => TrackerInfo(
-  id: 'c1',
+  id: 1,
   start: _start,
   metadata: const Metadata(
     network: 'tcp',
@@ -105,9 +101,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
-        coreHandlerProvider.overrideWithValue(
-          CoreController.scoped(_MockCoreHandlerInterface()),
-        ),
+        coreHandlerProvider.overrideWithValue(coreMocks().controller),
         ...overrides,
       ],
     );
@@ -584,13 +578,13 @@ void main() {
             method: 'GET',
             url: 'https://api.test/ok',
             status: 200,
-            connection: 'c1',
+            connectionId: 1,
           ),
         ),
       ],
     );
     capture();
-    container.read(requestsProvider.notifier).addRequest(_connection());
+    container.read(requestsProvider.notifier).addRequests([_connection()]);
     await pumpHttp(tester);
 
     expect(find.text('Select a request'), findsOneWidget);
