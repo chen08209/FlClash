@@ -3,3 +3,6 @@ contact_links:
   - name: 使用交流 / Questions and discussion
     url: https://t.me/+G-veVtwBOl4wODc1
     about: 用法、订阅和节点的问题，在 Telegram 群里交流 / Usage, subscription and node questions go to the Telegram group
+  - name: 安全问题 / Security
+    url: https://github.com/chen08209/FlClash/security/advisories/new
+    about: 私下报告漏洞，不要在公开 issue 里写细节 / Report a vulnerability privately; keep its details out of public issues
