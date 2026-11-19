@@ -2839,6 +2839,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String scriptNotification(Object script, Object text) {
+    return '스크립트 $script\n$text';
+  }
+
+  @override
   String customIssuesSummary(Object count) {
     return '문제가 있는 항목 $count개, 이 프로필을 적용하면 실패할 수 있습니다';
   }

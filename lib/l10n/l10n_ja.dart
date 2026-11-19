@@ -2791,6 +2791,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String scriptNotification(Object script, Object text) {
+    return 'スクリプト $script\n$text';
+  }
+
+  @override
   String customIssuesSummary(Object count) {
     return '$count 件に問題があり、プロファイルの適用に失敗する可能性があります';
   }
