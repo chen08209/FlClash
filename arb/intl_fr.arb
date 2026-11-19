@@ -854,6 +854,7 @@
   "customIssueMissingDialer": "Le proxy de connexion {name} n’existe pas",
   "customIssueDialerLoop": "{proxy} se connecte via {target}, qui renvoie à {proxy} ; la connexion boucle",
   "dialerProxyLoopStopped": "La connexion via {name} renvoie au proxy qui l’utilise ; la connexion a donc été arrêtée",
+  "scriptNotification": "Script {script}\n{text}",
   "customIssuesSummary": "{count} éléments posent problème, et l’application de ce profil peut échouer",
   "providerInUse": "{label} est encore utilisé par {profiles}, qui ne fonctionneront plus correctement s’il est supprimé. Voulez-vous vraiment le supprimer ?",
   "proxyGroupInUse": "{label} est encore nommé par des règles, des groupes de proxys, des proxys de connexion, le DNS ou le NTP de ce profil, qui cesseront de fonctionner s’il est supprimé. Voulez-vous vraiment le supprimer ?",

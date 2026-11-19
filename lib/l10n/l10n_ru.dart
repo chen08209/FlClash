@@ -2911,6 +2911,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String scriptNotification(Object script, Object text) {
+    return 'Скрипт $script\n$text';
+  }
+
+  @override
   String customIssuesSummary(Object count) {
     return 'Проблем: $count, применение профиля может завершиться ошибкой';
   }

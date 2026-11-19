@@ -854,6 +854,7 @@
   "customIssueMissingDialer": "존재하지 않는 다이얼러 프록시: {name}",
   "customIssueDialerLoop": "{proxy}이(가) {target}을(를) 거쳐 다시 {proxy}(으)로 돌아오므로 다이얼이 순환합니다",
   "dialerProxyLoopStopped": "{name}을(를) 거치는 다이얼이 이를 사용하는 프록시로 되돌아와 연결을 중단했습니다",
+  "scriptNotification": "스크립트 {script}\n{text}",
   "customIssuesSummary": "문제가 있는 항목 {count}개, 이 프로필을 적용하면 실패할 수 있습니다",
   "providerInUse": "{label}은(는) 아직 {profiles}에서 사용 중이며, 삭제하면 해당 프로필이 제대로 작동하지 않습니다. 삭제하시겠습니까?",
   "proxyGroupInUse": "{label}은(는) 이 프로필의 규칙, 프록시 그룹, 다이얼러 프록시, DNS 또는 NTP에서 아직 참조 중이며, 삭제하면 작동하지 않게 됩니다. 삭제하시겠습니까?",

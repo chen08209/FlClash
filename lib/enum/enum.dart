@@ -424,6 +424,7 @@ enum AuthorizeCode { none, success, error }
 enum TunAuthorizationState { none, authorized, unauthorized }
 
 enum FunctionTag {
+  scriptNotification,
   updateConfig,
   updateGroups,
   applyProfile,

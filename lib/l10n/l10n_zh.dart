@@ -2749,6 +2749,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String scriptNotification(Object script, Object text) {
+    return '脚本 $script\n$text';
+  }
+
+  @override
   String customIssuesSummary(Object count) {
     return '$count 项存在问题，应用配置可能失败';
   }

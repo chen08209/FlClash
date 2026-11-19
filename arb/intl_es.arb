@@ -854,6 +854,7 @@
   "customIssueMissingDialer": "El proxy de marcación {name} no existe",
   "customIssueDialerLoop": "{proxy} marca a través de {target}, que lleva de vuelta a {proxy}, por lo que la marcación entra en bucle",
   "dialerProxyLoopStopped": "La marcación a través de {name} lleva de vuelta al proxy que lo usa, por lo que se detuvo la conexión",
+  "scriptNotification": "Script {script}\n{text}",
   "customIssuesSummary": "{count} elementos tienen problemas, y aplicar este perfil puede fallar",
   "providerInUse": "{label} sigue en uso en {profiles}, que dejarán de funcionar correctamente si se elimina. ¿Seguro que quieres eliminarlo?",
   "proxyGroupInUse": "{label} sigue mencionado por reglas, grupos de proxies, proxies de marcación, DNS o NTP de este perfil, que dejarán de funcionar si se elimina. ¿Seguro que quieres eliminarlo?",

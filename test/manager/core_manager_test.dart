@@ -983,6 +983,44 @@ void main() {
     await tester.pump(const Duration(seconds: 10));
   });
 
+  test('a script notification links only to a web address', () {
+    expect(
+      scriptNotificationLink('https://a.test/x'),
+      Uri.parse('https://a.test/x'),
+    );
+    expect(scriptNotificationLink(''), isNull);
+    expect(scriptNotificationLink('file:///etc/hosts'), isNull);
+    expect(scriptNotificationLink('clash://install-config?url=x'), isNull);
+    expect(scriptNotificationLink('http://[::1'), isNull);
+    expect(scriptNotificationLink('https:///no-host'), isNull);
+  });
+
+  testWidgets('a burst of script notifications shows its first alone', (
+    tester,
+  ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    final harness = _harness();
+    await _pumpConnected(tester, harness);
+    String shown(String title) =>
+        currentAppLocalizations.scriptNotification('sign', title);
+
+    harness.feeds.events.add(const [
+      ScriptNotificationEvent(script: 'sign', title: 'one'),
+      ScriptNotificationEvent(script: 'sign', title: 'two'),
+    ]);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text(shown('one')), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text(shown('two')), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 10));
+  });
+
   testWidgets('geo events are forwarded to the geo resource action', (
     tester,
   ) async {

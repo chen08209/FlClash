@@ -5238,6 +5238,12 @@ abstract class AppLocalizations {
   /// **'Dialing through {name} leads back to the proxy that uses it, so the connection was stopped'**
   String dialerProxyLoopStopped(Object name);
 
+  /// No description provided for @scriptNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Script {script}\n{text}'**
+  String scriptNotification(Object script, Object text);
+
   /// No description provided for @customIssuesSummary.
   ///
   /// In en, this message translates to:

@@ -854,6 +854,7 @@
   "customIssueMissingDialer": "ダイヤラープロキシ {name} が存在しません",
   "customIssueDialerLoop": "{proxy} は {target} 経由で接続しますが、{target} から再び {proxy} に戻るため、ループになります",
   "dialerProxyLoopStopped": "{name} 経由の接続が使用元のプロキシに戻るため、接続を中止しました",
+  "scriptNotification": "スクリプト {script}\n{text}",
   "customIssuesSummary": "{count} 件に問題があり、プロファイルの適用に失敗する可能性があります",
   "providerInUse": "{label} は {profiles} でまだ使用されており、削除するとそれらが正常に動作しなくなります。削除してもよろしいですか？",
   "proxyGroupInUse": "{label} はこのプロファイルのルール、プロキシグループ、ダイヤラープロキシ、DNS または NTP からまだ参照されており、削除するとそれらの参照は無効になります。削除してもよろしいですか？",
