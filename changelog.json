@@ -2,6 +2,186 @@
   "schemaVersion": 2,
   "versions": [
     {
+      "version": "0.9.4",
+      "tag": "v0.9.4",
+      "date": "2026-11-19",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "feat",
+          "entries": [
+            {
+              "id": "a89b339",
+              "scope": "dashboard",
+              "text": "One status button gathers core, update and resource states, with counts, download progress and new card icons",
+              "merges": [
+                "c6d1b4d",
+                "aacc062"
+              ]
+            },
+            {
+              "id": "c8b34f2",
+              "scope": "rules",
+              "text": "Added rules can go to named custom exits; a profile's script and added rules run together and open from the extend page",
+              "merges": [
+                "79a6f91",
+                "e409406"
+              ]
+            },
+            {
+              "id": "7633c3c",
+              "scope": "proxy",
+              "text": "PAC mode for the desktop system proxy; new Windows installs bypass <local>; GTK apps on KDE Plasma follow the proxy",
+              "merges": [
+                "ea458b5"
+              ]
+            },
+            {
+              "id": "ca2693a",
+              "scope": "dns",
+              "text": "respect-rules, hosts and cache-algorithm in the DNS overrides; macOS system DNS through tun.dns-mode native",
+              "merges": [
+                "695bd9e"
+              ]
+            },
+            {
+              "id": "c85bf3a",
+              "scope": "logs",
+              "text": "Open a log on a phone to select and copy it"
+            },
+            {
+              "id": "1b2ea11",
+              "scope": "resources",
+              "text": "Geo resources update automatically by default"
+            },
+            {
+              "id": "848583d",
+              "scope": "desktop",
+              "text": "Impeller on Windows and Intel Macs; the Apple Silicon download no longer carries Intel code"
+            },
+            {
+              "id": "e57e5ac",
+              "text": "Update the core to mihomo v1.19.34, with editor completion for its new keys"
+            }
+          ]
+        },
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "8298573",
+              "scope": "core",
+              "text": "A start that fails or a lost Core says why; a mixed port of 0 is replaced; the mixed port opens without a profile",
+              "merges": [
+                "65de33a",
+                "153a04b",
+                "396f2b5",
+                "609dfc3",
+                "26747be"
+              ]
+            },
+            {
+              "id": "044f5b5",
+              "scope": "config",
+              "text": "Process rules match by default; picked override keys are written as set, empty included",
+              "merges": [
+                "e1669a6"
+              ]
+            },
+            {
+              "id": "b13cf52",
+              "scope": "android",
+              "text": "WireGuard, Hysteria2 and TUIC reconnect after a network change; core sockets opened before the VPN are protected",
+              "merges": [
+                "43a7af8"
+              ]
+            },
+            {
+              "id": "408aaa9",
+              "scope": "dashboard",
+              "text": "Service and exit IP checks no longer fail while the proxy starts, stops or changes network"
+            },
+            {
+              "id": "47824d4",
+              "scope": "core",
+              "text": "HTTPUpgrade share links no longer import as WebSocket"
+            },
+            {
+              "id": "5c5964f",
+              "scope": "connections",
+              "text": "App icons show whenever the app is known and keep their place while loading",
+              "merges": [
+                "474920c"
+              ]
+            },
+            {
+              "id": "c620dc9",
+              "scope": "desktop",
+              "text": "macOS tray windows stay on the current Space; windows use the target display's scale; AppImage without a bundled libstdc++; cleaner deb removal; the Windows installer only stops its own processes",
+              "merges": [
+                "fad47df",
+                "39a54ac",
+                "99bc411",
+                "fc3e8bb"
+              ]
+            },
+            {
+              "id": "b08bcd9",
+              "scope": "ui",
+              "text": "Pages open at the top and on the selected profile; sheets open from sheets as pages; the editor shows its spinner and grows its sheet; calmer success and warning colors; remote icons hold their size",
+              "merges": [
+                "1a0ab61",
+                "e750293",
+                "49becb3",
+                "fa5663f",
+                "e56d779",
+                "cafc288",
+                "4f4bff8",
+                "6be6fde",
+                "0fdd955",
+                "f124cf6",
+                "c1c9332"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "perf",
+          "entries": [
+            {
+              "id": "19fb1b0",
+              "scope": "connections",
+              "text": "Connections rank and sort off the UI thread; proxy and group icons use less memory",
+              "merges": [
+                "df8b684"
+              ]
+            }
+          ]
+        }
+      ],
+      "omit": [
+        "f3df1b6",
+        "016dc8b",
+        "7140e37",
+        "7801976",
+        "f29013b",
+        "f1623e1",
+        "0a55a31",
+        "2d31f10",
+        "3d05b37",
+        "96b405f",
+        "57b9b6c",
+        "a0eda19",
+        "036f462",
+        "3ddcdf6",
+        "5766b05",
+        "2f3a2ca",
+        "fe7ef13",
+        "bc1ac73",
+        "bc58d86"
+      ]
+    },
+    {
       "version": "0.9.3",
       "tag": "v0.9.3",
       "date": "2026-11-04",
