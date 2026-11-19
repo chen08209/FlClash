@@ -860,6 +860,7 @@
   "customIssueMissingDialer": "拨号代理 {name} 不存在",
   "customIssueDialerLoop": "{proxy} 经 {target} 拨号，而 {target} 又会回到 {proxy}，形成环路",
   "dialerProxyLoopStopped": "经 {name} 拨号会绕回使用它的代理，连接已中止",
+  "scriptNotification": "脚本 {script}\n{text}",
   "customIssuesSummary": "{count} 项存在问题，应用配置可能失败",
   "providerInUse": "{label} 仍被 {profiles} 使用，删除后这些配置会异常。确定删除吗？",
   "proxyGroupInUse": "{label} 仍被当前配置的规则、策略组、拨号代理、DNS 或 NTP 引用，删除后这些引用会失效。确定删除吗？",

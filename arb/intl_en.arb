@@ -970,6 +970,13 @@
     }
   },
   "dialerProxyLoopStopped": "Dialing through {name} leads back to the proxy that uses it, so the connection was stopped",
+  "scriptNotification": "Script {script}\n{text}",
+  "@scriptNotification": {
+    "placeholders": {
+      "script": {},
+      "text": {}
+    }
+  },
   "customIssuesSummary": "{count} items have problems, and applying this profile may fail",
   "providerInUse": "{label} is still used by {profiles}, which will not work properly once it is deleted. Are you sure you want to delete it?",
   "@providerInUse": {

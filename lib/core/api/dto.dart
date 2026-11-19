@@ -946,6 +946,7 @@ sealed class CoreEventDto {
     'resourceUpdate' => ResourceUpdateEvent.fromJson(json),
     'stateChanged' => StateChangedEvent.fromJson(json),
     'dialerLoop' => DialerLoopEvent(json['name'] as String),
+    'scriptNotification' => ScriptNotificationEvent.fromJson(json),
     'delay' => DelayEvent(
       DelayResult(
         name: json['name'] as String,
@@ -1101,6 +1102,35 @@ final class DialerLoopEvent extends CoreEventDto {
   final String name;
 
   const DialerLoopEvent(this.name);
+}
+
+/// What a MITM script posted with `$notification.post`.
+final class ScriptNotificationEvent extends CoreEventDto {
+  final String script;
+  final String title;
+  final String subtitle;
+  final String body;
+  final String url;
+
+  const ScriptNotificationEvent({
+    required this.script,
+    required this.title,
+    this.subtitle = '',
+    this.body = '',
+    this.url = '',
+  });
+
+  factory ScriptNotificationEvent.fromJson(JsonMap json) =>
+      ScriptNotificationEvent(
+        script: json['script'] as String,
+        title: json['title'] as String,
+        subtitle: json['subtitle'] as String? ?? '',
+        body: json['body'] as String? ?? '',
+        url: json['url'] as String? ?? '',
+      );
+
+  String get text =>
+      [title, subtitle, body].where((part) => part.isNotEmpty).join('\n');
 }
 
 final class DelayEvent extends CoreEventDto {

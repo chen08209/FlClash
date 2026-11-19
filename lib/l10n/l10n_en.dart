@@ -2916,6 +2916,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String scriptNotification(Object script, Object text) {
+    return 'Script $script\n$text';
+  }
+
+  @override
   String customIssuesSummary(Object count) {
     return '$count items have problems, and applying this profile may fail';
   }

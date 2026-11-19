@@ -247,6 +247,8 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         _writeState(_sync.take(event));
       case DialerLoopEvent(:final name):
         _onDialerLoop(name);
+      case final ScriptNotificationEvent notice:
+        _onScriptNotification(notice);
       case FatalEvent(:final message):
         _onCrash(message);
       case EventsResynced():
@@ -372,6 +374,25 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     );
   }
 
+  void _onScriptNotification(ScriptNotificationEvent notice) {
+    if (notice.text.isEmpty ||
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
+    final link = scriptNotificationLink(notice.url);
+    throttler.call(
+      FunctionTag.scriptNotification,
+      () => dialogs.showBanner(
+        currentAppLocalizations.scriptNotification(notice.script, notice.text),
+        onTap: link == null
+            ? null
+            : () => unawaited(dialogs.openUrl(link.toString())),
+      ),
+      duration: const Duration(seconds: 1),
+      fire: true,
+    );
+  }
+
   void _onCrash(String message) {
     if (ref.read(coreStatusProvider) != CoreStatus.connected) {
       return;
@@ -388,4 +409,13 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   Widget build(BuildContext context) {
     return widget.child;
   }
+}
+
+Uri? scriptNotificationLink(String url) {
+  final link = Uri.tryParse(url);
+  return link != null &&
+          (link.isScheme('http') || link.isScheme('https')) &&
+          link.host.isNotEmpty
+      ? link
+      : null;
 }
