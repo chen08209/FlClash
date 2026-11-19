@@ -4,10 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('a row repeating once more rebuilds alone', (tester) async {
-    final built = <String>[];
+    final built = <int>[];
     final rows = Column(
       children: [
-        for (final id in ['a', 'b', 'c'])
+        for (final id in [1, 2, 3])
           Builder(
             builder: (context) {
               built.add(id);
@@ -19,14 +19,14 @@ void main() {
           ),
       ],
     );
-    Widget repeats(Map<String, int> counts) =>
+    Widget repeats(Map<int, int> counts) =>
         TrackerRepeats(counts: counts, child: rows);
-    await tester.pumpWidget(repeats(const {'a': 2, 'b': 3}));
+    await tester.pumpWidget(repeats(const {1: 2, 2: 3}));
     built.clear();
 
-    await tester.pumpWidget(repeats(const {'a': 2, 'b': 4}));
+    await tester.pumpWidget(repeats(const {1: 2, 2: 4}));
 
-    expect(built, ['b']);
-    expect(find.text('b 4'), findsOneWidget);
+    expect(built, [2]);
+    expect(find.text('2 4'), findsOneWidget);
   });
 }

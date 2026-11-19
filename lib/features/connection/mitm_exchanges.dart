@@ -17,26 +17,36 @@ import 'mitm_texts.dart';
 class MitmExchangesView extends ConsumerWidget {
   final TrackerInfo trackerInfo;
 
-  const MitmExchangesView({super.key, required this.trackerInfo});
+  /// Whether the Core session the connection was made in has ended.
+  final bool ended;
+
+  const MitmExchangesView({
+    super.key,
+    required this.trackerInfo,
+    this.ended = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final (list, loading, error) = ref.watch(
-      mitmExchangesProvider(trackerInfo.id).select(
-        (value) => (
-          value.value,
-          !value.hasValue && (value.isLoading || value.retrying),
-          value.hasValue || value.retrying ? null : value.error,
-        ),
-      ),
-    );
+    final (list, loading, error) = ended
+        ? (null, false, null)
+        : ref.watch(
+            mitmExchangesProvider(trackerInfo.id).select(
+              (value) => (
+                value.value,
+                !value.hasValue && (value.isLoading || value.retrying),
+                value.hasValue || value.retrying ? null : value.error,
+              ),
+            ),
+          );
     final errorText = error == null
         ? null
         : userFacingErrorMessage(error, appLocalizations);
     final exchanges = list?.exchanges ?? const <MitmExchangeSummary>[];
     final since = list?.since;
-    final missing = since != null && trackerInfo.start.isBefore(since);
+    final missing =
+        ended || (since != null && trackerInfo.start.isBefore(since));
     final waiting = errorText == null && list?.capturing != false && !missing;
     return NullStatusSwitcher(
       isLoading: loading,

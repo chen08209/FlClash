@@ -110,6 +110,56 @@ TrackerInfo trackerOf(ConnectionInfo info) => TrackerInfo(
   rulePayload: info.rulePayload,
 );
 
+models.MitmQueryPage mitmQueryPageOf(MitmQueryAnswer answer) =>
+    models.MitmQueryPage(
+      capturing: answer.capturing,
+      since: switch (answer.since) {
+        final since? => DateTime.parse(since),
+        null => null,
+      },
+      version: answer.version,
+      oldest: answer.oldest,
+      held: answer.held,
+      matched: answer.matched,
+      exchanges: [
+        for (final exchange in answer.exchanges)
+          _mitmExchangeSummaryOf(exchange),
+      ],
+      next: answer.next,
+      unmatched: answer.unmatched,
+    );
+
+models.MitmExchangeSummary _mitmExchangeSummaryOf(MitmExchangeSummaryDto dto) =>
+    models.MitmExchangeSummary(
+      id: dto.id,
+      start: DateTime.parse(dto.start),
+      pending: dto.pending,
+      duration: dto.duration,
+      method: dto.method,
+      url: dto.url,
+      status: dto.status,
+      requestSize: dto.requestSize,
+      responseSize: dto.responseSize,
+      error: dto.error,
+      host: dto.host,
+      path: dto.path,
+      contentType: dto.contentType,
+      statusClass: dto.statusClass.wire,
+      kind: dto.kind.name,
+      rewritten: dto.rewritten,
+      actionKinds: dto.actionKinds,
+      answer: dto.answer,
+      connectionId: dto.connectionId,
+      app: switch (dto.app) {
+        final app? => models.MitmApp(
+          process: app.process,
+          processPath: app.processPath,
+          uid: app.uid,
+        ),
+        null => null,
+      },
+    );
+
 ExternalProvider providerOf(ProviderInfo info) => ExternalProvider(
   name: info.name,
   type: info.type == ProviderKindDto.rule ? 'Rule' : 'Proxy',

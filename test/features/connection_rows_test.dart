@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 final _t0 = DateTime.utc(2026, 11, 21, 8);
 
 TrackerInfo _connection(
-  String id, {
+  int id, {
   int second = 0,
   String host = 'example.com',
   bool failed = false,
@@ -26,7 +26,7 @@ TrackerInfo _connection(
       : null,
 );
 
-List<String> _ids(ConnectionRows rows) => [
+List<int> _ids(ConnectionRows rows) => [
   for (var index = 0; index < rows.length; index++)
     if (rows.rowAt(index) case MinuteRecord(:final item)) item,
 ];
@@ -46,12 +46,12 @@ void main() {
     final rows = ConnectionRows();
     addTearDown(rows.dispose);
     var log = ConnectionLog(10).open([
-      _connection('a'),
-      _connection('b', second: 1),
-      _connection('c', second: 2),
+      _connection(1),
+      _connection(2, second: 1),
+      _connection(3, second: 2),
     ]);
     rows.follow(log);
-    expect(rows.atFraction(0.5)?.id, 'b');
+    expect(rows.atFraction(0.5)?.id, 2);
 
     log = ConnectionLog(10);
     rows.follow(log);
@@ -63,25 +63,25 @@ void main() {
       'open out until it leaves, and goes on changing the rows it shows', () {
     final rows = ConnectionRows();
     addTearDown(rows.dispose);
-    var log = ConnectionLog(10).open([_connection('a')]);
+    var log = ConnectionLog(10).open([_connection(1)]);
     rows
       ..follow(log)
       ..hovered = true;
 
     log = log
-        .open([_connection('b', second: 1)])
-        .updateTraffic({'a': (upload: 0, download: 10)})
-        .close(['a'], _t0);
+        .open([_connection(2, second: 1)])
+        .updateTraffic({1: (upload: 0, download: 10)})
+        .close([1], _t0);
     rows.update(log);
 
-    expect(_ids(rows), ['a']);
-    expect(rows.infoOf('a').isActive, isFalse);
-    expect(rows.infoOf('a').download, 10);
+    expect(_ids(rows), [1]);
+    expect(rows.infoOf(1).isActive, isFalse);
+    expect(rows.infoOf(1).download, 10);
     expect(rows.countOf(ConnectionStatus.all), 1);
 
     rows.hovered = false;
 
-    expect(_ids(rows), ['a', 'b']);
+    expect(_ids(rows), [1, 2]);
     expect(rows.countOf(ConnectionStatus.active), 1);
   });
 
@@ -91,16 +91,16 @@ void main() {
     () {
       final rows = ConnectionRows();
       addTearDown(rows.dispose);
-      var log = ConnectionLog(10).open([_connection('a')]);
+      var log = ConnectionLog(10).open([_connection(1)]);
       rows
         ..follow(log)
         ..hovered = true;
-      log = log.open([_connection('b', second: 1)]);
+      log = log.open([_connection(2, second: 1)]);
       rows.update(log);
 
       rows.following = false;
 
-      expect(_ids(rows), ['a', 'b']);
+      expect(_ids(rows), [1, 2]);
       expect(rows.following, isFalse);
       expect(rows.holdsNew, isFalse);
     },
@@ -110,16 +110,16 @@ void main() {
       'the pointer', () {
     final rows = ConnectionRows();
     addTearDown(rows.dispose);
-    var log = ConnectionLog(10).open([_connection('a')]);
+    var log = ConnectionLog(10).open([_connection(1)]);
     rows
       ..follow(log)
       ..following = false
       ..hovered = true;
 
-    log = log.open([_connection('b', second: 1)]);
+    log = log.open([_connection(2, second: 1)]);
     rows.update(log);
 
-    expect(_ids(rows), ['a', 'b']);
+    expect(_ids(rows), [1, 2]);
   });
 
   test('a list off its end keeps its rows, gone or not, and adds the new '
@@ -128,22 +128,22 @@ void main() {
     addTearDown(rows.dispose);
     var log = ConnectionLog(
       1,
-    ).open([_connection('a'), _connection('b', second: 1)]);
+    ).open([_connection(1), _connection(2, second: 1)]);
     rows
       ..follow(log)
       ..following = false;
 
     log = log
-        .updateTraffic({'b': (upload: 0, download: 10)})
-        .close(['a'], _t0)
-        .close(['b'], _t0)
-        .open([_connection('c', second: 2), _connection('d', second: 3)]);
+        .updateTraffic({2: (upload: 0, download: 10)})
+        .close([1], _t0)
+        .close([2], _t0)
+        .open([_connection(3, second: 2), _connection(4, second: 3)]);
     rows.update(log);
 
-    expect(log['a'], isNull);
-    expect(_ids(rows), ['a', 'b', 'c', 'd']);
-    expect(rows.infoOf('a').isActive, isFalse);
-    expect(rows.infoOf('b').download, 10);
+    expect(log[1], isNull);
+    expect(_ids(rows), [1, 2, 3, 4]);
+    expect(rows.infoOf(1).isActive, isFalse);
+    expect(rows.infoOf(2).download, 10);
     expect(rows.countOf(ConnectionStatus.active), 2);
   });
 
@@ -152,7 +152,7 @@ void main() {
       'limit', () {
     final start = ConnectionLog(
       1,
-    ).open([_connection('a'), _connection('b', second: 1)]);
+    ).open([_connection(1), _connection(2, second: 1)]);
     ConnectionRows offEnd() {
       final rows = ConnectionRows(rowLimit: 6)
         ..follow(start)
@@ -163,19 +163,19 @@ void main() {
 
     final seen = offEnd();
     final missed = offEnd();
-    var log = start.close(['a'], _t0).close(['b'], _t0);
+    var log = start.close([1], _t0).close([2], _t0);
     seen.update(log);
     for (var batch = 0; batch < 9; batch++) {
       log = log.open([
         for (var index = batch * 1000; index < (batch + 1) * 1000; index++)
-          _connection('n$index', second: 2),
+          _connection(100 + index, second: 2),
       ]);
       seen.update(log);
     }
     expect(log.changesSince(start.revision), isNull);
     missed.update(log);
 
-    expect(_ids(seen), ['a', 'b', 'n0', 'n1', 'n2', 'n3']);
+    expect(_ids(seen), [1, 2, 100, 101, 102, 103]);
     expect(_rows(missed), _rows(seen));
     expect(missed.counts, seen.counts);
   });
@@ -187,28 +187,28 @@ void main() {
       final rows = ConnectionRows();
       addTearDown(rows.dispose);
       var log = ConnectionLog(1).open([
-        for (final (second, id) in ['a', 'b', 'c', 'd'].indexed)
+        for (final (second, id) in [1, 2, 3, 4].indexed)
           _connection(id, second: second),
       ]);
       rows
         ..follow(log)
         ..following = false;
 
-      for (final (second, id) in ['a', 'b', 'c'].indexed) {
+      for (final (second, id) in [1, 2, 3].indexed) {
         log = log.close([id], _t0.add(Duration(seconds: 10 + second)));
       }
       if (missesChanges) {
         log = log.open([
           for (var index = 0; index < 9000; index++)
-            _connection('n$index', second: 5),
+            _connection(100 + index, second: 5),
         ]);
       }
-      expect(log.lastOf('a'), isNull);
+      expect(log.lastOf(1), isNull);
       rows.update(log);
 
-      expect(rows.infoOf('a').closedAt, _t0.add(const Duration(seconds: 11)));
-      expect(rows.infoOf('b').closedAt, _t0.add(const Duration(seconds: 11)));
-      expect(rows.infoOf('d').isActive, isTrue);
+      expect(rows.infoOf(1).closedAt, _t0.add(const Duration(seconds: 11)));
+      expect(rows.infoOf(2).closedAt, _t0.add(const Duration(seconds: 11)));
+      expect(rows.infoOf(4).isActive, isTrue);
       expect(rows.countOf(ConnectionStatus.active), rows.held.length - 3);
     });
   }
@@ -219,20 +219,20 @@ void main() {
     addTearDown(rows.dispose);
     var log = ConnectionLog(
       1,
-    ).open([_connection('a'), _connection('b', second: 1)]);
+    ).open([_connection(1), _connection(2, second: 1)]);
     rows
       ..follow(log)
       ..hovered = true;
 
-    log = log.close(['a'], _t0).close(['b'], _t0).open([
+    log = log.close([1], _t0).close([2], _t0).open([
       for (var index = 0; index < 9000; index++)
-        _connection('n$index', second: 2),
+        _connection(100 + index, second: 2),
     ]);
     rows
       ..update(log)
       ..following = false;
 
-    expect(_ids(rows), ['a', 'b', 'n0', 'n1', 'n2', 'n3']);
+    expect(_ids(rows), [1, 2, 100, 101, 102, 103]);
     expect(rows.countOf(ConnectionStatus.active), 4);
   });
 
@@ -242,7 +242,7 @@ void main() {
     addTearDown(rows.dispose);
     List<TrackerInfo> range(int from, int to) => [
       for (var index = from; index < to; index++)
-        _connection('c$index', second: index),
+        _connection(index, second: index),
     ];
     var log = ConnectionLog(10).open(range(0, 2));
     rows
@@ -251,58 +251,58 @@ void main() {
 
     log = log.open(range(2, 7));
     rows.update(log);
-    expect(_ids(rows), ['c0', 'c1', 'c2', 'c3']);
+    expect(_ids(rows), [0, 1, 2, 3]);
 
     log = log.open(range(7, 12));
     rows.update(log);
-    expect(_ids(rows), ['c0', 'c1', 'c2', 'c3']);
+    expect(_ids(rows), [0, 1, 2, 3]);
 
     rows.follow(log);
-    expect(_ids(rows), [for (var index = 0; index < 12; index++) 'c$index']);
+    expect(_ids(rows), [for (var index = 0; index < 12; index++) index]);
   });
 
   testWidgets('traffic alone ticks the traffic, not the rows', (tester) async {
     final rows = ConnectionRows();
     addTearDown(rows.dispose);
-    var log = ConnectionLog(1).open([_connection('a')]);
+    var log = ConnectionLog(1).open([_connection(1)]);
     rows.follow(log);
     var rowsChanged = 0;
     var trafficTicked = 0;
     rows.addListener(() => rowsChanged++);
     rows.traffic.addListener(() => trafficTicked++);
 
-    log = log.updateTraffic({'a': (upload: 0, download: 10)});
+    log = log.updateTraffic({1: (upload: 0, download: 10)});
     rows.update(log);
     await tester.pump();
     expect((rowsChanged, trafficTicked), (0, 1));
-    expect(rows.infoOf('a').download, 10);
-    expect(rows.detailsOf('a').download, 0);
+    expect(rows.infoOf(1).download, 10);
+    expect(rows.detailsOf(1).download, 0);
 
-    log = log.close(['a'], _t0);
+    log = log.close([1], _t0);
     rows.update(log);
     expect(rowsChanged, 1);
     await tester.pump();
     expect(trafficTicked, 2);
-    expect(rows.detailsOf('a').isActive, isFalse);
+    expect(rows.detailsOf(1).isActive, isFalse);
   });
 
   test('a row keeps its index across what the log changes around it', () {
     final rows = ConnectionRows();
     addTearDown(rows.dispose);
     var log = ConnectionLog(1).open([
-      _connection('a'),
-      _connection('b', second: 61),
-      _connection('c', second: 62),
+      _connection(1),
+      _connection(2, second: 61),
+      _connection(3, second: 62),
     ]);
     rows.follow(log);
 
-    log = log.close(['a', 'b'], _t0);
+    log = log.close([1, 2], _t0);
     rows.update(log);
 
-    expect(_rows(rows), ['b end false', 'c start true', '[29920801 2]']);
-    expect(rows.indexOfKey(rows.keyOf('c')), 1);
+    expect(_rows(rows), ['2 end false', '3 start true', '[29920801 2]']);
+    expect(rows.indexOfKey(rows.keyOf(3)), 1);
     expect(rows.indexOfKey(const MinuteHeader(29920801, '', 0).key), 2);
-    expect(rows.indexOfKey(rows.keyOf('a')), isNull);
+    expect(rows.indexOfKey(rows.keyOf(1)), isNull);
   });
 
   test('a log of a new run replaces the rows, however far its revision '
@@ -310,19 +310,19 @@ void main() {
     final rows = ConnectionRows();
     addTearDown(rows.dispose);
     final old = ConnectionLog(4)
-        .open([_connection('a')])
-        .open([_connection('b', second: 1)])
-        .updateTraffic({'b': (upload: 0, download: 10)});
+        .open([_connection(1)])
+        .open([_connection(2, second: 1)])
+        .updateTraffic({2: (upload: 0, download: 10)});
     rows.follow(old);
 
     var log = ConnectionLog(4);
-    for (final (index, id) in ['c', 'd', 'e', 'f'].indexed) {
+    for (final (index, id) in [3, 4, 5, 6].indexed) {
       log = log.open([_connection(id, second: 2 + index)]);
     }
     expect(log.revision, greaterThan(old.revision));
     rows.update(log);
 
-    expect(_ids(rows), ['c', 'd', 'e', 'f']);
+    expect(_ids(rows), [3, 4, 5, 6]);
     expect(rows.counts, {
       ConnectionStatus.all: 4,
       ConnectionStatus.active: 4,
@@ -356,7 +356,7 @@ void main() {
             log = log.open([
               for (var count = random.nextInt(most); count > 0; count--)
                 _connection(
-                  'n${next++}',
+                  next++,
                   second: random.nextInt(240),
                   host: ['a.test', 'b.test'][random.nextInt(2)],
                   failed: random.nextInt(3) == 0,
@@ -386,7 +386,7 @@ void main() {
       for (var index = 0; index < rows.length; index++) {
         final key = switch (rows.rowAt(index)) {
           MinuteRecord(:final item) => rows.keyOf(item),
-          final MinuteHeader<String> header => header.key,
+          final MinuteHeader<int> header => header.key,
         };
         expect(rows.indexOfKey(key), index, reason: 'round $round');
       }
@@ -411,7 +411,7 @@ void main() {
       'every row again does, not a move of the rows per connection', () {
     final connections = [
       for (var index = 0; index < 5000; index++)
-        _connection('c$index', second: index),
+        _connection(index, second: index),
     ];
     var update = 1 << 62;
     var replace = 1 << 62;

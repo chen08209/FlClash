@@ -204,6 +204,11 @@ void main() {
           {'kind': 'url-rewrite', 'detail': 'header'},
           {'kind': 'script', 'phase': 'request', 'detail': 'sign'},
         ],
+        'route': {
+          'rule': 'URLRegex',
+          'rule-payload': '^https://a\\.test/new',
+          'chains': ['A', 'G'],
+        },
       });
 
       expect(exchange.originalUrl, 'https://a.test/old');
@@ -211,6 +216,18 @@ void main() {
       expect(exchange.responseHeader, isEmpty);
       expect(exchange.actions.last.phase, 'request');
       expect(exchange.error, isEmpty);
+      expect(
+        exchange.route,
+        const MitmRoute(
+          rule: 'URLRegex',
+          rulePayload: r'^https://a\.test/new',
+          chains: ['A', 'G'],
+        ),
+      );
+      expect(
+        MitmExchange.fromJson({'id': 4, 'start': '2026-10-28T00:00:00Z'}).route,
+        isNull,
+      );
     });
 
     test('a body reads with its flags left out', () {

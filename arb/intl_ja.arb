@@ -1121,6 +1121,7 @@
   "mitmModuleRulesDesc": "プロファイル自身のルールより先に照合されます。",
   "mitmRequestRulesDesc": "URL-REGEX と USER-AGENT のルールは URL 書き換えとして動作し、HTTPS ではホスト名に含まれるホストだけが対象です。",
   "mitmExtendedMatchingNote": "うち {count} 件は拡張マッチング",
+  "mitmActionModule": "{module} から",
   "mitmModuleSystemTip": "{system} 向けに書かれています。一部の行はこのデバイスのアプリに一致しない場合があります。",
   "mitmModuleRequirementTip": "このモジュールは {requirement} を必要としますが、このデバイスは満たしていないため、想定どおりに動作しない場合があります。",
   "mitmExitModules": "モジュール：{modules}",

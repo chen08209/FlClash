@@ -548,6 +548,27 @@ final class RpcCoreApi implements CoreApi {
   );
 
   @override
+  Future<MitmQueryAnswer> mitmQuery({
+    MitmFilter filter = const MitmFilter(),
+    int? before,
+    int? limit,
+    int? since,
+    bool facets = false,
+    int? rateFrom,
+  }) => _call(
+    'mitm.query',
+    (r) => MitmQueryAnswer.fromJson(_object(r)),
+    params: {
+      'filter': filter.toJson(),
+      'before': ?before,
+      'limit': ?limit,
+      'since': ?since,
+      if (facets) 'facets': true,
+      'rateFrom': ?rateFrom,
+    },
+  );
+
+  @override
   Future<Object?> mitmExchange(int id) =>
       _find<Object?>('mitm.exchange', _resultOrNull, params: {'id': id});
 

@@ -6840,6 +6840,12 @@ abstract class AppLocalizations {
   /// **'{count} use extended matching'**
   String mitmExtendedMatchingNote(Object count);
 
+  /// No description provided for @mitmActionModule.
+  ///
+  /// In en, this message translates to:
+  /// **'From {module}'**
+  String mitmActionModule(Object module);
+
   /// No description provided for @mitmModuleSystemTip.
   ///
   /// In en, this message translates to:

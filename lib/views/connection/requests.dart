@@ -204,6 +204,9 @@ class _RequestsViewState extends ConsumerState<RequestsView>
   }
 
   @override
+  bool get showsConnectionTraffic => _segment == RequestsSegment.connections;
+
+  @override
   Duration get pollInterval => const Duration(seconds: 1);
 
   @override
@@ -218,7 +221,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     final query =
         widget.httpQuery ??
         (ref.read(coreStatusProvider) == CoreStatus.connected
-            ? _core.queryMitmExchanges
+            ? _core.api.queryMitmExchanges
             : null);
     if (query == null || !httpCapturing(ref.read(patchClashConfigProvider))) {
       return;
@@ -304,6 +307,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
       return;
     }
     setState(() => _segment = segment);
+    syncConnectionCounters();
     _searchShown();
     final behind = _behind.remove(segment);
     switch (segment) {

@@ -80,6 +80,37 @@ void main() {
               ],
             },
           });
+        case 'mitm.query':
+          channel.answer(message['id'], {
+            'capturing': true,
+            'since': '2026-11-21T08:00:00Z',
+            'version': 9,
+            'oldest': 3,
+            'held': 2,
+            'matched': 1,
+            'exchanges': [
+              {
+                'id': 4,
+                'start': '2026-11-21T08:00:01Z',
+                'duration': 12,
+                'method': 'GET',
+                'url': 'https://a.test/x',
+                'status': 404,
+                'request-size': 0,
+                'response-size': 5,
+                'host': 'a.test',
+                'path': '/x',
+                'status-class': '4xx',
+                'kind': 'json',
+                'action-kinds': ['header-rewrite', 'map-local'],
+                'answer': 'map-local',
+                'connection-id': 21,
+                'app': {'process': 'curl'},
+              },
+            ],
+            'next': 3,
+            'unmatched': [2],
+          });
         case 'mitm.body':
           channel.fail(message['id'], {
             'code': -32000,
@@ -140,6 +171,29 @@ void main() {
       ),
     });
   });
+
+  test(
+    'a page of the HTTP capture reads as the request page wants it',
+    () async {
+      final page = await api.queryMitmExchanges(limit: 50);
+      expect(page.capturing, isTrue);
+      expect(page.since, DateTime.utc(2026, 11, 21, 8));
+      expect(
+        (page.version, page.oldest, page.held, page.matched),
+        (9, 3, 2, 1),
+      );
+      expect(page.next, 3);
+      expect(page.unmatched, [2]);
+      final exchange = page.exchanges.single;
+      expect(exchange.statusClass, '4xx');
+      expect(exchange.kind, 'json');
+      expect(exchange.actionKinds, ['header-rewrite', 'map-local']);
+      expect(exchange.answer, 'map-local');
+      expect(exchange.connectionId, 21);
+      expect(exchange.app?.process, 'curl');
+      expect(exchange.start, DateTime.utc(2026, 11, 21, 8, 0, 1));
+    },
+  );
 
   test('an MITM record the Core has dropped reads as null', () async {
     expect(await api.mitmBody(7, response: true), isNull);

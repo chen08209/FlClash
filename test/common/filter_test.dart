@@ -196,7 +196,7 @@ void main() {
     );
 
     TrackerInfo tracker(
-      String id, {
+      int id, {
       List<String> chains = const ['proxy-a'],
       Metadata? metadata,
       String rule = 'MATCH',
@@ -211,106 +211,106 @@ void main() {
     );
 
     test('returns all when the query is empty', () {
-      final state = _searched(trackerInfos: [tracker('1')]);
+      final state = _searched(trackerInfos: [tracker(1)]);
       expect(state.list.length, 1);
     });
 
     test('filters by a proxy anywhere in the chain', () {
       final infos =
           [
-            tracker('1', chains: ['proxy-a', 'proxy-b']),
-            tracker('2', chains: ['proxy-c']),
+            tracker(1, chains: ['proxy-a', 'proxy-b']),
+            tracker(2, chains: ['proxy-c']),
           ].whereFilters(trackerInfoFacets, const [
             RecordFilter(RecordFacetKind.proxy, 'proxy-b'),
           ]).toList();
-      expect(infos.map((info) => info.id), ['1']);
+      expect(infos.map((info) => info.id), [1]);
     });
 
     test('filters by process', () {
       final infos =
           [
-            tracker('1', metadata: meta(process: 'chrome')),
-            tracker('2', metadata: meta(process: 'firefox')),
+            tracker(1, metadata: meta(process: 'chrome')),
+            tracker(2, metadata: meta(process: 'firefox')),
           ].whereFilters(trackerInfoFacets, const [
             RecordFilter(RecordFacetKind.app, 'firefox'),
           ]).toList();
-      expect(infos.map((info) => info.id), ['2']);
+      expect(infos.map((info) => info.id), [2]);
     });
 
     test('query matches host', () {
       final state = _searched(
         trackerInfos: [
-          tracker('1', metadata: meta(host: 'google.com')),
-          tracker('2', metadata: meta(host: 'github.com')),
+          tracker(1, metadata: meta(host: 'google.com')),
+          tracker(2, metadata: meta(host: 'github.com')),
         ],
         query: 'github',
       );
       expect(state.list.length, 1);
-      expect(state.list[0].id, '2');
+      expect(state.list[0].id, 2);
     });
 
     test('query matches network', () {
       final state = _searched(
         trackerInfos: [
-          tracker('1', metadata: meta(network: 'tcp')),
-          tracker('2', metadata: meta(network: 'udp')),
+          tracker(1, metadata: meta(network: 'tcp')),
+          tracker(2, metadata: meta(network: 'udp')),
         ],
         query: 'udp',
       );
       expect(state.list.length, 1);
-      expect(state.list[0].id, '2');
+      expect(state.list[0].id, 2);
     });
 
     test('query matches destinationIP', () {
       final state = _searched(
         trackerInfos: [
-          tracker('1', metadata: meta(destinationIP: '10.0.0.1')),
-          tracker('2', metadata: meta(destinationIP: '192.168.1.1')),
+          tracker(1, metadata: meta(destinationIP: '10.0.0.1')),
+          tracker(2, metadata: meta(destinationIP: '192.168.1.1')),
         ],
         query: '192.168',
       );
       expect(state.list.length, 1);
-      expect(state.list[0].id, '2');
+      expect(state.list[0].id, 2);
     });
 
     test('query matches chains text', () {
       final state = _searched(
         trackerInfos: [
-          tracker('1', chains: ['proxy-a']),
-          tracker('2', chains: ['proxy-b']),
+          tracker(1, chains: ['proxy-a']),
+          tracker(2, chains: ['proxy-b']),
         ],
         query: 'proxy-b',
       );
       expect(state.list.length, 1);
-      expect(state.list[0].id, '2');
+      expect(state.list[0].id, 2);
     });
 
     test('query matches the rule and its payload', () {
       final trackerInfos = [
-        tracker('1'),
-        tracker('2', rule: 'DomainSuffix', rulePayload: 'googleapis.com'),
+        tracker(1),
+        tracker(2, rule: 'DomainSuffix', rulePayload: 'googleapis.com'),
       ];
       expect(
         _searched(
           trackerInfos: trackerInfos,
           query: 'domainsuffix',
         ).list.single.id,
-        '2',
+        2,
       );
       expect(
         _searched(
           trackerInfos: trackerInfos,
           query: 'googleapis',
         ).list.single.id,
-        '2',
+        2,
       );
     });
 
     test('query matches the source address and the process path', () {
       final trackerInfos = [
-        tracker('1'),
+        tracker(1),
         tracker(
-          '2',
+          2,
           metadata: const Metadata(
             sourceIP: '198.18.0.1',
             sourcePort: '53211',
@@ -323,31 +323,31 @@ void main() {
           trackerInfos: trackerInfos,
           query: '198.18.0.1',
         ).list.single.id,
-        '2',
+        2,
       );
       expect(
         _searched(trackerInfos: trackerInfos, query: '53211').list.single.id,
-        '2',
+        2,
       );
       expect(
         _searched(trackerInfos: trackerInfos, query: '/usr/bin').list.single.id,
-        '2',
+        2,
       );
     });
 
     test('every query term has to match', () {
       final state = _searched(
         trackerInfos: [
-          tracker('1', metadata: meta(host: 'github.com')),
+          tracker(1, metadata: meta(host: 'github.com')),
           tracker(
-            '2',
+            2,
             chains: ['proxy-b'],
             metadata: meta(host: 'github.com'),
           ),
         ],
         query: 'GitHub proxy-b',
       );
-      expect(state.list.single.id, '2');
+      expect(state.list.single.id, 2);
     });
   });
 }

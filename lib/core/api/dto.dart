@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+part 'mitm_query_dto.dart';
 part 'module_dto.dart';
 
 typedef JsonMap = Map<String, Object?>;

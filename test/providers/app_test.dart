@@ -1,6 +1,5 @@
 import 'package:fl_clash/common/fixed.dart';
 import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -11,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
 
-class _MockCore extends Mock implements CoreHandlerInterface {}
+import '../helpers/core_mocks.dart';
 
 void main() {
   late ProviderContainer container;
@@ -26,16 +25,23 @@ void main() {
 
   test('the rules in force are listed again each time the Core connects, '
       'and kept while it is away', () async {
-    final core = _MockCore();
-    final rules = RuleTable.of(const [(type: 'MATCH', payload: '')]);
+    final mocks = coreMocks();
     var calls = 0;
-    when(core.getRules).thenAnswer((_) async {
+    when(mocks.api.ruleList).thenAnswer((_) async {
       calls++;
-      return calls == 1 ? throw StateError('stopped') : rules;
+      return calls == 1
+          ? throw StateError('stopped')
+          : {
+              'rules': [
+                {'type': 'MATCH', 'payload': '', 'target': 'DIRECT'},
+              ],
+            };
     });
     final container = ProviderContainer(
       overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.test(core)),
+        coreHandlerProvider.overrideWithValue(
+          CoreController.test(mocks.backend),
+        ),
       ],
     );
     addTearDown(container.dispose);
@@ -48,11 +54,12 @@ void main() {
     );
     status.value = CoreStatus.connecting;
     status.value = CoreStatus.connected;
-    expect(await container.read(activeRulesProvider.future), rules);
+    final rules = await container.read(activeRulesProvider.future);
+    expect(rules.holds(0, type: 'MATCH', payload: ''), isTrue);
 
     status.value = CoreStatus.disconnected;
     await Future<void>.delayed(Duration.zero);
-    expect(container.read(activeRulesProvider).value, rules);
+    expect(container.read(activeRulesProvider).value, same(rules));
     expect(calls, 2);
   });
 
@@ -342,25 +349,23 @@ void main() {
       );
       addTearDown(subscription.close);
 
-      container
-          .read(requestsProvider.notifier)
-          .addRequest(
-            TrackerInfo(
-              id: '1',
-              start: DateTime.utc(2026),
-              metadata: const Metadata(network: 'tcp', host: 'example.com'),
-              chains: const ['Proxy'],
-              rule: 'DOMAIN',
-              rulePayload: 'example.com',
-            ),
-          );
+      container.read(requestsProvider.notifier).addRequests([
+        TrackerInfo(
+          id: 1,
+          start: DateTime.utc(2026),
+          metadata: const Metadata(network: 'tcp', host: 'example.com'),
+          chains: const ['Proxy'],
+          rule: 'DOMAIN',
+          rulePayload: 'example.com',
+        ),
+      ]);
 
       expect(notifications, 1);
       expect(container.read(requestsProvider).length, 1);
     });
 
     test('Requests.updateTraffic updates the requests it names', () {
-      TrackerInfo request(String id) => TrackerInfo(
+      TrackerInfo request(int id) => TrackerInfo(
         id: id,
         upload: 460,
         start: DateTime.utc(2026),
@@ -371,8 +376,8 @@ void main() {
       );
       final notifier = container.read(requestsProvider.notifier);
       notifier.value = ConnectionLog(3);
-      notifier.addRequest(request('a'));
-      notifier.addRequest(request('b'));
+      notifier.addRequests([request(1)]);
+      notifier.addRequests([request(2)]);
       var notifications = 0;
       final subscription = container.listen(
         requestsProvider.select((state) => state.revision),
@@ -380,12 +385,12 @@ void main() {
       );
       addTearDown(subscription.close);
 
-      notifier.updateTraffic({'gone': (upload: 1, download: 1)});
+      notifier.updateTraffic({99: (upload: 1, download: 1)});
       expect(notifications, 0);
 
       notifier.updateTraffic({
-        'a': (upload: 520, download: 257835),
-        'gone': (upload: 1, download: 1),
+        1: (upload: 520, download: 257835),
+        99: (upload: 1, download: 1),
       });
 
       expect(notifications, 1);
@@ -394,13 +399,13 @@ void main() {
             .read(requestsProvider)
             .list
             .map((request) => (request.id, request.upload, request.download)),
-        [('a', 520, 257835), ('b', 460, 0)],
+        [(1, 520, 257835), (2, 460, 0)],
       );
     });
 
     test('Requests notifies once per close, sync and closeAll that changes '
         'the log, and not for one that changes nothing', () {
-      TrackerInfo request(String id, int second) => TrackerInfo(
+      TrackerInfo request(int id, int second) => TrackerInfo(
         id: id,
         start: DateTime.utc(2026).add(Duration(seconds: second)),
         metadata: const Metadata(network: 'tcp', host: 'example.com'),
@@ -410,9 +415,9 @@ void main() {
       );
       final notifier = container.read(requestsProvider.notifier);
       notifier.value = ConnectionLog(3);
-      notifier.addRequest(request('a', 0));
-      notifier.addRequest(request('b', 1));
-      notifier.addRequest(request('c', 2));
+      notifier.addRequests([request(1, 0)]);
+      notifier.addRequests([request(2, 1)]);
+      notifier.addRequests([request(3, 2)]);
       var notifications = 0;
       final subscription = container.listen(
         requestsProvider.select((state) => state.revision),
@@ -421,20 +426,20 @@ void main() {
       addTearDown(subscription.close);
       final later = DateTime.utc(2026, 1, 2);
 
-      notifier.close(['a'], at: later);
+      notifier.close([1], at: later);
       expect(notifications, 1);
-      notifier.close(['a', 'gone'], at: later);
+      notifier.close([1, 99], at: later);
       expect(notifications, 1);
 
       notifier.sync(
-        [request('c', 2)],
+        [request(3, 2)],
         requestedAt: later,
         lineage: container.read(requestsProvider).lineage,
       );
       expect(notifications, 2);
-      expect(container.read(requestsProvider)['b']!.closedAt, later);
+      expect(container.read(requestsProvider)[2]!.closedAt, later);
       notifier.sync(
-        [request('c', 2)],
+        [request(3, 2)],
         requestedAt: later,
         lineage: container.read(requestsProvider).lineage,
       );

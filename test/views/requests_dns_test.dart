@@ -1,7 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -17,14 +15,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/hidden_segments.dart';
 import '../helpers/record_lines.dart';
 import '../helpers/status_menu.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
 const _paneSize = Size(1400, 1000);
 const _narrowSize = Size(600, 1000);
@@ -58,14 +55,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late ProviderContainer container;
-  late _MockCoreHandlerInterface core;
+  late CoreMocks core;
 
   setUp(() {
-    core = _MockCoreHandlerInterface();
+    core = coreMocks();
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        coreHandlerProvider.overrideWithValue(core.controller),
       ],
     );
     globalState.container = container;
@@ -80,7 +77,7 @@ void main() {
     final notifier = container.read(dnsQueriesProvider.notifier);
     notifier.value = FixedList<DnsQuery>(500);
     for (final dnsQuery in dnsQueries) {
-      notifier.addQuery(dnsQuery);
+      notifier.addQueries([dnsQuery]);
     }
   }
 
@@ -228,9 +225,9 @@ void main() {
     await pumpDnsQueries(tester);
     expect(find.text('gamma.test'), findsNothing);
 
-    container
-        .read(dnsQueriesProvider.notifier)
-        .addQuery(_dnsQuery('gamma.test'));
+    container.read(dnsQueriesProvider.notifier).addQueries([
+      _dnsQuery('gamma.test'),
+    ]);
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     await tester.pump();
@@ -370,9 +367,9 @@ void main() {
     seedDnsQueries([_dnsQuery('alpha.test')]);
 
     await pumpDnsQueries(tester);
-    container
-        .read(dnsQueriesProvider.notifier)
-        .addQuery(_dnsQuery('beta.test', type: 'AAAA'));
+    container.read(dnsQueriesProvider.notifier).addQueries([
+      _dnsQuery('beta.test', type: 'AAAA'),
+    ]);
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     await tester.pump();
@@ -428,8 +425,8 @@ void main() {
     final notifier = container.read(dnsQueriesProvider.notifier);
     notifier.value = FixedList<DnsQuery>(2);
     notifier
-      ..addQuery(_dnsQuery('alpha.test'))
-      ..addQuery(_dnsQuery('beta.test'));
+      ..addQueries([_dnsQuery('alpha.test')])
+      ..addQueries([_dnsQuery('beta.test')]);
 
     await pumpDnsQueries(tester);
     await tester.tap(
@@ -441,7 +438,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(DnsQueryDetailView), findsOneWidget);
 
-    notifier.addQuery(_dnsQuery('gamma.test'));
+    notifier.addQueries([_dnsQuery('gamma.test')]);
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
 
@@ -457,11 +454,11 @@ void main() {
     final notifier = container.read(dnsQueriesProvider.notifier);
     notifier.value = FixedList<DnsQuery>(60);
     for (var index = 0; index < 60; index++) {
-      notifier.addQuery(
+      notifier.addQueries([
         _dnsQuery(
           'd$index.test',
         ).copyWith(time: start.add(Duration(seconds: index * 7))),
-      );
+      ]);
     }
     await pumpDnsQueries(tester);
     final list = find.byType(RecordMinuteList<DnsQuery>);
@@ -475,9 +472,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(DnsQueryDetailView), findsOneWidget);
 
-    notifier.addQuery(
+    notifier.addQueries([
       _dnsQuery('new.test').copyWith(time: start.add(const Duration(hours: 1))),
-    );
+    ]);
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     expect(find.text('d0.test'), findsWidgets);
@@ -544,10 +541,10 @@ void main() {
       container.listen(requestsProvider, (_, _) {});
       final requests = container.read(requestsProvider.notifier);
       for (final (id, host, dnsQueries) in [
-        ('c1', 'alpha.test', [5]),
-        ('c2', 'other.test', <int>[]),
+        (1, 'alpha.test', [5]),
+        (2, 'other.test', <int>[]),
       ]) {
-        requests.addRequest(
+        requests.addRequests([
           TrackerInfo(
             id: id,
             upload: 0,
@@ -559,7 +556,7 @@ void main() {
             rulePayload: '',
             dnsQueries: dnsQueries,
           ),
-        );
+        ]);
       }
     }
 
@@ -626,9 +623,9 @@ void main() {
       container.listen(requestsProvider, (_, _) {});
       final requests = container.read(requestsProvider.notifier);
       for (var index = 0; index < 300; index++) {
-        requests.addRequest(
+        requests.addRequests([
           TrackerInfo(
-            id: 'c$index',
+            id: index,
             start: DateTime.utc(2026),
             metadata: const Metadata(network: 'tcp', host: 'alpha.test'),
             chains: const ['DIRECT'],
@@ -636,7 +633,7 @@ void main() {
             rulePayload: '',
             dnsQueries: const [5],
           ),
-        );
+        ]);
       }
       await pumpDnsQueries(tester);
       await select(tester, 'alpha.test');
@@ -801,12 +798,12 @@ void main() {
   testWidgets('the overflow menu clears the DNS cache and says so', (
     tester,
   ) async {
-    when(core.clearDnsCache).thenAnswer((_) async => true);
+    when(core.api.clearDnsCache).thenAnswer((_) async {});
     await pumpDnsQueries(tester);
 
     await clearDnsCache(tester);
 
-    verify(core.clearDnsCache).called(1);
+    verify(core.api.clearDnsCache).called(1);
     expect(find.text('DNS cache cleared'), findsOneWidget);
 
     await teardownView(tester);
@@ -815,7 +812,7 @@ void main() {
   testWidgets('a Core that cannot clear the DNS cache reports it', (
     tester,
   ) async {
-    when(core.clearDnsCache).thenThrow(
+    when(core.api.clearDnsCache).thenThrow(
       const CoreMethodException(
         code: 'transport_disconnected',
         message: 'Core is not running',
@@ -845,7 +842,9 @@ void main() {
       }
     };
     addTearDown(() => debugOnRebuildDirtyWidget = null);
-    container.read(dnsQueriesProvider.notifier).addQuery(_dnsQuery('new.test'));
+    container.read(dnsQueriesProvider.notifier).addQueries([
+      _dnsQuery('new.test'),
+    ]);
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump();
     debugOnRebuildDirtyWidget = null;
@@ -868,24 +867,22 @@ void main() {
   }
 
   void addQuery(DnsQuery dnsQuery) =>
-      container.read(dnsQueriesProvider.notifier).addQuery(dnsQuery);
+      container.read(dnsQueriesProvider.notifier).addQueries([dnsQuery]);
 
   testWidgets('a query selected beside the list moves into a sheet as the '
       'page narrows and back as it widens, and the connection chosen '
       'before stays out of it', (tester) async {
     seedDnsQueries([_dnsQuery('alpha.test'), _dnsQuery('beta.test')]);
-    container
-        .read(requestsProvider.notifier)
-        .addRequest(
-          TrackerInfo(
-            id: 'c1',
-            start: DateTime.utc(2026),
-            metadata: const Metadata(network: 'tcp', host: 'conn.test'),
-            chains: const ['DIRECT'],
-            rule: 'Match',
-            rulePayload: '',
-          ),
-        );
+    container.read(requestsProvider.notifier).addRequests([
+      TrackerInfo(
+        id: 1,
+        start: DateTime.utc(2026),
+        metadata: const Metadata(network: 'tcp', host: 'conn.test'),
+        chains: const ['DIRECT'],
+        rule: 'Match',
+        rulePayload: '',
+      ),
+    ]);
     Future<void> resize(Size size) async {
       container.read(viewSizeProvider.notifier).update((_) => size);
       tester.view.physicalSize = size;

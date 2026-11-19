@@ -3867,6 +3867,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String mitmActionModule(Object module) {
+    return 'Из $module';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return 'Написан для $system; некоторые строки могут не подходить к приложениям на этом устройстве.';
   }

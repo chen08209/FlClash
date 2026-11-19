@@ -3646,6 +3646,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String mitmActionModule(Object module) {
+    return '来自 $module';
+  }
+
+  @override
   String mitmModuleSystemTip(Object system) {
     return '为 $system 编写，部分行可能不适用于本设备。';
   }

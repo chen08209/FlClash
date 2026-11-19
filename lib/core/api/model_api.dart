@@ -139,6 +139,14 @@ extension ModelApi on CoreApi {
         Map<String, Object?>.from(await mitmExchanges(connectionId) as Map),
       );
 
+  Future<MitmQueryPage> queryMitmExchanges({
+    int? before,
+    int? since,
+    required int limit,
+  }) async => mitmQueryPageOf(
+    await mitmQuery(before: before, since: since, limit: limit),
+  );
+
   /// Null once the Core no longer keeps the request.
   Future<MitmExchange?> getMitmExchange(int id) async {
     final exchange = await mitmExchange(id);
