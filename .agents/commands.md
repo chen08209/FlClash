@@ -201,6 +201,9 @@ its own, lets that run decide, and names the files that only failed together. Se
 also what CI runs; `tool/check_plugins.sh` does not descend into it. It must stay out of `flutter test`, because a test
 run of `plugins/setup` would execute the build hook itself.
 
+`.github/scripts/issue-gate.js` is tested with `node --test .github/scripts/`, against the forms in
+`.github/ISSUE_TEMPLATE/`; no workflow runs it, so run it after changing the script or a form.
+
 Native plugin code under `plugins/*/{linux,macos,windows}` is compiled by the CI `desktop` job, which runs
 `flutter build <platform> --debug` on every branch push, and by the release matrix on a tag; `tool/check_plugins.sh`
 only analyzes and tests the Dart side.

@@ -22,10 +22,12 @@ function unquote(text) {
 
 // The fields of one issue form: each one's heading, whether it is required, and for checkboxes the required options.
 function parseForm(text) {
-  const form = { labels: [], fields: [] };
+  const form = { title: '', labels: [], fields: [] };
   let field = null;
   let option = null;
   for (const line of text.split('\n')) {
+    const title = line.match(/^title:\s*(.+)$/);
+    if (title) form.title = unquote(title[1]);
     const labels = line.match(/^labels:\s*\[(.*)\]\s*$/);
     if (labels) form.labels = labels[1].split(',').map(unquote).filter(Boolean);
     const type = line.match(/^ {2}- type:\s*(\S+)/);
@@ -102,6 +104,15 @@ function formProblems(form, found) {
   return problems;
 }
 
+// A title that is only the form's prefix says nothing; GitHub requires a title but not past the prefill.
+function titleProblems(form, title) {
+  const prefix = form.title.trim();
+  let rest = (title || '').trim();
+  if (prefix && rest.toLowerCase().startsWith(prefix.toLowerCase())) rest = rest.slice(prefix.length).trim();
+  if (rest !== '') return [];
+  return [`标题：在 ${prefix} 后面用一句话写清问题 / Title: add a one-line summary after ${prefix}`];
+}
+
 function releaseOf(value) {
   const match = value.match(RELEASE);
   return match ? match.slice(1).map(Number) : null;
@@ -150,7 +161,7 @@ async function problemsOf(github, repo, issue, forms) {
   const found = sections(issue.body);
   const form = matchForm(forms, labels, found);
   if (!form) return ['没有通过 issue 表单提交 / Not opened through one of the issue forms.'];
-  const problems = formProblems(form, found);
+  const problems = [...titleProblems(form, issue.title), ...formProblems(form, found)];
   const version = form.fields.find((field) => field.id === 'version');
   const value = version && found.get(version.heading);
   if (value && value !== EMPTY) problems.push(...(await versionProblems(github, repo, value)));
@@ -229,4 +240,4 @@ async function sweep({ github, context, now = Date.now() }) {
   }
 }
 
-module.exports = { check, sweep, parseForm, sections, formProblems, matchForm, loadForms };
+module.exports = { check, sweep, parseForm, sections, formProblems, titleProblems, problemsOf, matchForm, loadForms };
