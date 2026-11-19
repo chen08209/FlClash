@@ -1,0 +1,52 @@
+name: issue-gate
+
+on:
+  issues:
+    types: [opened, edited]
+  schedule:
+    - cron: "41 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number || 'sweep' }}
+
+jobs:
+  check:
+    name: Check the issue
+    if: ${{ github.event_name == 'issues' && !github.event.repository.fork }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github
+
+      - name: Label an incomplete issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const gate = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/issue-gate.js`);
+            await gate.check({ github, context, root: process.env.GITHUB_WORKSPACE });
+
+  sweep:
+    name: Close and lock
+    if: ${{ github.event_name != 'issues' && !github.event.repository.fork }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github
+
+      - name: Close issues left incomplete and lock old closed ones
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const gate = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/issue-gate.js`);
+            await gate.sweep({ github, context });
