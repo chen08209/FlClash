@@ -16,7 +16,9 @@ void main() {
   test('DnsOverrideKey names every key of the core DNS section', () {
     expect(DnsOverrideKey.values.map((key) => key.path).toSet(), {
       for (final key in concordKeys('dns'))
-        if (key != DnsOverrideKey.fallbackFilterSection) key,
+        if (key != DnsOverrideKey.fallbackFilterSection &&
+            key != 'append-system')
+          key,
       for (final key in concordKeys('dns.fallback-filter'))
         '${DnsOverrideKey.fallbackFilterSection}.$key',
     });

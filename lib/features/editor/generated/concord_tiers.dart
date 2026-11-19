@@ -83,6 +83,7 @@ const concordKeyTiers = <String, Map<String, ConcordTier>>{
     'direct-nameserver-follow-policy': ConcordTier.t0,
     'use-hosts': ConcordTier.t0,
     'use-system-hosts': ConcordTier.t0,
+    'append-system': ConcordTier.t0,
     'respect-rules': ConcordTier.t0,
     'fake-ip-range': ConcordTier.t0,
     'fake-ip-filter': ConcordTier.t0,
@@ -230,6 +231,8 @@ const concordKeyTiers = <String, Map<String, ConcordTier>>{
     'DSCP': ConcordTier.t1,
     'IN-NAME': ConcordTier.t1,
     'REMATCH-NAME': ConcordTier.t1,
+    'URL-REGEX': ConcordTier.t1,
+    'USER-AGENT': ConcordTier.t1,
     'SCRIPT': ConcordTier.t1,
   },
   'proxy-types': {

@@ -221,10 +221,9 @@ void main() {
       expect(config['allow-lan'], true);
       expect(config['global-ua'], 'FlClash-Test');
       expect(config['profile']['store-selected'], false);
-      expect(
-        config['dns']['nameserver'],
-        containsAll(['1.1.1.1', 'system://']),
-      );
+      expect(config['dns']['nameserver'], contains('1.1.1.1'));
+      expect(config['dns']['nameserver'], isNot(contains('system://')));
+      expect(config['dns']['append-system'], true);
       expect(config['hosts']['router.local'], ['192.168.1.1', '192.168.1.2']);
       expect(config['sniffer']['sniff']['HTTP']['ports'], ['80', '443']);
       expect(
@@ -563,6 +562,7 @@ void main() {
 
     expect(config['dns']['enable'], true);
     expect(config['dns']['nameserver'], isNot(contains('system://')));
+    expect(config['dns']['append-system'], isNull);
     expect(config['proxy-groups'], hasLength(1));
     expect(config['proxy-groups'][0].keys, ['name', 'type', 'proxies']);
     expect(config['proxy-groups'][0]['type'], 'select');
@@ -607,6 +607,7 @@ void main() {
       'www.example.com': ['8.8.8.8'],
     });
     expect(config['dns']['nameserver'], isNot(contains('system://')));
+    expect(config['dns']['append-system'], isNull);
     expect(
       config['proxy-providers']['first']['path'],
       isNot(config['proxy-providers']['second']['path']),
