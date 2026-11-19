@@ -6,6 +6,7 @@ import 'src/changelog/builder.dart';
 import 'src/changelog/git.dart';
 import 'src/changelog/models.dart';
 import 'src/changelog/render.dart';
+import 'src/changelog/verify.dart';
 
 const _repository = 'chen08209/FlClash';
 
@@ -29,6 +30,8 @@ Future<void> main(List<String> arguments) async {
     ..addOption('tag', help: 'Version tag to render, defaults to the newest.')
     ..addOption('out', help: 'Output file, defaults to stdout.');
 
+  parser.addCommand('markdown');
+
   parser.addCommand('verify');
 
   final ArgResults results;
@@ -48,6 +51,7 @@ Future<void> main(List<String> arguments) async {
     'release' => _release(root, command),
     'build' => _build(root, command),
     'render' => _render(root, command),
+    'markdown' => _markdown(root),
     'verify' => _verify(root),
     _ => _fail(_usage(parser)),
   };
@@ -64,6 +68,7 @@ int _release(String root, ArgResults command) {
       version: version,
       date: command.option('date') ?? today(),
     ),
+    recorded: _recorded(root),
   );
   _printWarnings(result.warnings);
   _writeData(root, result.changelog);
@@ -95,7 +100,9 @@ int _build(String root, ArgResults command) {
       );
     }
   }
-  final result = ChangelogBuilder(git).build(pending: pending);
+  final result = ChangelogBuilder(
+    git,
+  ).build(pending: pending, recorded: _recorded(root));
   _printWarnings(result.warnings);
   _writeData(root, result.changelog);
   stdout.writeln('Wrote $changelogDataPath');
@@ -107,9 +114,7 @@ int _render(String root, ArgResults command) {
   if (rest.isEmpty) {
     _fail('render needs a target: release or telegram');
   }
-  final changelog = decodeChangelog(
-    resolve(root, changelogDataPath).readAsStringSync(),
-  );
+  final changelog = _readData(root);
   if (changelog.versions.isEmpty) {
     _fail('$changelogDataPath has no versions to render');
   }
@@ -145,108 +150,44 @@ int _render(String root, ArgResults command) {
 
 int _verify(String root) {
   final dataFile = resolve(root, changelogDataPath);
-  final markdownFile = resolve(root, changelogMarkdownPath);
-  final problems = <String>[];
-
   if (!dataFile.existsSync()) {
     _fail('$changelogDataPath is missing; run tool/changelog.dart release');
   }
-
-  final changelog = decodeChangelog(dataFile.readAsStringSync());
-
-  final markdown = markdownFile.readAsStringSync();
-  if (!markdown.contains(changelogFrozenMarker)) {
-    problems.add('$changelogMarkdownPath is missing the frozen marker');
-  } else if (markdownHead(markdown).trimRight() !=
-      renderMarkdown(changelog).trimRight()) {
-    problems.add(
-      '$changelogMarkdownPath does not match $changelogDataPath; '
-      'run tool/changelog.dart release to regenerate it',
-    );
-  }
-
-  final git = Git(workingDirectory: root);
-  final expected = ChangelogBuilder(git).build();
-  _printWarnings(expected.warnings);
-  final expectedByTag = <String, ChangelogVersion>{
-    for (final version in expected.changelog.versions) version.tag: version,
-  };
-
-  final unreachable = <String>[];
-  for (final version in changelog.versions) {
-    if (!git.tagIsReachable(version.tag)) {
-      if (git.tagExists(version.tag)) {
-        unreachable.add(version.tag);
-      }
-      continue;
-    }
-    final reference = expectedByTag[version.tag];
-    if (reference == null) {
-      problems.add(
-        '${version.tag} is in changelog.json but not derivable from git',
-      );
-      continue;
-    }
-
-    final missing = _fingerprint(reference).difference(_fingerprint(version));
-    if (missing.isNotEmpty) {
-      problems.add(
-        '${version.tag} is missing entries git can derive: '
-        '${missing.join(', ')}.\n'
-        '  Regenerate, or mark those commits with "Changelog: skip".',
-      );
-    }
-
-    final known = expected.commitIdsByTag[version.tag] ?? const <String>{};
-    final unknown = <String>[
-      for (final group in version.groups)
-        for (final entry in group.entries)
-          if (!known.contains(entry.id)) entry.id,
-    ];
-    if (unknown.isNotEmpty) {
-      problems.add(
-        '${version.tag} has entries pointing at commits outside its range: '
-        '${unknown.join(', ')}',
-      );
-    }
-  }
-
-  // A tag git can derive a version for but changelog.json never recorded means
-  // someone tagged a release without running `release` first. Without this the
-  // omission only shows up at the very end of the release, when `render` finds
-  // no notes for the tag being published.
-  for (final tag in missingReleaseTags(changelog, expected.changelog)) {
-    problems.add(
-      '$tag is tagged in git but missing from $changelogDataPath; '
-      'run tool/changelog.dart release --version '
-      '${tag.startsWith('v') ? tag.substring(1) : tag}',
-    );
-  }
-
-  if (unreachable.isNotEmpty) {
+  final check = checkChangelog(
+    git: Git(workingDirectory: root),
+    changelog: decodeChangelog(dataFile.readAsStringSync()),
+    markdown: resolve(root, changelogMarkdownPath).readAsStringSync(),
+  );
+  _printWarnings(check.warnings);
+  if (check.skipped.isNotEmpty) {
     stdout.writeln(
-      'Skipped ${unreachable.join(', ')}: tagged outside this branch, so git '
+      'Skipped ${check.skipped.join(', ')}: tagged outside this branch, so git '
       'derives nothing to compare here.',
     );
   }
-
-  if (problems.isEmpty) {
+  if (check.problems.isEmpty) {
     stdout.writeln('Changelog is consistent with git.');
     return 0;
   }
-  for (final problem in problems) {
+  for (final problem in check.problems) {
     stderr.writeln('✗ $problem');
   }
   return 1;
 }
 
-/// Identity of an entry for drift detection: which group it landed in and which
-/// commit it came from. Wording and scope are deliberately excluded so a
-/// maintainer can polish the text of a released version without failing CI.
-Set<String> _fingerprint(ChangelogVersion version) => <String>{
-  for (final group in version.groups)
-    for (final entry in group.entries) '${group.type.id}:${entry.id}',
-};
+int _markdown(String root) {
+  _writeMarkdown(root, _readData(root));
+  stdout.writeln('Wrote $changelogMarkdownPath');
+  return 0;
+}
+
+Changelog? _recorded(String root) {
+  final file = resolve(root, changelogDataPath);
+  return file.existsSync() ? decodeChangelog(file.readAsStringSync()) : null;
+}
+
+Changelog _readData(String root) =>
+    decodeChangelog(resolve(root, changelogDataPath).readAsStringSync());
 
 void _writeData(String root, Changelog changelog) {
   final file = resolve(root, changelogDataPath);
@@ -272,6 +213,7 @@ Usage: dart run tool/changelog.dart <command> [options]
 Commands:
   release --version X   Rewrite CHANGELOG.md and changelog.json.
   build [--unreleased]  Rewrite changelog.json only.
+  markdown              Rewrite CHANGELOG.md from changelog.json.
   render <release|telegram> [--tag vX] [--out file]
   verify                Check the committed changelog against git.
 

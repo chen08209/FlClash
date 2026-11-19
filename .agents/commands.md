@@ -282,6 +282,7 @@ bullets when a release predates it.
 dart run tool/changelog.dart verify                  # what CI checks
 dart run tool/changelog.dart release --version 0.8.96
 dart run tool/changelog.dart build --unreleased      # changelog.json only, includes untagged work
+dart run tool/changelog.dart markdown                # CHANGELOG.md from changelog.json after a hand edit
 dart run tool/changelog.dart render release --out release.md
 dart run tool/changelog.dart render telegram --out telegram.md
 ```
@@ -291,6 +292,9 @@ Releasing a stable version, in order:
 ```bash
 tool/bump_version.sh major
 dart run tool/changelog.dart release --version 0.8.96
+# edit changelog.json, then:
+dart run tool/changelog.dart markdown
+dart run tool/changelog.dart verify
 git commit -am "chore(release): v0.8.96"
 git tag v0.8.96
 git push origin main && git push origin v0.8.96
@@ -315,16 +319,29 @@ the patch when pubspec still names an already tagged one), prints the notes the 
 tool/release.sh pre --dry-run            # plan and notes, changes nothing
 tool/release.sh pre --push               # tag vX.Y.Z-pre.N on HEAD, push; no commit
 tool/release.sh pre --rebuild --push     # tag vX.Y.Z-pre.N+M on HEAD after a fix
-tool/release.sh stable --push            # changelog, chore(release) commit, tag, push
+tool/release.sh stable --push            # changelog, pause for edits, chore(release) commit, tag, push
 ```
 
 `--push` goes to `origin`; `--remote NAME` pushes to another remote instead, such as the public repository in a
 checkout whose `origin` is a private mirror.
 
 The release commit comes before the tag on purpose: the generated wording is reviewable in the diff before it ships, and
-the tag is what `render release` reads. CI never writes back to the repository; it only runs `verify`. Wording in
-`changelog.json` may be edited by hand as long as no derivable entry disappears and every entry still points at a commit
-inside that version's range.
+the tag is what `render release` reads. CI never writes back to the repository; it only runs `verify`.
+
+The generated notes are a draft. `release.sh stable` stops after `release` so the new version in `changelog.json` can be
+edited, then rewrites `CHANGELOG.md` with `markdown` and runs `verify` before it commits; a failed `verify` stops
+again for another edit. `--yes` skips the stop and commits the generated notes. In the version being released:
+
+- Reword an entry's `text` or `scope`, or write an entry for a commit git would not collect, such as a `refactor`
+  users notice; its `id` is any commit in the range.
+- `"merges": ["<id>", …]` on an entry folds those commits into it, so they need no entry of their own.
+- `"omit": ["<id>", …]` on the version leaves commits out of its notes: internal fixes, or work behind a flag the
+  release ships off, such as MITM under `rsFeature`.
+
+`verify` holds every commit git derives to an entry in its group, a merge or an omission, and every id, merge and
+omission to the version's range. It also checks the newest version before its tag exists, so the release commit is
+checked before it is tagged. `release` and `build` keep every stable version `changelog.json` already records as
+written and derive only the new one, so an edit outlives later releases.
 
 Entries at or below `v0.8.96` are frozen: they predate the pipeline, live under the `<!-- changelog:frozen -->` marker
 in `CHANGELOG.md`, and are never regenerated.

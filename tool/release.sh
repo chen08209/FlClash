@@ -18,7 +18,8 @@ usage() {
 Usage: tool/release.sh <pre|stable> [options]
 
   pre                Tag the next vX.Y.Z-pre.N prerelease on HEAD, no commit.
-  stable             Write the changelog, commit it, and tag vX.Y.Z.
+  stable             Write the changelog, pause for edits, commit it, and
+                     tag vX.Y.Z.
 
 CI takes the app version from the tag and the build number from the clock,
 so neither mode writes a build number into pubspec.yaml.
@@ -30,7 +31,7 @@ Options:
                      prerelease N instead of starting N+1.
   --push             Push the branch and the tag once the local steps pass.
   --remote NAME      Remote to push to (default origin).
-  --yes              Skip the confirmation prompt.
+  --yes              Skip the confirmation prompt and the changelog pause.
   --dry-run          Report the plan and exit without changing anything.
   -h, --help         Show this help.
 
@@ -207,13 +208,27 @@ fi
 
 if [[ "$mode" == "stable" ]]; then
   dart run tool/changelog.dart release --version "$version"
+  if ((assume_yes == 0)); then
+    echo
+    echo "changelog.json now holds the $tag notes. Edit their wording, merge"
+    echo "entries with \"merges\" or leave commits out with \"omit\" (see"
+    echo ".agents/commands.md), then press Enter; Ctrl-C undoes the release."
+    while true; do
+      read -r <"/dev/tty" || die "no answer read; pass --yes to run unattended"
+      dart run tool/changelog.dart markdown &&
+        dart run tool/changelog.dart verify &&
+        break
+      echo "Fix changelog.json, then press Enter again; Ctrl-C undoes the release."
+    done
+  else
+    dart run tool/changelog.dart verify
+  fi
   echo
   git --no-pager diff --stat -- CHANGELOG.md changelog.json pubspec.yaml
   echo
   git add CHANGELOG.md changelog.json pubspec.yaml
   git commit -m "chore(release): v$version"
   committed=1
-  dart run tool/changelog.dart verify
 fi
 
 git tag "$tag"

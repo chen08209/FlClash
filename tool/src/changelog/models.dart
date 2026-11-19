@@ -39,22 +39,30 @@ class RawCommit {
 }
 
 class ChangelogEntry {
-  const ChangelogEntry({required this.id, required this.text, this.scope});
+  const ChangelogEntry({
+    required this.id,
+    required this.text,
+    this.scope,
+    this.merges = const <String>[],
+  });
 
   final String id;
   final String? scope;
   final String text;
+  final List<String> merges;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'id': id,
     if (scope != null) 'scope': scope,
     'text': text,
+    if (merges.isNotEmpty) 'merges': merges,
   };
 
   static ChangelogEntry fromJson(Map<String, dynamic> json) => ChangelogEntry(
     id: json['id'] as String,
     scope: json['scope'] as String?,
     text: json['text'] as String,
+    merges: _ids(json['merges']),
   );
 }
 
@@ -92,6 +100,7 @@ class ChangelogVersion {
     required this.date,
     required this.groups,
     this.prerelease = false,
+    this.omit = const <String>[],
   });
 
   final String version;
@@ -99,6 +108,7 @@ class ChangelogVersion {
   final String date;
   final bool prerelease;
   final List<ChangelogGroup> groups;
+  final List<String> omit;
 
   bool get isEmpty => groups.every((group) => group.entries.isEmpty);
 
@@ -108,6 +118,7 @@ class ChangelogVersion {
     'date': date,
     'prerelease': prerelease,
     'groups': groups.map((group) => group.toJson()).toList(),
+    if (omit.isNotEmpty) 'omit': omit,
   };
 
   static ChangelogVersion fromJson(Map<String, dynamic> json) =>
@@ -122,6 +133,7 @@ class ChangelogVersion {
             )
             .whereType<ChangelogGroup>()
             .toList(),
+        omit: _ids(json['omit']),
       );
 }
 
@@ -157,3 +169,6 @@ class Changelog {
     );
   }
 }
+
+List<String> _ids(Object? value) =>
+    (value as List<dynamic>? ?? const <dynamic>[]).cast<String>();

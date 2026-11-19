@@ -91,6 +91,36 @@ void main() {
       );
     });
 
+    test('reads a version that merges and omits commits', () {
+      final changelog = decode('''
+{
+  "schemaVersion": 2,
+  "versions": [
+    {
+      "version": "0.9.4",
+      "tag": "v0.9.4",
+      "groups": [
+        {
+          "type": "feat",
+          "entries": [
+            {"id": "a89b339", "text": "One status button", "merges": ["c6d1b4d"]}
+          ]
+        }
+      ],
+      "omit": ["5766b05"]
+    }
+  ]
+}
+''');
+
+      final version = changelog.versions.single;
+      expect(
+        version.visibleGroups.single.entries.single.text,
+        'One status button',
+      );
+      expect(version.isEmpty, isFalse);
+    });
+
     test('tolerates a version without optional fields', () {
       final changelog = decode(
         '{"schemaVersion": 2, "versions": [{"version": "1.0.0", "tag": "v1.0.0"}]}',
