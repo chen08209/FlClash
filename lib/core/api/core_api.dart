@@ -331,6 +331,15 @@ abstract interface class CoreApi {
 
   Future<Object?> mitmExchanges(int connectionId);
 
+  Future<MitmQueryAnswer> mitmQuery({
+    MitmFilter filter = const MitmFilter(),
+    int? before,
+    int? limit,
+    int? since,
+    bool facets = false,
+    int? rateFrom,
+  });
+
   Future<Object?> mitmExchange(int id);
 
   Future<Object?> mitmBody(int id, {required bool response});

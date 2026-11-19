@@ -164,6 +164,25 @@ final Map<String, _Call> _calls = {
   'mitm.runScript': (api) =>
       api.runMitmScript('s', guard: const Duration(seconds: 5)),
   'mitm.exchanges': (api) => api.mitmExchanges(1),
+  'mitm.query': (api) => api.mitmQuery(
+    filter: const MitmFilter(
+      statuses: [MitmStatus.clientError, MitmStatus.failed],
+      methods: ['GET'],
+      kinds: [MitmKind.json],
+      hosts: ['example.com'],
+      apps: [''],
+      rewritten: true,
+      slowMs: 1,
+      text: 'a',
+      from: 1,
+      to: 2,
+    ),
+    before: 1,
+    limit: 1,
+    since: 1,
+    facets: true,
+    rateFrom: 1,
+  ),
   'mitm.exchange': (api) => api.mitmExchange(1),
   'mitm.body': (api) async {
     await api.mitmBody(1, response: true);

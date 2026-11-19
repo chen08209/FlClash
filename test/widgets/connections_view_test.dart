@@ -1,5 +1,5 @@
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -12,8 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_mocks.dart';
 import '../helpers/test_app.dart';
-import '../helpers/core_connections.dart';
 
 void main() {
   late ProviderContainer container;
@@ -31,7 +31,7 @@ void main() {
     return List.generate(
       count,
       (index) => TrackerInfo(
-        id: '$index',
+        id: index,
         start: DateTime(2024),
         metadata: Metadata(
           network: 'tcp',
@@ -89,7 +89,7 @@ void main() {
       -800,
       scrollable: find
           .descendant(
-            of: find.byType(RecordMinuteList<String>),
+            of: find.byType(RecordMinuteList<int>),
             matching: find.byType(Scrollable),
           )
           .first,
@@ -105,13 +105,13 @@ void main() {
     'a row closes its own connection from its menu, and stays where it was, '
     'closed',
     (tester) async {
-      final core = _MockCoreHandlerInterface();
-      when(() => core.closeConnection(any())).thenAnswer((_) async {});
+      final mocks = coreMocks();
+      when(
+        () => mocks.api.closeConnections(ids: any(named: 'ids')),
+      ).thenAnswer((_) async {});
       container.dispose();
       container = ProviderContainer(
-        overrides: [
-          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-        ],
+        overrides: [coreHandlerProvider.overrideWithValue(mocks.controller)],
       );
       globalState.container = container;
       var connections = buildConnections(2);
@@ -134,11 +134,11 @@ void main() {
       await tester.tap(find.text('Close connection'));
       await tester.pumpAndSettle();
 
-      verify(() => core.closeConnection('0')).called(1);
+      verify(() => mocks.api.closeConnections(ids: [0])).called(1);
       expect(readCount, greaterThan(reads));
       await tester.pump(const Duration(seconds: 1));
       expect(find.textContaining('host-0.com'), findsOneWidget);
-      expect(container.read(requestsProvider)['0']!.isActive, isFalse);
+      expect(container.read(requestsProvider)[0]!.isActive, isFalse);
 
       await tester.longPress(find.textContaining('host-0.com'));
       await tester.pumpAndSettle();
@@ -151,15 +151,13 @@ void main() {
   testWidgets('a failed close still refreshes the list and raises nothing', (
     tester,
   ) async {
-    final core = _MockCoreHandlerInterface();
+    final mocks = coreMocks();
     when(
-      () => core.closeConnection(any()),
+      () => mocks.api.closeConnections(ids: any(named: 'ids')),
     ).thenAnswer((_) async => throw Exception('closed already'));
     container.dispose();
     container = ProviderContainer(
-      overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-      ],
+      overrides: [coreHandlerProvider.overrideWithValue(mocks.controller)],
     );
     globalState.container = container;
     var readCount = 0;
@@ -179,24 +177,46 @@ void main() {
     await tester.tap(find.text('Close connection'));
     await tester.pumpAndSettle();
 
-    verify(() => core.closeConnection('0')).called(1);
+    verify(() => mocks.api.closeConnections(ids: [0])).called(1);
     expect(readCount, greaterThan(reads));
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('a Core that is not connected is not asked and lists nothing', (
-    tester,
-  ) async {
-    final core = _MockCoreHandlerInterface();
+  testWidgets('a Core that is not connected lists nothing, though its last '
+      'run left connections in the book', (tester) async {
+    final mocks = coreMocks();
     container.dispose();
     container = ProviderContainer(
-      overrides: [
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-      ],
+      overrides: [coreHandlerProvider.overrideWithValue(mocks.controller)],
     );
     globalState.container = container;
+    final status = container.read(coreStatusProvider.notifier);
+    status.value = CoreStatus.connected;
+    container
+        .read(connectionBookProvider)
+        .apply(
+          ConnectionsReset(
+            ConnectionSnapshot([
+              ConnectionInfo(
+                id: 1,
+                start: DateTime.utc(2026).millisecondsSinceEpoch,
+                network: 'tcp',
+                sourceIp: '127.0.0.1',
+                sourcePort: 50000,
+                destinationPort: 443,
+                host: 'stale.test',
+                inboundType: 'mixed',
+                chains: const ['Proxy'],
+                rule: 'MATCH',
+                upload: 0,
+                download: 0,
+              ),
+            ]),
+          ),
+        );
+    status.value = CoreStatus.disconnected;
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
 
     await tester.pumpWidget(
@@ -206,10 +226,10 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
 
-    registerConnectionsPresenter<ConnectionPoll>();
-    verifyNever(() => core.getConnectionsWith<ConnectionPoll>(any()));
+    expect(find.textContaining('stale.test'), findsNothing);
+    expect(container.read(requestsProvider).length, 0);
     expect(find.byType(NullStatus), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -316,5 +336,3 @@ class _TestApp extends StatelessWidget {
     );
   }
 }
-
-class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}

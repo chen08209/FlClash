@@ -8,6 +8,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core_session_builder.dart';
 import 'detail_tabs.dart';
 import 'mitm_body.dart';
 import 'mitm_exchange_menu.dart';
@@ -16,7 +17,7 @@ import 'mitm_timing.dart';
 import 'related_connections.dart';
 import 'tracker_clock.dart';
 
-class MitmExchangeView extends ConsumerWidget {
+class MitmExchangeView extends StatelessWidget {
   final int id;
 
   /// Pushed over a connection beside the list rather than opened in a sheet,
@@ -36,10 +37,12 @@ class MitmExchangeView extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) => CoreSessionBuilder(builder: _build);
+
+  Widget _build(BuildContext context, WidgetRef ref, bool ended) {
     final appLocalizations = context.appLocalizations;
-    final value = ref.watch(mitmExchangeProvider(id));
-    final exchange = value.value;
+    final value = ended ? null : ref.watch(mitmExchangeProvider(id));
+    final exchange = value?.value;
     final modules = watchLocalMitmModules(ref);
     final menu = exchange == null
         ? null
@@ -58,7 +61,7 @@ class MitmExchangeView extends ConsumerWidget {
     final content = ListTextScope(
       scale: ListTextScale.compact,
       child: NullStatusSwitcher(
-        isLoading: value.isLoading && !value.hasValue,
+        isLoading: value != null && value.isLoading && !value.hasValue,
         isEmpty: exchange == null,
         nullStatus: NullStatus(
           label: appLocalizations.httpRequestCleared,
@@ -177,6 +180,20 @@ class _MitmExchangeDetail extends StatelessWidget {
                 value: exchange.error,
                 copyable: true,
               ),
+            if (exchange.route case final route?) ...[
+              if (route.rule.isNotEmpty)
+                DetailRow.text(
+                  title: appLocalizations.rule,
+                  value: route.rulePayload.isEmpty
+                      ? route.rule
+                      : '${route.rule}(${route.rulePayload})',
+                ),
+              if (route.chains.isNotEmpty)
+                DetailRow.text(
+                  title: appLocalizations.proxyChains,
+                  value: route.chains.reversed.join(' → '),
+                ),
+            ],
             DetailRow.text(
               title: appLocalizations.creationTime,
               value: exchange.start.showFull,
@@ -212,6 +229,10 @@ class _MitmExchangeDetail extends StatelessWidget {
                     if (action.phase.isNotEmpty)
                       RecordLabel(
                         label: _phaseLabel(appLocalizations, action.phase),
+                      ),
+                    if (action.module.isNotEmpty)
+                      RecordLabel(
+                        label: appLocalizations.mitmActionModule(action.module),
                       ),
                   ],
                 ),

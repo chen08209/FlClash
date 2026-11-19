@@ -1121,6 +1121,7 @@
   "mitmModuleRulesDesc": "Se evalúan antes que las reglas del perfil.",
   "mitmRequestRulesDesc": "Las reglas URL-REGEX y USER-AGENT funcionan como reescrituras de URL; en HTTPS, solo para los hosts de la lista.",
   "mitmExtendedMatchingNote": "{count} usan coincidencia extendida",
+  "mitmActionModule": "De {module}",
   "mitmModuleSystemTip": "Escrito para {system}; algunas líneas pueden no coincidir con las apps de este dispositivo.",
   "mitmModuleRequirementTip": "El módulo requiere {requirement}, que este dispositivo no cumple; puede que no funcione como se espera.",
   "mitmExitModules": "De los módulos: {modules}",

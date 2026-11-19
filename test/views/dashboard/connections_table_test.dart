@@ -1,7 +1,4 @@
-import 'dart:async';
-
-import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -14,35 +11,38 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prism_ui/prism_list.dart';
-import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/route_cover.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 import '../../helpers/host_scaffold.dart';
-import '../../helpers/core_connections.dart';
 
-class _MockCore extends Mock implements CoreHandlerInterface {}
-
-TrackerInfo _connection(
+ConnectionInfo _connection(
   int index, {
   required String network,
   int download = 0,
 }) {
-  return TrackerInfo(
-    id: '$index',
-    download: download,
-    start: DateTime.utc(2026).add(Duration(seconds: index)),
-    metadata: Metadata(network: network, host: 'host-$index.test'),
+  return ConnectionInfo(
+    id: index,
+    start: DateTime.utc(
+      2026,
+    ).add(Duration(seconds: index)).millisecondsSinceEpoch,
+    network: network,
+    sourceIp: '127.0.0.1',
+    sourcePort: 50000,
+    destinationPort: 443,
+    host: 'host-$index.test',
+    inboundType: 'mixed',
     chains: const ['Proxy'],
     rule: 'MATCH',
-    rulePayload: '',
+    upload: 0,
+    download: download,
   );
 }
 
-TrackerInfo _request(String host, int download) {
+TrackerInfo _request(int id, String host, int download) {
   return TrackerInfo(
-    id: host,
+    id: id,
     download: download,
     start: DateTime.utc(2026),
     metadata: Metadata(network: 'tcp', host: host, destinationPort: '443'),
@@ -63,9 +63,11 @@ void main() {
     container.listen(appSettingProvider, (_, _) {});
     final requests = container.read(requestsProvider.notifier);
     requests.value = ConnectionLog(500);
-    requests.addRequest(_request('gamma.test', 10));
-    requests.addRequest(_request('alpha.test', 30));
-    requests.addRequest(_request('beta.test', 20));
+    requests.addRequests([
+      _request(1, 'gamma.test', 10),
+      _request(2, 'alpha.test', 30),
+      _request(3, 'beta.test', 20),
+    ]);
   });
 
   tearDown(() => container.dispose());
@@ -197,26 +199,27 @@ void main() {
 
   testWidgets('the table keeps the newest rows, sorts every connection and '
       'counts them all', (tester) async {
-    final core = _MockCore();
-    whenConnections<List<TrackerInfo>>(
-      core,
-      () async => [
-        for (var index = 0; index < 150; index++)
-          _connection(
-            index,
-            network: index < 130 ? 'tcp' : 'udp',
-            download: index == 0 ? 1 << 30 : index,
-          ),
-      ],
-    );
     final connections = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
         coreStatusProvider.overrideWithBuild((_, _) => CoreStatus.connected),
       ],
     );
     addTearDown(connections.dispose);
+    connections
+        .read(connectionBookProvider)
+        .apply(
+          ConnectionsReset(
+            ConnectionSnapshot([
+              for (var index = 0; index < 150; index++)
+                _connection(
+                  index,
+                  network: index < 130 ? 'tcp' : 'udp',
+                  download: index == 0 ? 1 << 30 : index,
+                ),
+            ]),
+          ),
+        );
     globalState.container = connections;
     const size = Size(1000, 700);
     connections.read(viewSizeProvider.notifier).value = size;
@@ -248,59 +251,23 @@ void main() {
 
     expect(find.text('TCP 130'), findsOneWidget);
     expect(find.text('UDP 20'), findsOneWidget);
-    expect(find.text('host-149.test'), findsOneWidget);
+    expect(
+      find.textContaining('host-149.test', findRichText: true),
+      findsOneWidget,
+    );
     final list = tester.widget<PrismListView>(find.byType(PrismListView));
     expect(list.itemCount, 100);
-    expect(find.text('host-0.test'), findsNothing);
+    expect(
+      find.textContaining('host-0.test', findRichText: true),
+      findsNothing,
+    );
 
     await tester.tap(find.text('Download'));
     await tester.pump();
-    expect(find.text('host-0.test'), findsOneWidget);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 2));
-  });
-
-  testWidgets('a list read before the log was started over stays out of '
-      'the new one', (tester) async {
-    final core = _MockCore();
-    final answer = Completer<List<TrackerInfo>>();
-    whenConnections<List<TrackerInfo>>(core, () => answer.future);
-    final connections = ProviderContainer(
-      overrides: [
-        profilesProvider.overrideWith(TestProfiles.new),
-        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-        coreStatusProvider.overrideWithBuild((_, _) => CoreStatus.connected),
-      ],
+    expect(
+      find.textContaining('host-0.test', findRichText: true),
+      findsOneWidget,
     );
-    addTearDown(connections.dispose);
-    globalState.container = connections;
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: connections,
-        child: const TestApp(
-          child: HostScaffold(
-            body: SizedBox(
-              width: 960,
-              height: 600,
-              child: DashboardDensityScope(
-                density: DashboardDensity.standard,
-                scale: 1,
-                child: ConnectionsTableCard(),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    verify(() => core.getConnectionsWith<List<TrackerInfo>>(any())).called(1);
-
-    connections.read(requestsProvider.notifier).value = ConnectionLog(500);
-    answer.complete([_connection(0, network: 'tcp')]);
-    await tester.pump();
-
-    expect(connections.read(requestsProvider).length, 0);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));

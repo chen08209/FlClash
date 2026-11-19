@@ -4,7 +4,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 TrackerInfo _tracker(
-  String id, {
+  int id, {
   String host = 'example.com',
   String process = 'curl',
   List<String> chains = const ['Proxy'],
@@ -28,14 +28,14 @@ TrackerInfo _tracker(
 
 void main() {
   final trackers = [
-    _tracker('a', host: 'api.github.com', process: 'chrome'),
-    _tracker('b', host: 'github.com', process: 'curl', chains: ['Tokyo']),
-    _tracker('c', host: 'ads.doubleclick.net', process: 'chrome'),
-    _tracker('d', host: 'example.com', process: 'firefox'),
-    _tracker('e', host: 'www.google.com', process: 'Google Chrome Helper'),
+    _tracker(1, host: 'api.github.com', process: 'chrome'),
+    _tracker(2, host: 'github.com', process: 'curl', chains: ['Tokyo']),
+    _tracker(3, host: 'ads.doubleclick.net', process: 'chrome'),
+    _tracker(4, host: 'example.com', process: 'firefox'),
+    _tracker(5, host: 'www.google.com', process: 'Google Chrome Helper'),
   ];
 
-  List<String> matching(String query) => [
+  List<int> matching(String query) => [
     for (final tracker in trackers)
       if (ConnectionQuery.parse(query).matcher(tracker)) tracker.id,
   ];
@@ -53,9 +53,9 @@ void main() {
   });
 
   test('conditions on one field widen, on different fields narrow', () {
-    expect(matching('host:github app:chrome'), ['a']);
-    expect(matching('app:chrome app:firefox'), ['a', 'c', 'd', 'e']);
-    expect(matching('host:GitHub exit:tokyo'), ['b']);
+    expect(matching('host:github app:chrome'), [1]);
+    expect(matching('app:chrome app:firefox'), [1, 3, 4, 5]);
+    expect(matching('host:GitHub exit:tokyo'), [2]);
   });
 
   test('a value in quotes keeps its spaces, and an unclosed one runs to '
@@ -69,8 +69,8 @@ void main() {
     ]);
     expect(query.text, 'helper');
     expect('${query.conditions.first}', 'app:"Google Chrome"');
-    expect(matching('app:"google chrome"'), ['e']);
-    expect(matching('app:"Google Chr'), ['e']);
+    expect(matching('app:"google chrome"'), [5]);
+    expect(matching('app:"Google Chr'), [5]);
     expect(ConnectionQuery.parse('host:""').conditions, isEmpty);
   });
 
@@ -91,29 +91,24 @@ void main() {
     ]);
     expect(query.text, 'app:=');
     expect('${query.conditions.last}', '-app:=chrome');
-    expect(matching('host:=GitHub.com'), ['b']);
-    expect(matching('host:github.com'), ['a', 'b']);
-    expect(matching('app:=chrome'), ['a', 'c']);
+    expect(matching('host:=GitHub.com'), [2]);
+    expect(matching('host:github.com'), [1, 2]);
+    expect(matching('app:=chrome'), [1, 3]);
     expect(matching('app:="google chrome"'), isEmpty);
-    expect(matching('app:="google chrome helper"'), ['e']);
+    expect(matching('app:="google chrome helper"'), [5]);
   });
 
   test('an excluding condition drops what it holds', () {
-    expect(matching('app:chrome -host:doubleclick'), ['a', 'e']);
-    expect(matching('-app:chrome -app:curl'), ['d']);
+    expect(matching('app:chrome -host:doubleclick'), [1, 5]);
+    expect(matching('-app:chrome -app:curl'), [4]);
   });
 
   test('a connection no rule matched names what routed it', () {
     final appLocalizations = currentAppLocalizations;
     final unruled = [
-      _tracker('global', rule: null, chains: ['Tokyo', 'GLOBAL']),
-      _tracker('direct', rule: null, chains: ['DIRECT']),
-      _tracker(
-        'listener',
-        rule: null,
-        chains: ['GLOBAL'],
-        specialProxy: 'GLOBAL',
-      ),
+      _tracker(6, rule: null, chains: ['Tokyo', 'GLOBAL']),
+      _tracker(7, rule: null, chains: ['DIRECT']),
+      _tracker(8, rule: null, chains: ['GLOBAL'], specialProxy: 'GLOBAL'),
     ];
     expect(
       [
@@ -145,7 +140,7 @@ void main() {
         for (final tracker in unruled)
           if (query.matcher(tracker)) tracker.id,
       ],
-      ['direct', 'listener'],
+      [7, 8],
     );
   });
 }

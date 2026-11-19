@@ -8,6 +8,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core_session_builder.dart';
 import 'detail_tabs.dart';
 import 'mitm_exchanges.dart';
 import 'tracker_detail_parts.dart';
@@ -122,7 +123,7 @@ class _ProxyNodeHop extends ConsumerWidget {
 
 const _infoColumnsMinWidth = 760.0;
 
-class TrackerInfoDetailView extends ConsumerWidget {
+class TrackerInfoDetailView extends StatelessWidget {
   final TrackerInfo trackerInfo;
   final bool opensRequests;
   final Widget? header;
@@ -254,7 +255,9 @@ class TrackerInfoDetailView extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) => CoreSessionBuilder(builder: _build);
+
+  Widget _build(BuildContext context, WidgetRef ref, bool ended) {
     final appLocalizations = context.appLocalizations;
     final capturing =
         trackerInfo.metadata.mitm &&
@@ -263,7 +266,7 @@ class TrackerInfoDetailView extends ConsumerWidget {
             (state) => state.mitm.enable && state.mitm.capture,
           ),
         );
-    final exchanges = capturing
+    final exchanges = capturing && !ended
         ? ref.watch(
             mitmExchangesProvider(
               trackerInfo.id,
@@ -278,14 +281,15 @@ class TrackerInfoDetailView extends ConsumerWidget {
         tabs: [
           (
             appLocalizations.timeline,
-            (context) => _buildTimeline(context, capturing: capturing),
+            (context) =>
+                _buildTimeline(context, capturing: capturing && !ended),
           ),
           if (capturing)
             (
               exchanges == 0
                   ? appLocalizations.httpRequests
                   : '${appLocalizations.httpRequests} $exchanges',
-              (_) => MitmExchangesView(trackerInfo: trackerInfo),
+              (_) => MitmExchangesView(trackerInfo: trackerInfo, ended: ended),
             ),
           (appLocalizations.connectionInfo, _buildOverview),
         ],

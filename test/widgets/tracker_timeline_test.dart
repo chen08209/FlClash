@@ -29,7 +29,7 @@ TrackerInfo _tracker({
   DateTime? closedAt,
 }) {
   return TrackerInfo(
-    id: '1',
+    id: 1,
     start: _accepted,
     metadata: Metadata(
       network: 'tcp',

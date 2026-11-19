@@ -1121,6 +1121,7 @@
   "mitmModuleRulesDesc": "先于配置自身的规则匹配。",
   "mitmRequestRulesDesc": "URL-REGEX 和 USER-AGENT 规则改作 URL 重写，HTTPS 只对主机名中的主机生效。",
   "mitmExtendedMatchingNote": "其中 {count} 条使用扩展匹配",
+  "mitmActionModule": "来自 {module}",
   "mitmModuleSystemTip": "为 {system} 编写，部分行可能不适用于本设备。",
   "mitmModuleRequirementTip": "模块要求 {requirement}，本设备不满足，可能无法按预期工作。",
   "mitmExitModules": "来自模块：{modules}",

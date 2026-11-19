@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_body.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/mitm.dart';
@@ -55,8 +56,18 @@ final _exchange = MitmExchange(
       detail: 'header-del X-Forwarded-For',
     ),
     MitmAction(kind: 'url-rewrite', detail: 'header'),
-    MitmAction(kind: 'script', phase: 'response', detail: 'sign'),
+    MitmAction(
+      kind: 'script',
+      phase: 'response',
+      detail: 'sign',
+      module: 'Sign-in',
+    ),
   ],
+  route: const MitmRoute(
+    rule: 'URLRegex',
+    rulePayload: '/new',
+    chains: ['node-b', 'pick'],
+  ),
 );
 
 MitmExchangeSummary _summary(MitmExchange exchange) => MitmExchangeSummary(
@@ -424,6 +435,8 @@ void main() {
     ]);
     expect(find.text('https://a.test/old?x=1'), findsOneWidget);
     expect(find.text('HTTP/2.0'), findsOneWidget);
+    expect(find.text('URLRegex(/new)'), findsOneWidget);
+    expect(find.text('pick → node-b'), findsOneWidget);
     expect(find.text('X-Upstream'), findsNothing);
     await _scrollTo(tester, find.text(appLocalizations.urlRewrite));
     expect(find.text(appLocalizations.total), findsOneWidget);
@@ -434,7 +447,10 @@ void main() {
     );
     expect(find.text('header'), findsOneWidget);
     expect(find.text('sign'), findsOneWidget);
-    final signLabels = findRecordLine('[${appLocalizations.response}]');
+    final signLabels = findRecordLine(
+      '[${appLocalizations.response}] '
+      '[${appLocalizations.mitmActionModule('Sign-in')}]',
+    );
     expect(signLabels, findsOneWidget);
     expect(
       tester.getRect(signLabels).top,
@@ -555,6 +571,55 @@ void main() {
 
     expect(
       find.text(currentAppLocalizations.httpRequestCleared),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a request opened before the Core restarted says it is gone', (
+    tester,
+  ) async {
+    final container = await _pumpDetail(
+      tester,
+      list: MitmExchangeList(capturing: true, exchanges: [_summary(_exchange)]),
+      exchange: _exchange,
+    );
+    final status = container.read(coreStatusProvider.notifier)
+      ..value = CoreStatus.connected;
+    await _openRequest(tester);
+    expect(find.text(currentAppLocalizations.httpRequestCleared), findsNothing);
+
+    status.value = CoreStatus.disconnected;
+    status.value = CoreStatus.connected;
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(currentAppLocalizations.httpRequestCleared),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a connection opened before the Core restarted lists none of '
+      'the next session\'s requests', (tester) async {
+    final container = await _pumpDetail(
+      tester,
+      list: MitmExchangeList(capturing: true, exchanges: [_summary(_exchange)]),
+    );
+    final status = container.read(coreStatusProvider.notifier)
+      ..value = CoreStatus.connected;
+    await _openTab(tester, currentAppLocalizations.httpRequests);
+    expect(find.text('/new?x=1'), findsOneWidget);
+
+    status.value = CoreStatus.disconnected;
+    status.value = CoreStatus.connected;
+    await tester.pumpAndSettle();
+
+    expect(find.text('/new?x=1'), findsNothing);
+    expect(
+      find.text(currentAppLocalizations.httpRequestsMissing),
       findsOneWidget,
     );
 
