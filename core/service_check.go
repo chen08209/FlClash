@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"net/netip"
 	"strings"
 	"sync"
 	"time"
@@ -52,6 +53,7 @@ type ServiceCheckItem struct {
 	Name         string     `json:"name"`
 	Status       string     `json:"status"`
 	Region       string     `json:"region,omitempty"`
+	Ip           string     `json:"ip,omitempty"`
 	Delay        int64      `json:"delay,omitempty"`
 	Chains       []string   `json:"chains,omitempty"`
 	CheckedAt    int64      `json:"checked-at"`
@@ -302,4 +304,12 @@ func traceValue(body string, key string) string {
 		}
 	}
 	return ""
+}
+
+func traceIp(body string) string {
+	addr, err := netip.ParseAddr(traceValue(body, "ip"))
+	if err != nil {
+		return ""
+	}
+	return addr.Unmap().String()
 }

@@ -9198,7 +9198,7 @@ as int,
 /// @nodoc
 mixin _$ServiceCheckItem {
 
- String get name; String get status; String get region; int get delay; List<String> get chains;@JsonKey(name: 'checked-at') int get checkedAt;@JsonKey(name: 'core-epoch') int get coreEpoch;@JsonKey(name: 'route-version') int get routeVersion; List<RouteHit> get hits;
+ String get name; String get status; String get region; String get ip; int get delay; List<String> get chains;@JsonKey(name: 'checked-at') int get checkedAt;@JsonKey(name: 'core-epoch') int get coreEpoch;@JsonKey(name: 'route-version') int get routeVersion; List<RouteHit> get hits;
 /// Create a copy of ServiceCheckItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -9212,20 +9212,20 @@ $ServiceCheckItemCopyWith<ServiceCheckItem> get copyWith => _$ServiceCheckItemCo
 @override
 bool operator ==(Object other) {
   final _this = this as ServiceCheckItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceCheckItem&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.region, _this.region) || other.region == _this.region)&&(identical(other.delay, _this.delay) || other.delay == _this.delay)&&const DeepCollectionEquality().equals(other.chains, _this.chains)&&(identical(other.checkedAt, _this.checkedAt) || other.checkedAt == _this.checkedAt)&&(identical(other.coreEpoch, _this.coreEpoch) || other.coreEpoch == _this.coreEpoch)&&(identical(other.routeVersion, _this.routeVersion) || other.routeVersion == _this.routeVersion)&&const DeepCollectionEquality().equals(other.hits, _this.hits));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceCheckItem&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.region, _this.region) || other.region == _this.region)&&(identical(other.ip, _this.ip) || other.ip == _this.ip)&&(identical(other.delay, _this.delay) || other.delay == _this.delay)&&const DeepCollectionEquality().equals(other.chains, _this.chains)&&(identical(other.checkedAt, _this.checkedAt) || other.checkedAt == _this.checkedAt)&&(identical(other.coreEpoch, _this.coreEpoch) || other.coreEpoch == _this.coreEpoch)&&(identical(other.routeVersion, _this.routeVersion) || other.routeVersion == _this.routeVersion)&&const DeepCollectionEquality().equals(other.hits, _this.hits));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as ServiceCheckItem;
-  return Object.hash(runtimeType,_this.name,_this.status,_this.region,_this.delay,const DeepCollectionEquality().hash(_this.chains),_this.checkedAt,_this.coreEpoch,_this.routeVersion,const DeepCollectionEquality().hash(_this.hits));
+  return Object.hash(runtimeType,_this.name,_this.status,_this.region,_this.ip,_this.delay,const DeepCollectionEquality().hash(_this.chains),_this.checkedAt,_this.coreEpoch,_this.routeVersion,const DeepCollectionEquality().hash(_this.hits));
 }
 
 @override
 String toString() {
   final _this = this as ServiceCheckItem;
-  return 'ServiceCheckItem(name: ${_this.name}, status: ${_this.status}, region: ${_this.region}, delay: ${_this.delay}, chains: ${_this.chains}, checkedAt: ${_this.checkedAt}, coreEpoch: ${_this.coreEpoch}, routeVersion: ${_this.routeVersion}, hits: ${_this.hits})';
+  return 'ServiceCheckItem(name: ${_this.name}, status: ${_this.status}, region: ${_this.region}, ip: ${_this.ip}, delay: ${_this.delay}, chains: ${_this.chains}, checkedAt: ${_this.checkedAt}, coreEpoch: ${_this.coreEpoch}, routeVersion: ${_this.routeVersion}, hits: ${_this.hits})';
 }
 
 
@@ -9236,7 +9236,7 @@ abstract mixin class $ServiceCheckItemCopyWith<$Res>  {
   factory $ServiceCheckItemCopyWith(ServiceCheckItem value, $Res Function(ServiceCheckItem) _then) = _$ServiceCheckItemCopyWithImpl;
 @useResult
 $Res call({
- String name, String status, String region, int delay, List<String> chains,@JsonKey(name: 'checked-at') int checkedAt,@JsonKey(name: 'core-epoch') int coreEpoch,@JsonKey(name: 'route-version') int routeVersion, List<RouteHit> hits
+ String name, String status, String region, String ip, int delay, List<String> chains,@JsonKey(name: 'checked-at') int checkedAt,@JsonKey(name: 'core-epoch') int coreEpoch,@JsonKey(name: 'route-version') int routeVersion, List<RouteHit> hits
 });
 
 
@@ -9253,11 +9253,12 @@ class _$ServiceCheckItemCopyWithImpl<$Res>
 
 /// Create a copy of ServiceCheckItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? status = null,Object? region = null,Object? delay = null,Object? chains = null,Object? checkedAt = null,Object? coreEpoch = null,Object? routeVersion = null,Object? hits = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? status = null,Object? region = null,Object? ip = null,Object? delay = null,Object? chains = null,Object? checkedAt = null,Object? coreEpoch = null,Object? routeVersion = null,Object? hits = null,}) {
   return _then(ServiceCheckItem(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,region: null == region ? _self.region : region // ignore: cast_nullable_to_non_nullable
+as String,ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
 as String,delay: null == delay ? _self.delay : delay // ignore: cast_nullable_to_non_nullable
 as int,chains: null == chains ? _self.chains : chains // ignore: cast_nullable_to_non_nullable
 as List<String>,checkedAt: null == checkedAt ? _self.checkedAt : checkedAt // ignore: cast_nullable_to_non_nullable
@@ -9349,10 +9350,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String status,  String region,  int delay,  List<String> chains, @JsonKey(name: 'checked-at')  int checkedAt, @JsonKey(name: 'core-epoch')  int coreEpoch, @JsonKey(name: 'route-version')  int routeVersion,  List<RouteHit> hits)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String status,  String region,  String ip,  int delay,  List<String> chains, @JsonKey(name: 'checked-at')  int checkedAt, @JsonKey(name: 'core-epoch')  int coreEpoch, @JsonKey(name: 'route-version')  int routeVersion,  List<RouteHit> hits)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServiceCheckItem() when $default != null:
-return $default(_that.name,_that.status,_that.region,_that.delay,_that.chains,_that.checkedAt,_that.coreEpoch,_that.routeVersion,_that.hits);case _:
+return $default(_that.name,_that.status,_that.region,_that.ip,_that.delay,_that.chains,_that.checkedAt,_that.coreEpoch,_that.routeVersion,_that.hits);case _:
   return orElse();
 
 }
@@ -9370,10 +9371,10 @@ return $default(_that.name,_that.status,_that.region,_that.delay,_that.chains,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String status,  String region,  int delay,  List<String> chains, @JsonKey(name: 'checked-at')  int checkedAt, @JsonKey(name: 'core-epoch')  int coreEpoch, @JsonKey(name: 'route-version')  int routeVersion,  List<RouteHit> hits)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String status,  String region,  String ip,  int delay,  List<String> chains, @JsonKey(name: 'checked-at')  int checkedAt, @JsonKey(name: 'core-epoch')  int coreEpoch, @JsonKey(name: 'route-version')  int routeVersion,  List<RouteHit> hits)  $default,) {final _that = this;
 switch (_that) {
 case _ServiceCheckItem():
-return $default(_that.name,_that.status,_that.region,_that.delay,_that.chains,_that.checkedAt,_that.coreEpoch,_that.routeVersion,_that.hits);case _:
+return $default(_that.name,_that.status,_that.region,_that.ip,_that.delay,_that.chains,_that.checkedAt,_that.coreEpoch,_that.routeVersion,_that.hits);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -9390,10 +9391,10 @@ return $default(_that.name,_that.status,_that.region,_that.delay,_that.chains,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String status,  String region,  int delay,  List<String> chains, @JsonKey(name: 'checked-at')  int checkedAt, @JsonKey(name: 'core-epoch')  int coreEpoch, @JsonKey(name: 'route-version')  int routeVersion,  List<RouteHit> hits)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String status,  String region,  String ip,  int delay,  List<String> chains, @JsonKey(name: 'checked-at')  int checkedAt, @JsonKey(name: 'core-epoch')  int coreEpoch, @JsonKey(name: 'route-version')  int routeVersion,  List<RouteHit> hits)?  $default,) {final _that = this;
 switch (_that) {
 case _ServiceCheckItem() when $default != null:
-return $default(_that.name,_that.status,_that.region,_that.delay,_that.chains,_that.checkedAt,_that.coreEpoch,_that.routeVersion,_that.hits);case _:
+return $default(_that.name,_that.status,_that.region,_that.ip,_that.delay,_that.chains,_that.checkedAt,_that.coreEpoch,_that.routeVersion,_that.hits);case _:
   return null;
 
 }
@@ -9405,12 +9406,13 @@ return $default(_that.name,_that.status,_that.region,_that.delay,_that.chains,_t
 @JsonSerializable()
 
 class _ServiceCheckItem implements ServiceCheckItem {
-  const _ServiceCheckItem({this.name = '', this.status = '', this.region = '', this.delay = 0,  List<String> chains = const [], @JsonKey(name: 'checked-at') this.checkedAt = 0, @JsonKey(name: 'core-epoch') this.coreEpoch = 0, @JsonKey(name: 'route-version') this.routeVersion = 0,  List<RouteHit> hits = const []}): _chains = chains,_hits = hits;
+  const _ServiceCheckItem({this.name = '', this.status = '', this.region = '', this.ip = '', this.delay = 0,  List<String> chains = const [], @JsonKey(name: 'checked-at') this.checkedAt = 0, @JsonKey(name: 'core-epoch') this.coreEpoch = 0, @JsonKey(name: 'route-version') this.routeVersion = 0,  List<RouteHit> hits = const []}): _chains = chains,_hits = hits;
   factory _ServiceCheckItem.fromJson(Map<String, dynamic> json) => _$ServiceCheckItemFromJson(json);
 
 @override@JsonKey() final  String name;
 @override@JsonKey() final  String status;
 @override@JsonKey() final  String region;
+@override@JsonKey() final  String ip;
 @override@JsonKey() final  int delay;
  final  List<String> _chains;
 @override@JsonKey() List<String> get chains {
@@ -9443,18 +9445,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceCheckItem&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.region, region) || other.region == region)&&(identical(other.delay, delay) || other.delay == delay)&&const DeepCollectionEquality().equals(other.chains, _chains)&&(identical(other.checkedAt, checkedAt) || other.checkedAt == checkedAt)&&(identical(other.coreEpoch, coreEpoch) || other.coreEpoch == coreEpoch)&&(identical(other.routeVersion, routeVersion) || other.routeVersion == routeVersion)&&const DeepCollectionEquality().equals(other.hits, _hits));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceCheckItem&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.region, region) || other.region == region)&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.delay, delay) || other.delay == delay)&&const DeepCollectionEquality().equals(other.chains, _chains)&&(identical(other.checkedAt, checkedAt) || other.checkedAt == checkedAt)&&(identical(other.coreEpoch, coreEpoch) || other.coreEpoch == coreEpoch)&&(identical(other.routeVersion, routeVersion) || other.routeVersion == routeVersion)&&const DeepCollectionEquality().equals(other.hits, _hits));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,name,status,region,delay,const DeepCollectionEquality().hash(_chains),checkedAt,coreEpoch,routeVersion,const DeepCollectionEquality().hash(_hits));
+    return Object.hash(runtimeType,name,status,region,ip,delay,const DeepCollectionEquality().hash(_chains),checkedAt,coreEpoch,routeVersion,const DeepCollectionEquality().hash(_hits));
 }
 
 @override
 String toString() {
-    return 'ServiceCheckItem(name: $name, status: $status, region: $region, delay: $delay, chains: $chains, checkedAt: $checkedAt, coreEpoch: $coreEpoch, routeVersion: $routeVersion, hits: $hits)';
+    return 'ServiceCheckItem(name: $name, status: $status, region: $region, ip: $ip, delay: $delay, chains: $chains, checkedAt: $checkedAt, coreEpoch: $coreEpoch, routeVersion: $routeVersion, hits: $hits)';
 }
 
 
@@ -9465,7 +9467,7 @@ abstract mixin class _$ServiceCheckItemCopyWith<$Res> implements $ServiceCheckIt
   factory _$ServiceCheckItemCopyWith(_ServiceCheckItem value, $Res Function(_ServiceCheckItem) _then) = __$ServiceCheckItemCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String status, String region, int delay, List<String> chains,@JsonKey(name: 'checked-at') int checkedAt,@JsonKey(name: 'core-epoch') int coreEpoch,@JsonKey(name: 'route-version') int routeVersion, List<RouteHit> hits
+ String name, String status, String region, String ip, int delay, List<String> chains,@JsonKey(name: 'checked-at') int checkedAt,@JsonKey(name: 'core-epoch') int coreEpoch,@JsonKey(name: 'route-version') int routeVersion, List<RouteHit> hits
 });
 
 
@@ -9482,11 +9484,12 @@ class __$ServiceCheckItemCopyWithImpl<$Res>
 
 /// Create a copy of ServiceCheckItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? status = null,Object? region = null,Object? delay = null,Object? chains = null,Object? checkedAt = null,Object? coreEpoch = null,Object? routeVersion = null,Object? hits = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? status = null,Object? region = null,Object? ip = null,Object? delay = null,Object? chains = null,Object? checkedAt = null,Object? coreEpoch = null,Object? routeVersion = null,Object? hits = null,}) {
   return _then(_ServiceCheckItem(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,region: null == region ? _self.region : region // ignore: cast_nullable_to_non_nullable
+as String,ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
 as String,delay: null == delay ? _self.delay : delay // ignore: cast_nullable_to_non_nullable
 as int,chains: null == chains ? _self._chains : chains // ignore: cast_nullable_to_non_nullable
 as List<String>,checkedAt: null == checkedAt ? _self.checkedAt : checkedAt // ignore: cast_nullable_to_non_nullable

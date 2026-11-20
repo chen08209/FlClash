@@ -510,6 +510,7 @@ abstract class ServiceCheckItem with _$ServiceCheckItem {
     @Default('') String name,
     @Default('') String status,
     @Default('') String region,
+    @Default('') String ip,
     @Default(0) int delay,
     @Default([]) List<String> chains,
     @JsonKey(name: 'checked-at') @Default(0) int checkedAt,

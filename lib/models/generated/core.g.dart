@@ -745,6 +745,7 @@ _ServiceCheckItem _$ServiceCheckItemFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String? ?? '',
       status: json['status'] as String? ?? '',
       region: json['region'] as String? ?? '',
+      ip: json['ip'] as String? ?? '',
       delay: (json['delay'] as num?)?.toInt() ?? 0,
       chains:
           (json['chains'] as List<dynamic>?)
@@ -766,6 +767,7 @@ Map<String, dynamic> _$ServiceCheckItemToJson(_ServiceCheckItem instance) =>
       'name': instance.name,
       'status': instance.status,
       'region': instance.region,
+      'ip': instance.ip,
       'delay': instance.delay,
       'chains': instance.chains,
       'checked-at': instance.checkedAt,

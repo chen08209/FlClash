@@ -22,7 +22,7 @@ func stubChecker(name string, item ServiceCheckItem) serviceChecker {
 
 func TestHandleServiceCheckRunsEveryCheckerByDefault(t *testing.T) {
 	withServiceCheckers(t,
-		stubChecker("alpha", ServiceCheckItem{Status: serviceAvailable, Region: "US"}),
+		stubChecker("alpha", ServiceCheckItem{Status: serviceAvailable, Region: "US", Ip: "203.0.113.7"}),
 		stubChecker("beta", ServiceCheckItem{Status: serviceUnsupportedRegion}),
 	)
 
@@ -31,7 +31,8 @@ func TestHandleServiceCheckRunsEveryCheckerByDefault(t *testing.T) {
 	if len(items) != 2 {
 		t.Fatalf("items = %d, want 2", len(items))
 	}
-	if items[0].Name != "alpha" || items[0].Status != serviceAvailable || items[0].Region != "US" {
+	if items[0].Name != "alpha" || items[0].Status != serviceAvailable || items[0].Region != "US" ||
+		items[0].Ip != "203.0.113.7" {
 		t.Errorf("items[0] = %+v", items[0])
 	}
 	if items[1].Name != "beta" || items[1].Status != serviceUnsupportedRegion {

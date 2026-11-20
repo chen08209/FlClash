@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/service_probe.dart';
 import 'package:fl_clash/features/features.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/outbound_ip.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/providers/routed_probe.dart';
@@ -446,14 +445,14 @@ mixin _NodeAddressWatch<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 /// back to the node only when the address could not be looked up.
 class _OutboundIpLine extends StatelessWidget {
   const _OutboundIpLine({
-    required this.ip,
+    required this.address,
     required this.region,
     required this.pending,
     required this.fallback,
     required this.style,
   });
 
-  final IpInfo? ip;
+  final String? address;
   final String? region;
   final bool pending;
   final String? fallback;
@@ -461,10 +460,10 @@ class _OutboundIpLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ip = this.ip;
+    final address = this.address;
     final fallback = this.fallback;
-    final flag = ip?.countryCode ?? region;
-    if (flag == null && ip == null && !pending && fallback == null) {
+    final flag = region;
+    if (flag == null && address == null && !pending && fallback == null) {
       return _NoValue(style: style);
     }
     final line = Row(
@@ -475,9 +474,9 @@ class _OutboundIpLine extends StatelessWidget {
             flag.countryFlagEmoji,
             style: style?.copyWith(fontFamily: FontFamily.twEmoji.value),
           ),
-        if (ip != null)
+        if (address != null)
           Flexible(
-            child: IpQualityText(ip: ip.ip, style: style),
+            child: IpQualityText(ip: address, style: style),
           )
         else if (pending)
           Flexible(child: SkeletonText(width: 88, style: style))
@@ -492,11 +491,11 @@ class _OutboundIpLine extends StatelessWidget {
           ),
       ],
     );
-    if (ip == null) return line;
+    if (address == null) return line;
     return Tooltip(
       message: context.appLocalizations.outboundIp,
       child: PressRegion(
-        onTap: () => showIpQualitySheet(context, ip: ip.ip),
+        onTap: () => showIpQualitySheet(context, ip: address),
         shape: AppShape.xs,
         overlay: PressRegion.focusOverlay,
         child: line,
@@ -852,9 +851,10 @@ class _ServiceRowState extends ConsumerState<_ServiceRow>
     final entry = widget.entry;
     final check = entry.value;
     final loading = entry.isLoading;
+    final serviceIp = check?.ip;
     final node = check?.node;
-    _showNode(node);
-    final ipEntry = node != null
+    _showNode(serviceIp == null ? node : null);
+    final ipEntry = serviceIp == null && node != null
         ? ref.watch(
             outboundIpProbeProvider.select((state) => state.entryOf(node)),
           )
@@ -880,8 +880,10 @@ class _ServiceRowState extends ConsumerState<_ServiceRow>
         subtitle: loading
             ? SkeletonText(width: 96, style: secondary)
             : _OutboundIpLine(
-                ip: outboundIp,
-                region: check?.region,
+                address: serviceIp ?? outboundIp?.ip,
+                region: serviceIp != null
+                    ? check?.region
+                    : outboundIp?.countryCode ?? check?.region,
                 pending:
                     ipEntry != null &&
                     ipEntry.phase != ProbePhase.failed &&

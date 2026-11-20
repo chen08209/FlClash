@@ -554,6 +554,49 @@ void main() {
     expect(await heightOf(quality), loading);
   });
 
+  testWidgets(
+    'a sheet row shows the address its service saw over the node\'s',
+    (tester) async {
+      final outboundIps = <String>[];
+      answer(
+        (params) => [
+          for (final name in params.names)
+            ServiceCheckItem(
+              name: name,
+              status: ServiceProbeStatus.available.id,
+              chains: const ['HK-01'],
+              region: name == ServiceTarget.claude.id ? 'US' : 'JP',
+              ip: name == ServiceTarget.claude.id ? '198.51.100.9' : '',
+              checkedAt: 1700000000000,
+              coreEpoch: 1,
+              routeVersion: 1,
+            ),
+        ],
+      );
+      await tester.pumpWidget(
+        app(
+          outboundIp: (params) {
+            outboundIps.add(params.proxyName);
+            return _address('203.0.113.7', 'SG');
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ServiceStatusCard));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Check all'));
+      await tester.pumpAndSettle();
+      final sheet = find.byType(ServiceStatusSheet);
+      Finder inSheet(String text) =>
+          find.descendant(of: sheet, matching: find.text(text));
+
+      expect(inSheet('198.51.100.9'), findsOneWidget);
+      expect(inSheet('\u{1F1FA}\u{1F1F8}'), findsOneWidget);
+      expect(inSheet('203.0.113.7'), findsWidgets);
+      expect(outboundIps, ['HK-01']);
+    },
+  );
+
   testWidgets('a sheet row falls back to the node without an address', (
     tester,
   ) async {
