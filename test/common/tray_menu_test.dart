@@ -217,7 +217,7 @@ void main() {
 
       final content = showCall()!;
       final l10n = currentAppLocalizations;
-      expect(content.toolTip, '$appName (${l10n.safeMode})');
+      expect(content.toolTip, '$packageDisplayName (${l10n.safeMode})');
       expect(
         content.image.pngs.first,
         File('assets/images/tray/macos/status_4.png').readAsBytesSync(),
@@ -241,7 +241,7 @@ void main() {
     expect(host.shown, hasLength(1));
 
     final content = host.shown.single;
-    expect(content.toolTip, appName);
+    expect(content.toolTip, packageDisplayName);
     expect(content.menu, isNotEmpty);
     expect(content.image.pngs, hasLength(Tray.variantScales.length));
     expect(content.image.pngs, everyElement(isNotEmpty));

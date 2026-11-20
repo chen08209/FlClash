@@ -1,5 +1,5 @@
-display_name: FlClash
-package_name: FlClash
+display_name: FlClash RS
+package_name: flclash-rs
 maintainer:
   name: chen08209
   email: chen08209@gmail.com
@@ -17,8 +17,8 @@ dependencies:
 # its teardown belongs here; the binary is already gone when postrm runs.
 postuninstall_scripts:
   - 'case "${1:-}" in remove|purge) ;; *) exit 0 ;; esac'
-  - 'systemctl disable --now flclash-helper.service >/dev/null 2>&1 || true'
-  - 'rm -f /etc/systemd/system/flclash-helper.service'
+  - 'systemctl disable --now flclash-rs-helper.service >/dev/null 2>&1 || true'
+  - 'rm -f /etc/systemd/system/flclash-rs-helper.service'
   - 'systemctl daemon-reload >/dev/null 2>&1 || true'
 
 supported_mime_type:
@@ -29,10 +29,10 @@ supported_mime_type:
 keywords:
   - FlClash
   - Clash
-  - ClashMeta
+  - Concord
   - Proxy
 
-generic_name: FlClash
+generic_name: FlClash RS
 
 categories:
   - Network

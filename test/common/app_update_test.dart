@@ -69,6 +69,10 @@ void main() {
     );
   });
 
+  test('an rs build has no self-update asset to download', () {
+    expect(selfUpdateAsset, isNull);
+  });
+
   group('releaseChecksum', () {
     const digest =
         'ff6a953c0f5c12e6bdc97b49428b565b64c4a62d85e50081823ba297407529b1';

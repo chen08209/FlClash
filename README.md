@@ -4,7 +4,7 @@
 
 # FlClash
 
-A multi-platform proxy client based on ClashMeta. Simple to use, open source and ad-free.
+A multi-platform proxy client based on the Concord core. Simple to use, open source and ad-free.
 
 **English** · [简体中文](README_zh_CN.md)
 
@@ -27,7 +27,7 @@ A multi-platform proxy client based on ClashMeta. Simple to use, open source and
 ## Features
 
 - **One app for Android, Windows, macOS and Linux**, with x64 and ARM64 builds on the desktop.
-- **mihomo (Clash.Meta) core** with rule routing, proxy groups, latency tests, system proxy and TUN mode.
+- **Concord core** with rule routing, proxy groups, latency tests, system proxy and TUN mode.
 - **Profiles** from a subscription link or a file, with a built-in editor, override scripts, and custom rules,
   proxies and proxy groups.
 - **Live views** of connections, requests, DNS queries and logs.

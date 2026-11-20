@@ -879,7 +879,7 @@ abstract class AppLocalizations {
   /// No description provided for @desc.
   ///
   /// In en, this message translates to:
-  /// **'A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.'**
+  /// **'A multi-platform proxy client based on the Concord core, simple and easy to use, open-source and ad-free.'**
   String get desc;
 
   /// No description provided for @startVpn.
@@ -2343,7 +2343,7 @@ abstract class AppLocalizations {
   /// No description provided for @disclaimerSoftwareContent.
   ///
   /// In en, this message translates to:
-  /// **'The Software is an open-source network proxy client built on the Clash.Meta (mihomo) core. It only provides local tooling such as configuration management, rule-based routing, and traffic forwarding.'**
+  /// **'The Software is an open-source network proxy client built on the Concord core. It only provides local tooling such as configuration management, rule-based routing, and traffic forwarding.'**
   String get disclaimerSoftwareContent;
 
   /// No description provided for @disclaimerNoServiceStatement.
@@ -2433,7 +2433,7 @@ abstract class AppLocalizations {
   /// No description provided for @disclaimerLicenseContent.
   ///
   /// In en, this message translates to:
-  /// **'The Software is open source under the GPL-3.0 license. Under that license you may run, study, modify, and distribute it; when you distribute the Software or a modified version, you must provide its source code under GPL-3.0 as well and keep the original copyright notices.\n\nThird-party components in the Software, including the Clash.Meta core, follow their own licenses. The original authors are not responsible for any problem arising from versions modified or distributed by others.'**
+  /// **'The Software is open source under the GPL-3.0 license. Under that license you may run, study, modify, and distribute it; when you distribute the Software or a modified version, you must provide its source code under GPL-3.0 as well and keep the original copyright notices.\n\nThird-party components in the Software, including the Concord core, follow their own licenses. The original authors are not responsible for any problem arising from versions modified or distributed by others.'**
   String get disclaimerLicenseContent;
 
   /// No description provided for @disclaimerChangesTitle.

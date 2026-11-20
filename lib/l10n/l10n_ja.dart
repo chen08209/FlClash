@@ -403,7 +403,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get desc =>
-      'ClashMetaベースのマルチプラットフォーム対応プロキシクライアント。シンプルで使いやすく、オープンソースで広告もありません。';
+      'Concord コアベースのマルチプラットフォーム対応プロキシクライアント。シンプルで使いやすく、オープンソースで広告もありません。';
 
   @override
   String get startVpn => 'VPNを起動しています…';
@@ -1154,7 +1154,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      '本ソフトウェアは Clash.Meta（mihomo）コアをベースとしたオープンソースのネットワークプロキシクライアントであり、設定管理、ルールによる振り分け、トラフィック転送などのローカルツール機能のみを提供します。';
+      '本ソフトウェアは Concord コアをベースとしたオープンソースのネットワークプロキシクライアントであり、設定管理、ルールによる振り分け、トラフィック転送などのローカルツール機能のみを提供します。';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -1207,7 +1207,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      '本ソフトウェアは GPL-3.0 ライセンスのもとで公開されたオープンソースソフトウェアです。同ライセンスに従って実行、研究、改変、配布することができます。本ソフトウェアまたはその改変版を配布する場合は、同じく GPL-3.0 のもとでソースコードを提供し、元の著作権表示を保持する必要があります。\n\n本ソフトウェアに含まれるサードパーティコンポーネント（Clash.Meta コアを含む）は、それぞれのライセンスに従います。他者が改変または配布したバージョンにより生じた問題について、原作者は責任を負いません。';
+      '本ソフトウェアは GPL-3.0 ライセンスのもとで公開されたオープンソースソフトウェアです。同ライセンスに従って実行、研究、改変、配布することができます。本ソフトウェアまたはその改変版を配布する場合は、同じく GPL-3.0 のもとでソースコードを提供し、元の著作権表示を保持する必要があります。\n\n本ソフトウェアに含まれるサードパーティコンポーネント（Concord コアを含む）は、それぞれのライセンスに従います。他者が改変または配布したバージョンにより生じた問題について、原作者は責任を負いません。';
 
   @override
   String get disclaimerChangesTitle => '本声明の変更';

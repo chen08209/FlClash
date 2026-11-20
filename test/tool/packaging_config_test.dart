@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:fl_clash/common/constant.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaml/yaml.dart';
 
@@ -18,10 +19,7 @@ void main() {
             .cast<String>();
 
         expect(scripts.first, contains('exit 0'));
-        expect(
-          scripts,
-          contains('rm -f /etc/systemd/system/flclash-helper.service'),
-        );
+        expect(scripts, contains('rm -f $helperUnitPath'));
         expect(
           scripts.any((script) => script.contains('systemctl daemon-reload')),
           isTrue,

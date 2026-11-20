@@ -36,7 +36,7 @@ class InitErrorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return PrismApp(
       debugShowCheckedModeBanner: false,
-      title: appName,
+      title: packageDisplayName,
       theme: _theme(Brightness.light),
       darkTheme: _theme(Brightness.dark),
       localizationsDelegates: const [

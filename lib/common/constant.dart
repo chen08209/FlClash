@@ -10,7 +10,24 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter/widgets.dart';
 
 const appName = 'FlClash';
+
+/// What the system shows for the installed package, as the packaging files
+/// name it.
+const packageDisplayName = rsSideBySide ? 'FlClash RS' : appName;
+
+/// Keeps registrations and backups apart from a FlClash install beside it:
+/// the autostart entry, whose Windows Run value the installer reads under
+/// [packageDisplayName] (value names ignore case), and the WebDAV backup root.
+const sideBySideName = rsSideBySide ? 'FlClash rs' : appName;
+const _appSlug = rsSideBySide ? 'flclash-rs' : 'flclash';
+
+/// Kept on every line: subscription servers match it in the User-Agent and
+/// the Helper accepts a Core socket only under a directory of this name.
+const productName = 'FlClash';
 const appHelperService = 'FlClashHelperService';
+const helperServiceName = rsSideBySide
+    ? 'FlClashRsHelperService'
+    : 'FlClashHelperService';
 const coreManifestName = 'manifest.json';
 const browserUa =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -19,10 +36,11 @@ final unixSocketPath = _privateSocketPath();
 final windowsPipeName = '\\\\.\\pipe\\FlClashCore_${_randomId()}';
 const helperPort = 47890;
 const helperPortKey =
-    'SYSTEM\\CurrentControlSet\\Services\\$appHelperService\\Runtime';
+    'SYSTEM\\CurrentControlSet\\Services\\$helperServiceName\\Runtime';
 const helperPortValue = 'Port';
-const helperSocketPath = '/run/flclash/helper.sock';
-const helperUnitPath = '/etc/systemd/system/flclash-helper.service';
+const helperSocketPath = '/run/$_appSlug/helper.sock';
+const helperUnitPath = '/etc/systemd/system/$_appSlug-helper.service';
+const linuxUrlHandlerDesktopId = '$_appSlug-url-handler.desktop';
 const helperProtocolVersionHeader = 'x-flclash-helper-protocol';
 final helperProtocolVersion = Platform.isWindows ? '9' : '7';
 const maxTextScale = 1.4;
@@ -37,9 +55,28 @@ const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
 /// turning it on, so a check must take a form that tool reads.
 const rsFeature = false;
 
+/// Native and packaging files cannot read this;
+/// `test/tool/side_by_side_identity_test.dart` lists each and both its values.
+const rsSideBySide = true;
+
 const disclaimerVersion = 1;
 
-String _randomPipeId() {
+String _privateSocketPath() {
+  final runtime = Platform.environment['XDG_RUNTIME_DIR'];
+  final String base;
+  if (Platform.isLinux) {
+    base = runtime != null && RegExp(r'^/run/user/\d{1,10}$').hasMatch(runtime)
+        ? runtime
+        : '/tmp';
+  } else {
+    base = runtime == null || runtime.isEmpty
+        ? Directory.systemTemp.path
+        : runtime;
+  }
+  return '$base/$productName/${_randomId()}.sock';
+}
+
+String _randomId() {
   final random = Random.secure();
   return List.generate(
     16,

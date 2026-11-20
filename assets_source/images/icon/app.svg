@@ -1,0 +1,113 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1024" height="1024" viewBox="0 0 240 240">
+  <title>FlClash</title>
+  <defs>
+    <path id="base" d="M83.48 3L156.52 3C179.69 3 191.28 3 203.75 6.94C217.37 11.9 228.1 22.63 233.06 36.25C237 48.72 237 60.31 237 83.48L237 156.52C237 179.69 237 191.28 233.06 203.75C228.1 217.37 217.37 228.1 203.75 233.06C191.28 237 179.69 237 156.52 237L83.48 237C60.31 237 48.72 237 36.25 233.06C22.63 228.1 11.9 217.37 6.94 203.75C3 191.28 3 179.69 3 156.52L3 83.48C3 60.31 3 48.72 6.94 36.25C11.9 22.63 22.63 11.9 36.25 6.94C48.72 3 60.31 3 83.48 3Z" />
+    <clipPath id="plate">
+      <use xlink:href="#base" />
+    </clipPath>
+    <mask id="mask" maskUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+      <g transform="translate(120 120) scale(.76) translate(-120 -120)">
+        <g stroke="white" stroke-width="46.32" stroke-linecap="round">
+          <line x1="59.68" y1="100.95" x2="180.02" y2="31.47" />
+          <line x1="90.56" y1="154.43" x2="150.74" y2="119.69" />
+        </g>
+        <circle cx="121.44" cy="207.92" r="23.16" fill="white" />
+      </g>
+    </mask>
+    <g id="glyph" mask="url(#mask)">
+      <rect width="240" height="240" />
+    </g>
+    <linearGradient id="basecolor" x1="187" y1="6" x2="61" y2="237" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8f4f3" stop-opacity="1" />
+      <stop offset="0.5" stop-color="#ebe7f0" stop-opacity="1" />
+      <stop offset="1" stop-color="#d4d5ea" stop-opacity="1" />
+    </linearGradient>
+    <radialGradient id="warm" cx="190" cy="55" r="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffb694" stop-opacity="0.24" />
+      <stop offset="0.45" stop-color="#ffb694" stop-opacity="0.156" />
+      <stop offset="1" stop-color="#ffb694" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="cool" cx="65" cy="177" r="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9393ca" stop-opacity="0.24" />
+      <stop offset="0.45" stop-color="#9393ca" stop-opacity="0.156" />
+      <stop offset="1" stop-color="#9393ca" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="rim" x1="82" y1="0" x2="149" y2="237" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.88" />
+      <stop offset="0.19" stop-color="#ffffff" stop-opacity="0.3" />
+      <stop offset="0.58" stop-color="#ffffff" stop-opacity="0.05" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.42" />
+    </linearGradient>
+    <linearGradient id="face" x1="59" y1="130" x2="191" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7c66d8" stop-opacity="1" />
+      <stop offset="0.25" stop-color="#9a6ad4" stop-opacity="1" />
+      <stop offset="0.5" stop-color="#bf67c8" stop-opacity="1" />
+      <stop offset="0.75" stop-color="#ea7ea4" stop-opacity="1" />
+      <stop offset="1" stop-color="#fea27c" stop-opacity="1" />
+    </linearGradient>
+    <linearGradient id="sheen" x1="92" y1="53" x2="143" y2="163" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff8ed" stop-opacity="0.3" />
+      <stop offset="0.27" stop-color="#fff5eb" stop-opacity="0.102" />
+      <stop offset="0.63" stop-color="#fff5eb" stop-opacity="0" />
+      <stop offset="1" stop-color="#73689f" stop-opacity="0.08" />
+    </linearGradient>
+    <radialGradient id="pearl" cx="181" cy="60" r="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff2cc" stop-opacity="0.18" />
+      <stop offset="0.45" stop-color="#fff2cc" stop-opacity="0.117" />
+      <stop offset="1" stop-color="#fff2cc" stop-opacity="0" />
+    </radialGradient>
+    <g id="plate-fill">
+      <rect width="240" height="240" fill="url(#basecolor)" />
+      <rect width="240" height="240" fill="url(#cool)" />
+      <rect width="240" height="240" fill="url(#warm)" />
+    </g>
+    <linearGradient id="edge" x1="59" y1="130" x2="191" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5a42ac" />
+      <stop offset="0.25" stop-color="#7146ac" />
+      <stop offset="0.5" stop-color="#9744a0" />
+      <stop offset="0.75" stop-color="#c25878" />
+      <stop offset="1" stop-color="#d97d58" />
+    </linearGradient>
+    <linearGradient id="shade" x1="59" y1="130" x2="191" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4c3588" />
+      <stop offset="0.25" stop-color="#5e3886" />
+      <stop offset="0.5" stop-color="#723978" />
+      <stop offset="0.75" stop-color="#8a4660" />
+      <stop offset="1" stop-color="#96604a" />
+    </linearGradient>
+    <filter id="drop" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4.5" />
+    </filter>
+    <filter id="core" x="-20%" y="-20%" width="140%" height="140%">
+      <feMorphology operator="erode" radius="1" />
+      <feGaussianBlur stdDeviation=".15" />
+    </filter>
+    <mask id="edgemask" maskUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+      <use xlink:href="#glyph" fill="white" />
+      <use xlink:href="#glyph" fill="black" filter="url(#core)" />
+    </mask>
+    <filter id="hiblur" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation=".2" />
+    </filter>
+    <mask id="toplight" maskUnits="userSpaceOnUse" x="0" y="0" width="240" height="240">
+      <use xlink:href="#glyph" fill="white" />
+      <use xlink:href="#glyph" fill="black" transform="translate(.35 .9)" filter="url(#hiblur)" />
+    </mask>
+    <g id="art">
+      <use xlink:href="#glyph" fill="url(#shade)" transform="translate(0 4.2)" filter="url(#drop)" opacity=".2" />
+      <use xlink:href="#glyph" fill="url(#face)" />
+      <g mask="url(#mask)">
+        <rect width="240" height="240" fill="url(#sheen)" />
+        <rect width="240" height="240" fill="url(#pearl)" />
+      </g>
+      <rect width="240" height="240" fill="url(#edge)" mask="url(#edgemask)" opacity=".4" />
+      <rect width="240" height="240" fill="#fff" mask="url(#toplight)" opacity=".5" />
+    </g>
+  </defs>
+  <g clip-path="url(#plate)">
+    <use xlink:href="#plate-fill" />
+    <use xlink:href="#base" fill="none" stroke="url(#rim)" stroke-width="2" />
+    <use xlink:href="#art" />
+  </g>
+</svg>

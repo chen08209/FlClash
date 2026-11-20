@@ -402,7 +402,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get desc =>
-      'ClashMeta 기반의 멀티 플랫폼 프록시 클라이언트로, 간편하게 사용할 수 있으며 오픈 소스이고 광고가 없습니다.';
+      'Concord 코어 기반의 멀티 플랫폼 프록시 클라이언트로, 간편하게 사용할 수 있으며 오픈 소스이고 광고가 없습니다.';
 
   @override
   String get startVpn => 'VPN 시작 중…';
@@ -1154,7 +1154,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      '본 소프트웨어는 Clash.Meta(mihomo) 코어를 기반으로 한 오픈 소스 네트워크 프록시 클라이언트입니다. 구성 관리, 규칙 기반 라우팅, 트래픽 전달과 같은 로컬 도구만 제공합니다.';
+      '본 소프트웨어는 Concord 코어를 기반으로 한 오픈 소스 네트워크 프록시 클라이언트입니다. 구성 관리, 규칙 기반 라우팅, 트래픽 전달과 같은 로컬 도구만 제공합니다.';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -1207,7 +1207,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      '본 소프트웨어는 GPL-3.0 라이선스로 공개된 오픈 소스입니다. 이 라이선스에 따라 실행, 연구, 수정, 배포할 수 있으며, 본 소프트웨어나 그 수정본을 배포할 때는 마찬가지로 GPL-3.0으로 소스 코드를 제공하고 원래의 저작권 고지를 유지해야 합니다.\n\n본 소프트웨어에 포함된 서드파티 구성 요소(Clash.Meta 코어 포함)는 각자의 라이선스를 따릅니다. 다른 사람이 수정하거나 배포한 버전에서 생긴 문제에 대해 원저작자는 책임지지 않습니다.';
+      '본 소프트웨어는 GPL-3.0 라이선스로 공개된 오픈 소스입니다. 이 라이선스에 따라 실행, 연구, 수정, 배포할 수 있으며, 본 소프트웨어나 그 수정본을 배포할 때는 마찬가지로 GPL-3.0으로 소스 코드를 제공하고 원래의 저작권 고지를 유지해야 합니다.\n\n본 소프트웨어에 포함된 서드파티 구성 요소(Concord 코어 포함)는 각자의 라이선스를 따릅니다. 다른 사람이 수정하거나 배포한 버전에서 생긴 문제에 대해 원저작자는 책임지지 않습니다.';
 
   @override
   String get disclaimerChangesTitle => '본 문서의 변경';
