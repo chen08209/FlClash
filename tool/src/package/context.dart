@@ -45,7 +45,6 @@ class PackageContext {
 
   String assetName(ReleaseArch arch, String extension, {ReleaseForm? form}) {
     return releaseAssetName(
-      line: line,
       version: version,
       os: os,
       arch: arch,

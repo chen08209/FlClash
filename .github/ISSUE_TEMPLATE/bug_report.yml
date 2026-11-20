@@ -32,12 +32,12 @@ body:
     attributes:
       label: 安装包 / Package
       description: >-
-        从 Releases 下载的文件名里有架构，如 `FlClash-0.9.3-windows-amd64-setup.exe`。/
-        The file name from Releases carries the architecture, such as `FlClash-0.9.3-windows-amd64-setup.exe`.
+        从 Releases 下载的文件名里有架构，如 `FlClash-0.9.4-windows-amd64-setup.exe`。/
+        The file name from Releases carries the architecture, such as `FlClash-0.9.4-windows-amd64-setup.exe`.
       options:
-        - Android APK arm64-v8a
-        - Android APK armeabi-v7a
-        - Android APK x86_64
+        - Android APK arm64
+        - Android APK armv7
+        - Android APK amd64
         - Android F-Droid
         - Windows amd64 安装版 / installer (setup.exe)
         - Windows amd64 便携版 / portable (zip)

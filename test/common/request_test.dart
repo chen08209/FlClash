@@ -5,7 +5,6 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
-import 'package:fl_clash/common/app_update.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/exception.dart';
 import 'package:fl_clash/common/release_asset.dart';
@@ -145,7 +144,6 @@ void main() {
 
   group('downloadVerifiedRelease', () {
     final name = releaseAssetName(
-      line: appReleaseLine,
       version: '1.2.3',
       os: ReleaseOs.android,
       arch: ReleaseArch.arm64,
@@ -180,7 +178,7 @@ void main() {
     }
 
     test('keeps a file matching the published digest', () async {
-      final request = requestServing('$digest  ./$name\n', package);
+      final request = requestServing('$digest  $name\n', package);
 
       final path = await download(request);
 
@@ -188,7 +186,7 @@ void main() {
     });
 
     test('refuses a file that does not match', () async {
-      final request = requestServing('$digest  ./$name\n', utf8.encode('x'));
+      final request = requestServing('$digest  $name\n', utf8.encode('x'));
 
       await expectLater(
         download(request),
@@ -197,7 +195,7 @@ void main() {
     });
 
     test('refuses an asset the listing does not name', () async {
-      final request = requestServing('$digest  ./other.apk\n', package);
+      final request = requestServing('$digest  other.apk\n', package);
 
       await expectLater(
         download(request),

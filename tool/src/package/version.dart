@@ -46,9 +46,17 @@ Future<ResolvedVersion> resolveVersion(String root, {String? tag}) async {
     'rev-parse',
     'HEAD',
   ], workingDirectory: root);
+  final line = detectReleaseLine(root);
   tag ??= _tagFromEnvironment() ?? await _tagAtHead(root);
   if (tag != null) {
-    return (version: releaseVersionOfTag(tag), commit: commit, tag: tag);
+    final version = releaseVersionOfTag(tag);
+    if (isRsReleaseVersion(version) != (line == ReleaseLine.rs)) {
+      throw PackageError(
+        'tag $tag does not name the ${line.name} line, and both lines '
+        'publish under the same file names',
+      );
+    }
+    return (version: version, commit: commit, tag: tag);
   }
   final seconds = await capture('git', [
     'show',
@@ -62,7 +70,7 @@ Future<ResolvedVersion> resolveVersion(String root, {String? tag}) async {
   );
   final base = pubspecVersionOf(root).split('+').first;
   return (
-    version: nightlyReleaseVersion(base, date, commit),
+    version: nightlyReleaseVersion(line, base, date, commit),
     commit: commit,
     tag: null,
   );

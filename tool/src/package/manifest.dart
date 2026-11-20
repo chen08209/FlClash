@@ -100,8 +100,7 @@ String writeManifest(String directory, List<ManifestEntry> entries) {
       'one manifest holds one line and version, these artifacts have $lines',
     );
   }
-  final (line, version) = lines.single;
-  final checksums = releaseChecksumsName(line, version);
+  final checksums = releaseChecksumsName(lines.single.$2);
   final sorted = [...entries]..sort((a, b) => a.name.compareTo(b.name));
   File(p.join(directory, checksums)).writeAsStringSync(checksumsText(sorted));
   File(p.join(directory, manifestName)).writeAsStringSync(

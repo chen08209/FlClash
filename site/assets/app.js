@@ -104,14 +104,14 @@
     switch (platform) {
       case 'android':
         return [
-          { id: 'android-arm64-v8a.apk', kind: 'APK', title: 'arm64-v8a', note: 'noteAndroidArm64', rec: true },
-          { id: 'android-armeabi-v7a.apk', kind: 'APK', title: 'armeabi-v7a', note: 'noteAndroidArm32' },
-          { id: 'android-x86_64.apk', kind: 'APK', title: 'x86_64', note: 'noteAndroidX64' },
+          { id: 'android-arm64.apk', kind: 'APK', title: 'arm64-v8a', note: 'noteAndroidArm64', rec: true },
+          { id: 'android-armv7.apk', kind: 'APK', title: 'armeabi-v7a', note: 'noteAndroidArm32' },
+          { id: 'android-amd64.apk', kind: 'APK', title: 'x86_64', note: 'noteAndroidX64' },
         ];
       case 'windows':
         return [
           { id: `windows-${goArch(arch)}-setup.exe`, kind: 'EXE', titleKey: 'winSetup', note: 'noteWinSetup', rec: true },
-          { id: `windows-${goArch(arch)}.zip`, kind: 'ZIP', titleKey: 'winPortable', note: 'noteWinPortable' },
+          { id: `windows-${goArch(arch)}-portable.zip`, kind: 'ZIP', titleKey: 'winPortable', note: 'noteWinPortable' },
         ];
       case 'macos':
         return [
@@ -129,24 +129,31 @@
     }
   }
 
+  // tool/package.dart check parses these names from this file to hold each release to them.
+  function assetName(release, id) {
+    return `FlClash-${release.version}-${id}`;
+  }
+
+  function assetHref(release, name) {
+    if (release.assets && !release.assets.has(name)) return `${REPO}/releases/tag/${release.tag}`;
+    return `${REPO}/releases/download/${release.tag}/${name}`;
+  }
+
   function resolveBuilds(platform, arch) {
     const release = state.release;
     if (!release) return [];
-    return buildsFor(platform, arch)
-      .map((build) => {
-        const name = `FlClash-${release.version}-${build.id}`;
-        const asset = release.assets ? release.assets.get(name) : null;
-        if (release.assets && !asset) return null;
-        return {
-          ...build,
-          name,
-          title: build.titleKey ? t(build.titleKey) : build.title,
-          href: `${REPO}/releases/download/${release.tag}/${name}`,
-          size: asset ? asset.size : null,
-          digest: asset && asset.digest ? asset.digest.replace(/^sha256:/, '') : null,
-        };
-      })
-      .filter(Boolean);
+    return buildsFor(platform, arch).map((build) => {
+      const name = assetName(release, build.id);
+      const asset = release.assets ? release.assets.get(name) : null;
+      return {
+        ...build,
+        name,
+        title: build.titleKey ? t(build.titleKey) : build.title,
+        href: assetHref(release, name),
+        size: asset ? asset.size : null,
+        digest: asset && asset.digest ? asset.digest.replace(/^sha256:/, '') : null,
+      };
+    });
   }
 
   async function detectDevice() {
@@ -232,8 +239,7 @@
       heroText.textContent = t('heroRelease', release.tag);
       $('#hero-release').href = `#${release.tag}`;
       $('#dl-meta').textContent = t('dlMeta', release.version, formatDate(release.date, state.lang));
-      $('#sums-link').href = `${REPO}/releases/download/${release.tag}/SHA256SUMS`;
-      $('#sums-link').hidden = !release.assets || !release.assets.has('SHA256SUMS');
+      $('#sums-link').href = assetHref(release, assetName(release, 'SHA256SUMS'));
     } else {
       heroText.textContent = t('heroReleaseLoading');
     }

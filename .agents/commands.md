@@ -24,8 +24,8 @@ dart tool/package.dart android             # every ABI; --arch arm64 for one
 dart tool/package.dart linux --dry-run --arch arm64   # names and steps only, any platform
 ```
 
-Artifacts land in `dist/` as `FlClash-<line>-<version>-<os>-<arch>[-<form>].<ext>`, with `manifest.json` and
-`FlClash-<line>-<version>-SHA256SUMS`; see Packaging in `architecture.md`.
+Artifacts land in `dist/` as `FlClash-<version>-<os>-<arch>[-<form>].<ext>`, with `manifest.json` and
+`FlClash-<version>-SHA256SUMS`; see Packaging in `architecture.md`.
 
 The desktop Go core and the Rust helper build automatically: Flutter runs
 `plugins/setup/hook/build.dart` on every `flutter build` and `flutter test`,
@@ -358,6 +358,53 @@ the Telegram post. They publish no GitHub release, so the update dialog never se
 version from `pubspec.yaml`, which the upload job has already set from the tag, and refuses to collect anything while
 `v<that version>` is tagged, so a prerelease tag must name the next, untagged `X.Y.Z`. The changelog builder walks
 stable tags only and ignores a `+M` tag.
+
+### Release File Names
+
+The site, the release notes, the Homebrew cask and the in-app updater each find a release's files by name, so a change
+to `releaseAssetName` or to the build matrix has to reach all of them:
+
+- `site/assets/app.js`: the ids in `buildsFor` and the checksum link.
+- `.github/release_template.md`: one link per file.
+- `.github/homebrew_cask_template.rb`: the disk image url.
+- `selfUpdateAssetFor` in `lib/common/release_asset.dart`: the installers the updater downloads and verifies against
+  `FlClash-<version>-SHA256SUMS`.
+
+`dart run tool/package.dart check dist` reads the names out of those files and fails when the merged release lacks one
+or its checksum file misstates an installer; the upload job runs it before it publishes anything, and
+`test/tool/release_contract_test.dart` runs it against the names the packager plans for every row of the build matrix.
+Released apps keep looking up the names they shipped with.
+
+#### Backfilling Old Names By Hand
+
+Optional, after a stable release, and never in CI. Updaters of 0.9.3 and 0.9.4 ask for older names; without these
+copies their users see "Update failed" and download the update from the release page instead. 0.9.3 fetches
+`FlClash-<v>-android-{arm64-v8a,armeabi-v7a,x86_64}.apk` and the Windows installers under their current names, all
+listed in `SHA256SUMS`; 0.9.4 fetches `FlClash-dev-<v>-*` names listed in `FlClash-dev-<v>-SHA256SUMS`. Releases up to
+0.9.2 only open the release page.
+
+```bash
+v=0.9.5
+cd "$(mktemp -d)"
+gh release download "v$v" -R chen08209/FlClash \
+  -p "FlClash-$v-android-arm64.apk" -p "FlClash-$v-android-armv7.apk" -p "FlClash-$v-android-amd64.apk" \
+  -p "FlClash-$v-windows-amd64-setup.exe" -p "FlClash-$v-windows-arm64-setup.exe"
+cp "FlClash-$v-android-arm64.apk" "FlClash-$v-android-arm64-v8a.apk"
+cp "FlClash-$v-android-armv7.apk" "FlClash-$v-android-armeabi-v7a.apk"
+cp "FlClash-$v-android-amd64.apk" "FlClash-$v-android-x86_64.apk"
+shasum -a 256 "FlClash-$v-android-arm64-v8a.apk" "FlClash-$v-android-armeabi-v7a.apk" \
+  "FlClash-$v-android-x86_64.apk" "FlClash-$v-windows-amd64-setup.exe" \
+  "FlClash-$v-windows-arm64-setup.exe" > SHA256SUMS
+for f in android-arm64.apk android-armv7.apk android-amd64.apk windows-amd64-setup.exe windows-arm64-setup.exe; do
+  cp "FlClash-$v-$f" "FlClash-dev-$v-$f"
+done
+shasum -a 256 "FlClash-dev-$v-android-arm64.apk" "FlClash-dev-$v-android-armv7.apk" \
+  "FlClash-dev-$v-android-amd64.apk" "FlClash-dev-$v-windows-amd64-setup.exe" \
+  "FlClash-dev-$v-windows-arm64-setup.exe" > "FlClash-dev-$v-SHA256SUMS"
+gh release upload "v$v" -R chen08209/FlClash \
+  "FlClash-$v-android-arm64-v8a.apk" "FlClash-$v-android-armeabi-v7a.apk" "FlClash-$v-android-x86_64.apk" \
+  SHA256SUMS "FlClash-dev-$v"-*
+```
 
 ### Website
 

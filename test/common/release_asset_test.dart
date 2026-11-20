@@ -8,11 +8,9 @@ void main() {
       ReleaseArch arch,
       String extension, {
       ReleaseForm? form,
-      ReleaseLine line = ReleaseLine.dev,
       String version = '0.9.4',
     }) {
       return releaseAssetName(
-        line: line,
         version: version,
         os: os,
         arch: arch,
@@ -25,11 +23,11 @@ void main() {
       for (final arch in [ReleaseArch.amd64, ReleaseArch.arm64]) {
         expect(
           name(ReleaseOs.windows, arch, 'exe', form: ReleaseForm.setup),
-          'FlClash-dev-0.9.4-windows-${arch.name}-setup.exe',
+          'FlClash-0.9.4-windows-${arch.name}-setup.exe',
         );
         expect(
           name(ReleaseOs.windows, arch, 'zip', form: ReleaseForm.portable),
-          'FlClash-dev-0.9.4-windows-${arch.name}-portable.zip',
+          'FlClash-0.9.4-windows-${arch.name}-portable.zip',
         );
       }
     });
@@ -38,12 +36,12 @@ void main() {
       for (final arch in [ReleaseArch.amd64, ReleaseArch.arm64]) {
         expect(
           name(ReleaseOs.macos, arch, 'dmg'),
-          'FlClash-dev-0.9.4-macos-${arch.name}.dmg',
+          'FlClash-0.9.4-macos-${arch.name}.dmg',
         );
         for (final extension in ['deb', 'rpm', 'AppImage']) {
           expect(
             name(ReleaseOs.linux, arch, extension),
-            'FlClash-dev-0.9.4-linux-${arch.name}.$extension',
+            'FlClash-0.9.4-linux-${arch.name}.$extension',
           );
         }
       }
@@ -56,40 +54,48 @@ void main() {
             name(ReleaseOs.android, arch, 'apk'),
         ],
         [
-          'FlClash-dev-0.9.4-android-amd64.apk',
-          'FlClash-dev-0.9.4-android-arm64.apk',
-          'FlClash-dev-0.9.4-android-armv7.apk',
-          'FlClash-dev-0.9.4-android-universal.apk',
+          'FlClash-0.9.4-android-amd64.apk',
+          'FlClash-0.9.4-android-arm64.apk',
+          'FlClash-0.9.4-android-armv7.apk',
+          'FlClash-0.9.4-android-universal.apk',
         ],
       );
     });
 
-    test('carries the line and the whole prerelease version', () {
+    test('tells the channels apart by version alone', () {
+      String setup(String tag) => name(
+        ReleaseOs.windows,
+        ReleaseArch.amd64,
+        'exe',
+        form: ReleaseForm.setup,
+        version: releaseVersionOfTag(tag),
+      );
+
+      expect(setup('v0.9.5'), 'FlClash-0.9.5-windows-amd64-setup.exe');
       expect(
-        name(
-          ReleaseOs.windows,
-          ReleaseArch.amd64,
-          'exe',
-          form: ReleaseForm.setup,
-          line: ReleaseLine.rs,
-          version: releaseVersionOfTag('v0.9.4-pre.2'),
-        ),
-        'FlClash-rs-0.9.4-pre.2-windows-amd64-setup.exe',
+        setup('v0.9.5-pre.1'),
+        'FlClash-0.9.5-pre.1-windows-amd64-setup.exe',
+      );
+      expect(
+        setup('v0.9.5-rs.1'),
+        'FlClash-0.9.5-rs.1-windows-amd64-setup.exe',
       );
     });
 
-    test('names a nightly by commit date and short hash', () {
-      final version = nightlyReleaseVersion(
-        '0.9.4',
-        DateTime.utc(2026, 11, 6, 23, 59),
-        '394f5bb82a524db3838aa441a8a348d038666ad7',
-      );
+    test('names a nightly by line, commit date and short hash', () {
+      final date = DateTime.utc(2026, 11, 6, 23, 59);
+      const commit = '394f5bb82a524db3838aa441a8a348d038666ad7';
+      final dev = nightlyReleaseVersion(ReleaseLine.dev, '0.9.4', date, commit);
+      final rs = nightlyReleaseVersion(ReleaseLine.rs, '0.9.4', date, commit);
 
-      expect(version, '0.9.4-nightly.20261106.394f5bb');
+      expect(dev, '0.9.4-nightly.20261106.394f5bb');
+      expect(rs, '0.9.4-rs.nightly.20261106.394f5bb');
       expect(
-        name(ReleaseOs.linux, ReleaseArch.amd64, 'AppImage', version: version),
-        'FlClash-dev-0.9.4-nightly.20261106.394f5bb-linux-amd64.AppImage',
+        name(ReleaseOs.linux, ReleaseArch.amd64, 'AppImage', version: rs),
+        'FlClash-0.9.4-rs.nightly.20261106.394f5bb-linux-amd64.AppImage',
       );
+      expect(isRsReleaseVersion(dev), isFalse);
+      expect(isRsReleaseVersion(rs), isTrue);
     });
 
     test('refuses a version GitHub would rewrite', () {
@@ -110,10 +116,17 @@ void main() {
     expect(releaseVersionOfTag('v0.9.4-rs.1+2'), '0.9.4-rs.1.2');
   });
 
-  test('the checksum file is named per line and version', () {
+  test('an rs version starts its prerelease with rs', () {
+    expect(isRsReleaseVersion('0.9.4-rs.1.2'), isTrue);
+    expect(isRsReleaseVersion('0.9.4'), isFalse);
+    expect(isRsReleaseVersion('0.9.4-pre.2'), isFalse);
+    expect(isRsReleaseVersion('0.9.4-pre.rs'), isFalse);
+  });
+
+  test('the checksum file is named by version', () {
     expect(
-      releaseChecksumsName(ReleaseLine.rs, '0.9.4-pre.2'),
-      'FlClash-rs-0.9.4-pre.2-SHA256SUMS',
+      releaseChecksumsName('0.9.4-pre.2'),
+      'FlClash-0.9.4-pre.2-SHA256SUMS',
     );
   });
 }
