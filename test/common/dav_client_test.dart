@@ -261,10 +261,10 @@ void main() {
       expect(server.requests.map((item) => item.method), ['MKCOL', 'PUT']);
       expect(
         server.requests.last.path,
-        '/${Uri.encodeComponent(appName)}/backup.zip',
+        '/${Uri.encodeComponent(sideBySideName)}/backup.zip',
       );
       expect(
-        server.files['/${Uri.encodeComponent(appName)}/backup.zip'],
+        server.files['/${Uri.encodeComponent(sideBySideName)}/backup.zip'],
         archive.readAsBytesSync(),
       );
     });
@@ -286,7 +286,8 @@ void main() {
 
     test('download writes the remote archive to the given path', () async {
       final payload = List<int>.generate(64, (index) => index);
-      server.files['/${Uri.encodeComponent(appName)}/backup.zip'] = payload;
+      server.files['/${Uri.encodeComponent(sideBySideName)}/backup.zip'] =
+          payload;
       final target = join(root.path, 'download.zip');
 
       await buildClient().download(target);

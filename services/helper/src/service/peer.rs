@@ -34,7 +34,7 @@ use windows_sys::Win32::System::Threading::{
 const AF_INET: u32 = 2;
 /// Hyper-V and WinNAT reserve ranges that can cover any fixed port; only admins
 /// write this volatile key under the service's own, and a reboot clears it.
-const PORT_KEY: &str = r"SYSTEM\CurrentControlSet\Services\FlClashHelperService\Runtime";
+const PORT_KEY: &str = r"SYSTEM\CurrentControlSet\Services\FlClashRsHelperService\Runtime";
 const PORT_VALUE: &str = "Port";
 const TABLE_ATTEMPTS: usize = 5;
 const ACCEPT_RETRY_DELAY: Duration = Duration::from_secs(1);

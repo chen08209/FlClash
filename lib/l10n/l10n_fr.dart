@@ -423,7 +423,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get desc =>
-      'Un client proxy multiplateforme basé sur ClashMeta, simple d’utilisation, open source et sans publicité.';
+      'Un client proxy multiplateforme basé sur le cœur Concord, simple d’utilisation, open source et sans publicité.';
 
   @override
   String get startVpn => 'Démarrage du VPN…';
@@ -1204,7 +1204,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      'Le Logiciel est un client proxy réseau open source construit sur le cœur Clash.Meta (mihomo). Il se limite à fournir des outils locaux tels que la gestion de la configuration, le routage par règles et le transfert du trafic.';
+      'Le Logiciel est un client proxy réseau open source construit sur le cœur Concord. Il se limite à fournir des outils locaux tels que la gestion de la configuration, le routage par règles et le transfert du trafic.';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -1257,7 +1257,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      'Le Logiciel est open source sous licence GPL-3.0. Selon cette licence, vous pouvez l\'exécuter, l\'étudier, le modifier et le distribuer ; lorsque vous distribuez le Logiciel ou une version modifiée, vous devez également en fournir le code source sous GPL-3.0 et conserver les mentions de droits d\'auteur d\'origine.\n\nLes composants tiers du Logiciel, y compris le noyau Clash.Meta, suivent leurs propres licences. Les auteurs d\'origine ne sont pas responsables des problèmes liés aux versions modifiées ou distribuées par d\'autres.';
+      'Le Logiciel est open source sous licence GPL-3.0. Selon cette licence, vous pouvez l\'exécuter, l\'étudier, le modifier et le distribuer ; lorsque vous distribuez le Logiciel ou une version modifiée, vous devez également en fournir le code source sous GPL-3.0 et conserver les mentions de droits d\'auteur d\'origine.\n\nLes composants tiers du Logiciel, y compris le noyau Concord, suivent leurs propres licences. Les auteurs d\'origine ne sont pas responsables des problèmes liés aux versions modifiées ou distribuées par d\'autres.';
 
   @override
   String get disclaimerChangesTitle => 'Modifications de cette déclaration';

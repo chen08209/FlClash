@@ -416,7 +416,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get desc =>
-      'A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.';
+      'A multi-platform proxy client based on the Concord core, simple and easy to use, open-source and ad-free.';
 
   @override
   String get startVpn => 'Starting VPN…';
@@ -1189,7 +1189,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      'The Software is an open-source network proxy client built on the Clash.Meta (mihomo) core. It only provides local tooling such as configuration management, rule-based routing, and traffic forwarding.';
+      'The Software is an open-source network proxy client built on the Concord core. It only provides local tooling such as configuration management, rule-based routing, and traffic forwarding.';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -1242,7 +1242,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      'The Software is open source under the GPL-3.0 license. Under that license you may run, study, modify, and distribute it; when you distribute the Software or a modified version, you must provide its source code under GPL-3.0 as well and keep the original copyright notices.\n\nThird-party components in the Software, including the Clash.Meta core, follow their own licenses. The original authors are not responsible for any problem arising from versions modified or distributed by others.';
+      'The Software is open source under the GPL-3.0 license. Under that license you may run, study, modify, and distribute it; when you distribute the Software or a modified version, you must provide its source code under GPL-3.0 as well and keep the original copyright notices.\n\nThird-party components in the Software, including the Concord core, follow their own licenses. The original authors are not responsible for any problem arising from versions modified or distributed by others.';
 
   @override
   String get disclaimerChangesTitle => 'Changes to this statement';

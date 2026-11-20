@@ -11,7 +11,7 @@ cask "flclash" do
   end
 
   name "FlClash"
-  desc "Multi-platform proxy client based on ClashMeta"
+  desc "Multi-platform proxy client based on the Concord core"
   homepage "https://github.com/chen08209/FlClash"
 
   livecheck do
