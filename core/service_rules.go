@@ -31,7 +31,7 @@ var (
 	discordCountryPattern  = regexp.MustCompile(`"country_code"\s*:\s*"([^"]+)"`)
 	geminiRegionMarker     = `,2,1,200,"`
 	claudeBlockedRegions   = []string{"AF", "BY", "CN", "CU", "HK", "IR", "KP", "MO", "RU", "SY"}
-	geminiBlockedRegions   = []string{"CHN", "RUS", "BLR", "CUB", "IRN", "PRK", "SYR", "HKG", "MAC"}
+	geminiBlockedRegions   = []string{"CHN", "RUS", "BLR", "CUB", "IRN", "PRK", "SYR"}
 
 	// A playable episode runs past the small body cap; only its leading code is read.
 	bilibiliCodePattern = regexp.MustCompile(`^\s*\{\s*"code"\s*:\s*(-?\d+)`)
@@ -65,10 +65,13 @@ func checkClaude(env serviceEnv) ServiceCheckItem {
 }
 
 func checkGemini(env serviceEnv) ServiceCheckItem {
-	result := env.scan("https://gemini.google.com", func(tail string) bool {
+	return geminiItem(env.scan("https://gemini.google.com", func(tail string) bool {
 		index := strings.Index(tail, geminiRegionMarker)
 		return index >= 0 && index+len(geminiRegionMarker)+3 <= len(tail)
-	})
+	}))
+}
+
+func geminiItem(result *ProbeResult) ServiceCheckItem {
 	item := itemFrom(result)
 	if !answered(item, result) {
 		return item

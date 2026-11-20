@@ -154,3 +154,21 @@ func TestDisneyAndPrimePatterns(t *testing.T) {
 		t.Errorf("territory = %q", got)
 	}
 }
+
+// Google's list of Gemini regions (support.google.com/gemini/answer/13575153)
+// names Hong Kong and Macau.
+func TestGeminiItemJudgesTheRegionItReads(t *testing.T) {
+	cases := map[string]struct{ status, region string }{
+		"HKG": {serviceAvailable, "HK"},
+		"MAC": {serviceAvailable, "MO"},
+		"JPN": {serviceAvailable, "JP"},
+		"CHN": {serviceUnsupportedRegion, "CN"},
+		"RUS": {serviceUnsupportedRegion, "RU"},
+	}
+	for code, want := range cases {
+		item := geminiItem(&ProbeResult{StatusCode: 200, Body: "[[" + geminiRegionMarker + code + `"]]`})
+		if item.Status != want.status || item.Region != want.region {
+			t.Errorf("%s: item = %+v, want %s in %s", code, item, want.status, want.region)
+		}
+	}
+}
