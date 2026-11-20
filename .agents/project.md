@@ -10,7 +10,7 @@ FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with
   `ScrollCacheExtent` through `package:flutter/widgets.dart`, which re-exports it
   only from 3.50.
 - Before moving the pin, walk `flutter-upgrade.md`: it lists the workarounds tied to
-  the current SDK, such as the guard against a wrong-size back buffer on macOS.
+  the current SDK, such as Impeller disabled on the Intel macOS release build.
 - The Dart SDK lower bound in `pubspec.yaml` sets the package language
   version. `flutter analyze` excludes `lib/**/generated/**`, so a raise is
   proven by `flutter test`, which parses the generated code, not by analyze.

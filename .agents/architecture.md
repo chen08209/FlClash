@@ -805,10 +805,10 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
 - A pane is a rounded rectangle, each corner with its own radius, unless a `clipper` gives it a path, as the start
   button's cookie does. The shader reads that path as its reach from the pane's center in 64 directions, so it must
   meet every ray from the center once.
-- Without Impeller's shader filters (Skia, as under plain `flutter test`) a pane frosts from its capture:
-  blur, saturation, brightness, tint, and a rim, with no refraction; the tint is not thickened there, as it is where a
-  pane has no capture, since the capture holds the blur. `flutter test --enable-impeller` runs the shader, so `toImage`
-  shows the real glass.
+- Without Impeller's shader filters (Skia on the Intel macOS build and under plain `flutter test`) a pane frosts from
+  its capture: blur, saturation, brightness, tint, and a rim, with no refraction; the tint is not thickened there, as it
+  is where a pane has no capture, since the capture holds the blur. `flutter test --enable-impeller` runs the shader, so
+  `toImage` shows the real glass.
 - A popup grows out of its anchor on a platter (`AnchoredPopupRoute`). On glass the platter is a `LiquidGlassPane`
   easing from the button's `regular` glass to the thicker `menu` glass, and the menu's cards stand `bare` while it
   shows, opening and returning, so one pane bends the backdrop at a time. The platter takes the `menu` glass's frost
