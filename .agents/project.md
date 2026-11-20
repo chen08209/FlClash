@@ -4,9 +4,12 @@ FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with
 
 ## Version Notes
 
-- Flutter stays on the 3.50.x line. Release CI pins 3.50.0 and is the source
+- Flutter stays on the 3.50.x line. Release CI pins 3.50.1 and is the source
   of truth for release builds; `.fvmrc` and local SDKs may sit on another 3.50
-  patch. `pubspec.yaml` requires Flutter 3.50.0, because the app imports
+  patch. The pin never goes below 3.50.1: 3.50.0's Linux engine draws the window
+  shifted by half its size on drivers without `glBlitFramebuffer`, all NVIDIA
+  ones included ([flutter/flutter#195885](https://github.com/flutter/flutter/issues/195885)),
+  which `test/tool/flutter_pin_test.dart` guards. `pubspec.yaml` requires Flutter 3.50.0, because the app imports
   `ScrollCacheExtent` through `package:flutter/widgets.dart`, which re-exports it
   only from 3.50.
 - Before moving the pin, walk `flutter-upgrade.md`: it lists the workarounds tied to

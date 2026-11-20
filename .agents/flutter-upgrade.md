@@ -44,7 +44,7 @@ be checked against the new SDK with a plain `diff` of that file between the two 
   disagrees with its descriptor, the render target drops it, and `Canvas::SetupRenderPass` dereferences a null
   texture on the raster thread. Debug builds log `The texture and its descriptor disagree about its size` and
   `Store action needs resolve but no valid resolve texture specified` first; release builds just crash.
-- **Fix upstream:** [flutter/flutter#192522](https://github.com/flutter/flutter/pull/192522), still open; 3.50.0
+- **Fix upstream:** [flutter/flutter#192522](https://github.com/flutter/flutter/pull/192522), still open; 3.50.1
   ships the same `FlutterSurfaceManager.mm` as 3.47.9, whose `removeSurfaceForSize:` compares only the first cached
   surface's size.
 - **Workaround:** `plugins/rust_api/rust/src/window/macos/back_buffer.rs`, installed from the window module's
@@ -67,7 +67,7 @@ be checked against the new SDK with a plain `diff` of that file between the two 
   `HandleTopLevelWindowProc`, so the view shows and hides with its window. The Flutter runner template has no such
   call, so keep it when regenerating the runner.
 - **Remove when:** the engine hides the view together with its top-level window; `windows_lifecycle_manager.cc` is
-  unchanged from 3.47.9 to 3.50.0. Check with the proxy running and
+  unchanged from 3.47.9 to 3.50.1. Check with the proxy running and
   the window focused: hiding it to the tray and minimizing it must each log `AppLifecycleState.hidden`.
 
 ## macOS activation resumes a hidden window
@@ -81,7 +81,7 @@ be checked against the new SDK with a plain `diff` of that file between the two 
   (`applicationActivityChanged:` in `plugins/rust_api/rust/src/window/macos/mod.rs`). A window brought back without another activation change
   would then wait on an occlusion notification macOS does not always post, keeping its last frame, so `show` and a
   deminiaturize hand the state back (`became_visible`).
-- **Remove when:** the engine ignores status item windows on activation; 3.50.0's `handleWillBecomeActive` still
+- **Remove when:** the engine ignores status item windows on activation; 3.50.1's `handleWillBecomeActive` still
   resumes for any visible window. Check without the workaround: minimize the
   window, switch to another app, then Cmd-Tab back without restoring it; the log must stay at
   `AppLifecycleState.hidden`.
@@ -96,7 +96,7 @@ be checked against the new SDK with a plain `diff` of that file between the two 
   follows the engine's `inactive`; the compositor focuses the window when it restores it, which the engine reports as
   `resumed`. A minimize the compositor starts itself (Super+H, the dock) is not covered.
 - **Remove when:** the Linux engine reports minimized windows on Wayland, which needs GTK 4 or xdg-shell's
-  `suspended` state; 3.50.0's `fl_window_state_monitor.cc` still reads only `GDK_WINDOW_STATE_ICONIFIED`. Check in a GNOME Wayland session without the workaround: minimizing from the caption button
+  `suspended` state; 3.50.1's `fl_window_state_monitor.cc` still reads only `GDK_WINDOW_STATE_ICONIFIED`. Check in a GNOME Wayland session without the workaround: minimizing from the caption button
   must log `AppLifecycleState.hidden`.
 
 ## Linux window black after it is shown again on Wayland

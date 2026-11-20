@@ -98,7 +98,7 @@ adb shell am start -a com.follow.clash.action.TOGGLE
 
 ## Build from source
 
-You need [Flutter](https://docs.flutter.dev/get-started/install) 3.50 (release builds use 3.50.0),
+You need [Flutter](https://docs.flutter.dev/get-started/install) 3.50 (release builds use 3.50.1),
 [Go](https://go.dev/dl/) 1.27 and [Rust](https://rustup.rs/) installed through rustup. Each platform builds on its own
 host, except Android, which builds anywhere.
 

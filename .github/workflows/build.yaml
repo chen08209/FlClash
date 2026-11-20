@@ -16,7 +16,7 @@ env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
   # See CI Caches in .agents/commands.md.
   BRANCH_CACHE: ${{ !startsWith(github.ref, 'refs/tags/') }}
-  FLUTTER_VERSION: '3.50.0'
+  FLUTTER_VERSION: '3.50.1'
   GO_VERSION: '1.27.1'
   NDK_VERSION: r28c
 
