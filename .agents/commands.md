@@ -416,21 +416,45 @@ works as is for local previews. `tool/build_site.sh [dir]` assembles it with the
 It then runs `tool/render_site.mjs` (Node), which writes the English page and a `zh/` copy for search engines: page
 text, the first changelog releases, canonical and `hreflang` links, JSON-LD and `sitemap.xml`, all from the strings,
 changelog parser and release markup in `site/assets/shared.js`, plus the GitHub star count from `release.json` so the
-nav does not grow when the page loads. `SITE_URL` overrides the published URL these point at.
-On the built site each URL keeps its language: the language button links to the other page and carries the section in
-view, the chosen platform and the changelog search. Only the English root sends readers who chose or prefer Chinese on
-to `zh/`, unless its URL carries `?lang=en`: the button on `zh/` links there with it, so getting back to English never
-depends on browser storage. A project site cannot serve the `robots.txt` that would announce the sitemap, so submit
-`sitemap.xml` in Google Search Console and Bing Webmaster Tools once.
+bar does not grow when the page loads. `SITE_URL` overrides the published URL these point at.
+On the built site each URL keeps its language: the bar shows both languages, the current one selected, and the other
+links to its page carrying the section in view, the chosen platform and the changelog search. Only the English root
+sends readers who chose or prefer Chinese on to `zh/`, unless its URL carries `?lang=en`: the English link on `zh/`
+carries it, so getting back to English never depends on browser storage. A project site cannot serve the `robots.txt`
+that would announce the sitemap, so submit `sitemap.xml` in Google Search Console and Bing Webmaster Tools once.
 
 ```bash
 tool/build_site.sh && python3 -m http.server -d build/site
 ```
 
-The page's look is deliberate: low-saturation flat colour, no blur, glow, glass or soft shadow, and motion that follows
-the logo's 30° lattice. `site/assets/field.js` draws the hero's capsules on that lattice with the glyph's own
-proportions, and the slanted wipes, the dot-to-bar marks and the theme transition reuse the same angle. Text that sits
-inside the hero has to be listed in `wireField` in `app.js`, or the capsules run behind it.
+The page's look is deliberate: flat colour, no glow, glass or soft shadow, and the app icon only in the nav and the
+favicon. The one blur is the floating bar's backdrop; the bar hides as the page scrolls down and comes back on the way
+up. Controls take Material 3 Expressive shapes: pill buttons whose corners tighten on press, connected button groups
+for the platform, the architecture, the bar's links and languages and the footer's links, the downloads and install
+tips as segmented lists. Archivo, Instrument Sans and Martian Mono are
+self-hosted in `site/assets/fonts/` under the OFL. There is no colour picker: the page steps through the app's theme
+colours (`defaultPrimaryColors` without graphite) as it scrolls, one per emblem shape, by setting `data-accent` on the
+root, and the palette tokens are registered `@property` colours so the change eases. Dark mode follows the system only.
+
+Colours are the app's, not tuned for the page: every token is a role of the vivid `seededColorScheme` of a
+`defaultPrimaryColors` seed, used as `.agents/surfaces.md` uses it: page, card and block levels instead of borders, the
+floating level for the bar and the next level up for the boxes in it, `primary` for the chosen tab, the main download
+and the emblem, `success`, `warning` and `error` for the changelog's kinds, and dividers in `onSurface` at 14%.
+`test/tool/site_palette_test.dart` fails when the palette in `site/assets/style.css` drifts from the app, and
+`flutter test --update-goldens test/tool/site_palette_test.dart` rewrites it.
+
+The hero's emblem is the dashboard's start button: a circle with play that morphs into the nine-sided cookie with pause,
+on the curves `_StartToggle` uses, and a click toggles it. Past the hero, every half screen of scroll morphs it one step
+further through a cycle of Compose's `MaterialShapes` (sunny, clover, burst, flower and the rest), springing past each
+shape on `easeOutBack` and turning a ninth of a turn per step. `site/assets/shapes.js` holds those morphs as cubic
+pairs; `test/tool/site_shapes_test.dart` builds them, with Compose's values for the shapes prism_ui lacks, fails when
+the file drifts, and `--update-goldens` rewrites it. On a wide screen the emblem grows on scroll, crosses to a sticky
+left column, and the downloads, hidden until then, blur in at the line the docked column starts on. The column shows the
+section's number in the emblem and its name and summary underneath, swapping with a fade-through as the changelog
+arrives; the right column's own section heads stay only for screen readers. Below 960 px the emblem stays in the hero,
+under the copy, and the heads show as usual. `site/assets/scene.js` drives all of it from script, as CSS scroll
+timelines stuttered in Android WebView; the emblem starts on `#spot` in the hero and docks where its CSS box is, and
+`data-part` on the root tells the stylesheet which section the column names.
 
 `.github/workflows/pages.yaml` deploys it after every successful stable tag build and on pushes to `main` that touch the
 site, in the public repository only; its Pages source has to be set to GitHub Actions once. The file names come from the

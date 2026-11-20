@@ -57,7 +57,6 @@ function render(page) {
   const t = STRINGS[page.lang];
   const text = (key) => escape(t[key]);
   const up = '../'.repeat(page.path.split('/').length - 1);
-  const other = PAGES.find((p) => p !== page);
   let html = template;
 
   html = replaceOnce(html, /<html lang="[^"]*">/, `<html lang="${page.locale}" data-page-lang="${page.lang}">`);
@@ -114,12 +113,18 @@ function render(page) {
   }
 
   if (up) html = html.replace(/\b(href|src|srcset)="(?![a-z]+:|#|\/)/g, `$1="${up}`);
-  return replaceOnce(
-    html,
-    /<button class="tool" id="lang-toggle" type="button">[^<]*<\/button>/,
-    `<a class="tool" id="lang-toggle" href="${up}${other.toggle}" hreflang="${other.locale}" lang="${other.locale}" ` +
-      `aria-label="${text('langLabel')}">${text('langToggle')}</a>`,
-  );
+  html = replaceOnce(html, /(id="langs" role="group" aria-label=")[^"]*/, (_, open) => open + text('langGroup'));
+  for (const target of PAGES) {
+    const current = target === page ? ' aria-current="page"' : '';
+    html = replaceOnce(
+      html,
+      new RegExp(`<button class="seg" type="button" data-lang="${target.lang}" lang="${target.locale}">([^<]*)</button>`),
+      (_, label) =>
+        `<a class="seg" data-lang="${target.lang}" href="${up}${target.toggle}" hreflang="${target.locale}" ` +
+        `lang="${target.locale}"${current}>${label}</a>`,
+    );
+  }
+  return html;
 }
 
 for (const page of PAGES) {
