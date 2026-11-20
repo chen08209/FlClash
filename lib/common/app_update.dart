@@ -10,6 +10,7 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:path/path.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 sealed class UpdateDownload {
   const UpdateDownload(this.tag);
@@ -39,6 +40,15 @@ SelfUpdateAsset? Function() resolveSelfUpdateAsset = () => selfUpdateAssetFor(
 );
 
 SelfUpdateAsset? get selfUpdateAsset => resolveSelfUpdateAsset();
+
+@visibleForTesting
+Future<bool> Function(Uri uri) launchReleasePage = launchUrl;
+
+Future<bool> openReleasePage() {
+  return launchReleasePage(
+    Uri.https('github.com', '/$repository/releases/latest'),
+  );
+}
 
 Uri releaseAssetUri(String tag, String name) {
   return Uri.https('github.com', '/$repository/releases/download/$tag/$name');

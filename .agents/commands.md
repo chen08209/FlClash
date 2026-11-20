@@ -373,7 +373,8 @@ to `releaseAssetName` or to the build matrix has to reach all of them:
 `dart run tool/package.dart check dist` reads the names out of those files and fails when the merged release lacks one
 or its checksum file misstates an installer; the upload job runs it before it publishes anything, and
 `test/tool/release_contract_test.dart` runs it against the names the packager plans for every row of the build matrix.
-Released apps keep looking up the names they shipped with.
+Released apps keep looking up the names they shipped with. When the updater cannot find its file, it opens the release
+page and says to download the update there.
 
 #### Backfilling Old Names By Hand
 

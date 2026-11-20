@@ -181,12 +181,20 @@ void main() {
     late Directory home;
     late SelfUpdateAsset? Function() resolveAsset;
     late HttpClientAdapter adapter;
+    late Future<bool> Function(Uri) launch;
+    late List<Uri> launched;
 
     setUp(() async {
       home = await Directory.systemTemp.createTemp('self_update');
       await useAppPaths(home);
       resolveAsset = resolveSelfUpdateAsset;
       adapter = request.releaseDio.httpClientAdapter;
+      launch = launchReleasePage;
+      launched = [];
+      launchReleasePage = (uri) async {
+        launched.add(uri);
+        return true;
+      };
       resolveSelfUpdateAsset = () => (
         os: ReleaseOs.android,
         arch: ReleaseArch.arm64,
@@ -198,6 +206,7 @@ void main() {
     tearDown(() async {
       resolveSelfUpdateAsset = resolveAsset;
       request.releaseDio.httpClientAdapter = adapter;
+      launchReleasePage = launch;
       await home.delete(recursive: true);
     });
 
@@ -248,6 +257,38 @@ void main() {
       expect(File('${home.path}/update/$asset').existsSync(), isFalse);
 
       await tapCancel(tester);
+    });
+
+    testWidgets('opens the release page for a file the release lacks', (
+      tester,
+    ) async {
+      request.releaseDio.httpClientAdapter = _ReleaseAdapter(
+        sums: '$digest  FlClash-0.8.96-android-armv7.apk\n',
+        asset: () => ResponseBody.fromBytes(package, 200),
+      );
+
+      final printed = <String>[];
+      final previousPrint = debugPrint;
+      debugPrint = (message, {wrapWidth}) => printed.add(message ?? '');
+      addTearDown(() => debugPrint = previousPrint);
+
+      final container = await startUpdate(tester);
+      await settleUntil(tester, () => launched.isNotEmpty);
+      await tester.pump();
+
+      expect(container.read(updateDownloadStateProvider), isNull);
+      expect(launched, [
+        Uri.parse('https://github.com/$repository/releases/latest'),
+      ]);
+      expect(
+        printed,
+        contains(
+          '[APP] banner: The update file is not in the release. '
+          'Download it from the release page.',
+        ),
+      );
+      expect(shows('Update failed'), isFalse);
+      await tester.pump(const Duration(seconds: 10));
     });
 
     testWidgets('downloads without blocking and waits to install', (

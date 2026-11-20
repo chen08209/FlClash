@@ -3762,6 +3762,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get updateDownloadFailed => '업데이트를 다운로드할 수 없습니다.';
 
   @override
+  String get updateFileMissing => '릴리스에 업데이트 파일이 없습니다. 릴리스 페이지에서 직접 다운로드하세요.';
+
+  @override
   String get defaultNameserverDesc =>
       '다른 DNS 서버의 도메인을 확인합니다. IP 주소만 입력할 수 있습니다.';
 

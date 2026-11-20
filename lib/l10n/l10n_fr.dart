@@ -3909,6 +3909,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de télécharger la mise à jour.';
 
   @override
+  String get updateFileMissing =>
+      'La publication ne contient pas le fichier de mise à jour. Téléchargez-le depuis la page de publication.';
+
+  @override
   String get defaultNameserverDesc =>
       'Résout les noms des autres serveurs DNS. Adresses IP uniquement.';
 

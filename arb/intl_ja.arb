@@ -1112,6 +1112,7 @@
   "updateNotVerified": "ダウンロードした更新を検証できませんでした。",
   "updateRestartTip": "更新をインストールするため FlClash を終了し、完了後に再び起動します。",
   "updateDownloadFailed": "更新をダウンロードできませんでした。",
+  "updateFileMissing": "リリースに更新ファイルがありません。リリースページから手動でダウンロードしてください。",
   "defaultNameserverDesc": "ほかの DNS サーバーのドメイン名を解決します。IP アドレスのみ指定できます。",
   "nameserverDesc": "既定で使う DNS サーバーです。例：223.5.5.5、tls://1.1.1.1、https://dns.google/dns-query",
   "fallbackDesc": "フォールバックフィルターが Nameserver の結果を汚染とみなしたときは、こちらの結果を使います。",

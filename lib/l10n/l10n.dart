@@ -6786,6 +6786,12 @@ abstract class AppLocalizations {
   /// **'The update could not be downloaded.'**
   String get updateDownloadFailed;
 
+  /// No description provided for @updateFileMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The update file is not in the release. Download it from the release page.'**
+  String get updateFileMissing;
+
   /// No description provided for @defaultNameserverDesc.
   ///
   /// In en, this message translates to:

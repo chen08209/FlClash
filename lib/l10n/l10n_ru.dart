@@ -3857,6 +3857,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get updateDownloadFailed => 'Не удалось загрузить обновление.';
 
   @override
+  String get updateFileMissing =>
+      'В релизе нет файла обновления. Скачайте его вручную со страницы релиза.';
+
+  @override
   String get defaultNameserverDesc =>
       'Разрешает имена других DNS-серверов. Только IP-адреса.';
 

@@ -3640,6 +3640,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get updateDownloadFailed => '无法下载更新。';
 
   @override
+  String get updateFileMissing => '未找到更新文件，请在发布页手动下载。';
+
+  @override
   String get defaultNameserverDesc => '用于解析其他 DNS 服务器的域名，只能填写 IP 地址。';
 
   @override

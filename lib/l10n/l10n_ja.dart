@@ -3686,6 +3686,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get updateDownloadFailed => '更新をダウンロードできませんでした。';
 
   @override
+  String get updateFileMissing => 'リリースに更新ファイルがありません。リリースページから手動でダウンロードしてください。';
+
+  @override
   String get defaultNameserverDesc =>
       'ほかの DNS サーバーのドメイン名を解決します。IP アドレスのみ指定できます。';
 

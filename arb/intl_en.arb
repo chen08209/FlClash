@@ -1215,6 +1215,7 @@
   "updateNotVerified": "The downloaded update could not be verified.",
   "updateRestartTip": "FlClash closes to install the update and opens again when it is done.",
   "updateDownloadFailed": "The update could not be downloaded.",
+  "updateFileMissing": "The update file is not in the release. Download it from the release page.",
   "defaultNameserverDesc": "Resolves the hostnames of the other DNS servers. Use IP addresses only.",
   "nameserverDesc": "The default DNS servers, such as 223.5.5.5, tls://1.1.1.1 or https://dns.google/dns-query.",
   "fallbackDesc": "Used instead of Nameserver when the fallback filter treats its answer as polluted.",

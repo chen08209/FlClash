@@ -1112,6 +1112,7 @@
   "updateNotVerified": "下载的更新未通过校验。",
   "updateRestartTip": "FlClash 将关闭以安装更新，完成后自动重新打开。",
   "updateDownloadFailed": "无法下载更新。",
+  "updateFileMissing": "未找到更新文件，请在发布页手动下载。",
   "defaultNameserverDesc": "用于解析其他 DNS 服务器的域名，只能填写 IP 地址。",
   "nameserverDesc": "默认使用的 DNS 服务器，如 223.5.5.5、tls://1.1.1.1、https://dns.google/dns-query。",
   "fallbackDesc": "Nameserver 的结果被 Fallback 过滤判定为污染时，改用这些服务器的结果。",

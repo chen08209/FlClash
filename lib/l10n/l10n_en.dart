@@ -3862,6 +3862,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateDownloadFailed => 'The update could not be downloaded.';
 
   @override
+  String get updateFileMissing =>
+      'The update file is not in the release. Download it from the release page.';
+
+  @override
   String get defaultNameserverDesc =>
       'Resolves the hostnames of the other DNS servers. Use IP addresses only.';
 

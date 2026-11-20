@@ -1112,6 +1112,7 @@
   "updateNotVerified": "다운로드한 업데이트를 확인할 수 없습니다.",
   "updateRestartTip": "업데이트를 설치하기 위해 FlClash가 종료되며, 완료되면 다시 열립니다.",
   "updateDownloadFailed": "업데이트를 다운로드할 수 없습니다.",
+  "updateFileMissing": "릴리스에 업데이트 파일이 없습니다. 릴리스 페이지에서 직접 다운로드하세요.",
   "defaultNameserverDesc": "다른 DNS 서버의 도메인을 확인합니다. IP 주소만 입력할 수 있습니다.",
   "nameserverDesc": "기본으로 사용하는 DNS 서버입니다. 예: 223.5.5.5, tls://1.1.1.1, https://dns.google/dns-query",
   "fallbackDesc": "폴백 필터가 Nameserver 결과를 오염으로 판단하면 이 서버의 결과를 사용합니다.",

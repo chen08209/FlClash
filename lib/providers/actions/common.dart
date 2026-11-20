@@ -188,9 +188,7 @@ class CommonAction extends _$CommonAction {
   }
 
   void _openReleasePage() {
-    unawaited(
-      launchUrl(Uri.parse('https://github.com/$repository/releases/latest')),
-    );
+    unawaited(openReleasePage());
   }
 
   /// Downloads the latest release for this build even when it is not newer.
@@ -248,6 +246,11 @@ class CommonAction extends _$CommonAction {
       download.value = null;
       await clearUpdateDownloads();
       if (error is DioException && CancelToken.isCancel(error)) {
+        return;
+      }
+      if (error is ReleaseFileMissingException) {
+        _openReleasePage();
+        dialogs.showBanner(currentAppLocalizations.updateFileMissing);
         return;
       }
       commonPrint.log(
