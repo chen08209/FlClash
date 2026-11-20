@@ -123,8 +123,8 @@ class AboutView extends ConsumerWidget {
               _buildLinkItem(
                 glyph: AppGlyphs.cpu,
                 title: appLocalizations.core,
-                url: 'https://github.com/chen08209/Clash.Meta/tree/FlClash',
-                label: 'github.com/chen08209/Clash.Meta',
+                url: 'https://github.com/chen08209/concord',
+                label: 'github.com/chen08209/concord',
               ),
               _buildLinkItem(
                 glyph: AppGlyphs.send,
@@ -177,7 +177,6 @@ class _AboutHero extends StatelessWidget {
   });
 
   static const _logoSize = 96.0;
-  static const _logoInset = 14.0;
 
   @override
   Widget build(BuildContext context) {
@@ -189,19 +188,10 @@ class _AboutHero extends StatelessWidget {
         children: [
           _DeveloperModeDetector(
             onEnterDeveloperMode: onEnterDeveloperMode,
-            child: DecoratedBox(
-              decoration: ShapeDecoration(
-                color: context.raisedSurfaceLevel.colorOf(colorScheme),
-                shape: AppShape.all(AppCorner.fit(_logoSize)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(_logoInset),
-                child: Image.asset(
-                  'assets/images/icon.png',
-                  width: _logoSize - _logoInset * 2,
-                  height: _logoSize - _logoInset * 2,
-                ),
-              ),
+            child: Image.asset(
+              'assets/images/icon.png',
+              width: _logoSize,
+              height: _logoSize,
             ),
           ),
           const SizedBox(height: 20),

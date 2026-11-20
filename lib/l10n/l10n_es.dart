@@ -423,7 +423,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get desc =>
-      'Un cliente proxy multiplataforma basado en ClashMeta, sencillo de usar, de código abierto y sin anuncios.';
+      'Un cliente proxy multiplataforma basado en el núcleo Concord, sencillo de usar, de código abierto y sin anuncios.';
 
   @override
   String get startVpn => 'Iniciando VPN…';
@@ -1203,7 +1203,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      'El Software es un cliente proxy de red de código abierto basado en el núcleo Clash.Meta (mihomo). Solo ofrece herramientas locales como la gestión de configuración, el enrutamiento basado en reglas y el reenvío de tráfico.';
+      'El Software es un cliente proxy de red de código abierto basado en el núcleo Concord. Solo ofrece herramientas locales como la gestión de configuración, el enrutamiento basado en reglas y el reenvío de tráfico.';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -1256,7 +1256,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      'El Software es de código abierto bajo la licencia GPL-3.0. Según esa licencia puedes ejecutarlo, estudiarlo, modificarlo y distribuirlo; al distribuir el Software o una versión modificada, debes proporcionar también su código fuente bajo GPL-3.0 y conservar los avisos de derechos de autor originales.\n\nLos componentes de terceros del Software, incluido el núcleo Clash.Meta, siguen sus propias licencias. Los autores originales no son responsables de los problemas de las versiones modificadas o distribuidas por otros.';
+      'El Software es de código abierto bajo la licencia GPL-3.0. Según esa licencia puedes ejecutarlo, estudiarlo, modificarlo y distribuirlo; al distribuir el Software o una versión modificada, debes proporcionar también su código fuente bajo GPL-3.0 y conservar los avisos de derechos de autor originales.\n\nLos componentes de terceros del Software, incluido el núcleo Concord, siguen sus propias licencias. Los autores originales no son responsables de los problemas de las versiones modificadas o distribuidas por otros.';
 
   @override
   String get disclaimerChangesTitle => 'Cambios en esta declaración';

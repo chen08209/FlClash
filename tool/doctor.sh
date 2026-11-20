@@ -25,10 +25,10 @@ echo 'Required'
 required git 'submodules and versioning'
 required flutter 'every build and test'
 required dart 'tool/ scripts'
-required go 'the build hook compiles the Go core, even for flutter test'
-required cargo 'the build hook compiles the Helper and rust_api'
+required cargo 'the build hook compiles Concord, the Helper and rust_api, even for flutter test'
+required rustup 'the toolchain pinned in concord/rust-toolchain.toml'
 
-for module in core/Clash.Meta plugins/prism_ui; do
+for module in concord plugins/prism_ui; do
   if [ -n "$(ls -A "$root/$module" 2>/dev/null)" ]; then
     ok "submodule $module"
   else
@@ -36,18 +36,26 @@ for module in core/Clash.Meta plugins/prism_ui; do
   fi
 done
 
-go_version="$(sed -n 's/^go //p' "$root/core/go.mod")"
-if has go; then
-  installed="$(go env GOVERSION 2>/dev/null | sed 's/^go//')"
-  if [ "$(printf '%s\n%s\n' "$go_version" "$installed" | sort -V | head -1)" = "$go_version" ]; then
-    ok "Go $installed (core/go.mod asks for $go_version)"
+toolchain_file="$root/concord/rust-toolchain.toml"
+if [ -f "$toolchain_file" ] && has rustup; then
+  channel="$(sed -n 's/^channel = "\(.*\)"/\1/p' "$toolchain_file")"
+  if rustup toolchain list | grep -q "^$channel"; then
+    ok "Rust $channel"
+    installed="$(rustup target list --installed --toolchain "$channel" 2>/dev/null)"
+    absent=()
+    for target in $(sed -n '/^targets/,/]/s/^ *"\(.*\)",*$/\1/p' "$toolchain_file"); do
+      grep -qx "$target" <<<"$installed" || absent+=("$target")
+    done
+    if [ "${#absent[@]}" -gt 0 ]; then
+      note "Rust targets not installed (only needed to build for them): ${absent[*]}"
+    fi
   else
-    need "Go $go_version or newer for core/go.mod, found $installed"
+    need "Rust $channel: rustup toolchain install $channel"
   fi
 fi
 
 if [ -n "${all_proxy:-}${ALL_PROXY:-}" ]; then
-  note 'all_proxy is set; cargo and go fetch through it, so unset it if the proxy is not running'
+  note 'all_proxy is set; cargo fetches through it, so unset it if the proxy is not running'
 fi
 
 echo
@@ -78,7 +86,8 @@ echo
 echo 'Optional'
 optional pre-commit 'make hooks'
 optional flutter_rust_bridge_codegen 'make frb'
-optional rsvg-convert 'make status-icons'
+optional rsvg-convert 'make icons, make status-icons'
+optional cwebp 'make icons'
 optional node 'make site'
 optional gh 'release metadata in make site'
 case "$(uname -s)" in

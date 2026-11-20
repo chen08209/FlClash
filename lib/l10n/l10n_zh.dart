@@ -400,7 +400,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tabAnimation => '选项卡动画';
 
   @override
-  String get desc => '基于ClashMeta的多平台代理客户端，简单易用，开源无广告。';
+  String get desc => '基于 Concord 内核的多平台代理客户端，简单易用，开源无广告。';
 
   @override
   String get startVpn => '正在启动VPN…';
@@ -1151,7 +1151,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get disclaimerSoftwareContent =>
-      '本软件是基于 Clash.Meta（mihomo）内核的开源网络代理客户端，仅提供配置管理、规则分流与流量转发等本地工具功能。';
+      '本软件是基于 Concord 内核的开源网络代理客户端，仅提供配置管理、规则分流与流量转发等本地工具功能。';
 
   @override
   String get disclaimerNoServiceStatement =>
@@ -1204,7 +1204,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get disclaimerLicenseContent =>
-      '本软件以 GPL-3.0 协议开源，你可以依该协议运行、研究、修改和分发本软件；分发本软件或其修改版本时，须同样以 GPL-3.0 协议提供源代码并保留原有的版权声明。\n\n本软件包含的第三方组件（包括 Clash.Meta 内核）分别遵循其各自的开源协议。基于本软件修改或分发的版本所产生的任何问题，与原作者无关。';
+      '本软件以 GPL-3.0 协议开源，你可以依该协议运行、研究、修改和分发本软件；分发本软件或其修改版本时，须同样以 GPL-3.0 协议提供源代码并保留原有的版权声明。\n\n本软件包含的第三方组件（包括 Concord 内核）分别遵循其各自的开源协议。基于本软件修改或分发的版本所产生的任何问题，与原作者无关。';
 
   @override
   String get disclaimerChangesTitle => '声明变更';

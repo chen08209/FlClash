@@ -1,6 +1,7 @@
 # Project Context
 
-FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with Flutter. It supports Android, Windows, macOS, and Linux, drawing its own components in the `prism_ui` package: a color system of its own with Apple's Human Interface interaction conventions.
+FlClash is a multi-platform proxy client built with Flutter around Concord, a Rust core in `concord/` that reads
+Clash configuration. It supports Android, Windows, macOS, and Linux, drawing its own components in `plugins/prism_ui`: a Material You color scheme with Apple's Human Interface interaction conventions.
 
 ## Version Notes
 

@@ -14,8 +14,6 @@ import 'package:flutter/services.dart' show PlatformException;
 import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const appReleaseLine = ReleaseLine.rs;
-
 /// GitHub's latest release is the Go build, so checking for updates and
 /// self-updating stay off. Turn this on once the rs line publishes its own
 /// releases there and the check reads only rs tags and asset names.

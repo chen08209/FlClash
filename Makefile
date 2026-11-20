@@ -10,12 +10,13 @@ SHELL := /bin/bash
 ##> APP_ENV=name   package: dev, pre (default) or stable
 ##> TAG=vX.Y.Z     package: release tag to name the build after
 ##> DEVICE=id      run: flutter device to run on
-##> KIND=name      release-plan: pre (default) or stable
+##> KIND=name      release-plan: pre, rs (default) or stable
 
 CARGO := env -u all_proxy -u ALL_PROXY CARGO_INCREMENTAL=0 cargo
+CORE_MAX_BYTES ?= 30000000
 # concord/.agents/commands.md lists the same crates: the members that declare default features.
 CORE_FEATURE_CRATES := concord-common concord-engine concord-mitm
-KIND ?= pre
+KIND ?= rs
 
 PACKAGE := dart tool/package.dart
 PACKAGE_FLAGS = $(if $(ARCH),--arch $(ARCH)) $(if $(FORM),--targets $(FORM)) \
@@ -23,7 +24,7 @@ PACKAGE_FLAGS = $(if $(ARCH),--arch $(ARCH)) $(if $(FORM),--targets $(FORM)) \
 COMMENT_FILES = $(or $(FILES),$(shell git diff HEAD --name-only --diff-filter=d; git ls-files --others --exclude-standard))
 
 .PHONY: help setup submodules pub-get doctor hooks worktrees \
-	gen gen-watch l10n status-icons frb site \
+	gen gen-watch l10n icons status-icons frb site \
 	fmt fmt-check analyze test coverage lint strip-check hooks-test comment-density plugins-check setup-hooks-test \
 	rust-check changelog-verify check \
 	core-build core-fmt core-check core-test core-sent-config core-gate core-schema \
@@ -41,13 +42,13 @@ help: ## List every target and variable
 
 setup: submodules pub-get ## Fetch submodules and Dart packages
 
-submodules: ## Update git submodules (Clash.Meta core sources, prism_ui)
+submodules: ## Update git submodules (Concord core, prism_ui)
 	git submodule update --init --recursive
 
 pub-get: ## flutter pub get
 	flutter pub get
 
-doctor: ## Report missing toolchains: Flutter, Go, cargo, NDK, JDK, packaging tools
+doctor: ## Report missing toolchains: Flutter, cargo, the pinned Rust, NDK, JDK, packaging tools
 	bash tool/doctor.sh
 
 hooks: ## Install the pre-commit, pre-push and commit-msg git hooks
@@ -67,7 +68,10 @@ gen-watch: ## Run build_runner in watch mode
 l10n: ## Regenerate lib/l10n from the ARB files
 	flutter gen-l10n
 
-status-icons: ## Regenerate the tray icons
+icons: ## Regenerate the app icons, the running gradient and every tray icon
+	dart run tool/generate_app_icons.dart
+
+status-icons: ## Regenerate the tray icons only
 	dart run tool/generate_status_icons.dart
 
 frb: ## Regenerate the flutter_rust_bridge bindings of plugins/rust_api
@@ -117,6 +121,7 @@ setup-hooks-test: ## Test the setup_hooks package with dart test
 rust-check: ## Format check and test the Helper and rust_api crates, as CI does
 	$(CARGO) fmt --manifest-path services/helper/Cargo.toml -- --check
 	$(CARGO) fmt --manifest-path plugins/rust_api/rust/Cargo.toml -- --check
+	$(CARGO) fmt --manifest-path android/core/jni/Cargo.toml -- --check
 	$(CARGO) test --manifest-path services/helper/Cargo.toml
 	$(CARGO) test --manifest-path plugins/rust_api/rust/Cargo.toml
 
@@ -155,8 +160,8 @@ core-gate: core-check core-test core-sent-config ## The full Concord gate: also 
 	cd concord && $(CARGO) build --release -p concord-desktop
 	cd concord && $(CARGO) xtask check-size target/release/concord $(CORE_MAX_BYTES)
 
-core-test: ## go test the core wrapper without cgo
-	cd core && CGO_ENABLED=0 go test -count=1 .
+core-schema: ## Rewrite concord/schema/ after an API or config change
+	cd concord && $(CARGO) xtask schema
 
 ##@ Package
 
@@ -189,7 +194,7 @@ run: ## Run a safe mode debug build, the only kind allowed on a shared host; DEV
 
 ##@ Release
 
-release-plan: ## Print the next release tag and its notes without changing anything; KIND=pre|stable
+release-plan: ## Print the next release tag and its notes without changing anything; KIND=pre|rs|stable
 	bash tool/release.sh $(KIND) --dry-run
 
 ##@ Clean
