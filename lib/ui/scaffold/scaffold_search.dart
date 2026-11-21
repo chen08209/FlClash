@@ -632,7 +632,7 @@ class _BarSearch extends StatelessWidget {
   Widget build(BuildContext context) {
     final padding = MediaQuery.paddingOf(context);
     final cancel = this.cancel;
-    final inset = appBarActionInset(cancel != null);
+    final inset = appBarActionInset(context, cancel != null);
     final rtl = Directionality.of(context) == TextDirection.rtl;
     final height = TonalButtonSize.bar.button;
     final glyph = GlyphIcon(

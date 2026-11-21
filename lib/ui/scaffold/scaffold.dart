@@ -784,6 +784,7 @@ class ScaffoldState extends State<Scaffold>
         ModalRoute.of(context)?.impliesAppBarDismissal == true;
     final compactTitle = isCompact || pushed;
     final titleEndInset = appBarActionInset(
+      context,
       isCompactBar(context, isMobileView),
     );
     // Under a sheet the bar drops its actions, so none reads as the sheet's.

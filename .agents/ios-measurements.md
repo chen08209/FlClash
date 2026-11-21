@@ -152,6 +152,15 @@ tuning.
   (0, 8), times 3 in dark. A resting tab bar on a white page has almost no shadow (1-3/255); FlClash's `dockShadows` is
   5-7%. That is a difference in the resting state and is kept.
 
+## Top bar button inset
+
+- Measured on iOS 27 at 375, 390, 402, 420 and 440 pt (UINavigationController over an insetGrouped table, dumped view
+  frames and 3x screenshots): the 44 pt glass of a bar button ends at the bar's `layoutMargins`, 16 at 375/390/402
+  and 20 at 420/440, the same as the table's inner inset at every width and not its card margin; at 400-402 iOS sets
+  the card 20 from the edge and the button 16.
+- FlClash: on a phone `appBarActionInset` is `ListInsets.of(context).leading`; desktop keeps 20 for a regular bar and
+  16 for a sheet.
+
 ## Top bar button symbols and bar button reveal
 
 - Symbols: a bar button is `textStyle=body, weight=Medium, scale=Large`. Line widths: plus/xmark about 1.95 pt,
