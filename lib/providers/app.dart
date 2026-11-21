@@ -171,11 +171,16 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
   void updateTraffic(Map<int, RequestTraffic> traffic) =>
       _apply((log) => log.updateTraffic(traffic));
 
-  void close(Iterable<int> ids, {DateTime? at}) =>
-      _apply((log) => log.close(ids, at ?? DateTime.now()));
+  void close(
+    Iterable<int> ids, {
+    DateTime? at,
+    Map<int, ConnectionEnd> ends = const {},
+  }) => _apply((log) => log.close(ids, at ?? DateTime.now(), ends: ends));
 
   void closeAll({DateTime? at}) =>
       _apply((log) => log.closeAll(at ?? DateTime.now()));
+
+  void startOver() => _apply((log) => ConnectionLog(log.closedCapacity));
 
   /// False, writing nothing, once a new log has replaced [lineage].
   bool sync(
@@ -215,6 +220,13 @@ class DnsQueries extends _$DnsQueries with AutoDisposeNotifierMixin {
     }
     value = state.appendAll(values);
   }
+
+  void startOver() {
+    if (!ref.mounted) {
+      return;
+    }
+    value = FixedList(state.maxLength);
+  }
 }
 
 Duration? _noRetry(int retryCount, Object error) => null;
@@ -229,7 +241,7 @@ Future<RuleTable> activeRules(Ref ref) {
       ref.invalidateSelf();
     }
   });
-  return ref.read(coreHandlerProvider).getRules();
+  return ref.read(coreHandlerProvider).api.getRules();
 }
 
 @Riverpod(keepAlive: true)

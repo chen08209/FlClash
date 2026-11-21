@@ -689,7 +689,7 @@ final class RequestsProvider
   }
 }
 
-String _$requestsHash() => r'73b1eb3d79bae7c9fea179a877105ef275d29407';
+String _$requestsHash() => r'3fdee2b426d70b46b1c93dee2061d61c504170ce';
 
 abstract class _$Requests extends $Notifier<ConnectionLog> {
   ConnectionLog build();
@@ -741,7 +741,7 @@ final class DnsQueriesProvider
   }
 }
 
-String _$dnsQueriesHash() => r'9281a2f1772916403823d5dc13f742e26ddbd2ae';
+String _$dnsQueriesHash() => r'c8f5c67d9ffa9a1016726209da8ebbea4f4f1f70';
 
 abstract class _$DnsQueries extends $Notifier<FixedList<DnsQuery>> {
   FixedList<DnsQuery> build();
@@ -808,7 +808,7 @@ final class ActiveRulesProvider
   }
 }
 
-String _$activeRulesHash() => r'10d9b0ae5309d15ace7d97dea4630cb94e2de101';
+String _$activeRulesHash() => r'7ba36fee8b7aeb4507e63f09b39f97dd60743e5a';
 
 @ProviderFor(DnsQueryCount)
 final dnsQueryCountProvider = DnsQueryCountProvider._();

@@ -21,7 +21,6 @@ const _notCalledByDart = {
   'dns.query',
   'provider.healthCheck',
   'proxy.states',
-  'rule.list',
 };
 
 /// The schema types its answer as optional where the core always fills it, so
@@ -121,6 +120,7 @@ final Map<String, _Call> _calls = {
   'provider.update': (api) => api.updateProvider('p'),
   'provider.sideLoad': (api) => api.sideLoadProvider('p', 'data'),
   'ruleSet.dump': (api) => api.dumpRuleSet('/p.yaml', outputFile: '/out'),
+  'rule.list': (api) => api.ruleList(),
   'ruleSet.compile': (api) => api.compileRuleSet('r', url: 'http://u'),
   'geo.update': (api) => api.updateGeo('geoip'),
   'traffic.watch': (api) =>

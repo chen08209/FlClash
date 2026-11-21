@@ -40,7 +40,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
 
   final _feeds = <String, StreamSubscription<Object?>>{};
   StreamSubscription<String>? _crashes;
-  bool _countersOpen = true;
   bool _away = false;
 
   bool get _pausesInBackground => widget.pausesInBackground ?? system.isAndroid;
@@ -133,6 +132,8 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     _closeFeeds();
     final api = _core.api;
     ref.read(connectionBookProvider).clear();
+    ref.read(requestsProvider.notifier).startOver();
+    ref.read(dnsQueriesProvider.notifier).startOver();
     _feed('dns', api.watchDns(), (entries) {
       ref
           .read(dnsQueriesProvider.notifier)
@@ -157,21 +158,35 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     _syncLogFeed();
   }
 
+  /// Kept for the session: a new watch's snapshot misses what closed meanwhile.
   void _openConnections() {
-    _countersOpen = _demand.wanted;
     _feed(
       'connections',
-      _core.api.watchConnections(maxBatchMs: 250, counters: _countersOpen),
+      _core.api.watchConnections(maxBatchMs: 250, counters: false),
       _onConnections,
     );
     if (_away) {
       _feeds['connections']?.pause();
     }
+    _syncConnectionCounters();
   }
 
   void _syncConnectionCounters() {
-    if (_feeds.containsKey('connections') && _demand.wanted != _countersOpen) {
-      _openConnections();
+    if (!_feeds.containsKey('connections') ||
+        _demand.wanted == _feeds.containsKey('counters')) {
+      return;
+    }
+    if (!_demand.wanted) {
+      unawaited(_feeds.remove('counters')?.cancel());
+      return;
+    }
+    _feed(
+      'counters',
+      _core.api.watchConnections(maxBatchMs: 250, counters: true),
+      _onCounters,
+    );
+    if (_away) {
+      _feeds['counters']?.pause();
     }
   }
 
@@ -185,10 +200,12 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       return;
     }
     _away = away;
-    if (away) {
-      _feeds['connections']?.pause();
-    } else {
-      _feeds['connections']?.resume();
+    for (final name in const ['connections', 'counters']) {
+      if (away) {
+        _feeds[name]?.pause();
+      } else {
+        _feeds[name]?.resume();
+      }
     }
   }
 
@@ -319,7 +336,14 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       requests.updateTraffic(change.counters);
     }
     if (change.closed.isNotEmpty) {
-      requests.close(change.closed);
+      requests.close(change.closed, ends: change.ended);
+    }
+  }
+
+  void _onCounters(ConnectionUpdate update) {
+    final counters = ref.read(connectionBookProvider).countersOf(update);
+    if (counters.isNotEmpty) {
+      ref.read(requestsProvider.notifier).updateTraffic(counters);
     }
   }
 
