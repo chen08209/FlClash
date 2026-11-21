@@ -265,6 +265,8 @@ abstract interface class CoreApi {
 
   Future<TextOutput> dumpRuleSet(String profilePath, {String? outputFile});
 
+  Future<Object?> ruleList();
+
   Future<RuleSetInfoDto> compileRuleSet(String name, {String? url});
 
   Future<void> updateGeo(String kind);

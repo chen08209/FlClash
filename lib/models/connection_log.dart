@@ -234,10 +234,14 @@ class ConnectionLog {
     return changed ? _next() : this;
   }
 
-  ConnectionLog close(Iterable<int> ids, DateTime at) {
+  ConnectionLog close(
+    Iterable<int> ids,
+    DateTime at, {
+    Map<int, ConnectionEnd> ends = const {},
+  }) {
     var changed = false;
     for (final id in ids) {
-      changed = _close(id, at) || changed;
+      changed = _close(id, at, ends[id]) || changed;
     }
     if (!changed) {
       return this;
@@ -427,16 +431,20 @@ class ConnectionLog {
     );
   }
 
-  bool _close(int id, DateTime at) {
+  bool _close(int id, DateTime at, [ConnectionEnd? end]) {
     final entry = _entries.byId[id];
     if (entry == null || !entry.info.isActive) {
       return false;
     }
+    final info = _infoOf(entry);
     _replace(
       entry,
-      _infoOf(
-        entry,
-      ).copyWith(closedAt: at, uploadSpeed: null, downloadSpeed: null),
+      info.copyWith(
+        closedAt: at,
+        end: end ?? info.end,
+        uploadSpeed: null,
+        downloadSpeed: null,
+      ),
     );
     _entries.closedOrder.add(id);
     _entries.open[entry.slot] = 0;
