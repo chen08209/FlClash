@@ -881,8 +881,6 @@ enum MitmRemoveOutcome { removed, userStore, needsRoot, failed }
 
 enum CoreStatus { connecting, connected, disconnected }
 
-enum RequestFeed { recent, live }
-
 enum UpdatingScope { core, local }
 
 /// Why the Android service gave up a start, by the code `ServiceStateMachine`

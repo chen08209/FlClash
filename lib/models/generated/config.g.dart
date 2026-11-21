@@ -29,9 +29,6 @@ _AppSettingProps _$AppSettingPropsFromJson(
   autoRun: json['autoRun'] as bool? ?? false,
   openLogs: json['openLogs'] as bool? ?? false,
   closeConnections: json['closeConnections'] as bool? ?? true,
-  requestFeed:
-      $enumDecodeNullable(_$RequestFeedEnumMap, json['requestFeed']) ??
-      RequestFeed.live,
   delayTestTimeout:
       (json['delayTestTimeout'] as num?)?.toInt() ?? defaultDelayTestTimeout,
   tabAnimation:
@@ -110,7 +107,6 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'autoRun': instance.autoRun,
       'openLogs': instance.openLogs,
       'closeConnections': instance.closeConnections,
-      'requestFeed': _$RequestFeedEnumMap[instance.requestFeed]!,
       'delayTestTimeout': instance.delayTestTimeout,
       'tabAnimation': _$TabAnimationEnumMap[instance.tabAnimation]!,
       'floatingNavigationBar': instance.floatingNavigationBar,
@@ -134,11 +130,6 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
       'tableColumnWidths': instance.tableColumnWidths,
       'recordGroupings': instance.recordGroupings,
     };
-
-const _$RequestFeedEnumMap = {
-  RequestFeed.recent: 'recent',
-  RequestFeed.live: 'live',
-};
 
 const _$TabAnimationEnumMap = {
   TabAnimation.slide: 'slide',

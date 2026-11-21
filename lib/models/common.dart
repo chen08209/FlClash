@@ -12,6 +12,8 @@ import 'package:prism_ui/icons/glyph.dart';
 import 'clash_config.dart';
 import 'record_filter.dart';
 
+import 'connection_query.dart';
+
 part 'generated/common.freezed.dart';
 
 part 'generated/common.g.dart';
@@ -297,6 +299,10 @@ abstract class TrackerInfosState with _$TrackerInfosState {
     @Default([]) List<TrackerInfo> trackerInfos,
     @Default('') String query,
     @Default(true) bool autoScrollToEnd,
+
+    /// Connections that opened since the list stopped following its end,
+    /// which it leaves out until it follows again.
+    @Default(0) int pending,
   }) = _TrackerInfosState;
 }
 
@@ -306,17 +312,21 @@ extension TrackerInfosStateExt on TrackerInfosState {
   bool get isSearching => SearchQuery(query).isNotEmpty;
 
   List<TrackerInfo> get list {
-    final searchQuery = SearchQuery(query);
-    if (searchQuery.isEmpty) {
+    final connectionQuery = ConnectionQuery.parse(query);
+    final searchQuery = SearchQuery(connectionQuery.text);
+    if (searchQuery.isEmpty && connectionQuery.isEmpty) {
       return trackerInfos;
     }
-    return trackerInfos
-        .whereMatches(
-          searchQuery,
-          (trackerInfo) => trackerInfo.searchFields,
-          texts: _trackerInfoSearchTexts,
-        )
-        .toList();
+    final searched = searchQuery.isEmpty
+        ? trackerInfos
+        : trackerInfos.whereMatches(
+            searchQuery,
+            (trackerInfo) => trackerInfo.searchFields,
+            texts: _trackerInfoSearchTexts,
+          );
+    return connectionQuery.isEmpty
+        ? searched.toList()
+        : searched.where(connectionQuery.matcher).toList();
   }
 }
 

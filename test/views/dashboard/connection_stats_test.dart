@@ -17,8 +17,6 @@ import 'package:mocktail/mocktail.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 import '../../helpers/host_scaffold.dart';
-import '../../helpers/core_connections.dart';
-import 'package:fl_clash/features/connection/tracker_speed_ranker.dart';
 
 class _MockCore extends Mock implements CoreHandlerInterface {}
 
@@ -164,59 +162,6 @@ void main() {
     await teardownCard(tester);
   });
 
-  testWidgets('a sheet switching feeds opens each at its own start', (
-    tester,
-  ) async {
-    whenConnections<RankedTrackerInfos>(
-      core,
-      () async => [for (var i = 0; i < 100; i++) _request(1000 + i)],
-    );
-    final notifier = container.read(requestsProvider.notifier);
-    for (var i = 0; i < 100; i++) {
-      notifier.addRequest(_request(i));
-    }
-    await pumpCard(tester);
-    await tester.tap(_stat('Recent requests'));
-    await tester.pumpAndSettle();
-    ScrollPosition position() => tester
-        .state<ScrollableState>(
-          find
-              .descendant(
-                of: find.byType(RequestsView),
-                matching: find.byWidgetPredicate(
-                  (widget) =>
-                      widget is Scrollable &&
-                      axisDirectionToAxis(widget.axisDirection) ==
-                          Axis.vertical,
-                ),
-              )
-              .first,
-        )
-        .position;
-    expect(position().pixels, position().maxScrollExtent);
-
-    await tester.tap(find.text('Recent requests').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Running'));
-    await tester.pumpAndSettle();
-    await tester.pump();
-    await tester.pump();
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 2));
-    expect(position().pixels, 0);
-
-    await tester.tap(find.text('Running').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Recent requests').last);
-    await tester.pumpAndSettle();
-    await tester.pump();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(position().pixels, position().maxScrollExtent);
-
-    await teardownCard(tester);
-  });
-
   testWidgets('the requests sheet keeps the newest request at its top while '
       'it is dragged and requests arrive', (tester) async {
     final notifier = container.read(requestsProvider.notifier);
@@ -228,7 +173,7 @@ void main() {
     await tester.tap(_stat('Recent requests'));
     await tester.pumpAndSettle();
     final list = find.descendant(
-      of: find.byType(TrackerInfoList),
+      of: find.byType(TrackerInfoGroupedList),
       matching: find.byType(Scrollable),
     );
     ScrollPosition position() =>
@@ -245,12 +190,14 @@ void main() {
       }
       await gesture.moveBy(const Offset(0, -6));
       await tester.pump(const Duration(milliseconds: 16));
-      expect(position().pixels, position().maxScrollExtent);
+      expect(position().pixels, 0);
     }
     await gesture.up();
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
 
-    expect(position().pixels, position().maxScrollExtent);
+    expect(position().pixels, 0);
     expect(find.textContaining('host-${next - 1}.test'), findsWidgets);
 
     await teardownCard(tester);

@@ -133,4 +133,92 @@ void main() {
     expect(log.activeCount, 0);
     expect(log.list.every((c) => c.closedAt == _t0), isTrue);
   });
+
+  test('clearing the history keeps the open connections in their order', () {
+    var log = ConnectionLog(10).open([
+      _connection('a'),
+      _connection('b', second: 1),
+      _connection('c', second: 2),
+    ]);
+    log = log.close(['b'], _t0);
+
+    final cleared = log.clearClosed();
+
+    expect(_ids(cleared), ['a', 'c']);
+    expect(cleared.revision, log.revision + 1);
+    expect(identical(cleared.clearClosed(), cleared), isTrue);
+    expect(_ids(cleared.close(['a'], _t0)), ['a', 'c']);
+  });
+
+  test('a first snapshot in another order is kept in the order they '
+      'opened', () {
+    final log = ConnectionLog(10).sync([
+      _connection('b', second: 2),
+      _connection('a'),
+      _connection('c', second: 3),
+    ], _t0);
+
+    expect(_ids(log), ['a', 'b', 'c']);
+  });
+
+  test('a connection that reports late takes the place it opened in', () {
+    var log = ConnectionLog(10).open([
+      _connection('a'),
+      _connection('b', second: 10),
+      _connection('c', second: 20),
+    ]);
+
+    log = log.open([
+      _connection('late', second: 5),
+      _connection('d', second: 30),
+    ]);
+    expect(_ids(log), ['a', 'late', 'b', 'c', 'd']);
+
+    log = log.sync([
+      for (final id in ['a', 'late', 'b', 'c', 'd']) log[id]!,
+      _connection('also late', second: 15),
+    ], _t0);
+    expect(_ids(log), ['a', 'late', 'b', 'also late', 'c', 'd']);
+
+    log = log.open([_connection('same second', second: 30)]);
+    expect(_ids(log).last, 'same second');
+  });
+
+  test('a snapshot asked for before the history was cleared puts nothing '
+      'back', () {
+    final requestedAt = DateTime.now();
+    var log = ConnectionLog(
+      10,
+    ).open([_connection('a'), _connection('b', second: 1)]).close(['a'], _t0);
+    final stale = [_connection('a'), log['b']!, _connection('c', second: 2)];
+
+    log = log.clearClosed();
+    log = log.sync(stale, requestedAt);
+
+    expect(_ids(log), ['b']);
+    log = log.sync(stale, DateTime.now());
+    expect(_ids(log), ['a', 'b', 'c']);
+  });
+
+  test('a snapshot asked for before the history trimmed leaves out what was '
+      'trimmed and still adds what it found new', () {
+    final requestedAt = DateTime.now();
+    var log = ConnectionLog(
+      1,
+    ).open([_connection('a'), _connection('b', second: 1)]);
+    final snapshot = [
+      _connection('a'),
+      _connection('b', second: 1),
+      _connection('c', second: 2),
+    ];
+
+    log = log.close(['a'], _t0).close(['b'], _t0);
+    expect(_ids(log), ['b']);
+
+    log = log.sync(snapshot, requestedAt);
+
+    expect(_ids(log), ['b', 'c']);
+    expect(log['b']!.isActive, isFalse);
+    expect(log['c']!.isActive, isTrue);
+  });
 }

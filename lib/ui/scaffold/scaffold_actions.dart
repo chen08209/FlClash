@@ -22,17 +22,25 @@ class _KeywordStrip extends StatelessWidget {
           ),
           itemBuilder: (_, index) {
             final keyword = keywords[index];
+            final menuItems = keyword.menuItems;
+            Widget chip(VoidCallback? onPressed) => Chip(
+              label: keyword.label,
+              onDeleted: keyword.onDeleted,
+              onPressed: onPressed,
+              selected: keyword.selected,
+            );
             return ConstrainedBox(
               key: ValueKey(keyword.key),
               constraints: BoxConstraints(
                 maxWidth: math.max(0, width - 2 * _inset),
               ),
-              child: Chip(
-                label: keyword.label,
-                onDeleted: keyword.onDeleted,
-                onPressed: keyword.onPressed,
-                selected: keyword.selected,
-              ),
+              child: menuItems == null
+                  ? chip(keyword.onPressed)
+                  : PopupAnchor(
+                      placement: PopupPlacement.overAnchorStart,
+                      targetBuilder: chip,
+                      popupBuilder: (_) => PopupMenu(items: menuItems()),
+                    ),
             );
           },
         ),

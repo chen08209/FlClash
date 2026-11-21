@@ -112,6 +112,8 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
   void close(Iterable<String> ids, {DateTime? at}) =>
       _apply((log) => log.close(ids, at ?? DateTime.now()));
 
+  void clearClosed() => _apply((log) => log.clearClosed());
+
   void closeAll({DateTime? at}) =>
       _apply((log) => log.closeAll(at ?? DateTime.now()));
 

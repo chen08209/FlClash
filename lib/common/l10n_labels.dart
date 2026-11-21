@@ -140,6 +140,20 @@ extension LocaleL10n on Locale {
   }
 }
 
+extension ConnectionFailureKindL10n on ConnectionFailureKind {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      ConnectionFailureKind.timeout => appLocalizations.timeout,
+      ConnectionFailureKind.refused => appLocalizations.failureRefused,
+      ConnectionFailureKind.unreachable => appLocalizations.failureUnreachable,
+      ConnectionFailureKind.dns => appLocalizations.failureDns,
+      ConnectionFailureKind.handshake => appLocalizations.failureHandshake,
+      ConnectionFailureKind.other => appLocalizations.failureOther,
+    };
+  }
+}
+
 extension RecordFacetKindL10n on RecordFacetKind {
   String? get title {
     final appLocalizations = currentAppLocalizations;

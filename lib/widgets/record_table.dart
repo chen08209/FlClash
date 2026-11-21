@@ -5,11 +5,12 @@ import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-const _recordTableMinWidth = 720.0;
+const recordTableMinWidth = 720.0;
 const recordWideTableWidth = 1000.0;
 const _recordTableMargin = 8.0;
 const _recordCellInset = 8.0;
 const _recordCellLineHeight = 20.0;
+const _denseCellLineHeight = 18.0;
 const _recordHeaderLineHeight = 16.0;
 const _recordRowPadding = 8.0;
 
@@ -133,13 +134,21 @@ class RecordTable<T> {
   final List<TableColumn> layouts;
   final List<double> widths;
   final double rowHeight;
+  final bool dense;
 
   const RecordTable._({
     required this.columns,
     required this.layouts,
     required this.widths,
     required this.rowHeight,
+    required this.dense,
   });
+
+  double get _lineHeight =>
+      dense ? _denseCellLineHeight : _recordCellLineHeight;
+
+  AppTextStyle get _cellStyle =>
+      dense ? AppTextStyle.footnote : AppTextStyle.subheadline;
 
   List<Widget> cellsOf(BuildContext context, T item) => [
     for (final column in columns) column.cell(context, item),
@@ -156,6 +165,12 @@ class RecordTableFrame<T> extends ConsumerStatefulWidget {
   /// Whether the list shows [items] bottom up, its last item on top.
   final bool reverse;
   final List<RecordColumn<T>> Function(double width) columnsOf;
+
+  /// Narrower than this the items are listed instead.
+  final double minWidth;
+
+  /// Sets the cells a size smaller, for a table read beside other panes.
+  final bool dense;
   final Widget Function(
     BuildContext context,
     RecordTable<T>? table,
@@ -169,6 +184,8 @@ class RecordTableFrame<T> extends ConsumerStatefulWidget {
     required this.items,
     this.reverse = false,
     required this.columnsOf,
+    this.minWidth = recordTableMinWidth,
+    this.dense = false,
     required this.builder,
   });
 
@@ -188,11 +205,13 @@ class _RecordTableFrameState<T> extends ConsumerState<RecordTableFrame<T>>
   String get tableId => widget.tableId;
 
   RecordTable<T>? _tableOf(BuildContext context, double width) {
-    if (width < _recordTableMinWidth) {
+    if (width < widget.minWidth) {
       return null;
     }
     final rowHeight =
-        MediaQuery.textScalerOf(context).scale(_recordCellLineHeight) +
+        MediaQuery.textScalerOf(
+          context,
+        ).scale(widget.dense ? _denseCellLineHeight : _recordCellLineHeight) +
         _recordRowPadding * 2;
     // Rows are memoized on the table, so a refresh must get the same one.
     final inputs = (
@@ -210,6 +229,7 @@ class _RecordTableFrameState<T> extends ConsumerState<RecordTableFrame<T>>
     final layouts = [for (final column in columns) column.layout];
     _tableInputs = inputs;
     return _table = RecordTable._(
+      dense: widget.dense,
       columns: columns,
       layouts: layouts,
       widths: tableColumnWidths(
@@ -247,19 +267,23 @@ class _RecordTableFrameState<T> extends ConsumerState<RecordTableFrame<T>>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _RecordTableHeader(
-                      table: table,
-                      sort: _sort,
-                      onSort: (column) =>
-                          setState(() => _sort = nextRecordSort(_sort, column)),
-                      onResize: (boundary, delta) => resizeColumn(
-                        table.layouts,
-                        table.widths,
-                        boundary,
-                        delta,
+                    MemoBuilder(
+                      inputs: [table, _sort],
+                      builder: (_) => _RecordTableHeader(
+                        table: table,
+                        sort: _sort,
+                        onSort: (column) => setState(
+                          () => _sort = nextRecordSort(_sort, column),
+                        ),
+                        onResize: (boundary, delta) => resizeColumn(
+                          table.layouts,
+                          table.widths,
+                          boundary,
+                          delta,
+                        ),
+                        onResizeEnd: saveColumnWidths,
+                        onReset: resetColumnWidths,
                       ),
-                      onResizeEnd: saveColumnWidths,
-                      onReset: resetColumnWidths,
                     ),
                     Expanded(
                       child: Builder(
@@ -425,6 +449,7 @@ class RecordTableRow extends StatelessWidget {
   final RecordTable<Object?> table;
   final List<Widget> cells;
   final bool striped;
+  final bool selected;
   final VoidCallback? onTap;
 
   const RecordTableRow({
@@ -432,13 +457,14 @@ class RecordTableRow extends StatelessWidget {
     required this.table,
     required this.cells,
     required this.striped,
+    this.selected = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final style = AppTextStyle.subheadline.of(context);
+    final style = table._cellStyle.of(context);
     final shape = AppShape.all(AppCorner.fit(table.rowHeight));
     final level = striped ? context.raisedSurfaceLevel : context.surfaceLevel;
     final row = PressSurface(
@@ -449,7 +475,7 @@ class RecordTableRow extends StatelessWidget {
       child: DefaultTextStyle(
         style: style.copyWith(
           color: colorScheme.onSurface,
-          height: _recordCellLineHeight / style.fontSize!,
+          height: table._lineHeight / style.fontSize!,
           fontFeatures: const [FontFeature.tabularFigures()],
         ),
         maxLines: 1,
@@ -465,7 +491,31 @@ class RecordTableRow extends StatelessWidget {
     );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _recordTableMargin),
-      child: SurfaceScope(level: level, child: row),
+      child: SurfaceScope(
+        level: level,
+        child: selected
+            ? Stack(
+                children: [
+                  row,
+                  PositionedDirectional(
+                    start: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: Container(
+                        width: 3,
+                        height: 16,
+                        decoration: ShapeDecoration(
+                          color: colorScheme.primary,
+                          shape: AppShape.full,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : row,
+      ),
     );
   }
 }

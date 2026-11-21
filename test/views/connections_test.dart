@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
@@ -9,6 +10,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/widgets/record.dart';
@@ -18,6 +20,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../helpers/core_connections.dart';
+import '../helpers/glyph_finders.dart';
+import '../helpers/record_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -88,9 +92,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(
-          child: RequestsView(initialFeed: RequestFeed.live),
-        ),
+        child: const TestApp(child: RequestsView()),
       ),
     );
     await tester.pump();
@@ -123,19 +125,18 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('shows nothing until core answers, then its rows at once', (
+  testWidgets('lists a connection the Core reports that no event told of', (
     tester,
   ) async {
     final pending = Completer<List<TrackerInfo>>();
     whenConnections<RankedTrackerInfos>(core, () => pending.future);
 
     await pumpConnections(tester);
-    expect(find.byType(NullStatus), findsNothing);
     expect(find.textContaining('alpha.test'), findsNothing);
 
     pending.complete([_tracker(id: 'a', host: 'alpha.test')]);
     await tester.pump();
-    await tester.pump();
+    await pumpSettled(tester);
 
     expect(find.byType(NullStatus), findsNothing);
     expect(find.textContaining('alpha.test'), findsWidgets);
@@ -144,13 +145,16 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('shows its first connections while its page is pushed in', (
+  testWidgets('shows the connections it holds while its page is pushed in', (
     tester,
   ) async {
     whenConnections<RankedTrackerInfos>(
       core,
       () async => [_tracker(id: 'a', host: 'alpha.test')],
     );
+    container
+        .read(requestsProvider.notifier)
+        .addRequest(_tracker(id: 'a', host: 'alpha.test'));
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -162,12 +166,9 @@ void main() {
         child: TestApp(
           child: Builder(
             builder: (context) => TextButton(
-              onPressed: () => Navigator.of(context).push(
-                HostPageRoute<void>(
-                  builder: (_) =>
-                      const RequestsView(initialFeed: RequestFeed.live),
-                ),
-              ),
+              onPressed: () => Navigator.of(
+                context,
+              ).push(HostPageRoute<void>(builder: (_) => const RequestsView())),
               child: const Text('open'),
             ),
           ),
@@ -206,30 +207,45 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('orders rows by total traffic, then newest first', (
+  testWidgets('lists the newest connection first, whatever its traffic', (
     tester,
   ) async {
     whenConnections<RankedTrackerInfos>(
       core,
       () async => [
-        _tracker(id: 'a', host: 'alpha.test', download: 100),
-        _tracker(id: 'b', host: 'beta.test', upload: 300, download: 300),
+        _tracker(id: 'a', host: 'alpha.test', download: 900),
+        _tracker(
+          id: 'b',
+          host: 'beta.test',
+          download: 100,
+          start: DateTime.utc(2026, 2),
+        ),
         _tracker(
           id: 'c',
           host: 'gamma.test',
-          download: 100,
-          start: DateTime.utc(2026, 2),
+          download: 300,
+          start: DateTime.utc(2026, 3),
         ),
       ],
     );
 
-    await pumpConnections(tester);
-    await pumpSettled(tester);
+    for (final width in [1400.0, 600.0]) {
+      await pumpConnections(tester, width: width);
+      await pumpSettled(tester);
 
-    double topOf(String host) =>
-        tester.getTopLeft(find.textContaining(host).first).dy;
-    expect(topOf('beta.test'), lessThan(topOf('gamma.test')));
-    expect(topOf('gamma.test'), lessThan(topOf('alpha.test')));
+      double topOf(String host) =>
+          tester.getTopLeft(find.textContaining(host).first).dy;
+      expect(
+        topOf('gamma.test'),
+        lessThan(topOf('beta.test')),
+        reason: '$width',
+      );
+      expect(
+        topOf('beta.test'),
+        lessThan(topOf('alpha.test')),
+        reason: '$width',
+      );
+    }
     expect(tester.takeException(), null);
 
     await teardownView(tester);
@@ -248,18 +264,16 @@ void main() {
     await pumpSettled(tester);
 
     for (final label in [
-      'Process',
+      'Time',
+      'App',
       'Target',
-      'Protocol',
       'Rule',
       'Exit',
-      'Download',
-      'Upload',
-      'Downloaded',
-      'Uploaded',
+      'Speed',
       'Duration',
+      'Total',
     ]) {
-      expect(find.text(label), findsOneWidget);
+      expect(headerText(label), findsOneWidget);
     }
     expect(find.byType(TrackerInfoTableRow), findsNWidgets(2));
     expect(find.byType(Divider), findsNothing);
@@ -272,6 +286,11 @@ void main() {
     );
     expect(find.text('Tokyo'), findsOneWidget);
 
+    double topOf(String host) =>
+        tester.getTopLeft(find.textContaining(host).first).dy;
+    final alphaTop = topOf('alpha.test');
+    final betaTop = topOf('beta.test');
+
     await tester.longPress(find.textContaining('alpha.test').first);
     await tester.pumpAndSettle();
     connections = [connections.last];
@@ -279,75 +298,48 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => core.closeConnection('a')).called(1);
-    expect(find.textContaining('alpha.test'), findsNothing);
-    expect(find.textContaining('beta.test'), findsWidgets);
+    await pumpSettled(tester);
+    expect(container.read(requestsProvider)['a']!.isActive, isFalse);
+    expect(topOf('alpha.test'), alphaTop);
+    expect(topOf('beta.test'), betaTop);
     expect(tester.takeException(), null);
 
     await teardownView(tester);
   });
 
-  testWidgets('a live table keeps the totals ahead of protocol and duration', (
-    tester,
-  ) async {
-    whenConnections<RankedTrackerInfos>(
-      core,
-      () async => [
-        _tracker(id: 'a', host: 'alpha.test', upload: 512, download: 1536),
-      ],
-    );
+  if (rsFeature) {
+    testWidgets('a table marks a decrypted connection in its target', (
+      tester,
+    ) async {
+      whenConnections<RankedTrackerInfos>(
+        core,
+        () async => [
+          _tracker(id: 'a', host: 'alpha.test', mitm: true),
+          _tracker(id: 'b', host: 'beta.test'),
+        ],
+      );
 
-    await pumpConnections(tester, width: 1100);
-    await pumpSettled(tester);
+      await pumpConnections(tester, width: 900);
+      await pumpSettled(tester);
 
-    expect(find.text('Downloaded'), findsOneWidget);
-    expect(find.text('Uploaded'), findsOneWidget);
-    expect(find.text('1.5KB'), findsOneWidget);
-    expect(find.text('512B'), findsOneWidget);
-    expect(find.text('Protocol'), findsNothing);
-    expect(find.text('Duration'), findsNothing);
-
-    tester.view.physicalSize = const Size(900, 1000);
-    await tester.pump();
-
-    expect(find.text('Traffic'), findsOneWidget);
-    expect(find.text('2KB'), findsOneWidget);
-    expect(find.text('Downloaded'), findsNothing);
-    expect(tester.takeException(), null);
-
-    await teardownView(tester);
-  });
-
-  testWidgets('a table marks a decrypted connection in its target', (
-    tester,
-  ) async {
-    whenConnections<RankedTrackerInfos>(
-      core,
-      () async => [
-        _tracker(id: 'a', host: 'alpha.test', mitm: true),
-        _tracker(id: 'b', host: 'beta.test'),
-      ],
-    );
-
-    await pumpConnections(tester, width: 900);
-    await pumpSettled(tester);
-
-    expect(find.byType(TrackerInfoTableRow), findsNWidgets(2));
-    final label = find.widgetWithText(RecordLabel, 'MITM');
-    expect(label, findsOneWidget);
-    expect(
-      find.ancestor(
-        of: label,
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is TrackerTargetText && widget.trackerInfo.id == 'a',
+      expect(find.byType(TrackerInfoTableRow), findsNWidgets(2));
+      final label = find.widgetWithText(RecordLabel, 'MITM');
+      expect(label, findsOneWidget);
+      expect(
+        find.ancestor(
+          of: label,
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is TrackerTargetText && widget.trackerInfo.id == 'a',
+          ),
         ),
-      ),
-      findsOneWidget,
-    );
-    expect(tester.takeException(), null);
+        findsOneWidget,
+      );
+      expect(tester.takeException(), null);
 
-    await teardownView(tester);
-  });
+      await teardownView(tester);
+    });
+  }
 
   testWidgets('a sorted table keeps its order across polls', (tester) async {
     whenConnections<RankedTrackerInfos>(
@@ -364,9 +356,8 @@ void main() {
 
     double topOf(String host) =>
         tester.getTopLeft(find.textContaining(host).first).dy;
-    expect(topOf('alpha.test'), lessThan(topOf('beta.test')));
 
-    await tester.tap(find.text('Process'));
+    await tester.tap(headerText('App'));
     await tester.pumpAndSettle();
     expect(topOf('beta.test'), lessThan(topOf('gamma.test')));
     expect(topOf('gamma.test'), lessThan(topOf('alpha.test')));
@@ -374,6 +365,30 @@ void main() {
     await pumpSettled(tester);
     expect(topOf('beta.test'), lessThan(topOf('gamma.test')));
     expect(topOf('gamma.test'), lessThan(topOf('alpha.test')));
+
+    await teardownView(tester);
+  });
+
+  testWidgets('the menu disconnects every open connection', (tester) async {
+    whenConnections<RankedTrackerInfos>(
+      core,
+      () async => [_tracker(id: 'a', host: 'alpha.test')],
+    );
+    when(() => core.closeConnections()).thenAnswer((_) async {});
+
+    await pumpConnections(tester, width: 600);
+    await pumpSettled(tester);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byGlyph(AppGlyphs.more),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Disconnect all active connections'));
+    await tester.pumpAndSettle();
+
+    verify(() => core.closeConnections()).called(1);
 
     await teardownView(tester);
   });
@@ -433,60 +448,5 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
 
     verifyNever(() => core.getConnectionsWith<RankedTrackerInfos>(any()));
-  });
-
-  testWidgets('one page switches between recent requests and what is open, '
-      'polling only for the latter', (tester) async {
-    final requests = container.read(requestsProvider.notifier);
-    requests.value = ConnectionLog(500);
-    requests.addRequest(_tracker(id: 'old', host: 'finished.test'));
-    whenConnections<RankedTrackerInfos>(
-      core,
-      () async => [_tracker(id: 'open', host: 'open.test')],
-    );
-    tester.view.physicalSize = const Size(1400, 1000);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const TestApp(
-          child: RequestsView(initialFeed: RequestFeed.recent),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump();
-
-    expect(find.textContaining('finished.test'), findsWidgets);
-    expect(find.byTooltip('Close connections'), findsNothing);
-    verifyNever(() => core.getConnectionsWith<RankedTrackerInfos>(any()));
-
-    await tester.tap(find.text('Recent requests'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Running'));
-    await tester.pumpAndSettle();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-
-    expect(find.textContaining('open.test'), findsWidgets);
-    expect(find.textContaining('finished.test'), findsNothing);
-    expect(find.byTooltip('Close connections'), findsOneWidget);
-
-    await tester.tap(find.text('Running'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Recent requests'));
-    await tester.pumpAndSettle();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    clearInteractions(core);
-    await tester.pump(const Duration(seconds: 3));
-
-    expect(find.textContaining('finished.test'), findsWidgets);
-    verifyNever(() => core.getConnectionsWith<RankedTrackerInfos>(any()));
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 2));
   });
 }

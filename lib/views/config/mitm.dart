@@ -10,7 +10,6 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
@@ -488,7 +487,6 @@ class _MitmOptionsViewState extends ConsumerState<MitmOptionsView> {
                 check: check,
               ),
             ),
-            generateSection(items: [_MitmCaptureItem(isAndroid: isAndroid)]),
             generateSection(
               items: [
                 ConfigToggleItem(
@@ -582,111 +580,6 @@ class MitmEnableItem extends ConsumerWidget {
       title: Text(context.appLocalizations.httpsDecryption),
       value: enable,
       onChanged: (value) => _handleChanged(context, ref, value),
-    );
-  }
-}
-
-class _MitmCaptureItem extends ConsumerWidget {
-  const _MitmCaptureItem({required this.isAndroid});
-
-  final bool isAndroid;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final capture = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => state.mitm.enable && state.mitm.capture,
-      ),
-    );
-    return ListItem.open(
-      title: Text(appLocalizations.httpCapture),
-      subtitle: Text(
-        capture ? appLocalizations.enabled : appLocalizations.disabled,
-      ),
-      widget: _MitmCaptureView(isAndroid: isAndroid),
-    );
-  }
-}
-
-class _MitmCaptureView extends ConsumerWidget {
-  const _MitmCaptureView({required this.isAndroid});
-
-  final bool isAndroid;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final (enable, capture, limit) = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => (
-          state.mitm.enable,
-          state.mitm.capture,
-          state.mitm.captureLimit(isAndroid: isAndroid),
-        ),
-      ),
-    );
-    final noHost = ref.watch(
-      patchClashConfigProvider.select(
-        (state) =>
-            state.mitm.enable &&
-            state.mitm.capture &&
-            state.mitm.hostname.every((line) => line.startsWith('-')),
-      ),
-    );
-    final hasModule = ref.watch(
-      mitmModulesProvider.select(
-        (state) => state.value?.any((module) => module.enabled) == true,
-      ),
-    );
-    final options = mitmCaptureOptions(isAndroid: isAndroid);
-    return Scaffold(
-      title: appLocalizations.httpCapture,
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-          top: context.sectionsTopPadding,
-          bottom: 16 + context.bottomInset,
-        ),
-        children: [
-          generateSection(
-            items: [
-              ListItem.toggle(
-                title: Text(appLocalizations.httpCapture),
-                value: capture,
-                onChanged: enable
-                    ? (value) => _updateMitm(
-                        ref,
-                        (state) => state.copyWith(capture: value),
-                      )
-                    : null,
-              ),
-            ],
-            footer: noHost && !hasModule
-                ? appLocalizations.httpCaptureNoHosts
-                : appLocalizations.httpCaptureDesc,
-          ),
-          generateSection(
-            items: [
-              ListItem<int>.options(
-                title: Text(appLocalizations.httpCaptureLimit),
-                options: options.contains(limit)
-                    ? options
-                    : ([...options, limit]..sort()),
-                value: limit,
-                textBuilder: (value) => '$value',
-                onChanged: (value) => _updateMitm(
-                  ref,
-                  (state) => state.copyWith(captureEntries: value),
-                ),
-              ),
-            ],
-            footer: appLocalizations.httpCaptureLimitDesc(
-              mitmCaptureBytes(isAndroid: isAndroid).traffic.show,
-              mitmMaxBodySize(isAndroid: isAndroid).traffic.show,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -2091,7 +2091,9 @@ as bool,
 /// @nodoc
 mixin _$TrackerInfosState {
 
- List<TrackerInfo> get trackerInfos; String get query; bool get autoScrollToEnd;
+ List<TrackerInfo> get trackerInfos; String get query; bool get autoScrollToEnd;/// Connections that opened since the list stopped following its end,
+/// which it leaves out until it follows again.
+ int get pending;
 /// Create a copy of TrackerInfosState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2103,20 +2105,20 @@ $TrackerInfosStateCopyWith<TrackerInfosState> get copyWith => _$TrackerInfosStat
 @override
 bool operator ==(Object other) {
   final _this = this as TrackerInfosState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfosState&&const DeepCollectionEquality().equals(other.trackerInfos, _this.trackerInfos)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfosState&&const DeepCollectionEquality().equals(other.trackerInfos, _this.trackerInfos)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd)&&(identical(other.pending, _this.pending) || other.pending == _this.pending));
 }
 
 
 @override
 int get hashCode {
   final _this = this as TrackerInfosState;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.trackerInfos),_this.query,_this.autoScrollToEnd);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.trackerInfos),_this.query,_this.autoScrollToEnd,_this.pending);
 }
 
 @override
 String toString() {
   final _this = this as TrackerInfosState;
-  return 'TrackerInfosState(trackerInfos: ${_this.trackerInfos}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
+  return 'TrackerInfosState(trackerInfos: ${_this.trackerInfos}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd}, pending: ${_this.pending})';
 }
 
 
@@ -2127,7 +2129,7 @@ abstract mixin class $TrackerInfosStateCopyWith<$Res>  {
   factory $TrackerInfosStateCopyWith(TrackerInfosState value, $Res Function(TrackerInfosState) _then) = _$TrackerInfosStateCopyWithImpl;
 @useResult
 $Res call({
- List<TrackerInfo> trackerInfos, String query, bool autoScrollToEnd
+ List<TrackerInfo> trackerInfos, String query, bool autoScrollToEnd, int pending
 });
 
 
@@ -2144,12 +2146,13 @@ class _$TrackerInfosStateCopyWithImpl<$Res>
 
 /// Create a copy of TrackerInfosState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? trackerInfos = null,Object? query = null,Object? autoScrollToEnd = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? trackerInfos = null,Object? query = null,Object? autoScrollToEnd = null,Object? pending = null,}) {
   return _then(TrackerInfosState(
 trackerInfos: null == trackerInfos ? _self.trackerInfos : trackerInfos // ignore: cast_nullable_to_non_nullable
 as List<TrackerInfo>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -2234,10 +2237,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<TrackerInfo> trackerInfos,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<TrackerInfo> trackerInfos,  String query,  bool autoScrollToEnd,  int pending)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TrackerInfosState() when $default != null:
-return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd,_that.pending);case _:
   return orElse();
 
 }
@@ -2255,10 +2258,10 @@ return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<TrackerInfo> trackerInfos,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<TrackerInfo> trackerInfos,  String query,  bool autoScrollToEnd,  int pending)  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfosState():
-return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd,_that.pending);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2275,10 +2278,10 @@ return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<TrackerInfo> trackerInfos,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<TrackerInfo> trackerInfos,  String query,  bool autoScrollToEnd,  int pending)?  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfosState() when $default != null:
-return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd,_that.pending);case _:
   return null;
 
 }
@@ -2290,7 +2293,7 @@ return $default(_that.trackerInfos,_that.query,_that.autoScrollToEnd);case _:
 
 
 class _TrackerInfosState implements TrackerInfosState {
-  const _TrackerInfosState({ List<TrackerInfo> trackerInfos = const [], this.query = '', this.autoScrollToEnd = true}): _trackerInfos = trackerInfos;
+  const _TrackerInfosState({ List<TrackerInfo> trackerInfos = const [], this.query = '', this.autoScrollToEnd = true, this.pending = 0}): _trackerInfos = trackerInfos;
   
 
  final  List<TrackerInfo> _trackerInfos;
@@ -2302,6 +2305,9 @@ class _TrackerInfosState implements TrackerInfosState {
 
 @override@JsonKey() final  String query;
 @override@JsonKey() final  bool autoScrollToEnd;
+/// Connections that opened since the list stopped following its end,
+/// which it leaves out until it follows again.
+@override@JsonKey() final  int pending;
 
 /// Create a copy of TrackerInfosState
 /// with the given fields replaced by the non-null parameter values.
@@ -2313,18 +2319,18 @@ _$TrackerInfosStateCopyWith<_TrackerInfosState> get copyWith => __$TrackerInfosS
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfosState&&const DeepCollectionEquality().equals(other.trackerInfos, _trackerInfos)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfosState&&const DeepCollectionEquality().equals(other.trackerInfos, _trackerInfos)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd)&&(identical(other.pending, pending) || other.pending == pending));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_trackerInfos),query,autoScrollToEnd);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_trackerInfos),query,autoScrollToEnd,pending);
 }
 
 @override
 String toString() {
-    return 'TrackerInfosState(trackerInfos: $trackerInfos, query: $query, autoScrollToEnd: $autoScrollToEnd)';
+    return 'TrackerInfosState(trackerInfos: $trackerInfos, query: $query, autoScrollToEnd: $autoScrollToEnd, pending: $pending)';
 }
 
 
@@ -2335,7 +2341,7 @@ abstract mixin class _$TrackerInfosStateCopyWith<$Res> implements $TrackerInfosS
   factory _$TrackerInfosStateCopyWith(_TrackerInfosState value, $Res Function(_TrackerInfosState) _then) = __$TrackerInfosStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<TrackerInfo> trackerInfos, String query, bool autoScrollToEnd
+ List<TrackerInfo> trackerInfos, String query, bool autoScrollToEnd, int pending
 });
 
 
@@ -2352,12 +2358,13 @@ class __$TrackerInfosStateCopyWithImpl<$Res>
 
 /// Create a copy of TrackerInfosState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? trackerInfos = null,Object? query = null,Object? autoScrollToEnd = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? trackerInfos = null,Object? query = null,Object? autoScrollToEnd = null,Object? pending = null,}) {
   return _then(_TrackerInfosState(
 trackerInfos: null == trackerInfos ? _self._trackerInfos : trackerInfos // ignore: cast_nullable_to_non_nullable
 as List<TrackerInfo>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

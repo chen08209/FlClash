@@ -174,6 +174,75 @@
   "infiniteTime": "Never expires",
   "connections": "Connections",
   "liveConnections": "Live connections",
+  "speed": "Speed",
+  "disconnectActiveConnections": "Disconnect all active connections",
+  "clearClosedConnections": "Clear closed connections",
+  "newConnections": "{count, plural, =1{1 new connection} other{{count} new connections}}",
+  "@newConnections": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "connectionsAll": "All",
+  "connectionsActive": "Active",
+  "connectionsFailed": "Failed",
+  "connectionsDecrypted": "Decrypted",
+  "failureRefused": "Refused",
+  "failureUnreachable": "Unreachable",
+  "failureDns": "DNS failed",
+  "failureHandshake": "Handshake failed",
+  "failureOther": "Other error",
+  "previousItem": "Previous",
+  "nextItem": "Next",
+  "connectionClosed": "Closed",
+  "condition": "Condition",
+  "addCondition": "Add condition",
+  "conditionField": "Field",
+  "conditionExcludes": "Exclude matches",
+  "conditionTip": "Conditions on one field match any of them, on different fields all. Search takes the same form, as in host:github.com -app:chrome.",
+  "connectionsShown": "Showing {count}",
+  "@connectionsShown": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "connectionsFiltered": "{count} after filtering",
+  "@connectionsFiltered": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectedCount": "{count} selected",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "thisRun": "This run",
+  "connectionPath": "Path",
+  "proxyNode": "Node",
+  "closingTime": "Closed at",
+  "processUid": "UID {uid}",
+  "@processUid": {
+    "placeholders": {
+      "uid": {
+        "type": "int"
+      }
+    }
+  },
+  "onlyThisApp": "Only this app",
+  "hideThisHost": "Hide this host",
+  "viewHttp": "View HTTP",
+  "pauseRefreshing": "Pause refreshing",
+  "resumeRefreshing": "Resume refreshing",
   "inbound": "Inbound",
   "intranetIP": "Intranet IP",
   "view": "View",
@@ -742,7 +811,6 @@
   "exitFullScreen": "Exit full screen",
   "torch": "Flashlight",
   "pickFromAlbum": "Choose from album",
-  "closeConnections": "Close connections",
   "scrollToSelected": "Scroll to selected",
   "showMore": "Expand",
   "showLess": "Collapse",
@@ -1047,6 +1115,9 @@
   "httpRequestsMissing": "Requests made before capture was on, or since cleared, are not listed.",
   "httpRequestCleared": "This request is no longer kept",
   "httpCaptureOff": "Capture is off",
+  "httpCapturing": "Capturing",
+  "httpCaptureNeedsDecryption": "Capture needs HTTPS decryption on and its certificate installed first.",
+  "goToMitmSettings": "Go to MITM settings",
   "inProgress": "In progress",
   "method": "Method",
   "originalUrl": "Original URL",

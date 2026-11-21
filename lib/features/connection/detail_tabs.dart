@@ -5,15 +5,16 @@ const _clearance = 16.0;
 
 class DetailTabs extends StatefulWidget {
   final List<(String label, WidgetBuilder builder)> tabs;
+  final int initialIndex;
 
-  const DetailTabs({super.key, required this.tabs});
+  const DetailTabs({super.key, required this.tabs, this.initialIndex = 0});
 
   @override
   State<DetailTabs> createState() => _DetailTabsState();
 }
 
 class _DetailTabsState extends State<DetailTabs> {
-  var _index = 0;
+  late var _index = widget.initialIndex;
 
   @override
   Widget build(BuildContext context) {

@@ -47,7 +47,7 @@ void main() {
     'dashboard': const DashboardView(),
     'proxies': const ProxiesView(),
     'profiles': const ProfilesView(),
-    'requests': const RequestsView(initialFeed: RequestFeed.recent),
+    'requests': const RequestsView(),
     'dns queries': const DnsQueriesView(),
     'resources': const ResourcesView(),
     'logs': const LogsView(),

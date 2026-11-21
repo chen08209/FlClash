@@ -571,6 +571,126 @@ class AppLocalizationsEs extends AppLocalizations {
   String get liveConnections => 'Conexiones activas';
 
   @override
+  String get speed => 'Velocidad';
+
+  @override
+  String get disconnectActiveConnections =>
+      'Desconectar todas las conexiones activas';
+
+  @override
+  String get clearClosedConnections => 'Borrar las conexiones cerradas';
+
+  @override
+  String newConnections(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count conexiones nuevas',
+      one: '1 conexión nueva',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get connectionsAll => 'Todas';
+
+  @override
+  String get connectionsActive => 'Activas';
+
+  @override
+  String get connectionsFailed => 'Fallidas';
+
+  @override
+  String get connectionsDecrypted => 'Descifradas';
+
+  @override
+  String get failureRefused => 'Rechazada';
+
+  @override
+  String get failureUnreachable => 'Inalcanzable';
+
+  @override
+  String get failureDns => 'Error de DNS';
+
+  @override
+  String get failureHandshake => 'Error de negociación';
+
+  @override
+  String get failureOther => 'Otro error';
+
+  @override
+  String get previousItem => 'Anterior';
+
+  @override
+  String get nextItem => 'Siguiente';
+
+  @override
+  String get connectionClosed => 'Cerrada';
+
+  @override
+  String get condition => 'Condición';
+
+  @override
+  String get addCondition => 'Añadir condición';
+
+  @override
+  String get conditionField => 'Campo';
+
+  @override
+  String get conditionExcludes => 'Excluir coincidencias';
+
+  @override
+  String get conditionTip =>
+      'Las condiciones de un mismo campo se cumplen con una de ellas; las de campos distintos, todas. La búsqueda admite la misma forma, como host:github.com -app:chrome.';
+
+  @override
+  String connectionsShown(int count) {
+    return 'Mostrando $count';
+  }
+
+  @override
+  String connectionsFiltered(int count) {
+    return '$count tras filtrar';
+  }
+
+  @override
+  String selectedCount(int count) {
+    return '$count seleccionadas';
+  }
+
+  @override
+  String get thisRun => 'Esta ejecución';
+
+  @override
+  String get connectionPath => 'Ruta';
+
+  @override
+  String get proxyNode => 'Nodo';
+
+  @override
+  String get closingTime => 'Cerrada a las';
+
+  @override
+  String processUid(int uid) {
+    return 'UID $uid';
+  }
+
+  @override
+  String get onlyThisApp => 'Solo esta app';
+
+  @override
+  String get hideThisHost => 'Ocultar este host';
+
+  @override
+  String get viewHttp => 'Ver HTTP';
+
+  @override
+  String get pauseRefreshing => 'Pausar la actualización';
+
+  @override
+  String get resumeRefreshing => 'Reanudar la actualización';
+
+  @override
   String get inbound => 'Entrada';
 
   @override
@@ -2405,9 +2525,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pickFromAlbum => 'Elegir del álbum';
 
   @override
-  String get closeConnections => 'Cerrar conexiones';
-
-  @override
   String get scrollToSelected => 'Ir a la selección';
 
   @override
@@ -3310,6 +3427,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get httpCaptureOff => 'La captura está desactivada';
+
+  @override
+  String get httpCapturing => 'Capturando';
+
+  @override
+  String get httpCaptureNeedsDecryption =>
+      'Para capturar, primero activa el descifrado HTTPS e instala su certificado.';
+
+  @override
+  String get goToMitmSettings => 'Ir a los ajustes de MITM';
 
   @override
   String get inProgress => 'En curso';

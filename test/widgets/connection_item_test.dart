@@ -8,6 +8,7 @@ import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -77,7 +78,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('DOMAIN-SUFFIX(example.com)'), findsOneWidget);
-    expect(find.text('chrome(1000)'), findsOneWidget);
+    expect(find.text('chrome'), findsOneWidget);
+    expect(find.text('Process · UID 1000'), findsOneWidget);
     expect(find.text('1.2.3.4:8080'), findsOneWidget);
     expect(find.text('5.6.7.8:443'), findsOneWidget);
     expect(find.text('example.com'), findsOneWidget);
@@ -90,6 +92,7 @@ void main() {
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 5));
   });
 
   testWidgets('TrackerInfoDetailView omits empty fields', (tester) async {
@@ -112,136 +115,241 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('TrackerInfoItem shows all chains and filters by them', (
+  testWidgets('a failed connection says why, in its row and its detail', (
     tester,
   ) async {
-    final clicked = <RecordFilter>[];
+    final failed = _tracker(host: 'example.com').copyWith(
+      closedAt: DateTime(2026, 1, 1, 10, 31),
+      failure: const ConnectionFailure(
+        kind: ConnectionFailureKind.timeout,
+        message: 'dial tcp 1.2.3.4:443: i/o timeout',
+      ),
+    );
     await tester.pumpWidget(
       TestApp(
         wrapInProviderScope: true,
         homeBuilder: (child) => HostScaffold(body: child),
-        child: RecordFilterScope(
-          onFilter: clicked.add,
-          child: TrackerInfoItem(
-            trackerInfo: _tracker(chains: const ['Proxy A', 'Proxy B']),
-            detailTitle: 'detail',
-          ),
-        ),
+        child: TrackerInfoItem(trackerInfo: failed, detailTitle: 'detail'),
       ),
     );
     await tester.pump();
+    expect(find.widgetWithText(TonalChip, 'Timeout'), findsOneWidget);
 
-    expect(find.text('Proxy A'), findsOneWidget);
-    expect(find.text('Proxy B'), findsOneWidget);
-
-    await tester.tap(find.text('Proxy A'));
-    await tester.pump();
-    await tester.tap(find.text('Proxy B'));
-    await tester.pump();
-
-    expect(clicked, const [
-      RecordFilter(RecordFacetKind.proxy, 'Proxy A'),
-      RecordFilter(RecordFacetKind.proxy, 'Proxy B'),
-    ]);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  testWidgets('TrackerInfoItem reads from the rule to the node', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      TestApp(
-        wrapInProviderScope: true,
-        homeBuilder: (child) => HostScaffold(body: child),
-        child: TrackerInfoItem(
-          trackerInfo: _tracker(
-            rulePayload: 'example.com',
-            process: 'chrome',
-            uid: 1000,
-            sourceIP: '1.2.3.4',
-            sourcePort: '8080',
-            destinationIP: '5.6.7.8',
-            destinationPort: '443',
-            host: 'example.com',
-            chains: const ['Node', 'Group'],
-          ),
-          detailTitle: 'detail',
-        ),
-      ),
-    );
-    await tester.pump();
-
-    final rule = tester.getCenter(find.text('DOMAIN-SUFFIX(example.com)'));
-    final group = tester.getCenter(find.text('Group'));
-    final node = tester.getCenter(find.text('Node'));
-    expect(rule.dx, lessThan(group.dx));
-    expect(group.dx, lessThan(node.dx));
-    expect(find.text('example.com:443  5.6.7.8'), findsOneWidget);
-    expect(find.text('chrome(1000)  ·  1.2.3.4:8080'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  testWidgets('TrackerInfoItem shows speed only for a live connection', (
-    tester,
-  ) async {
-    Future<void> pumpItem({required bool isLive}) async {
-      await tester.pumpWidget(
-        TestApp(
-          wrapInProviderScope: true,
-          homeBuilder: (child) => HostScaffold(body: child),
-          child: TrackerInfoItem(
-            key: ValueKey(isLive),
-            trackerInfo: _tracker(
-              host: 'example.com',
-            ).copyWith(uploadSpeed: 2048, downloadSpeed: 4096),
-            isLive: isLive,
-            detailTitle: 'detail',
-          ),
-        ),
-      );
-      await tester.pump();
-    }
-
-    await pumpItem(isLive: false);
-    expect(find.text(DateTime(2026, 1, 1, 10, 30).showFull), findsOneWidget);
-    expect(find.textContaining('4KB/s'), findsNothing);
-
-    await pumpItem(isLive: true);
-    expect(find.text(DateTime(2026, 1, 1, 10, 30).showFull), findsNothing);
-    expect(find.textContaining('4KB/s'), findsOneWidget);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  testWidgets('TrackerInfoDetailView lists the chain from group to node', (
-    tester,
-  ) async {
     await tester.pumpWidget(
       TestApp(
         wrapInProviderScope: true,
         homeBuilder: (child) => HostScaffold(body: child),
         child: SheetProvider(
           type: SheetType.page,
+          child: TrackerInfoDetailView(trackerInfo: failed),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Failed'), findsOneWidget);
+    expect(find.text('dial tcp 1.2.3.4:443: i/o timeout'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Closed at'),
+      100,
+      scrollable: find.byType(Scrollable),
+    );
+    expect(find.text('Closed at'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  Future<void> pumpItem(WidgetTester tester, TrackerInfo trackerInfo) async {
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        homeBuilder: (child) => HostScaffold(body: child),
+        child: TrackerInfoItem(
+          key: ValueKey(trackerInfo),
+          trackerInfo: trackerInfo,
+          detailTitle: 'detail',
+        ),
+      ),
+    );
+    await tester.pump();
+  }
+
+  testWidgets('TrackerInfoItem reads its host, then its app, exit and age', (
+    tester,
+  ) async {
+    final opened = DateTime.now().subtract(const Duration(seconds: 75));
+    await pumpItem(
+      tester,
+      _tracker(
+        process: 'chrome',
+        destinationIP: '5.6.7.8',
+        destinationPort: '443',
+        host: 'example.com',
+        chains: const ['Node', 'Group'],
+      ).copyWith(start: opened),
+    );
+
+    expect(find.text('example.com'), findsOneWidget);
+    expect(find.text('chrome · Node · 1:15'), findsOneWidget);
+    expect(find.text('C'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await pumpItem(
+      tester,
+      _tracker(destinationIP: '5.6.7.8', destinationPort: '443'),
+    );
+    expect(find.text('5.6.7.8:443'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('TrackerInfoItem shows the speed of an open connection, and '
+      'what a closed one moved', (tester) async {
+    final open = _tracker(
+      host: 'example.com',
+    ).copyWith(uploadSpeed: 2048, downloadSpeed: 2048, download: 3072);
+    Finder dot() => find.descendant(
+      of: find.byType(TrackerAppWell),
+      matching: find.byType(PositionedDirectional),
+    );
+
+    await pumpItem(tester, open);
+    expect(find.text('4KB/s'), findsOneWidget);
+    expect(find.text('3KB'), findsOneWidget);
+    expect(dot(), findsOneWidget);
+
+    final closedAt = open.start.add(const Duration(seconds: 6));
+    await pumpItem(tester, open.copyWith(closedAt: closedAt));
+    expect(find.textContaining('/s'), findsNothing);
+    expect(find.text('3KB'), findsOneWidget);
+    expect(find.textContaining('6 s'), findsOneWidget);
+    expect(dot(), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('TrackerInfoDetailView lists the path from the app and rule '
+      'through the group to the node, each hop with what it is', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [
+          groupsProvider.overrideWithBuild(
+            (_, _) => const [
+              Group(
+                type: GroupType.URLTest,
+                name: 'Auto',
+                testUrl: 'https://group.test',
+                all: [Proxy(name: 'Tokyo 01', type: 'Trojan')],
+              ),
+            ],
+          ),
+          delayProvider(
+            proxyName: 'Tokyo 01',
+            testUrl: 'https://group.test',
+          ).overrideWithValue(38),
+        ],
+        homeBuilder: (child) => HostScaffold(body: child),
+        child: SheetProvider(
+          type: SheetType.page,
           child: TrackerInfoDetailView(
-            trackerInfo: _tracker(chains: const ['Node', 'Group']),
+            trackerInfo: _tracker(
+              process: 'chrome',
+              rulePayload: 'example.com',
+              chains: const ['Tokyo 01', 'Auto'],
+            ),
           ),
         ),
       ),
     );
     await tester.pump();
-    await tester.scrollUntilVisible(
-      find.text('Node'),
-      100,
-      scrollable: find.byType(Scrollable),
+
+    double topOf(String text) => tester.getTopLeft(find.text(text)).dy;
+    expect(topOf('chrome'), lessThan(topOf('DOMAIN-SUFFIX(example.com)')));
+    expect(topOf('DOMAIN-SUFFIX(example.com)'), lessThan(topOf('Auto')));
+    expect(topOf('Auto'), lessThan(topOf('Tokyo 01')));
+    expect(find.text('Proxy group · URLTest'), findsOneWidget);
+    expect(find.text('Node · Trojan'), findsOneWidget);
+    expect(find.text('38 ms'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  test('a connection without a host copies its address, an IPv6 one in '
+      'brackets', () {
+    expect(
+      trackerCopyText(
+        _tracker(destinationIP: '2001:db8::1', destinationPort: '443'),
+      ),
+      '[2001:db8::1]:443',
+    );
+    expect(
+      trackerCopyText(
+        _tracker(destinationIP: '1.2.3.4', destinationPort: '443'),
+      ),
+      '1.2.3.4:443',
+    );
+  });
+
+  testWidgets('a target cell keeps its labels beside the host and cuts them '
+      'off in a column too narrow for them', (tester) async {
+    final failed = _tracker(host: 'example.com', destinationPort: '443')
+        .copyWith(
+          failure: const ConnectionFailure(
+            kind: ConnectionFailureKind.unreachable,
+          ),
+        );
+    Future<void> pumpAt(double width) => tester.pumpWidget(
+      TestApp(
+        child: Align(
+          alignment: AlignmentDirectional.topStart,
+          child: SizedBox(
+            width: width,
+            height: 20,
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TrackerTargetText(failed),
+            ),
+          ),
+        ),
+      ),
     );
 
+    await pumpAt(400);
+    final label = find.byType(RecordLabel);
     expect(
-      tester.getCenter(find.text('Group')).dx,
-      lessThan(tester.getCenter(find.text('Node')).dx),
+      tester.getTopLeft(label).dx,
+      tester.getTopRight(find.byType(RichText).first).dx + 6,
     );
+    await pumpAt(30);
+    expect(tester.takeException(), isNull);
+    expect(label, findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('the status bar sets what it trails at its end', (tester) async {
+    tester.view.physicalSize = const Size(800, 100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    const end = Key('end');
+    await tester.pumpWidget(
+      const TestApp(
+        wrapInProviderScope: true,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConnectionStatusBar(
+            shown: 3,
+            active: 1,
+            selected: false,
+            trailing: [SizedBox(key: end, width: 40, height: 20)],
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.getTopRight(find.byKey(end)).dx, 800 - 16);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -283,18 +391,14 @@ void main() {
       WidgetTester tester,
       String process, {
       App? source,
-      ValueChanged<RecordFilter>? onFilter,
     }) async {
       await tester.pumpWidget(
         TestApp(
           overrides: [packageIconSourceProvider.overrideWithValue(source)],
           homeBuilder: (child) => HostScaffold(body: child),
-          child: RecordFilterScope(
-            onFilter: onFilter ?? (_) {},
-            child: TrackerInfoItem(
-              trackerInfo: _tracker(process: process, host: 'example.com'),
-              detailTitle: 'detail',
-            ),
+          child: TrackerInfoItem(
+            trackerInfo: _tracker(process: process, host: 'example.com'),
+            detailTitle: 'detail',
           ),
         ),
       );
@@ -302,50 +406,36 @@ void main() {
       await tester.pump();
     }
 
-    double titleInset(WidgetTester tester) =>
-        tester.getTopLeft(find.textContaining('example.com')).dx -
-        tester.getTopLeft(find.byType(RecordListItem)).dx;
+    Size wellSize(WidgetTester tester) =>
+        tester.getSize(find.byType(TrackerAppWell));
 
-    testWidgets('shows the icon an app draws and filters by its app', (
-      tester,
-    ) async {
-      await pumpRow(tester, '', source: App());
-      final bare = titleInset(tester);
-      final clicked = <RecordFilter>[];
-      await pumpRow(tester, 'com.own', source: App(), onFilter: clicked.add);
+    testWidgets('shows the icon an app draws in its well', (tester) async {
+      await pumpRow(tester, 'com.own', source: App());
 
       expect(find.byType(Image), findsOneWidget);
-      expect(titleInset(tester), bare + 24 + 8);
-      await tester.tap(find.byType(Image));
-      expect(clicked, const [RecordFilter(RecordFacetKind.app, 'com.own')]);
+      expect(find.text('C'), findsNothing);
+      expect(wellSize(tester), const Size.square(36));
 
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
-    testWidgets('leaves no room where no icon can be read, or for an app '
-        'already known to have none of its own', (tester) async {
-      await pumpRow(tester, '', source: App());
-      final bare = titleInset(tester);
-
+    testWidgets('shows the initial of an app where no icon can be read, or '
+        'of one already known to have none of its own', (tester) async {
       await pumpRow(tester, 'com.own');
       expect(find.byType(Image), findsNothing);
-      expect(titleInset(tester), bare);
+      expect(find.text('C'), findsOneWidget);
 
       await tester.runAsync(() => App().getOwnPackageIcon('com.plain'));
       await pumpRow(tester, 'com.plain', source: App());
       expect(find.byType(Image), findsNothing);
-      expect(titleInset(tester), bare);
+      expect(find.text('C'), findsOneWidget);
+      expect(wellSize(tester), const Size.square(36));
 
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
-    testWidgets('a row holds the room of an icon still loading, and keeps it '
-        'with the generic app icon where none of its own arrives', (
-      tester,
-    ) async {
-      await pumpRow(tester, '', source: App());
-      final bare = titleInset(tester);
-
+    testWidgets('a well keeps its size while an icon loads, and takes the '
+        'generic app icon where none of its own arrives', (tester) async {
       for (final (process, icon) in [
         ('com.own', 'com.own.png'),
         ('com.plain', 'default.png'),
@@ -353,7 +443,7 @@ void main() {
         held[process] = Completer();
         await pumpRow(tester, process, source: App());
         expect(find.byType(Image), findsNothing, reason: process);
-        expect(titleInset(tester), bare + 24 + 8, reason: process);
+        expect(wellSize(tester), const Size.square(36), reason: process);
 
         held[process]!.complete();
         await tester.pump();
@@ -365,7 +455,7 @@ void main() {
           endsWith(icon),
           reason: process,
         );
-        expect(titleInset(tester), bare + 24 + 8, reason: process);
+        expect(wellSize(tester), const Size.square(36), reason: process);
         await tester.pumpWidget(const SizedBox.shrink());
       }
     });
@@ -463,7 +553,6 @@ void main() {
               RecordGroup('', [_tracker(process: '')]),
             ],
             grouping: RecordGrouping.app,
-            isLive: false,
             detailTitle: 'detail',
           ),
         ),

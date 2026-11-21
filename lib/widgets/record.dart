@@ -163,11 +163,26 @@ class DetailRow extends StatelessWidget {
   final Widget? value;
   final String? copyText;
 
-  const DetailRow({super.key, required this.title, this.value, this.copyText});
+  /// Sets the row a size smaller, for a detail read beside a table.
+  final bool dense;
+  final bool monospace;
 
-  DetailRow.text({super.key, required this.title, required String value})
-    : value = Text(value),
-      copyText = value;
+  const DetailRow({
+    super.key,
+    required this.title,
+    this.value,
+    this.copyText,
+    this.dense = false,
+  }) : monospace = false;
+
+  DetailRow.text({
+    super.key,
+    required this.title,
+    required String value,
+    this.dense = false,
+    this.monospace = false,
+  }) : value = Text(value),
+       copyText = value;
 
   Future<void> _copy(BuildContext context, String text) async {
     await Clipboard.setData(ClipboardData(text: text));
@@ -179,25 +194,32 @@ class DetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final value = this.value;
     final copyText = this.copyText;
+    final titleText = Text(
+      title,
+      style: dense ? AppTextStyle.footnote.of(context) : null,
+    );
+    final valueStyle = switch ((dense, monospace)) {
+      (_, true) => AppTextStyle.caption1.of(context).toJetBrainsMono,
+      (true, false) => AppTextStyle.footnote.of(context),
+      (false, false) => AppTextStyle.subheadline.of(context),
+    };
     return DecorationListItem(
       onPressed: copyText == null ? null : () => _copy(context, copyText),
       title: value == null
-          ? Text(title)
+          ? titleText
           : Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               spacing: 20,
               children: [
-                Text(title),
+                titleText,
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: DefaultTextStyle.merge(
                       textAlign: TextAlign.end,
-                      style: AppTextStyle.subheadline
-                          .of(context)
-                          .copyWith(
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
+                      style: valueStyle.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
                       child: value,
                     ),
                   ),

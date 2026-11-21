@@ -11,6 +11,14 @@ const _openingGrace = Duration(seconds: 1);
 class _Entries {
   final byId = <String, TrackerInfo>{};
   final closedOrder = Queue<String>();
+
+  /// Never before the latest start held.
+  DateTime? latestStart;
+
+  /// A snapshot asked for before this may list what was cleared.
+  DateTime? clearedAt;
+
+  final trimmed = <String>{};
 }
 
 /// The connections of this run in the order they opened: every open one, and
@@ -43,13 +51,18 @@ class ConnectionLog {
 
   ConnectionLog open(Iterable<TrackerInfo> trackerInfos) {
     final byId = _entries.byId;
+    final placed = byId.length;
     var changed = false;
+    var late = false;
     for (final trackerInfo in trackerInfos) {
       if (byId.containsKey(trackerInfo.id)) {
         continue;
       }
-      byId[trackerInfo.id] = trackerInfo;
+      late = _appendWasLate(trackerInfo) || late;
       changed = true;
+    }
+    if (late) {
+      _placeLate(placed);
     }
     return changed ? _next() : this;
   }
@@ -85,6 +98,21 @@ class ConnectionLog {
     return _next();
   }
 
+  ConnectionLog clearClosed() {
+    final closedOrder = _entries.closedOrder;
+    if (closedOrder.isEmpty) {
+      return this;
+    }
+    final byId = _entries.byId;
+    for (final id in closedOrder) {
+      byId.remove(id);
+    }
+    closedOrder.clear();
+    _entries.clearedAt = DateTime.now();
+    _forgetLatestIfEmpty();
+    return _next();
+  }
+
   ConnectionLog closeAll(DateTime at) => close([
     for (final trackerInfo in _entries.byId.values)
       if (trackerInfo.isActive) trackerInfo.id,
@@ -94,22 +122,28 @@ class ConnectionLog {
   /// it is missing from the snapshot however late the answer comes.
   ConnectionLog sync(List<TrackerInfo> open, DateTime requestedAt) {
     final byId = _entries.byId;
+    final placed = byId.length;
+    final clearedAt = _entries.clearedAt;
+    final stale = clearedAt != null && requestedAt.isBefore(clearedAt);
+    final trimmed = _entries.trimmed;
     final listed = <String>{};
     var changed = false;
-    var outOfOrder = false;
-    final latestStart = byId.isEmpty ? null : byId.values.last.start;
+    var late = false;
     for (final trackerInfo in open) {
       listed.add(trackerInfo.id);
       final known = byId[trackerInfo.id];
       if (known == null) {
-        outOfOrder =
-            outOfOrder ||
-            latestStart != null && trackerInfo.start.isBefore(latestStart);
-        byId[trackerInfo.id] = trackerInfo;
+        if (stale || trimmed.contains(trackerInfo.id)) {
+          continue;
+        }
+        late = _appendWasLate(trackerInfo) || late;
         changed = true;
-      } else if (known.isActive && known != trackerInfo) {
-        byId[trackerInfo.id] = trackerInfo;
-        changed = true;
+      } else if (known.isActive) {
+        final next = _keepingSpeed(trackerInfo, known);
+        if (next != known) {
+          byId[trackerInfo.id] = next;
+          changed = true;
+        }
       }
     }
     final settled = requestedAt.subtract(_openingGrace);
@@ -126,11 +160,22 @@ class ConnectionLog {
     if (!changed) {
       return this;
     }
-    if (outOfOrder) {
-      _sortByStart();
+    if (late) {
+      _placeLate(placed);
     }
     _trim();
     return _next();
+  }
+
+  /// An unranked snapshot has no speeds; it keeps the last ranked ones.
+  static TrackerInfo _keepingSpeed(TrackerInfo next, TrackerInfo known) {
+    if (next.uploadSpeed != null || next.downloadSpeed != null) {
+      return next;
+    }
+    return next.copyWith(
+      uploadSpeed: known.uploadSpeed,
+      downloadSpeed: known.downloadSpeed,
+    );
   }
 
   bool _close(String id, DateTime at) {
@@ -149,20 +194,56 @@ class ConnectionLog {
 
   void _trim() {
     final closedOrder = _entries.closedOrder;
+    if (closedOrder.length <= closedCapacity) {
+      return;
+    }
+    final trimmed = _entries.trimmed;
     while (closedOrder.length > closedCapacity) {
-      _entries.byId.remove(closedOrder.removeFirst());
+      final id = closedOrder.removeFirst();
+      _entries.byId.remove(id);
+      trimmed.add(id);
+      if (trimmed.length > closedCapacity) {
+        trimmed.remove(trimmed.first);
+      }
+    }
+    _forgetLatestIfEmpty();
+  }
+
+  void _forgetLatestIfEmpty() {
+    if (_entries.byId.isEmpty) {
+      _entries.latestStart = null;
     }
   }
 
-  void _sortByStart() {
+  bool _appendWasLate(TrackerInfo trackerInfo) {
+    _entries.byId[trackerInfo.id] = trackerInfo;
+    final latest = _entries.latestStart;
+    if (latest != null && trackerInfo.start.isBefore(latest)) {
+      return true;
+    }
+    _entries.latestStart = trackerInfo.start;
+    return false;
+  }
+
+  void _placeLate(int placed) {
     final byId = _entries.byId;
-    final sorted = byId.values.toList();
-    mergeSort(sorted, compare: (a, b) => a.start.compareTo(b.start));
-    byId
-      ..clear()
-      ..addEntries(
-        sorted.map((trackerInfo) => MapEntry(trackerInfo.id, trackerInfo)),
-      );
+    final all = byId.values.toList(growable: false);
+    int byStart(TrackerInfo a, TrackerInfo b) => a.start.compareTo(b.start);
+    final appended = all.sublist(placed);
+    mergeSort(appended, compare: byStart);
+    final earliest = appended.first.start;
+    var from = placed;
+    while (from > 0 && all[from - 1].start.isAfter(earliest)) {
+      from--;
+    }
+    final moved = [...all.sublist(from, placed), ...appended];
+    mergeSort(moved, compare: byStart);
+    for (final trackerInfo in all.skip(from)) {
+      byId.remove(trackerInfo.id);
+    }
+    for (final trackerInfo in moved) {
+      byId[trackerInfo.id] = trackerInfo;
+    }
   }
 
   @override

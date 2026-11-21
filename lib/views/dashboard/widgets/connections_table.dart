@@ -63,14 +63,8 @@ void openDashboardFeed(BuildContext context, DashboardFeed feed) {
     context,
     builder: (_, controller) => NestedPagedSheet(
       builder: (_) => switch (feed) {
-        DashboardFeed.connections => RequestsView(
-          scrollController: controller,
-          initialFeed: RequestFeed.live,
-        ),
-        DashboardFeed.requests => RequestsView(
-          scrollController: controller,
-          initialFeed: RequestFeed.recent,
-        ),
+        DashboardFeed.connections ||
+        DashboardFeed.requests => RequestsView(scrollController: controller),
         DashboardFeed.dns => DnsQueriesView(scrollController: controller),
       },
     ),
@@ -121,12 +115,18 @@ mixin ConnectionsPolling<T extends ConsumerStatefulWidget>
     try {
       if (pollsConnections) {
         final requestedAt = DateTime.now();
-        final (:next, :tcp) = await _core.getConnectionsWith(_newestFirst);
+        final snapshot = await _core.getConnectionsWith(_asListed);
         if (!isCurrent()) return;
-        connectionCount.value = next.length;
-        ref
-            .read(requestsProvider.notifier)
-            .sync(next, requestedAt: requestedAt);
+        connectionCount.value = snapshot.length;
+        final requests = ref.read(requestsProvider.notifier)
+          ..sync(snapshot, requestedAt: requestedAt);
+        final next = [
+          for (final trackerInfo in requests.value.list.reversed)
+            if (trackerInfo.isActive) trackerInfo,
+        ];
+        final tcp = next
+            .where((item) => item.metadata.network.toLowerCase() == 'tcp')
+            .length;
         updateWhenRouteSettled(
           () => setState(() {
             connections = next;
@@ -921,12 +921,4 @@ class _DnsResult extends StatelessWidget {
   }
 }
 
-({List<TrackerInfo> next, int tcp}) _newestFirst(
-  List<TrackerInfo> trackerInfos,
-) {
-  final next = [...trackerInfos]..sort((a, b) => b.start.compareTo(a.start));
-  final tcp = next
-      .where((item) => item.metadata.network.toLowerCase() == 'tcp')
-      .length;
-  return (next: next, tcp: tcp);
-}
+List<TrackerInfo> _asListed(List<TrackerInfo> trackerInfos) => trackerInfos;

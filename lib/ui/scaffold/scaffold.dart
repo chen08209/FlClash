@@ -29,11 +29,15 @@ class ScaffoldKeyword {
     this.onPressed,
     this.selected = false,
     this.startsSection = false,
+    this.menuItems,
   });
 
   final Object key;
   final String label;
   final VoidCallback? onDeleted;
+
+  /// Opens a menu of these from the chip instead of [onPressed].
+  final List<PopupMenuItem> Function()? menuItems;
 
   final VoidCallback? onPressed;
   final bool selected;
@@ -79,6 +83,9 @@ class Scaffold extends StatefulWidget {
 
   /// Removable chips under the bar, kept by the page that filters by them.
   final ValueListenable<List<ScaffoldKeyword>>? keywords;
+
+  /// A line under the [keywords] strip, as a summary of what they select.
+  final Widget? keywordsCaption;
   final bool? resizeToAvoidBottomInset;
   final VoidCallback? backAction;
 
@@ -105,6 +112,7 @@ class Scaffold extends StatefulWidget {
     this.menuItems = const [],
     this.confirmationAction,
     this.keywords,
+    this.keywordsCaption,
     this.resizeToAvoidBottomInset,
     this.canSort = false,
   });
@@ -530,6 +538,32 @@ class ScaffoldState extends State<Scaffold>
     );
   }
 
+  Widget _buildKeywords(List<ScaffoldKeyword> keywords) {
+    final caption = widget.keywordsCaption;
+    final strip = _KeywordStrip(keywords: keywords);
+    if (caption == null) {
+      return strip;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 8,
+      children: [
+        strip,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: DefaultTextStyle.merge(
+            style: AppTextStyle.caption1
+                .of(context)
+                .copyWith(color: context.colorScheme.onSurfaceVariant),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            child: caption,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTitle({required bool compact}) {
     return BarItemPresence.title(
       child:
@@ -856,7 +890,7 @@ class ScaffoldState extends State<Scaffold>
                 ? null
                 : Padding(
                     padding: const EdgeInsets.only(top: 4, bottom: 16),
-                    child: _KeywordStrip(keywords: keywords.value),
+                    child: _buildKeywords(keywords.value),
                   ),
       foot: docked == null ? null : _buildDockedSearch(docked),
       footHidden: _sorting,

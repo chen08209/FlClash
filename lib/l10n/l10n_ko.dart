@@ -545,6 +545,119 @@ class AppLocalizationsKo extends AppLocalizations {
   String get liveConnections => '실시간 연결';
 
   @override
+  String get speed => '속도';
+
+  @override
+  String get disconnectActiveConnections => '활성 연결 모두 끊기';
+
+  @override
+  String get clearClosedConnections => '종료된 연결 기록 지우기';
+
+  @override
+  String newConnections(int count) {
+    return '새 연결 $count개';
+  }
+
+  @override
+  String get connectionsAll => '전체';
+
+  @override
+  String get connectionsActive => '활성';
+
+  @override
+  String get connectionsFailed => '실패';
+
+  @override
+  String get connectionsDecrypted => '복호화됨';
+
+  @override
+  String get failureRefused => '거부됨';
+
+  @override
+  String get failureUnreachable => '도달 불가';
+
+  @override
+  String get failureDns => 'DNS 확인 실패';
+
+  @override
+  String get failureHandshake => '핸드셰이크 실패';
+
+  @override
+  String get failureOther => '기타 오류';
+
+  @override
+  String get previousItem => '이전';
+
+  @override
+  String get nextItem => '다음';
+
+  @override
+  String get connectionClosed => '종료됨';
+
+  @override
+  String get condition => '조건';
+
+  @override
+  String get addCondition => '조건 추가';
+
+  @override
+  String get conditionField => '필드';
+
+  @override
+  String get conditionExcludes => '일치 항목 제외';
+
+  @override
+  String get conditionTip =>
+      '같은 필드의 조건은 하나만 맞으면 되고, 다른 필드의 조건은 모두 맞아야 합니다. 검색창도 같은 형식을 씁니다. 예: host:github.com -app:chrome';
+
+  @override
+  String connectionsShown(int count) {
+    return '$count개 표시';
+  }
+
+  @override
+  String connectionsFiltered(int count) {
+    return '필터 후 $count개';
+  }
+
+  @override
+  String selectedCount(int count) {
+    return '$count개 선택됨';
+  }
+
+  @override
+  String get thisRun => '이번 실행';
+
+  @override
+  String get connectionPath => '경로';
+
+  @override
+  String get proxyNode => '노드';
+
+  @override
+  String get closingTime => '종료 시간';
+
+  @override
+  String processUid(int uid) {
+    return 'UID $uid';
+  }
+
+  @override
+  String get onlyThisApp => '이 앱만 보기';
+
+  @override
+  String get hideThisHost => '이 호스트 숨기기';
+
+  @override
+  String get viewHttp => 'HTTP 보기';
+
+  @override
+  String get pauseRefreshing => '새로 고침 일시 중지';
+
+  @override
+  String get resumeRefreshing => '새로 고침 재개';
+
+  @override
   String get inbound => '인바운드';
 
   @override
@@ -2310,9 +2423,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pickFromAlbum => '앨범에서 선택';
 
   @override
-  String get closeConnections => '연결 종료';
-
-  @override
   String get scrollToSelected => '선택 항목으로 스크롤';
 
   @override
@@ -3191,6 +3301,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get httpCaptureOff => '캡처가 꺼져 있습니다';
+
+  @override
+  String get httpCapturing => '캡처 중';
+
+  @override
+  String get httpCaptureNeedsDecryption => '캡처하려면 먼저 HTTPS 복호화를 켜고 인증서를 설치하세요.';
+
+  @override
+  String get goToMitmSettings => 'MITM 설정으로 이동';
 
   @override
   String get inProgress => '진행 중';

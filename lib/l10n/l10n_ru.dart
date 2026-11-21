@@ -561,6 +561,127 @@ class AppLocalizationsRu extends AppLocalizations {
   String get liveConnections => 'Активные соединения';
 
   @override
+  String get speed => 'Скорость';
+
+  @override
+  String get disconnectActiveConnections => 'Разорвать все активные соединения';
+
+  @override
+  String get clearClosedConnections => 'Очистить закрытые соединения';
+
+  @override
+  String newConnections(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count новых соединения',
+      many: '$count новых соединений',
+      few: '$count новых соединения',
+      one: '$count новое соединение',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get connectionsAll => 'Все';
+
+  @override
+  String get connectionsActive => 'Активные';
+
+  @override
+  String get connectionsFailed => 'Сбои';
+
+  @override
+  String get connectionsDecrypted => 'Расшифрованные';
+
+  @override
+  String get failureRefused => 'Отклонено';
+
+  @override
+  String get failureUnreachable => 'Недоступно';
+
+  @override
+  String get failureDns => 'Ошибка DNS';
+
+  @override
+  String get failureHandshake => 'Ошибка рукопожатия';
+
+  @override
+  String get failureOther => 'Другая ошибка';
+
+  @override
+  String get previousItem => 'Предыдущее';
+
+  @override
+  String get nextItem => 'Следующее';
+
+  @override
+  String get connectionClosed => 'Закрыто';
+
+  @override
+  String get condition => 'Условие';
+
+  @override
+  String get addCondition => 'Добавить условие';
+
+  @override
+  String get conditionField => 'Поле';
+
+  @override
+  String get conditionExcludes => 'Исключить совпадения';
+
+  @override
+  String get conditionTip =>
+      'Условия по одному полю объединяются через «или», по разным полям — через «и». Поиск понимает ту же запись, например host:github.com -app:chrome.';
+
+  @override
+  String connectionsShown(int count) {
+    return 'Показано: $count';
+  }
+
+  @override
+  String connectionsFiltered(int count) {
+    return 'После фильтра: $count';
+  }
+
+  @override
+  String selectedCount(int count) {
+    return 'Выбрано: $count';
+  }
+
+  @override
+  String get thisRun => 'Этот запуск';
+
+  @override
+  String get connectionPath => 'Маршрут';
+
+  @override
+  String get proxyNode => 'Узел';
+
+  @override
+  String get closingTime => 'Время закрытия';
+
+  @override
+  String processUid(int uid) {
+    return 'UID $uid';
+  }
+
+  @override
+  String get onlyThisApp => 'Только это приложение';
+
+  @override
+  String get hideThisHost => 'Скрыть этот хост';
+
+  @override
+  String get viewHttp => 'Показать HTTP';
+
+  @override
+  String get pauseRefreshing => 'Приостановить обновление';
+
+  @override
+  String get resumeRefreshing => 'Возобновить обновление';
+
+  @override
   String get inbound => 'Входящие';
 
   @override
@@ -2383,9 +2504,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pickFromAlbum => 'Выбрать из галереи';
 
   @override
-  String get closeConnections => 'Закрыть соединения';
-
-  @override
   String get scrollToSelected => 'Прокрутить к выбранному';
 
   @override
@@ -3269,6 +3387,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get httpCaptureOff => 'Захват выключен';
+
+  @override
+  String get httpCapturing => 'Идёт захват';
+
+  @override
+  String get httpCaptureNeedsDecryption =>
+      'Для захвата сначала включите расшифровку HTTPS и установите сертификат.';
+
+  @override
+  String get goToMitmSettings => 'Перейти к настройкам MITM';
 
   @override
   String get inProgress => 'Выполняется';

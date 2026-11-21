@@ -1158,6 +1158,210 @@ abstract class AppLocalizations {
   /// **'Live connections'**
   String get liveConnections;
 
+  /// No description provided for @speed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed'**
+  String get speed;
+
+  /// No description provided for @disconnectActiveConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect all active connections'**
+  String get disconnectActiveConnections;
+
+  /// No description provided for @clearClosedConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear closed connections'**
+  String get clearClosedConnections;
+
+  /// No description provided for @newConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 new connection} other{{count} new connections}}'**
+  String newConnections(int count);
+
+  /// No description provided for @connectionsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get connectionsAll;
+
+  /// No description provided for @connectionsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get connectionsActive;
+
+  /// No description provided for @connectionsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get connectionsFailed;
+
+  /// No description provided for @connectionsDecrypted.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrypted'**
+  String get connectionsDecrypted;
+
+  /// No description provided for @failureRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'Refused'**
+  String get failureRefused;
+
+  /// No description provided for @failureUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unreachable'**
+  String get failureUnreachable;
+
+  /// No description provided for @failureDns.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS failed'**
+  String get failureDns;
+
+  /// No description provided for @failureHandshake.
+  ///
+  /// In en, this message translates to:
+  /// **'Handshake failed'**
+  String get failureHandshake;
+
+  /// No description provided for @failureOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other error'**
+  String get failureOther;
+
+  /// No description provided for @previousItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get previousItem;
+
+  /// No description provided for @nextItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get nextItem;
+
+  /// No description provided for @connectionClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get connectionClosed;
+
+  /// No description provided for @condition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get condition;
+
+  /// No description provided for @addCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Add condition'**
+  String get addCondition;
+
+  /// No description provided for @conditionField.
+  ///
+  /// In en, this message translates to:
+  /// **'Field'**
+  String get conditionField;
+
+  /// No description provided for @conditionExcludes.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude matches'**
+  String get conditionExcludes;
+
+  /// No description provided for @conditionTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Conditions on one field match any of them, on different fields all. Search takes the same form, as in host:github.com -app:chrome.'**
+  String get conditionTip;
+
+  /// No description provided for @connectionsShown.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {count}'**
+  String connectionsShown(int count);
+
+  /// No description provided for @connectionsFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} after filtering'**
+  String connectionsFiltered(int count);
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedCount(int count);
+
+  /// No description provided for @thisRun.
+  ///
+  /// In en, this message translates to:
+  /// **'This run'**
+  String get thisRun;
+
+  /// No description provided for @connectionPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Path'**
+  String get connectionPath;
+
+  /// No description provided for @proxyNode.
+  ///
+  /// In en, this message translates to:
+  /// **'Node'**
+  String get proxyNode;
+
+  /// No description provided for @closingTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed at'**
+  String get closingTime;
+
+  /// No description provided for @processUid.
+  ///
+  /// In en, this message translates to:
+  /// **'UID {uid}'**
+  String processUid(int uid);
+
+  /// No description provided for @onlyThisApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Only this app'**
+  String get onlyThisApp;
+
+  /// No description provided for @hideThisHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this host'**
+  String get hideThisHost;
+
+  /// No description provided for @viewHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'View HTTP'**
+  String get viewHttp;
+
+  /// No description provided for @pauseRefreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause refreshing'**
+  String get pauseRefreshing;
+
+  /// No description provided for @resumeRefreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume refreshing'**
+  String get resumeRefreshing;
+
   /// No description provided for @inbound.
   ///
   /// In en, this message translates to:
@@ -4308,12 +4512,6 @@ abstract class AppLocalizations {
   /// **'Choose from album'**
   String get pickFromAlbum;
 
-  /// No description provided for @closeConnections.
-  ///
-  /// In en, this message translates to:
-  /// **'Close connections'**
-  String get closeConnections;
-
   /// No description provided for @scrollToSelected.
   ///
   /// In en, this message translates to:
@@ -5813,6 +6011,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Capture is off'**
   String get httpCaptureOff;
+
+  /// No description provided for @httpCapturing.
+  ///
+  /// In en, this message translates to:
+  /// **'Capturing'**
+  String get httpCapturing;
+
+  /// No description provided for @httpCaptureNeedsDecryption.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture needs HTTPS decryption on and its certificate installed first.'**
+  String get httpCaptureNeedsDecryption;
+
+  /// No description provided for @goToMitmSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to MITM settings'**
+  String get goToMitmSettings;
 
   /// No description provided for @inProgress.
   ///

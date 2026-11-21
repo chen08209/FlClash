@@ -541,6 +541,119 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liveConnections => '实时连接';
 
   @override
+  String get speed => '速度';
+
+  @override
+  String get disconnectActiveConnections => '断开全部活动连接';
+
+  @override
+  String get clearClosedConnections => '清空已关闭记录';
+
+  @override
+  String newConnections(int count) {
+    return '$count 条新连接';
+  }
+
+  @override
+  String get connectionsAll => '全部';
+
+  @override
+  String get connectionsActive => '活动';
+
+  @override
+  String get connectionsFailed => '失败';
+
+  @override
+  String get connectionsDecrypted => '已解密';
+
+  @override
+  String get failureRefused => '连接被拒绝';
+
+  @override
+  String get failureUnreachable => '不可达';
+
+  @override
+  String get failureDns => 'DNS 解析失败';
+
+  @override
+  String get failureHandshake => '握手失败';
+
+  @override
+  String get failureOther => '其他错误';
+
+  @override
+  String get previousItem => '上一条';
+
+  @override
+  String get nextItem => '下一条';
+
+  @override
+  String get connectionClosed => '已关闭';
+
+  @override
+  String get condition => '条件';
+
+  @override
+  String get addCondition => '添加条件';
+
+  @override
+  String get conditionField => '字段';
+
+  @override
+  String get conditionExcludes => '反向（排除匹配项）';
+
+  @override
+  String get conditionTip =>
+      '同一字段的条件满足其一即可，不同字段的条件都要满足。搜索框支持同样的写法，如 host:github.com -app:chrome。';
+
+  @override
+  String connectionsShown(int count) {
+    return '显示 $count 条';
+  }
+
+  @override
+  String connectionsFiltered(int count) {
+    return '筛选后 $count 条';
+  }
+
+  @override
+  String selectedCount(int count) {
+    return '已选 $count';
+  }
+
+  @override
+  String get thisRun => '本次运行';
+
+  @override
+  String get connectionPath => '链路';
+
+  @override
+  String get proxyNode => '节点';
+
+  @override
+  String get closingTime => '关闭时间';
+
+  @override
+  String processUid(int uid) {
+    return 'UID $uid';
+  }
+
+  @override
+  String get onlyThisApp => '只看此应用';
+
+  @override
+  String get hideThisHost => '隐藏此主机';
+
+  @override
+  String get viewHttp => '查看 HTTP';
+
+  @override
+  String get pauseRefreshing => '暂停刷新';
+
+  @override
+  String get resumeRefreshing => '继续刷新';
+
+  @override
   String get inbound => '入站';
 
   @override
@@ -2240,9 +2353,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pickFromAlbum => '从相册选择';
 
   @override
-  String get closeConnections => '关闭连接';
-
-  @override
   String get scrollToSelected => '滚动到已选';
 
   @override
@@ -3080,6 +3190,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get httpCaptureOff => '抓包未开启';
+
+  @override
+  String get httpCapturing => '抓包中';
+
+  @override
+  String get httpCaptureNeedsDecryption => '抓包要先开启 HTTPS 解密并安装证书。';
+
+  @override
+  String get goToMitmSettings => '前往 MITM 设置';
 
   @override
   String get inProgress => '进行中';

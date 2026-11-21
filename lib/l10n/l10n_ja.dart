@@ -545,6 +545,119 @@ class AppLocalizationsJa extends AppLocalizations {
   String get liveConnections => 'リアルタイム接続';
 
   @override
+  String get speed => '速度';
+
+  @override
+  String get disconnectActiveConnections => 'アクティブな接続をすべて切断';
+
+  @override
+  String get clearClosedConnections => '終了した接続の記録を消去';
+
+  @override
+  String newConnections(int count) {
+    return '新しい接続 $count 件';
+  }
+
+  @override
+  String get connectionsAll => 'すべて';
+
+  @override
+  String get connectionsActive => 'アクティブ';
+
+  @override
+  String get connectionsFailed => '失敗';
+
+  @override
+  String get connectionsDecrypted => '復号済み';
+
+  @override
+  String get failureRefused => '拒否されました';
+
+  @override
+  String get failureUnreachable => '到達不能';
+
+  @override
+  String get failureDns => 'DNS 解決に失敗';
+
+  @override
+  String get failureHandshake => 'ハンドシェイクに失敗';
+
+  @override
+  String get failureOther => 'その他のエラー';
+
+  @override
+  String get previousItem => '前へ';
+
+  @override
+  String get nextItem => '次へ';
+
+  @override
+  String get connectionClosed => '終了済み';
+
+  @override
+  String get condition => '条件';
+
+  @override
+  String get addCondition => '条件を追加';
+
+  @override
+  String get conditionField => 'フィールド';
+
+  @override
+  String get conditionExcludes => '一致を除外';
+
+  @override
+  String get conditionTip =>
+      '同じフィールドの条件はいずれか一つ、異なるフィールドの条件はすべてに一致します。検索欄でも同じ書き方が使えます（例：host:github.com -app:chrome）。';
+
+  @override
+  String connectionsShown(int count) {
+    return '$count 件を表示';
+  }
+
+  @override
+  String connectionsFiltered(int count) {
+    return '絞り込み後 $count 件';
+  }
+
+  @override
+  String selectedCount(int count) {
+    return '$count 件選択';
+  }
+
+  @override
+  String get thisRun => '今回の実行';
+
+  @override
+  String get connectionPath => '経路';
+
+  @override
+  String get proxyNode => 'ノード';
+
+  @override
+  String get closingTime => '終了時刻';
+
+  @override
+  String processUid(int uid) {
+    return 'UID $uid';
+  }
+
+  @override
+  String get onlyThisApp => 'このアプリのみ表示';
+
+  @override
+  String get hideThisHost => 'このホストを非表示';
+
+  @override
+  String get viewHttp => 'HTTP を表示';
+
+  @override
+  String get pauseRefreshing => '更新を一時停止';
+
+  @override
+  String get resumeRefreshing => '更新を再開';
+
+  @override
   String get inbound => 'インバウンド';
 
   @override
@@ -2263,9 +2376,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get pickFromAlbum => 'アルバムから選択';
 
   @override
-  String get closeConnections => '接続を閉じる';
-
-  @override
   String get scrollToSelected => '選択項目へスクロール';
 
   @override
@@ -3117,6 +3227,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get httpCaptureOff => 'キャプチャはオフです';
+
+  @override
+  String get httpCapturing => 'キャプチャ中';
+
+  @override
+  String get httpCaptureNeedsDecryption =>
+      'キャプチャするには、先に HTTPS 復号をオンにして証明書をインストールしてください。';
+
+  @override
+  String get goToMitmSettings => 'MITM 設定へ';
 
   @override
   String get inProgress => '進行中';

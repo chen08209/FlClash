@@ -562,6 +562,125 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liveConnections => 'Live connections';
 
   @override
+  String get speed => 'Speed';
+
+  @override
+  String get disconnectActiveConnections => 'Disconnect all active connections';
+
+  @override
+  String get clearClosedConnections => 'Clear closed connections';
+
+  @override
+  String newConnections(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new connections',
+      one: '1 new connection',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get connectionsAll => 'All';
+
+  @override
+  String get connectionsActive => 'Active';
+
+  @override
+  String get connectionsFailed => 'Failed';
+
+  @override
+  String get connectionsDecrypted => 'Decrypted';
+
+  @override
+  String get failureRefused => 'Refused';
+
+  @override
+  String get failureUnreachable => 'Unreachable';
+
+  @override
+  String get failureDns => 'DNS failed';
+
+  @override
+  String get failureHandshake => 'Handshake failed';
+
+  @override
+  String get failureOther => 'Other error';
+
+  @override
+  String get previousItem => 'Previous';
+
+  @override
+  String get nextItem => 'Next';
+
+  @override
+  String get connectionClosed => 'Closed';
+
+  @override
+  String get condition => 'Condition';
+
+  @override
+  String get addCondition => 'Add condition';
+
+  @override
+  String get conditionField => 'Field';
+
+  @override
+  String get conditionExcludes => 'Exclude matches';
+
+  @override
+  String get conditionTip =>
+      'Conditions on one field match any of them, on different fields all. Search takes the same form, as in host:github.com -app:chrome.';
+
+  @override
+  String connectionsShown(int count) {
+    return 'Showing $count';
+  }
+
+  @override
+  String connectionsFiltered(int count) {
+    return '$count after filtering';
+  }
+
+  @override
+  String selectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get thisRun => 'This run';
+
+  @override
+  String get connectionPath => 'Path';
+
+  @override
+  String get proxyNode => 'Node';
+
+  @override
+  String get closingTime => 'Closed at';
+
+  @override
+  String processUid(int uid) {
+    return 'UID $uid';
+  }
+
+  @override
+  String get onlyThisApp => 'Only this app';
+
+  @override
+  String get hideThisHost => 'Hide this host';
+
+  @override
+  String get viewHttp => 'View HTTP';
+
+  @override
+  String get pauseRefreshing => 'Pause refreshing';
+
+  @override
+  String get resumeRefreshing => 'Resume refreshing';
+
+  @override
   String get inbound => 'Inbound';
 
   @override
@@ -2374,9 +2493,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickFromAlbum => 'Choose from album';
 
   @override
-  String get closeConnections => 'Close connections';
-
-  @override
   String get scrollToSelected => 'Scroll to selected';
 
   @override
@@ -3275,6 +3391,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get httpCaptureOff => 'Capture is off';
+
+  @override
+  String get httpCapturing => 'Capturing';
+
+  @override
+  String get httpCaptureNeedsDecryption =>
+      'Capture needs HTTPS decryption on and its certificate installed first.';
+
+  @override
+  String get goToMitmSettings => 'Go to MITM settings';
 
   @override
   String get inProgress => 'In progress';

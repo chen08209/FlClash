@@ -149,7 +149,7 @@ void main() {
   testWidgets('the table keeps the newest rows, sorts every connection and '
       'counts them all', (tester) async {
     final core = _MockCore();
-    whenConnections<({List<TrackerInfo> next, int tcp})>(
+    whenConnections<List<TrackerInfo>>(
       core,
       () async => [
         for (var index = 0; index < 150; index++)

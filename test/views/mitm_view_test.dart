@@ -14,6 +14,7 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/list_item.dart';
 import 'package:fl_clash/views/config/advanced.dart';
 import 'package:fl_clash/views/config/mitm.dart';
+import 'package:fl_clash/views/connection/http_capture.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -155,10 +156,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> openCapture(WidgetTester tester) async {
-    await tester.tap(find.text(currentAppLocalizations.httpCapture));
-    await tester.pumpAndSettle();
-  }
+  const captureView = HttpCaptureView(isAndroid: false);
 
   Future<void> toggleEnable(WidgetTester tester) async {
     await tester.tap(
@@ -179,8 +177,8 @@ void main() {
     await pumpView(
       tester,
       mitm: const Mitm(enable: true, capture: true, hostname: ['-a.example']),
+      view: captureView,
     );
-    await openCapture(tester);
     expect(
       find.text(currentAppLocalizations.httpCaptureNoHosts),
       findsOneWidget,
@@ -193,8 +191,8 @@ void main() {
     await pumpView(
       tester,
       mitm: const Mitm(enable: true, capture: true, hostname: ['a.example']),
+      view: captureView,
     );
-    await openCapture(tester);
     expect(find.text(currentAppLocalizations.httpCaptureNoHosts), findsNothing);
     expect(find.text(currentAppLocalizations.httpCaptureDesc), findsOneWidget);
   });
@@ -338,7 +336,7 @@ void main() {
         await tester.tap(find.text(currentAppLocalizations.options));
         await tester.pumpAndSettle();
 
-        expect(find.text(currentAppLocalizations.httpCapture), findsOneWidget);
+        expect(find.text(currentAppLocalizations.httpCapture), findsNothing);
         expect(find.text(_certificate.subject), findsOneWidget);
       },
     );
@@ -349,12 +347,34 @@ void main() {
     matching: find.byType(Switch),
   );
 
-  testWidgets('capture waits for decryption to be on', (tester) async {
-    await pumpView(tester, certificate: _certificate);
+  testWidgets('capture waits for decryption to be on and leads to it', (
+    tester,
+  ) async {
+    await pumpView(tester, certificate: _certificate, view: captureView);
 
-    expect(find.text(currentAppLocalizations.options), findsOneWidget);
-    await openCapture(tester);
     expect(tester.widget<Switch>(captureSwitch()).onChanged, isNull);
+    expect(
+      find.text(currentAppLocalizations.httpCaptureNeedsDecryption),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text(currentAppLocalizations.goToMitmSettings));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AdvancedConfigView), findsOneWidget);
+  });
+
+  testWidgets('capture can be turned on once decryption is', (tester) async {
+    await pumpView(
+      tester,
+      certificate: _certificate,
+      mitm: const Mitm(enable: true, hostname: ['a.example']),
+      view: captureView,
+    );
+
+    expect(tester.widget<Switch>(captureSwitch()).onChanged, isNotNull);
+    expect(find.text(currentAppLocalizations.goToMitmSettings), findsNothing);
+    expect(find.text(currentAppLocalizations.httpCaptureDesc), findsOneWidget);
   });
 
   testWidgets('capture is saved with the MITM settings', (tester) async {
@@ -362,9 +382,9 @@ void main() {
       tester,
       certificate: _certificate,
       mitm: const Mitm(enable: true),
+      view: captureView,
     );
 
-    await openCapture(tester);
     await tester.tap(captureSwitch());
     await tester.pumpAndSettle();
 
@@ -378,9 +398,9 @@ void main() {
       tester,
       certificate: _certificate,
       mitm: const Mitm(enable: true),
+      view: captureView,
     );
 
-    await openCapture(tester);
     await tester.tap(find.text('2000'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('5000'));
