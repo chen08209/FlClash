@@ -20,9 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.util.concurrent.TimeUnit
-
-private const val ICON_TTL_DAYS = 1L
+import java.io.IOException
 
 val Application.sharedState: SharedState
     get() = try {
@@ -45,17 +43,26 @@ fun Application.showToast(text: String?) {
     }
 }
 
+// A directory per package, so a new version replaces only that package's icon
+// file; `icons` holds the flat layout of earlier releases.
+private val packageIconDir by lazy {
+    val cacheDir = GlobalState.application.cacheDir
+    File(cacheDir, "icons").deleteRecursively()
+    File(cacheDir, "package_icons")
+}
+
 suspend fun PackageManager.getPackageIconPath(packageName: String): String =
     withContext(Dispatchers.IO) {
-        val cacheDir = GlobalState.application.cacheDir
-        val iconDir = File(cacheDir, "icons").apply { mkdirs() }
+        val iconDir = packageIconDir.apply { mkdirs() }
         return@withContext try {
             val lastUpdateTime = getPackageInfo(packageName, 0).lastUpdateTime
-            val iconFile = File(iconDir, "${packageName}_${lastUpdateTime}.webp")
-            if (iconFile.exists() && !isExpired(iconFile)) {
+            val packageDir = File(iconDir, packageName)
+            val iconFile = File(packageDir, "$lastUpdateTime.webp")
+            if (iconFile.exists()) {
                 return@withContext iconFile.absolutePath
             }
-            iconDir.listFiles { f -> f.name.startsWith("${packageName}_") }?.forEach(File::delete)
+            packageDir.deleteRecursively()
+            packageDir.mkdirs()
 
             val icon = getApplicationIcon(packageName)
             saveDrawableToFile(icon, iconFile)
@@ -73,6 +80,8 @@ private suspend fun saveDrawableToFile(drawable: Drawable, file: File) {
     val bitmap = withContext(Dispatchers.Default) {
         drawable.toBitmap(width = 128, height = 128)
     }
+    // Callers trust any file that exists, so only a complete one may take its name.
+    val partial = File.createTempFile(file.name, ".tmp", file.parentFile)
     try {
         @Suppress("DEPRECATION")
         val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -80,18 +89,16 @@ private suspend fun saveDrawableToFile(drawable: Drawable, file: File) {
         } else {
             Bitmap.CompressFormat.WEBP
         }
-        FileOutputStream(file).use { fos ->
+        val written = FileOutputStream(partial).use { fos ->
             bitmap.compress(format, 90, fos)
         }
+        if (!written || !partial.renameTo(file)) {
+            throw IOException("could not write ${file.name}")
+        }
     } finally {
+        partial.delete()
         if (!bitmap.isRecycled) bitmap.recycle()
     }
-}
-
-private fun isExpired(file: File): Boolean {
-    val now = System.currentTimeMillis()
-    val age = now - file.lastModified()
-    return age > TimeUnit.DAYS.toMillis(ICON_TTL_DAYS)
 }
 
 inline fun <reified T : FlutterPlugin> FlutterEngine.plugin(): T? {
