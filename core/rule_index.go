@@ -130,3 +130,26 @@ func newConnectionSnapshot(snapshot *statistic.Snapshot) *connectionSnapshot {
 	}
 	return result
 }
+
+type ruleEntry struct {
+	Type    string `json:"type"`
+	Payload string `json:"payload"`
+	Target  string `json:"target"`
+}
+
+type ruleList struct {
+	Rules []ruleEntry `json:"rules"`
+}
+
+// handleGetRules lists the table ruleIndex points into, written as a tracker names its rule.
+func handleGetRules() ruleList {
+	t := &currentRuleTable
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.refresh()
+	list := ruleList{Rules: make([]ruleEntry, 0, len(t.rules))}
+	for _, rule := range t.rules {
+		list.Rules = append(list.Rules, ruleEntry{rule.RuleType().String(), rule.Payload(), rule.Adapter()})
+	}
+	return list
+}

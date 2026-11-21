@@ -153,6 +153,27 @@ func TestARequestEventIsTheTrackerWithItsRuleIndex(t *testing.T) {
 	}
 }
 
+func TestRuleListNamesEachRuleAsATrackerDoesInIndexOrder(t *testing.T) {
+	useRules(t, [3]string{"DOMAIN-SUFFIX", "x.test", "Proxy"}, [3]string{"MATCH", "", "DIRECT"})
+	data, err := json.Marshal(handleGetRules())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{"rules":[{"type":"DomainSuffix","payload":"x.test","target":"Proxy"},{"type":"Match","payload":"","target":"DIRECT"}]}`
+	if string(data) != want {
+		t.Errorf("rule.list = %s\nwant %s", data, want)
+	}
+	info := &statistic.TrackerInfo{Metadata: &C.Metadata{}, Start: time.Now(), Chain: C.Chain{"HK-01", "Proxy"}, Rule: "DomainSuffix", RulePayload: "x.test"}
+	if got := indexValue(currentRuleTable.indexOf(info, true)); got != 0 {
+		t.Errorf("the tracker's index %d, want the first listed", got)
+	}
+
+	tunnel.UpdateRules(nil, nil, nil)
+	if data, _ := json.Marshal(handleGetRules()); string(data) != `{"rules":[]}` {
+		t.Errorf("no rules: %s", data)
+	}
+}
+
 func TestAListedConnectionOpenedAfterTheRulesWereSwappedElsewhereKeepsItsIndex(t *testing.T) {
 	useRules(t, [3]string{"MATCH", "", "DIRECT"})
 	info := func() *statistic.TrackerInfo {
