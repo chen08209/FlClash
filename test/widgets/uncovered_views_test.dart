@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/exception.dart';
 import 'package:fl_clash/common/l10n_labels.dart';
+import 'package:fl_clash/common/release_asset.dart';
 import 'package:fl_clash/common/request.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
@@ -296,13 +297,10 @@ void main() {
       lessThan(tester.getRect(find.text(l10n.autoCheckUpdate)).top),
     );
     expect(
-      tester.getRect(find.text(l10n.autoCheckUpdate)).top,
-      lessThan(tester.getRect(find.text(l10n.updateChannel)).top),
-    );
-    expect(
-      tester.getRect(find.text(l10n.updateChannel)).bottom,
+      tester.getRect(find.text(l10n.autoCheckUpdate)).bottom,
       lessThan(tester.getRect(find.widgetWithText(ListHeader, l10n.more)).top),
     );
+    expect(find.text(l10n.updateChannel), findsNothing);
 
     expect(container.read(appSettingProvider).autoCheckUpdate, isTrue);
     await tester.tap(
@@ -314,16 +312,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(appSettingProvider).autoCheckUpdate, isFalse);
 
-    expect(
-      container.read(appSettingProvider).updateChannel,
-      UpdateChannel.stable,
-    );
-    await tester.tap(find.text(l10n.updateChannel));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.updateChannelPre));
-    await tester.pumpAndSettle();
-    expect(container.read(appSettingProvider).updateChannel, UpdateChannel.pre);
-    expect(find.text(l10n.updateChannelPre), findsOneWidget);
     expect(tester.takeException(), null);
   });
 
@@ -355,7 +343,15 @@ void main() {
 
     adapter.response.complete(
       ResponseBody.fromString(
-        jsonEncode({'tag_name': 'v0.0.0'}),
+        jsonEncode([
+          {
+            'tag_name': 'v0.0.0-rs.1',
+            'draft': false,
+            'assets': [
+              {'name': updateChecksumsName('v0.0.0-rs.1')},
+            ],
+          },
+        ]),
         200,
         headers: {
           Headers.contentTypeHeader: [Headers.jsonContentType],

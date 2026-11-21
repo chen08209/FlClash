@@ -124,6 +124,9 @@ const _feed = '''
   <entry>
     <link rel="alternate" type="text/html" href="https://github.com/owner/repo/releases/tag/v0.9.4-pre.1"/>
   </entry>
+  <entry>
+    <link rel="alternate" type="text/html" href="https://github.com/owner/repo/releases/tag/v0.9.4-rs.1"/>
+  </entry>
 </feed>
 ''';
 
@@ -245,75 +248,6 @@ void main() {
     const api = 'api.github.com/repos/$repository/releases';
     const feed = 'github.com/$repository/releases.atom';
 
-    test('stable reads only the latest release', () async {
-      final request = requestAnswering({
-        '$api/latest': () => json({'tag_name': 'v1.2.0'}),
-        api: () => json([
-          {'tag_name': 'v1.3.0-pre.1'},
-        ]),
-      });
-
-      expect(await request.newestRelease(UpdateChannel.stable), {
-        'tag_name': 'v1.2.0',
-      });
-    });
-
-    test('pre takes the newest dev release from the list', () async {
-      final request = requestAnswering({
-        api: () => json([
-          listed('v1.3.0-rs.4', body: 'rs'),
-          listed('v1.3.0-pre.9', draft: true),
-          listed('v1.3.0-pre.2', body: 'pre 2'),
-          listed('v1.3.0-pre.10', body: 'pre 10'),
-          listed('v1.2.0', body: 'stable'),
-        ]),
-      });
-
-      final release = await request.newestRelease(UpdateChannel.pre);
-
-      expect(release['tag_name'], 'v1.3.0-pre.10');
-      expect(release['body'], 'pre 10');
-    });
-
-    test('pre answers a stable release newer than every prerelease', () async {
-      final request = requestAnswering({
-        api: () => json([listed('v1.3.0-pre.2'), listed('v1.3.0')]),
-      });
-
-      expect(
-        (await request.newestRelease(UpdateChannel.pre))['tag_name'],
-        'v1.3.0',
-      );
-    });
-
-    test('pre looks past a full page with no dev release on it', () async {
-      final request = Request()
-        ..dio.httpClientAdapter = _PageAdapter({
-          '1': () =>
-              json([for (var i = 1; i <= 100; i++) listed('v1.3.0-rs.$i')]),
-          '2': () => json([listed('v1.3.0-pre.2')]),
-        });
-
-      expect(
-        (await request.newestRelease(UpdateChannel.pre))['tag_name'],
-        'v1.3.0-pre.2',
-      );
-    });
-
-    test('pre skips a release still uploading its files', () async {
-      final request = requestAnswering({
-        api: () => json([
-          listed('v1.3.0-pre.3', uploaded: false),
-          listed('v1.3.0-pre.2'),
-        ]),
-      });
-
-      expect(
-        (await request.newestRelease(UpdateChannel.pre))['tag_name'],
-        'v1.3.0-pre.2',
-      );
-    });
-
     String published(String tag) {
       final uri = releaseAssetUri(tag, updateChecksumsName(tag));
       return '${uri.host}${uri.path}';
@@ -321,50 +255,98 @@ void main() {
 
     ResponseBody redirect() => ResponseBody.fromString('', 302);
 
-    test('pre falls back to the feed when the API is rate limited', () async {
-      final request = requestAnswering({
-        api: () => json({'message': 'rate limited'}, 403),
-        feed: () => ResponseBody.fromString(_feed, 200),
-        published('v0.9.4-pre.2+2'): redirect,
-        published('v0.9.4-pre.1'): redirect,
-      });
-
-      expect(await request.newestRelease(UpdateChannel.pre), {
-        'tag_name': 'v0.9.4-pre.2+2',
-      });
-    });
-
-    test('pre skips a feed tag whose release has no files yet', () async {
-      final request = requestAnswering({
-        api: () => json({'message': 'rate limited'}, 403),
-        feed: () => ResponseBody.fromString(_feed, 200),
-        published('v0.9.4-pre.1'): redirect,
-      });
-
-      expect(await request.newestRelease(UpdateChannel.pre), {
-        'tag_name': 'v0.9.4-pre.1',
-      });
-    });
-
-    const unnamed = ['nightly', 'v1.3.0-beta-1', 'v1.2.0+1'];
-
     test(
-      'pre passes over a listed tag no release files are named after',
+      'reads the list on either channel and takes the newest rs release',
       () async {
         final request = requestAnswering({
+          '$api/latest': () => json(listed('v99.0.0')),
           api: () => json([
-            for (final tag in unnamed)
-              {'tag_name': tag, 'draft': false, 'assets': <Object>[]},
-            listed('v1.2.0-pre.2'),
+            listed('v99.0.0', body: 'Go stable'),
+            listed('v1.3.0-pre.9', body: 'Go prerelease'),
+            listed('v1.3.0-rs.11', draft: true),
+            listed('v1.3.0-rs.2', body: 'rs 2'),
+            listed('v1.3.0-rs.10', body: 'rs 10'),
           ]),
         });
 
-        expect(
-          (await request.newestRelease(UpdateChannel.pre))['tag_name'],
-          'v1.2.0-pre.2',
-        );
+        for (final channel in UpdateChannel.values) {
+          final release = await request.newestRelease(channel);
+          expect(release['tag_name'], 'v1.3.0-rs.10');
+          expect(release['body'], 'rs 10');
+        }
       },
     );
+
+    test('looks past a full page with no rs release on it', () async {
+      final request = Request()
+        ..dio.httpClientAdapter = _PageAdapter({
+          '1': () => json([for (var i = 0; i < 100; i++) listed('v99.0.$i')]),
+          '2': () => json([listed('v1.3.0-rs.2')]),
+        });
+
+      expect(
+        (await request.newestRelease(UpdateChannel.stable))['tag_name'],
+        'v1.3.0-rs.2',
+      );
+    });
+
+    test('skips a release still uploading its files', () async {
+      final request = requestAnswering({
+        api: () => json([
+          listed('v1.3.0-rs.3', uploaded: false),
+          listed('v1.3.0-rs.2'),
+        ]),
+      });
+
+      expect(
+        (await request.newestRelease(UpdateChannel.stable))['tag_name'],
+        'v1.3.0-rs.2',
+      );
+    });
+
+    test('falls back to the feed when the API is rate limited', () async {
+      final request = requestAnswering({
+        api: () => json({'message': 'rate limited'}, 403),
+        feed: () => ResponseBody.fromString(_feed, 200),
+        published('v0.9.3'): redirect,
+        published('v0.9.4-pre.2+2'): redirect,
+        published('v0.9.4-rs.2'): redirect,
+        published('v0.9.4-rs.1'): redirect,
+      });
+
+      expect(await request.newestRelease(UpdateChannel.stable), {
+        'tag_name': 'v0.9.4-rs.2',
+      });
+    });
+
+    test('skips a feed tag whose release has no files yet', () async {
+      final request = requestAnswering({
+        api: () => json({'message': 'rate limited'}, 403),
+        feed: () => ResponseBody.fromString(_feed, 200),
+        published('v0.9.4-rs.1'): redirect,
+      });
+
+      expect(await request.newestRelease(UpdateChannel.stable), {
+        'tag_name': 'v0.9.4-rs.1',
+      });
+    });
+
+    const unnamed = ['nightly', 'v1.3.0-rs.beta-1'];
+
+    test('passes over a listed tag no release files are named after', () async {
+      final request = requestAnswering({
+        api: () => json([
+          for (final tag in unnamed)
+            {'tag_name': tag, 'draft': false, 'assets': <Object>[]},
+          listed('v1.2.0-rs.2'),
+        ]),
+      });
+
+      expect(
+        (await request.newestRelease(UpdateChannel.stable))['tag_name'],
+        'v1.2.0-rs.2',
+      );
+    });
 
     String entryOf(String tag) =>
         '<entry><link rel="alternate" type="text/html" '
@@ -377,69 +359,45 @@ void main() {
       '</feed>',
     ].join('\n');
 
-    test(
-      'pre passes over a feed tag no release files are named after',
-      () async {
-        final request = requestAnswering({
-          api: () => json({'message': 'rate limited'}, 403),
-          feed: () => ResponseBody.fromString(
-            feedOf([...unnamed, 'v1.2.0-pre.2']),
-            200,
-          ),
-          published('v1.2.0-pre.2'): redirect,
-        });
+    test('passes over a feed tag no release files are named after', () async {
+      final request = requestAnswering({
+        api: () => json({'message': 'rate limited'}, 403),
+        feed: () =>
+            ResponseBody.fromString(feedOf([...unnamed, 'v1.2.0-rs.2']), 200),
+        published('v1.2.0-rs.2'): redirect,
+      });
 
-        expect(await request.newestRelease(UpdateChannel.pre), {
-          'tag_name': 'v1.2.0-pre.2',
-        });
-      },
-    );
+      expect(await request.newestRelease(UpdateChannel.stable), {
+        'tag_name': 'v1.2.0-rs.2',
+      });
+    });
 
-    test(
-      'pre looks past every feed tag whose release has no files yet',
-      () async {
-        final request = requestAnswering({
-          api: () => json({'message': 'rate limited'}, 403),
-          feed: () => ResponseBody.fromString(
-            feedOf([for (var n = 5; n > 0; n--) 'v1.2.0-pre.$n']),
-            200,
-          ),
-          published('v1.2.0-pre.1'): redirect,
-        });
+    test('looks past every feed tag whose release has no files yet', () async {
+      final request = requestAnswering({
+        api: () => json({'message': 'rate limited'}, 403),
+        feed: () => ResponseBody.fromString(
+          feedOf([for (var n = 5; n > 0; n--) 'v1.2.0-rs.$n']),
+          200,
+        ),
+        published('v1.2.0-rs.1'): redirect,
+      });
 
-        expect(await request.newestRelease(UpdateChannel.pre), {
-          'tag_name': 'v1.2.0-pre.1',
-        });
-      },
-    );
+      expect(await request.newestRelease(UpdateChannel.stable), {
+        'tag_name': 'v1.2.0-rs.1',
+      });
+    });
 
-    test('pre fails when neither the API nor the feed answers', () async {
+    test('fails when neither the API nor the feed answers', () async {
       final request = requestAnswering({
         api: () => json({}, 403),
         feed: () => ResponseBody.fromString('', 503),
       });
 
       await expectLater(
-        request.newestRelease(UpdateChannel.pre),
+        request.newestRelease(UpdateChannel.stable),
         throwsA(isA<DioException>()),
       );
     });
-  });
-
-  test('an rs build is not offered the latest release, the Go build', () async {
-    final request = Request()
-      ..dio.httpClientAdapter = _HostAdapter({
-        'api.github.com': () => ResponseBody.fromString(
-          '{"tag_name":"v99.0.0"}',
-          200,
-          headers: {
-            Headers.contentTypeHeader: [Headers.jsonContentType],
-          },
-        ),
-      });
-
-    expect(rsReleasesOnGitHub, isFalse);
-    expect(await request.checkForUpdate(UpdateChannel.stable), isNull);
   });
 
   test('releaseTagsOfFeed reads every entry and decodes the tag', () {
@@ -448,6 +406,7 @@ void main() {
       'v0.9.4-rs.2',
       'v0.9.4-pre.2+2',
       'v0.9.4-pre.1',
+      'v0.9.4-rs.1',
     ]);
   });
 
