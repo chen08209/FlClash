@@ -39,7 +39,7 @@ class OutboundModeCard extends ConsumerWidget {
         children: [
           DashboardCardHeader(
             glyph: AppGlyphs.split,
-            title: context.appLocalizations.outboundMode,
+            title: context.appLocalizations.outbound,
           ),
           const SizedBox(height: 12),
           ConnectedButtonGroup(
@@ -121,7 +121,7 @@ class OutboundModeBar extends ConsumerWidget {
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: constraints.maxWidth / 4),
               child: Text(
-                appLocalizations.outboundMode,
+                appLocalizations.outbound,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: DashboardText.cardTitle(context),
