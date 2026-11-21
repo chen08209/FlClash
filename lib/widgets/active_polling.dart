@@ -49,7 +49,17 @@ mixin ActivePollingMixin<T extends StatefulWidget>
       return;
     }
     _isPageActive = isPageActive;
-    _syncPolling();
+    if (!isPageActive) {
+      stopPolling();
+      return;
+    }
+    // A poll starts synchronously, so one that finishes at once would change
+    // state the tree is still building from.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _syncPolling();
+      }
+    });
   }
 
   @override
