@@ -1444,6 +1444,18 @@ void main() {
       expect(balanced.containsKey('tolerance'), isFalse);
     });
 
+    test('emits policy-priority only on a smart group and reads it back', () {
+      final weighted = group.copyWith(policyPriority: 'HK:1.5;US:0.8');
+      final smart = weighted.copyWith(type: GroupType.Smart);
+
+      expect(weighted.definition.containsKey('policy-priority'), isFalse);
+      expect(
+        smart.definition,
+        containsPair('policy-priority', 'HK:1.5;US:0.8'),
+      );
+      expect(smart.withDefinitionYaml(smart.definitionYaml), smart);
+    });
+
     test('emits the options mihomo reads for one type only on that type', () {
       final options = group.copyWith(
         defaultSelected: 'A',

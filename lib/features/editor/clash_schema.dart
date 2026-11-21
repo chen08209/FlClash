@@ -1300,6 +1300,7 @@ const _proxyGroupFields = {
     'url-test',
     'fallback',
     'load-balance',
+    'smart',
   ]),
   'proxies': YamlSchema.list(_policy),
   'use': YamlSchema.list(YamlSchema.of(YamlScalar.proxyProvider)),
@@ -1322,6 +1323,7 @@ const _proxyGroupFields = {
 const _proxyGroupVariants = {
   'select': {'default-selected': _policy},
   'url-test': {'tolerance': _str},
+  'smart': {'tolerance': _str, 'policy-priority': _str},
   'load-balance': {
     'strategy': YamlSchema.scalar([
       'consistent-hashing',
