@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prism_ui/prism_ui.dart';
@@ -104,6 +105,52 @@ class _RenderHeldPane extends RenderBox {
       steadyFrost: steadyFrost,
     );
   }
+}
+
+List<Widget> _stripes() => [
+  const Positioned.fill(child: ColoredBox(color: Colors.white)),
+  for (var stripe = 0; stripe < 56; stripe++)
+    Positioned(
+      left: stripe * 14.3,
+      top: stripe.isEven ? 0 : 40,
+      width: 5 + stripe % 4 * 2.5,
+      bottom: 0,
+      child: ColoredBox(color: [_red, _green, _blue][stripe % 3]),
+    ),
+  for (var stripe = 0; stripe < 40; stripe++)
+    Positioned(
+      left: 0,
+      top: stripe * 15.7,
+      right: stripe.isEven ? 0 : 90,
+      height: 4,
+      child: const ColoredBox(color: Color(0xB3000000)),
+    ),
+];
+
+// The first panes of a run ask for the shaders, which come after their frame.
+Future<void> _shadersLoaded(WidgetTester tester) => tester.pump();
+
+int _furthest(List<int> one, List<int> other) {
+  expect(one.length, other.length);
+  var furthest = 0;
+  for (var index = 0; index < one.length; index++) {
+    final apart = (one[index] - other[index]).abs();
+    if (apart > furthest) {
+      furthest = apart;
+    }
+  }
+  return furthest;
+}
+
+/// The frame as the view shows it, a channel at a time.
+Future<List<int>> _frame(WidgetTester tester) async {
+  final layer = tester.binding.renderViews.first.debugLayer! as OffsetLayer;
+  final image = (await tester.runAsync(
+    () => layer.toImage(Offset.zero & tester.view.physicalSize),
+  ))!;
+  final bytes = (await tester.runAsync(image.toByteData))!;
+  image.dispose();
+  return bytes.buffer.asUint8List();
 }
 
 Future<Color> _behind(WidgetTester tester, _Pane pane, Offset point) async {
@@ -746,6 +793,76 @@ void main() {
     final near = await _behind(tester, pane, const Offset(194, 150));
     expect(near.b, inExclusiveRange(0.15, 0.5));
     expect(await _behind(tester, pane, const Offset(120, 150)), _red);
+  });
+
+  testWidgets('a pane that skips the rim in its middle draws alike', (
+    tester,
+  ) async {
+    addTearDown(() => LiquidGlassHost.debugSkipRimOverride = null);
+    final colorScheme = ColorScheme.fromSeed(seedColor: _blue);
+    await tester.pumpWidget(
+      _app(
+        Stack(
+          children: [
+            ..._stripes(),
+            _pane(
+              const Rect.fromLTWH(60, 40, 300, 180),
+              style: LiquidGlassStyle.regular(colorScheme),
+            ),
+            _pane(
+              const Rect.fromLTWH(380, 260, 320, 200),
+              style: LiquidGlassStyle.menu(colorScheme),
+            ),
+            _pane(
+              const Rect.fromLTWH(60, 300, 280, 120),
+              style: LiquidGlassStyle.pill(colorScheme),
+            ),
+          ],
+        ),
+      ),
+    );
+    await _shadersLoaded(tester);
+
+    Future<List<int>> drawn({required bool skipping}) {
+      LiquidGlassHost.debugSkipRimOverride = skipping ? null : false;
+      tester.binding.scheduleFrame();
+      return tester.pump().then((_) => _frame(tester));
+    }
+
+    final throughout = await drawn(skipping: false);
+    final skipped = await drawn(skipping: true);
+
+    expect(throughout.toSet().length, greaterThan(64));
+    expect(_furthest(throughout, skipped), 0);
+  }, skip: !ui.ImageFilter.isShaderFilterSupported);
+
+  test('a pane has a middle only past all its rim reaches', () {
+    final colorScheme = ColorScheme.fromSeed(seedColor: _blue);
+    final menu = LiquidGlassStyle.menu(colorScheme);
+    const card = Rect.fromLTWH(0, 0, 270, 170);
+
+    // Its bevel of 20 dp, then what a corner of 34 dp cuts off a rectangle.
+    final inner = liquidGlassInner(card, 34, card.size, menu, shine: true);
+    expect(inner.left, closeTo(24.11, 0.01));
+    expect(inner.top, closeTo(24.11, 0.01));
+    expect(inner.right, closeTo(245.89, 0.01));
+    expect(inner.bottom, closeTo(145.89, 0.01));
+
+    const small = Rect.fromLTWH(0, 0, 20, 20);
+    expect(
+      liquidGlassInner(small, 10, small.size, menu, shine: false),
+      Rect.zero,
+    );
+    expect(
+      liquidGlassInner(
+        card,
+        34,
+        card.size,
+        LiquidGlassStyle.lens(colorScheme),
+        shine: false,
+      ),
+      Rect.zero,
+    );
   });
 
   testWidgets('a host turned off captures nothing', (tester) async {

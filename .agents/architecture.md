@@ -799,6 +799,13 @@ over it, as iOS's does, and lets go 0.2 s after the change, as LiquidGlassKit's 
   engine's Gaussian, in device pixels, on a Vogel disc of 16 taps up to a sigma of 2 pixels, 32 up to 3.5 and 64
   past it, so no taps lie further apart than 64 leave them at the widest; rendered at density 2.625 the lens moves by
   at most 12/255 on a few pixels from 64 taps throughout.
+- The shader works a pane's rim out only where it reaches. `liquidGlassInner` gives the rectangle deeper in than the
+  bevel and all the rim draws (the highlight and its tail, the line, the parted colors, the shine's bands), where
+  every one of those sums comes to nothing; a pixel inside it takes its sample, tint, contrast and glow by the same
+  sums and skips the rest, so a frame is what it was, bit for bit. A lens bends to its middle and a shaded end fades
+  without end, so they have no such rectangle, nor has a pane outlined by a path; goo takes its first pill. On a
+  Mi 11 a frame with an alert open takes 17 to 23 of about 375 units less GPU work (busy share times clock), a still
+  page 3 to 4 of about 200, and the slowest tenth of the frames of an alert's entry finish 0.5 to 1.7 ms sooner.
 - Glass builds no pipelines ahead of use. A warm-up that rendered panes offscreen once the first frame landed was
   dropped: after an install, with no pipeline cache on disk, it compiled on the raster thread just as the app was first
   used, to spare the first menu and lens only a few pipelines.
