@@ -298,23 +298,22 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
     final headerHeight = _tabHeightOf(density) * scale;
     final tabInset = _tabInsetOf(density);
     final cellStart = dashboardCardPadding(density).left - _cellInset;
-    Widget segment(DashboardFeed feed, Widget count) =>
-        DashboardConnectedButton(
-          selected: _feed == feed,
-          first: feed == DashboardFeed.values.first,
-          last: feed == DashboardFeed.values.last,
-          outer: headerHeight / 2,
-          inner: 8,
-          background: DashboardColors.of(context).tone,
-          semanticLabel: feed.label,
-          onTap: () => _select(feed),
-          builder: (foreground) => _FeedSegment(
-            label: feed.label,
-            count: count,
-            height: headerHeight,
-            foreground: foreground,
-          ),
-        );
+    Widget segment(DashboardFeed feed, Widget count) => ConnectedButton(
+      selected: _feed == feed,
+      first: feed == DashboardFeed.values.first,
+      last: feed == DashboardFeed.values.last,
+      outer: headerHeight / 2,
+      inner: 8,
+      background: DashboardColors.of(context).tone,
+      semanticLabel: feed.label,
+      onTap: () => _select(feed),
+      builder: (foreground) => _FeedSegment(
+        label: feed.label,
+        count: count,
+        height: headerHeight,
+        foreground: foreground,
+      ),
+    );
     return DashboardCard(
       semanticLabel: appLocalizations.liveConnections,
       padding: EdgeInsets.fromLTRB(cellStart, tabInset, cellStart, 0),
@@ -330,7 +329,7 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
                 start: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,
-                  child: DashboardConnectedGroup(
+                  child: ConnectedButtonGroup(
                     children: [
                       segment(
                         DashboardFeed.connections,

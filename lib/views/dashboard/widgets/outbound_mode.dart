@@ -42,11 +42,11 @@ class OutboundModeCard extends ConsumerWidget {
             title: context.appLocalizations.outboundMode,
           ),
           const SizedBox(height: 12),
-          DashboardConnectedGroup(
+          ConnectedButtonGroup(
             children: [
               for (final (index, item) in Mode.values.indexed)
                 Expanded(
-                  child: DashboardConnectedButton(
+                  child: ConnectedButton(
                     selected: item == mode,
                     first: index == 0,
                     last: index == Mode.values.length - 1,
@@ -128,12 +128,12 @@ class OutboundModeBar extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: DashboardConnectedGroup(
+              child: ConnectedButtonGroup(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (final (index, item) in Mode.values.indexed)
                     Expanded(
-                      child: DashboardConnectedButton(
+                      child: ConnectedButton(
                         selected: item == mode,
                         first: index == 0,
                         last: index == Mode.values.length - 1,
