@@ -27,8 +27,8 @@ import 'package:prism_ui/switch.dart';
 import '../helpers/test_app.dart';
 
 const _module = r'''
-#!name=Ads
-#!desc=Removes ads
+#!name=Sample
+#!desc=Rewrites samples
 #!arguments=Toggle:true
 [MITM]
 hostname = %APPEND% *.example.com
@@ -39,12 +39,12 @@ bad line
 skip-proxy = example.com
 hijack-dns = 8.8.8.8:53
 [Script]
-Ads = type=http-response,pattern=^https://example\.com/b,script-path=https://example.com/ads.js
+Sample = type=http-response,pattern=^https://example\.com/b,script-path=https://example.com/sample.js
 cron "0 8 * * *" script-path=https://example.com/daily.js, tag=Daily
 ''';
 
 const _resources = {
-  'https://example.com/ads.js': 'ads.js',
+  'https://example.com/sample.js': 'sample.js',
   'https://example.com/daily.js': 'daily.js',
 };
 
@@ -84,9 +84,9 @@ class _SavingArguments extends MitmModulesAction {
 
 final _remote = MitmModule(
   id: 1,
-  name: 'Ads',
-  description: 'Removes ads',
-  url: 'https://example.com/ads.sgmodule',
+  name: 'Sample',
+  description: 'Rewrites samples',
+  url: 'https://example.com/sample.sgmodule',
   lastUpdateTime: DateTime(2026, 10, 24),
   order: 0,
 );
@@ -169,7 +169,7 @@ void main() {
   testWidgets('the list shows each module and turns one off', (tester) async {
     await pump(tester, const MitmModulesView());
 
-    expect(find.text('Ads'), findsOneWidget);
+    expect(find.text('Sample'), findsOneWidget);
     expect(find.text(currentAppLocalizations.remote), findsOneWidget);
     expect(find.text('Mine'), findsOneWidget);
     expect(find.text(currentAppLocalizations.local), findsOneWidget);
@@ -327,7 +327,7 @@ void main() {
   ) async {
     await pump(tester, MitmModuleView(id: _remote.id));
 
-    expect(find.text('Removes ads'), findsOneWidget);
+    expect(find.text('Rewrites samples'), findsOneWidget);
     expect(find.text('Toggle'), findsOneWidget);
     expect(find.text(MitmList.hostname.label), findsOneWidget);
     expect(
@@ -378,7 +378,7 @@ void main() {
 
     await tester.tap(find.text(MitmList.script.label));
     await tester.pumpAndSettle();
-    await tester.longPress(find.textContaining('Ads = '));
+    await tester.longPress(find.textContaining('Sample = '));
     await tester.pumpAndSettle();
     expect(find.text(currentAppLocalizations.mitmRunScript), findsNothing);
     await tester.tap(find.text(currentAppLocalizations.confirm));
@@ -429,7 +429,7 @@ void main() {
         ruleProviders: {
           'mitm-0123456789ab': {
             'type': 'http',
-            'url': 'https://example.com/ads.list',
+            'url': 'https://example.com/sample.list',
           },
         },
       ),
@@ -445,7 +445,7 @@ void main() {
       (RuleAction.DOMAIN_SUFFIX, 'ads.example.com', 'REJECT'),
       (RuleAction.IP_CIDR, '10.0.0.0/8', 'DIRECT'),
       (RuleAction.DOMAIN, 'proxied.example.com', 'PROXY'),
-      (RuleAction.RULE_SET, 'https://example.com/ads.list', 'REJECT'),
+      (RuleAction.RULE_SET, 'https://example.com/sample.list', 'REJECT'),
     ]) {
       final row = find.ancestor(
         of: find.text(content),

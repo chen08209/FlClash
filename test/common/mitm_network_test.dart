@@ -137,8 +137,8 @@ void main() {
     expect(mitmDnsServer('223.5.5.5'), '223.5.5.5');
     expect(mitmDnsServer('[2400:3200::1]:53'), '[2400:3200::1]:53');
     expect(
-      mitmDnsServer('h3://dns.alidns.com/dns-query'),
-      'https://dns.alidns.com/dns-query#h3=true',
+      mitmDnsServer('h3://dns.a.test/dns-query'),
+      'https://dns.a.test/dns-query#h3=true',
     );
     expect(mitmDnsServer('quic://dns.test'), 'quic://dns.test');
     expect(mitmDnsServer('dns.test'), isNull);

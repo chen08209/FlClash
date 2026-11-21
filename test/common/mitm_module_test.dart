@@ -7,8 +7,8 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _surge = r'''
-#!name=Ads
-#!desc=Removes ads\nfrom a few apps
+#!name=Sample
+#!desc=Rewrites a few\nsample hosts
 #!system=ios
 #!arguments=Toggle:true,Path:"a,b"
 
@@ -19,7 +19,7 @@ skip-proxy = example.com
 DOMAIN-SUFFIX,ads.example.com,REJECT
 DOMAIN,track.example.com,REJECT-TINYGIF,pre-matching
 IP-CIDR,10.0.0.1,REJECT-DROP,no-resolve
-AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
+AND,((DOMAIN-SUFFIX,video.a.test), (PROTOCOL,UDP)),REJECT
 URL-REGEX,"^https?://example\.com/ad,1",REJECT-DICT
 USER-AGENT,Example*,REJECT
 DOMAIN,proxied.example.com,PROXY
@@ -51,11 +51,11 @@ skip-server-cert-verify = true
 ''';
 
 const _loon = r'''
-#!name = Loon ads
+#!name = Loon sample
 #!desc = For Loon
 
 [Argument]
-Block = switch,true,false,tag=Block ads,desc=Blocks the ad requests
+Block = switch,true,false,tag=Block samples,desc=Blocks the ad requests
 Region = select,"US","JP",tag=Region
 
 [Rule]
@@ -185,7 +185,7 @@ tcp-connection = true
 
     test('read Quantumult X MITM lines and interaction tasks', () {
       const snippet = r'''
-hostname = a.com
+hostname = a.test
 skip_dst_ip = 1.1.1.1, 8.8.8.8
 p12 = MIIJ...
 passphrase = secret
@@ -196,7 +196,7 @@ event-interaction https://cdn.test/info.js, tag=Info, img-url=info.system
         snippet,
         resources: const {'https://cdn.test/info.js': 'info0.js'},
       );
-      expect(content.mitm.hostname, ['-1.1.1.1', '-8.8.8.8', 'a.com']);
+      expect(content.mitm.hostname, ['-1.1.1.1', '-8.8.8.8', 'a.test']);
       expect(content.script, [
         'Info = type=generic,script-path=info0.js,timeout=120',
       ]);
@@ -204,7 +204,7 @@ event-interaction https://cdn.test/info.js, tag=Info, img-url=info.system
         MitmModuleSkipReason.managedCa,
         MitmModuleSkipReason.managedCa,
       ]);
-      expect(content.skipVerifyHostname, ['a.com']);
+      expect(content.skipVerifyHostname, ['a.test']);
     });
 
     test('turn IP rewrites into rules and name the sections FlClash lacks', () {
@@ -215,7 +215,7 @@ event-interaction https://cdn.test/info.js, tag=Info, img-url=info.system
 10.7.0.1 = reflect
 
 [Proxy Group]
-Ads = select, DIRECT, REJECT
+Sample = select, DIRECT, REJECT
 
 [Panel]
 Info = script-name=info
@@ -239,16 +239,16 @@ private-key = x
     test('split Loon header-add pairs and approximate reject-video', () {
       const plugin = r'''
 [Rewrite]
-^https://a\.com/x header-add X-A 1 X-B "two words"
-^https://a\.com/y header-add X-A 1 X-B
-^https://a\.com/v reject-video
+^https://a\.test/x header-add X-A 1 X-B "two words"
+^https://a\.test/y header-add X-A 1 X-B
+^https://a\.test/v reject-video
 ''';
       final content = parseMitmModule(plugin);
       expect(content.headerRewrite, [
-        r'http-request ^https://a\.com/x header-add X-A 1',
-        r'http-request ^https://a\.com/x header-add X-B "two words"',
+        r'http-request ^https://a\.test/x header-add X-A 1',
+        r'http-request ^https://a\.test/x header-add X-B "two words"',
       ]);
-      expect(content.urlRewrite, [r'^https://a\.com/v reject-200']);
+      expect(content.urlRewrite, [r'^https://a\.test/v reject-200']);
       expect(content.skipped.single.reason, MitmModuleSkipReason.unreadable);
     });
 
@@ -291,12 +291,14 @@ http:
   force-http-engine:
     - "api.example.com:8080"
   url-rewrite:
-    - ^https://a\.com/x https://b.com/x header
+    - ^https://a\.test/x https://b.test/x header
   ca: MIIJ...
 ''';
       final content = parseMitmModule(override);
       expect(content.mitm.hostname, ['api.example.com:8080']);
-      expect(content.urlRewrite, [r'^https://a\.com/x https://b.com/x header']);
+      expect(content.urlRewrite, [
+        r'^https://a\.test/x https://b.test/x header',
+      ]);
       expect(content.skipped.single.reason, MitmModuleSkipReason.managedCa);
     });
   });
@@ -307,7 +309,7 @@ http:
 name: Inline
 http:
   script:
-    - match: ^https?://a\.com/list
+    - match: ^https?://a\.test/list
       name: inline
       type: response
 script-providers:
@@ -322,7 +324,7 @@ script-providers:
       expect(pending.skipped.single.reason, MitmModuleSkipReason.notDownloaded);
       final written = parseMitmModule(override, resources: {key: 'in0.js'});
       expect(written.script, [
-        r'inline = type=http-response,pattern=^https?://a\.com/list,script-path=in0.js',
+        r'inline = type=http-response,pattern=^https?://a\.test/list,script-path=in0.js',
       ]);
       expect(written.skipped, isEmpty);
     });
@@ -332,16 +334,16 @@ script-providers:
     test("turn Loon's legacy JSON lines into jq", () {
       final content = parseMitmModule(r'''
 [Rewrite]
-^https:\/\/saas-ad\.cloudpnr\.com\/huifuad-base-api\/api\/tactics\/ad$ response-body-json-del data[0] data[1] data[2]
-^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v1\/search\/hot_list$ response-body-json-replace data.items []
-^https:\/\/api\.gamer\.com\.tw\/mobile_app\/anime\/v1\/vip_info\.php response-body-json-add expire "2099-02-27\x2005:20:14" type "web" info "∞"
+^https:\/\/promo\.a\.test\/v1\/promo\/list$ response-body-json-del data[0] data[1] data[2]
+^https:\/\/feed\.a\.test\/v1\/search\/trending$ response-body-json-replace data.items []
+^https:\/\/api\.b\.test\/v1\/member\.php response-body-json-add expire "2099-02-27\x2005:20:14" type "web" info "∞"
 ^http://example.com request-body-json-add data.apps[0] {"appName":"loon","appVersion":"3.2.1"} data.category tool
 ^http://example.com request-body-json-add data.apps[0]
 ''');
       expect(content.bodyRewrite, [
-        r'http-response-jq ^https:\/\/saas-ad\.cloudpnr\.com\/huifuad-base-api\/api\/tactics\/ad$ del(.data[0], .data[1], .data[2])',
-        r'http-response-jq ^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v1\/search\/hot_list$ if .data.items != null then .data.items = [] else . end',
-        r'http-response-jq ^https:\/\/api\.gamer\.com\.tw\/mobile_app\/anime\/v1\/vip_info\.php .expire = "2099-02-27 05:20:14" | .type = "web" | .info = "∞"',
+        r'http-response-jq ^https:\/\/promo\.a\.test\/v1\/promo\/list$ del(.data[0], .data[1], .data[2])',
+        r'http-response-jq ^https:\/\/feed\.a\.test\/v1\/search\/trending$ if .data.items != null then .data.items = [] else . end',
+        r'http-response-jq ^https:\/\/api\.b\.test\/v1\/member\.php .expire = "2099-02-27 05:20:14" | .type = "web" | .info = "∞"',
         r'http-request-jq ^http://example.com .data.apps[0] = {"appName":"loon","appVersion":"3.2.1"} | .data.category = "tool"',
       ]);
       expect(content.skipped.single.reason, MitmModuleSkipReason.unreadable);
@@ -352,13 +354,13 @@ script-providers:
 name: JSON
 http:
   body-rewrite:
-    - '^https://api\.zhihu\.com/questions/\d+/feeds\? response-json-del ad_info'
-    - ^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v1\/search\/hot_list$ response-json-replace data.items []
+    - '^https://api\.c\.test/questions/\d+/feeds\? response-json-del promo_info'
+    - ^https:\/\/feed\.a\.test\/v1\/search\/trending$ response-json-replace data.items []
     - ^https://example\.com/meta response-json-add meta.source "proxy" meta.version 1
 ''');
       expect(content.bodyRewrite, [
-        r'http-response-jq ^https://api\.zhihu\.com/questions/\d+/feeds\? if (.ad_info | . != null and . != false) then del(.ad_info) else . end',
-        r'http-response-jq ^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v1\/search\/hot_list$ if (.data.items | . != null and . != false) then .data.items = [] else . end',
+        r'http-response-jq ^https://api\.c\.test/questions/\d+/feeds\? if (.promo_info | . != null and . != false) then del(.promo_info) else . end',
+        r'http-response-jq ^https:\/\/feed\.a\.test\/v1\/search\/trending$ if (.data.items | . != null and . != false) then .data.items = [] else . end',
         r'http-response-jq ^https://example\.com/meta if .meta.source == null then .meta.source = "proxy" else . end | if .meta.version == null then .meta.version = 1 else . end',
       ]);
       expect(content.skipped, isEmpty);
@@ -397,13 +399,13 @@ skip-server-cert-verify = false
 
     test('read Quantumult X skip_src_ip and skip_validating_cert', () {
       final content = parseMitmModule(r'''
-hostname = a.com, -b.com
+hostname = a.test, -b.test
 skip_src_ip = 192.168.4.50, 192.168.4.51
 skip_validating_cert = true
-^https?://a\.com/ad url reject
+^https?://a\.test/ad url reject
 ''');
       expect(content.clientSourceAddress, ['-192.168.4.50, -192.168.4.51']);
-      expect(content.skipVerifyHostname, ['a.com']);
+      expect(content.skipVerifyHostname, ['a.test']);
       expect(content.skipped, isEmpty);
     });
 
@@ -466,7 +468,7 @@ DOMAIN-SET,reject.conf,REJECT
     test('bring their providers along', () {
       const module = r'''
 [Rule]
-RULE-SET,https://example.com/ads.list,REJECT,no-resolve,update-interval=-1
+RULE-SET,https://example.com/sample.list,REJECT,no-resolve,update-interval=-1
 RULE-SET,https://example.com/cn.list,DIRECT,extended-matching
 RULE-SET,LAN,DIRECT
 RULE-SET,SYSTEM,DIRECT
@@ -475,9 +477,9 @@ RULE-SET,Missing,REJECT
 RULE-SET,https://example.com/p.list,Proxy
 
 [Ruleset Streaming]
-DOMAIN-SUFFIX,netflix.com
+DOMAIN-SUFFIX,stream.a.test
 RULE-SET,https://example.com/nested.list
-DOMAIN,netflixdnstest0.com
+DOMAIN,probe.stream.a.test
 ''';
       final content = parseMitmModule(module);
       expect(
@@ -497,7 +499,7 @@ DOMAIN,netflixdnstest0.com
         'type': 'http',
         'behavior': 'classical',
         'format': 'text',
-        'url': 'https://example.com/ads.list',
+        'url': 'https://example.com/sample.list',
         'interval': 0,
       });
       expect(providers[setOf(content, 1)]!['interval'], 86400);
@@ -512,7 +514,10 @@ DOMAIN,netflixdnstest0.com
       expect(providers[setOf(content, 4)], {
         'type': 'inline',
         'behavior': 'classical',
-        'payload': ['DOMAIN-SUFFIX,netflix.com', 'DOMAIN,netflixdnstest0.com'],
+        'payload': [
+          'DOMAIN-SUFFIX,stream.a.test',
+          'DOMAIN,probe.stream.a.test',
+        ],
       });
       expect(content.skipped.map((skip) => (skip.line, skip.reason)), [
         ('RULE-SET,Missing,REJECT', MitmModuleSkipReason.relativeData),
@@ -522,15 +527,15 @@ DOMAIN,netflixdnstest0.com
 
     test('of one name merge across modules, under names of their own', () {
       final a = parseMitmModule(
-        '[Ruleset Ads]\nDOMAIN,a.com\n[Rule]\nRULE-SET,Ads,REJECT',
+        '[Ruleset Sample]\nDOMAIN,a.test\n[Rule]\nRULE-SET,Sample,REJECT',
       );
-      final b = parseMitmModule('[Ruleset Ads]\nDOMAIN,b.com');
+      final b = parseMitmModule('[Ruleset Sample]\nDOMAIN,b.test');
       final merged = mergeMitmModules(const [], [a, b]);
       final name = setOf(a, 0);
       expect(name, startsWith('mitm-'));
       expect(merged.ruleProviders[name]!['payload'], [
-        'DOMAIN,a.com',
-        'DOMAIN,b.com',
+        'DOMAIN,a.test',
+        'DOMAIN,b.test',
       ]);
     });
 
@@ -559,8 +564,8 @@ rule-providers:
     type: http
     behavior: domain
     format: text
-    url: https://example.com/ads.txt
-    path: ./ads.txt
+    url: https://example.com/sample.txt
+    path: ./sample.txt
     interval: 3600
   local:
     type: file
@@ -576,7 +581,7 @@ rules:
         'type': 'http',
         'behavior': 'domain',
         'format': 'text',
-        'url': 'https://example.com/ads.txt',
+        'url': 'https://example.com/sample.txt',
         'interval': 3600,
       });
       expect(stash.skipped.map((skip) => skip.reason), [
@@ -591,11 +596,11 @@ rules:
       final content = parseMitmModule('''
 [General]
 dns-server = 223.5.5.5, system
-encrypted-dns-server = %APPEND% h3://dns.alidns.com/dns-query
+encrypted-dns-server = %APPEND% h3://dns.a.test/dns-query
 skip-proxy = %APPEND% *.local, 10.0.0.0/8
 tun-excluded-routes = 192.168.0.0/16, 1.1.1.1
 tun-included-routes = 10.8.0.0/16
-always-real-ip = *.srv.nintendo.net
+always-real-ip = *.srv.game.test
 force-http-engine-hosts = api.test:8080
 hijack-dns = 8.8.8.8:53
 tun-excluded-routes = lan
@@ -609,7 +614,7 @@ bad host = 1.1.1.1
       final network = content.network;
       expect(
         network.nameserver,
-        const MitmListEdit(after: ['https://dns.alidns.com/dns-query#h3=true']),
+        const MitmListEdit(after: ['https://dns.a.test/dns-query#h3=true']),
       );
       expect(
         network.defaultNameserver,
@@ -629,7 +634,7 @@ bad host = 1.1.1.1
       expect(network.routeAddress, ['10.8.0.0/16']);
       expect(
         network.fakeIpFilter,
-        const MitmListEdit(replace: true, before: ['*.srv.nintendo.net']),
+        const MitmListEdit(replace: true, before: ['*.srv.game.test']),
       );
       expect(network.hosts, {
         'ad.test': ['0.0.0.0'],
@@ -663,7 +668,7 @@ include-tun = 172.16.0.0/12
 real-ip = *.lan
 
 [Rewrite]
-^https://a\\.com/ad reject
+^https://a\\.test/ad reject
 ''').network;
       expect(
         network.nameserver,
@@ -745,8 +750,8 @@ DOMAIN,c.example,DIRECT
       ]);
       expect(surge.exits, {'Proxy', 'Media Group'});
       expect(surge.skipped.single.reason, MitmModuleSkipReason.httpRulePolicy);
-      expect(parseMitmModule('host-suffix, a.com, proxy').rules, [
-        'DOMAIN-SUFFIX,a.com,PROXY',
+      expect(parseMitmModule('host-suffix, a.test, proxy').rules, [
+        'DOMAIN-SUFFIX,a.test,PROXY',
       ]);
       expect(parseMitmModule('[Rule]\nDOMAIN,x,PROXY').exits, {'PROXY'});
       expect(parseMitmModule('[Rule]\nGEOSITE,nope,Proxy').exits, {'Proxy'});
@@ -787,41 +792,41 @@ DOMAIN,c.example,DIRECT
       final content = read(r'''
 request if ${url} ~= /^https:\/\/old\.example\.com(\/.*)$/ as m then url.replace("https://new.example.com${m.1}")
 request if ${url} ~= /^http:\/\/example\.com/ then redirect(302, "https://api.example.com")
-request if ${url} ~= /^https:\/\/a\.com\/(ad|track)/i || ${url} == "https://b.com/x" then reject_dict(200)
-request if ${url} ~= /^https:\/\/a\.com\/legal/ then reject(451, "Unavailable for legal reasons")
-request if ${url} ~= /^https:\/\/a\.com\/h/ then request.header.set("X-Loon", "true") | request.header.del(["Cookie", "Referer"])
-response if ${url} ~= /^https:\/\/a\.com\/b/ then response.body.replace(/"enabled":\s*(false)/, "\"enabled\":true") | response.json.delete("data.ads") | response.json.add("data.items[0].vip", true) | response.json.jq(".data.ads = []")
-response if ${url} ~= /^https:\/\/a\.com\/r/ then response.json.replace("data.price", 9.99) | response.header.replace("Server", /nginx(\d)/, "srv$1")
-response if ${url} ~= /^https:\/\/a\.com\/m$/ then response.body.mock("json", `{"code":0}`, 200)
-response if ${url} ~= /^https:\/\/a\.com\/f$/ then response.body.mock_file("json", "https://cdn.test/m.json")
-request if ${url} ~= /^https:\/\/a\.com\/s/ then script("https://cdn.test/s.js", "k=v") with tag="S", timeout=10, requires_body=true
+request if ${url} ~= /^https:\/\/a\.test\/(ad|track)/i || ${url} == "https://b.test/x" then reject_dict(200)
+request if ${url} ~= /^https:\/\/a\.test\/legal/ then reject(451, "Unavailable for legal reasons")
+request if ${url} ~= /^https:\/\/a\.test\/h/ then request.header.set("X-Loon", "true") | request.header.del(["Cookie", "Referer"])
+response if ${url} ~= /^https:\/\/a\.test\/b/ then response.body.replace(/"enabled":\s*(false)/, "\"enabled\":true") | response.json.delete("data.ads") | response.json.add("data.items[0].vip", true) | response.json.jq(".data.ads = []")
+response if ${url} ~= /^https:\/\/a\.test\/r/ then response.json.replace("data.price", 9.99) | response.header.replace("Server", /nginx(\d)/, "srv$1")
+response if ${url} ~= /^https:\/\/a\.test\/m$/ then response.body.mock("json", `{"code":0}`, 200)
+response if ${url} ~= /^https:\/\/a\.test\/f$/ then response.body.mock_file("json", "https://cdn.test/m.json")
+request if ${url} ~= /^https:\/\/a\.test\/s/ then script("https://cdn.test/s.js", "k=v") with tag="S", timeout=10, requires_body=true
 ''');
       expect(content.urlRewrite, [
         r'^https:\/\/old\.example\.com(\/.*)$ https://new.example.com$1 header',
         r'^http:\/\/example\.com https://api.example.com 302',
       ]);
       expect(content.headerRewrite, [
-        r'http-request ^https:\/\/a\.com\/h header-del X-Loon',
-        r'http-request ^https:\/\/a\.com\/h header-add X-Loon true',
-        r'http-request ^https:\/\/a\.com\/h header-del Cookie',
-        r'http-request ^https:\/\/a\.com\/h header-del Referer',
-        r'http-response ^https:\/\/a\.com\/r header-replace-regex Server nginx(\d) srv$1',
+        r'http-request ^https:\/\/a\.test\/h header-del X-Loon',
+        r'http-request ^https:\/\/a\.test\/h header-add X-Loon true',
+        r'http-request ^https:\/\/a\.test\/h header-del Cookie',
+        r'http-request ^https:\/\/a\.test\/h header-del Referer',
+        r'http-response ^https:\/\/a\.test\/r header-replace-regex Server nginx(\d) srv$1',
       ]);
       expect(content.bodyRewrite, [
-        r'http-response ^https:\/\/a\.com\/b "\"enabled\":\s*(false)" "\"enabled\":true"',
-        r'http-response-jq ^https:\/\/a\.com\/b del(.data.ads)',
-        r'http-response-jq ^https:\/\/a\.com\/b .data.items[0].vip = true',
-        r'http-response-jq ^https:\/\/a\.com\/b .data.ads = []',
-        r'http-response-jq ^https:\/\/a\.com\/r if .data.price != null then .data.price = 9.99 else . end',
+        r'http-response ^https:\/\/a\.test\/b "\"enabled\":\s*(false)" "\"enabled\":true"',
+        r'http-response-jq ^https:\/\/a\.test\/b del(.data.ads)',
+        r'http-response-jq ^https:\/\/a\.test\/b .data.items[0].vip = true',
+        r'http-response-jq ^https:\/\/a\.test\/b .data.ads = []',
+        r'http-response-jq ^https:\/\/a\.test\/r if .data.price != null then .data.price = 9.99 else . end',
       ]);
       expect(content.mapLocal, [
-        r'(?:(?i:^https:\/\/a\.com\/(ad|track)))|(?:^https://b\.com/x$) data-type="text" data="{}" status-code="200" header="Content-Type:application/json"',
-        r'^https:\/\/a\.com\/legal data-type="text" data="Unavailable for legal reasons" status-code="451"',
-        r'^https:\/\/a\.com\/m$ data-type="text" data="{\"code\":0}" status-code="200" header="Content-Type:application/json"',
-        r'^https:\/\/a\.com\/f$ data-type="file" data="m0.json" header="Content-Type:application/json"',
+        r'(?:(?i:^https:\/\/a\.test\/(ad|track)))|(?:^https://b\.test/x$) data-type="text" data="{}" status-code="200" header="Content-Type:application/json"',
+        r'^https:\/\/a\.test\/legal data-type="text" data="Unavailable for legal reasons" status-code="451"',
+        r'^https:\/\/a\.test\/m$ data-type="text" data="{\"code\":0}" status-code="200" header="Content-Type:application/json"',
+        r'^https:\/\/a\.test\/f$ data-type="file" data="m0.json" header="Content-Type:application/json"',
       ]);
       expect(content.script, [
-        r'S = type=http-request,pattern=^https:\/\/a\.com\/s,script-path=s0.js,requires-body=true,timeout=10,argument="k=v"',
+        r'S = type=http-request,pattern=^https:\/\/a\.test\/s,script-path=s0.js,requires-body=true,timeout=10,argument="k=v"',
       ]);
       expect(content.declaredScripts, 0);
       expect(content.skipped, isEmpty);
@@ -829,27 +834,27 @@ request if ${url} ~= /^https:\/\/a\.com\/s/ then script("https://cdn.test/s.js",
 
     test('match the method and headers on the request head', () {
       final content = read(r'''
-request if ${url} ~= /^https:\/\/a\.com\/api/ && ${request.method} == "POST" then reject_dict(200)
-request if ${url} ~= /^https:\/\/a\.com\/ua/ && ${request.header['User-Agent']} ~= /httpdns/i then reject(200)
-request if ${url} ~= /^https:\/\/a\.com\/x/ && ${request.method} == "GET" then request.header.del("X")
-request if ${url} ~= /^https:\/\/a\.com\/y/ && ${request.method} == "GET" then reject(403)
-response if ${url} ~= /^https:\/\/a\.com\/z/ && ${response.status} == 200 then response.header.del("X")
-request if ${url} ~= /^https:\/\/a\.com\/q/ then request.body.mock("json", "{}")
+request if ${url} ~= /^https:\/\/a\.test\/api/ && ${request.method} == "POST" then reject_dict(200)
+request if ${url} ~= /^https:\/\/a\.test\/ua/ && ${request.header['User-Agent']} ~= /httpdns/i then reject(200)
+request if ${url} ~= /^https:\/\/a\.test\/x/ && ${request.method} == "GET" then request.header.del("X")
+request if ${url} ~= /^https:\/\/a\.test\/y/ && ${request.method} == "GET" then reject(403)
+response if ${url} ~= /^https:\/\/a\.test\/z/ && ${response.status} == 200 then response.header.del("X")
+request if ${url} ~= /^https:\/\/a\.test\/q/ then request.body.mock("json", "{}")
 request if ${url} then reject(200)
 ''');
       expect(content.urlRewrite, [
-        r'^https:\/\/a\.com\/api "^(?=POST )" url-and-header reject-dict',
-        r'^https:\/\/a\.com\/ua "^(?=[\s\S]*\r\n(?i:User-Agent): [^\r\n]*(?:(?i:httpdns))[^\r\n]*\r\n)" url-and-header reject-200',
+        r'^https:\/\/a\.test\/api "^(?=POST )" url-and-header reject-dict',
+        r'^https:\/\/a\.test\/ua "^(?=[\s\S]*\r\n(?i:User-Agent): [^\r\n]*(?:(?i:httpdns))[^\r\n]*\r\n)" url-and-header reject-200',
       ]);
       expect(content.headerRewrite, [
-        r'http-request ^https:\/\/a\.com\/x request-head "^(?=GET )" header-del X',
-        r'http-response ^https:\/\/a\.com\/z response-head "^(?=\S+ 200(?: |\r\n))" header-del X',
+        r'http-request ^https:\/\/a\.test\/x request-head "^(?=GET )" header-del X',
+        r'http-response ^https:\/\/a\.test\/z response-head "^(?=\S+ 200(?: |\r\n))" header-del X',
       ]);
       expect(content.mapLocal, [
-        r'^https:\/\/a\.com\/y request-head "^(?=GET )" data-type="text" data="" status-code="403"',
+        r'^https:\/\/a\.test\/y request-head "^(?=GET )" data-type="text" data="" status-code="403"',
       ]);
       expect(content.requestBodyMock, [
-        r'^https:\/\/a\.com\/q data-type="text" data="{}" header="Content-Type:application/json"',
+        r'^https:\/\/a\.test\/q data-type="text" data="{}" header="Content-Type:application/json"',
       ]);
       expect(content.skipped.map((skip) => skip.reason), [
         MitmModuleSkipReason.unreadable,
@@ -859,20 +864,20 @@ request if ${url} then reject(200)
     test('match the status and both heads on a response', () {
       final content = read(r'''
 response if ${url} ~= /^https:\/\/api\.example\.com\/profile$/ && ${response.status} == 200 then response.json.replace("data.vip", true)
-response if ${url} ~= /^https:\/\/a\.com\/c/ && ${response.header['Content-Type']} ~= /json/i && ${request.method} == "POST" then response.json.delete("ads") | response.header.set("Cache-Control", "no-store")
-response if ${url} ~= /^https:\/\/a\.com\/s/ && ${response.status} ~= /^30[12]$/ then response.body.replace(/ad/, "")
-request if ${url} ~= /^https:\/\/a\.com\/q/ && ${response.status} == 200 then request.header.del("X")
-response if ${url} ~= /^https:\/\/a\.com\/m/ && ${response.status} == 200 then response.body.mock("json", "{}")
-response if ${url} ~= /^https:\/\/a\.com\/u/ && ${response.status} == 200 then reject(200)
+response if ${url} ~= /^https:\/\/a\.test\/c/ && ${response.header['Content-Type']} ~= /json/i && ${request.method} == "POST" then response.json.delete("ads") | response.header.set("Cache-Control", "no-store")
+response if ${url} ~= /^https:\/\/a\.test\/s/ && ${response.status} ~= /^30[12]$/ then response.body.replace(/ad/, "")
+request if ${url} ~= /^https:\/\/a\.test\/q/ && ${response.status} == 200 then request.header.del("X")
+response if ${url} ~= /^https:\/\/a\.test\/m/ && ${response.status} == 200 then response.body.mock("json", "{}")
+response if ${url} ~= /^https:\/\/a\.test\/u/ && ${response.status} == 200 then reject(200)
 ''');
       expect(content.bodyRewrite, [
         r'http-response-jq ^https:\/\/api\.example\.com\/profile$ response-head "^(?=\S+ 200(?: |\r\n))" if .data.vip != null then .data.vip = true else . end',
-        r'http-response-jq ^https:\/\/a\.com\/c request-head "^(?=POST )" response-head "^(?=[\s\S]*\r\n(?i:Content-Type): [^\r\n]*(?:(?i:json))[^\r\n]*\r\n)" del(.ads)',
-        r'http-response ^https:\/\/a\.com\/s response-head "^(?=\S+ (?:30[12])(?: |\r\n))" ad ""',
+        r'http-response-jq ^https:\/\/a\.test\/c request-head "^(?=POST )" response-head "^(?=[\s\S]*\r\n(?i:Content-Type): [^\r\n]*(?:(?i:json))[^\r\n]*\r\n)" del(.ads)',
+        r'http-response ^https:\/\/a\.test\/s response-head "^(?=\S+ (?:30[12])(?: |\r\n))" ad ""',
       ]);
       expect(content.headerRewrite, [
-        r'http-response ^https:\/\/a\.com\/c request-head "^(?=POST )" response-head "^(?=[\s\S]*\r\n(?i:Content-Type): [^\r\n]*(?:(?i:json))[^\r\n]*\r\n)" header-del Cache-Control',
-        r'http-response ^https:\/\/a\.com\/c request-head "^(?=POST )" response-head "^(?=[\s\S]*\r\n(?i:Content-Type): [^\r\n]*(?:(?i:json))[^\r\n]*\r\n)" header-add Cache-Control no-store',
+        r'http-response ^https:\/\/a\.test\/c request-head "^(?=POST )" response-head "^(?=[\s\S]*\r\n(?i:Content-Type): [^\r\n]*(?:(?i:json))[^\r\n]*\r\n)" header-del Cache-Control',
+        r'http-response ^https:\/\/a\.test\/c request-head "^(?=POST )" response-head "^(?=[\s\S]*\r\n(?i:Content-Type): [^\r\n]*(?:(?i:json))[^\r\n]*\r\n)" header-add Cache-Control no-store',
       ]);
       expect(content.skipped.map((skip) => skip.reason), [
         MitmModuleSkipReason.unreadable,
@@ -886,8 +891,8 @@ response if ${url} ~= /^https:\/\/a\.com\/u/ && ${response.status} == 200 then r
 request if ${url} ~= /^https:\/\/api\.example\.com\// && ${url} ~= /ad_id=/ then reject(200)
 request if ${url} ~= /^https:\/\/api\.example\.com\/feed/ && (${request.method} == "GET" || ${request.method} == "HEAD") then reject_dict(200)
 response if ${url} ~= /^https:\/\/api\.example\.com\/v1/ && (${response.status} == 204 || ${response.header['X-Ad']} == "1") then response.header.del("Set-Cookie")
-request if ${url} ~= /^https:\/\/a\.com/ || ${request.method} == "GET" then reject(200)
-request if ${url} ~= /a/ as m && ${url} ~= /b/ then url.replace("https://c.com${m.1}")
+request if ${url} ~= /^https:\/\/a\.test/ || ${request.method} == "GET" then reject(200)
+request if ${url} ~= /a/ as m && ${url} ~= /b/ then url.replace("https://c.test${m.1}")
 ''');
       expect(content.mapLocal, [
         r'^(?=[\s\S]*?(?:^https:\/\/api\.example\.com\/))(?=[\s\S]*?(?:ad_id=)) data-type="text" data="" status-code="200"',
@@ -906,12 +911,12 @@ request if ${url} ~= /a/ as m && ${url} ~= /b/ then url.replace("https://c.com${
 
     test('run scripts by the request and response heads', () {
       final content = read(r'''
-request if ${url} ~= /^https:\/\/a\.com\/s/ && ${request.method} == "POST" then script("https://cdn.test/s.js") with tag="S"
-response if ${url} ~= /^https:\/\/a\.com\/r/ && ${response.status} == 200 then script("https://cdn.test/s.js") with tag="R"
+request if ${url} ~= /^https:\/\/a\.test\/s/ && ${request.method} == "POST" then script("https://cdn.test/s.js") with tag="S"
+response if ${url} ~= /^https:\/\/a\.test\/r/ && ${response.status} == 200 then script("https://cdn.test/s.js") with tag="R"
 ''');
       expect(content.script, [
-        r'S = type=http-request,pattern=^https:\/\/a\.com\/s,request-head="^(?=POST )",script-path=s0.js,timeout=20',
-        r'R = type=http-response,pattern=^https:\/\/a\.com\/r,response-head="^(?=\S+ 200(?: |\r\n))",script-path=s0.js,timeout=20',
+        r'S = type=http-request,pattern=^https:\/\/a\.test\/s,request-head="^(?=POST )",script-path=s0.js,timeout=20',
+        r'R = type=http-response,pattern=^https:\/\/a\.test\/r,response-head="^(?=\S+ 200(?: |\r\n))",script-path=s0.js,timeout=20',
       ]);
       expect(content.skipped, isEmpty);
     });
@@ -939,15 +944,15 @@ response if ${url} ~= /^https:\/\/api\.example\.com\/ad/ && ${request.header['Us
 [Rule]
 USER-AGENT,"httpdns*",REJECT
 USER-AGENT,"Httpsdns*",REJECT
-USER-AGENT,Apple.News?(1)*,REJECT-DICT
-USER-AGENT,Instagram*,DIRECT
-URL-REGEX,^http://a\.com/ad,PROXY
+USER-AGENT,Sample.Agent?(1)*,REJECT-DICT
+USER-AGENT,Viewer*,DIRECT
+URL-REGEX,^http://a\.test/ad,PROXY
 ''';
       final content = parseMitmModule(module);
       expect(content.urlRewrite, [
         r'^https?:// "\r\nUser-Agent: httpdns[^\r\n]*\r\n" url-and-header reject',
         r'^https?:// "\r\nUser-Agent: Httpsdns[^\r\n]*\r\n" url-and-header reject',
-        r'^https?:// "\r\nUser-Agent: Apple\.News[^\r\n]\(1\)[^\r\n]*\r\n" url-and-header reject-dict',
+        r'^https?:// "\r\nUser-Agent: Sample\.Agent[^\r\n]\(1\)[^\r\n]*\r\n" url-and-header reject-dict',
       ]);
       expect(content.requestRules, 3);
       expect(content.rules, isEmpty);
@@ -962,14 +967,14 @@ URL-REGEX,^http://a\.com/ad,PROXY
 
     test('pass Quantumult X url-and-header rewrites on', () {
       const snippet = r'''
-^http:\/\/.+\/amdc\/mobileDispatch %E8%8F%9C%E9%B8%9F%E8%A3%B9%E8%A3%B9* url-and-header reject
-^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=get_searching_info WeiboOverseas url-and-header reject-dict
+^http:\/\/.+\/dispatch\/mobile %E7%A4%BA%E4%BE%8B* url-and-header reject
+^https?:\/\/intl\.api\.d\.test\/portal\.php\?a=get_search_info SampleIntl url-and-header reject-dict
 ^http://example\.com/resource1/1/ ^POST url-and-header 302 http://example.com/post
 ^http://example\.com/resource1/1/ \r\nUser-Agent: example-agent url-and-header reject
-^https:\/\/config\.ab\.qq\.com\/tab\/GetTabRemoteConfig(?:\?.*)?$ (?i)\r\nUser-Agent:\s*QQSportsV3\/ url-and-header script-response-body https://cdn.test/a.js
-^https?:\/\/api\.weibo\.cn\/\d\/(cardlist\?v_f=\d|ad\/weibointl\?) WeiboOverseas url-and-header echo-response text/html echo-response https://cdn.test/reject-dict.json
-^https:\/\/a\.com\/j WeiboOverseas url-and-header jsonjq-response-body '.ads = []'
-^https:\/\/a\.com\/h ^POST url-and-header request-header (\r\n)X-Ad:[^\r]*(\r\n) request-header $1$2
+^https:\/\/config\.e\.test\/tab\/GetRemoteConfig(?:\?.*)?$ (?i)\r\nUser-Agent:\s*SampleSports\/ url-and-header script-response-body https://cdn.test/a.js
+^https?:\/\/api\.d\.test\/\d\/(cardlist\?v_f=\d|promo\/intl\?) SampleIntl url-and-header echo-response text/html echo-response https://cdn.test/reject-dict.json
+^https:\/\/a\.test\/j SampleIntl url-and-header jsonjq-response-body '.ads = []'
+^https:\/\/a\.test\/h ^POST url-and-header request-header (\r\n)X-Ad:[^\r]*(\r\n) request-header $1$2
 ''';
       final content = parseMitmModule(
         snippet,
@@ -979,22 +984,22 @@ URL-REGEX,^http://a\.com/ad,PROXY
         },
       );
       expect(content.urlRewrite, [
-        r'^http:\/\/.+\/amdc\/mobileDispatch %E8%8F%9C%E9%B8%9F%E8%A3%B9%E8%A3%B9* url-and-header reject',
-        r'^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=get_searching_info WeiboOverseas url-and-header reject-dict',
+        r'^http:\/\/.+\/dispatch\/mobile %E7%A4%BA%E4%BE%8B* url-and-header reject',
+        r'^https?:\/\/intl\.api\.d\.test\/portal\.php\?a=get_search_info SampleIntl url-and-header reject-dict',
         r'^http://example\.com/resource1/1/ ^POST url-and-header 302 http://example.com/post',
         r'^http://example\.com/resource1/1/ "\r\nUser-Agent: example-agent" url-and-header reject',
       ]);
       expect(content.script, [
-        r'a.js = type=http-response,pattern="^https:\/\/config\.ab\.qq\.com\/tab\/GetTabRemoteConfig(?:\?.*)?$",request-head="(?i)\r\nUser-Agent:\s*QQSportsV3\/",requires-body=true,script-path=a0.js',
+        r'a.js = type=http-response,pattern="^https:\/\/config\.e\.test\/tab\/GetRemoteConfig(?:\?.*)?$",request-head="(?i)\r\nUser-Agent:\s*SampleSports\/",requires-body=true,script-path=a0.js',
       ]);
       expect(content.mapLocal, [
-        r'^https?:\/\/api\.weibo\.cn\/\d\/(cardlist\?v_f=\d|ad\/weibointl\?) request-head WeiboOverseas data-type="file" data="r0.json" header="Content-Type:text/html"',
+        r'^https?:\/\/api\.d\.test\/\d\/(cardlist\?v_f=\d|promo\/intl\?) request-head SampleIntl data-type="file" data="r0.json" header="Content-Type:text/html"',
       ]);
       expect(content.bodyRewrite, [
-        r"http-response-jq ^https:\/\/a\.com\/j request-head WeiboOverseas '.ads = []'",
+        r"http-response-jq ^https:\/\/a\.test\/j request-head SampleIntl '.ads = []'",
       ]);
       expect(content.headerRewrite, [
-        r'http-request ^https:\/\/a\.com\/h request-head ^POST header-text-replace (\r\n)X-Ad:[^\r]*(\r\n) $1$2',
+        r'http-request ^https:\/\/a\.test\/h request-head ^POST header-text-replace (\r\n)X-Ad:[^\r]*(\r\n) $1$2',
       ]);
       expect(content.skipped, isEmpty);
     });
@@ -1003,27 +1008,27 @@ URL-REGEX,^http://a\.com/ad,PROXY
   group('jq rewrites', () {
     test('go to the Core as Surge writes them, from every format', () {
       const snippet = r'''
-^https:\/\/bp-api\.bestv\.cn\/cms\/api\/free\/open\/advertisingV2 url jsonjq-response-body '.dt = []'
-^https:\/\/bp-api\.bestv\.cn\/cms\/api\/c\/search\/hot\/v(2|4) url jsonjq-response-body '.dt.hot = [] | .dt.recommand = [] | .dt.bannerList = []'
-^https:\/\/(apissl|az2-api(-js|-idc)?)\.(gifshow|ksapisrv)\.com\/rest\/system\/startup\? url jsonjq-response-body 'del(.reskinConfig.sidebarExSquareStyle.moreList, .reskinConfig.sidebarExSquareStyle.topList)'
-^https?://a\.com/req url jsonjq-request-body '.ad = false'
+^https:\/\/api\.f\.test\/cms\/api\/open\/promoV2 url jsonjq-response-body '.dt = []'
+^https:\/\/api\.f\.test\/cms\/api\/c\/search\/hot\/v(2|4) url jsonjq-response-body '.dt.hot = [] | .dt.recommand = [] | .dt.bannerList = []'
+^https:\/\/(api|edge(-js|-idc)?)\.(one|two)\.test\/rest\/system\/startup\? url jsonjq-response-body 'del(.theme.sidebar.moreList, .theme.sidebar.topList)'
+^https?://a\.test/req url jsonjq-request-body '.ad = false'
 ''';
       final content = parseMitmModule(snippet);
       expect(content.bodyRewrite, [
-        r"http-response-jq ^https:\/\/bp-api\.bestv\.cn\/cms\/api\/free\/open\/advertisingV2 '.dt = []'",
-        r"http-response-jq ^https:\/\/bp-api\.bestv\.cn\/cms\/api\/c\/search\/hot\/v(2|4) '.dt.hot = [] | .dt.recommand = [] | .dt.bannerList = []'",
-        r"http-response-jq ^https:\/\/(apissl|az2-api(-js|-idc)?)\.(gifshow|ksapisrv)\.com\/rest\/system\/startup\? 'del(.reskinConfig.sidebarExSquareStyle.moreList, .reskinConfig.sidebarExSquareStyle.topList)'",
-        r"http-request-jq ^https?://a\.com/req '.ad = false'",
+        r"http-response-jq ^https:\/\/api\.f\.test\/cms\/api\/open\/promoV2 '.dt = []'",
+        r"http-response-jq ^https:\/\/api\.f\.test\/cms\/api\/c\/search\/hot\/v(2|4) '.dt.hot = [] | .dt.recommand = [] | .dt.bannerList = []'",
+        r"http-response-jq ^https:\/\/(api|edge(-js|-idc)?)\.(one|two)\.test\/rest\/system\/startup\? 'del(.theme.sidebar.moreList, .theme.sidebar.topList)'",
+        r"http-request-jq ^https?://a\.test/req '.ad = false'",
       ]);
       expect(content.skipped, isEmpty);
       final loon = parseMitmModule(r'''
 [Rewrite]
-^https?:\/\/api\.a\.com\/feed response-body-json-jq 'del(.data.ad)'
-^https?:\/\/api\.a\.com\/post request-body-json-jq '.debug = false'
+^https?:\/\/api\.a\.test\/feed response-body-json-jq 'del(.data.ad)'
+^https?:\/\/api\.a\.test\/post request-body-json-jq '.debug = false'
 ''');
       expect(loon.bodyRewrite, [
-        r"http-response-jq ^https?:\/\/api\.a\.com\/feed 'del(.data.ad)'",
-        r"http-request-jq ^https?:\/\/api\.a\.com\/post '.debug = false'",
+        r"http-response-jq ^https?:\/\/api\.a\.test\/feed 'del(.data.ad)'",
+        r"http-request-jq ^https?:\/\/api\.a\.test\/post '.debug = false'",
       ]);
       expect(loon.skipped, isEmpty);
     });
@@ -1036,8 +1041,8 @@ URL-REGEX,^http://a\.com/ad,PROXY
     );
 
     test('reads its metadata and arguments', () {
-      expect(content.name, 'Ads');
-      expect(content.description, 'Removes ads\nfrom a few apps');
+      expect(content.name, 'Sample');
+      expect(content.description, 'Rewrites a few\nsample hosts');
       expect(content.system, 'ios');
       expect(
         [
@@ -1056,7 +1061,7 @@ URL-REGEX,^http://a\.com/ad,PROXY
         'DOMAIN-SUFFIX,ads.example.com,REJECT',
         'DOMAIN,track.example.com,REJECT',
         'IP-CIDR,10.0.0.1/32,REJECT-DROP,no-resolve',
-        'AND,((DOMAIN-SUFFIX,googlevideo.com),(NETWORK,UDP)),REJECT',
+        'AND,((DOMAIN-SUFFIX,video.a.test),(NETWORK,UDP)),REJECT',
         'DOMAIN,proxied.example.com,PROXY',
         'RULE-SET,${content.ruleProviders.keys.single},REJECT',
       ]);
@@ -1155,9 +1160,9 @@ hostname = %APPEND% {{{Host}}}
     );
 
     test('reads its arguments', () {
-      expect(content.name, 'Loon ads');
+      expect(content.name, 'Loon sample');
       final [block, region] = content.arguments;
-      expect(block.title, 'Block ads');
+      expect(block.title, 'Block samples');
       expect(block.type, MitmModuleArgumentType.toggle);
       expect(block.defaultValue, 'true');
       expect(block.description, 'Blocks the ad requests');
@@ -1204,21 +1209,21 @@ Region = select,"US","JP"
 Limit = input,"5",type=number
 
 [Script]
-Ads = type=http-response,pattern=^https?://(www\.)?a\.com/v\d{1,3},requires-body=1,max-size=-1,script-path=https://cdn.test/ads.js,engine=webview,argument="a=1,b=2"
-http-response ^https:\/\/b\.com\/x script-path=https://cdn.test/b.js, requires-body=true, timeout=10, tag=Loon B, argument=[{Block},{Region},{Limit}], enable={Block}
-http-request ^https:\/\/c\.com script-path=https://cdn.test/c.js, enable=false
-http-request = type=http-request,pattern=^https://d\.com,script-path=https://cdn.test/d.js
+Sample = type=http-response,pattern=^https?://(www\.)?a\.test/v\d{1,3},requires-body=1,max-size=-1,script-path=https://cdn.test/sample.js,engine=webview,argument="a=1,b=2"
+http-response ^https:\/\/b\.test\/x script-path=https://cdn.test/b.js, requires-body=true, timeout=10, tag=Loon B, argument=[{Block},{Region},{Limit}], enable={Block}
+http-request ^https:\/\/c\.test script-path=https://cdn.test/c.js, enable=false
+http-request = type=http-request,pattern=^https://d\.test,script-path=https://cdn.test/d.js
 cron "0 8 * * *" script-path=https://cdn.test/cron.js
 Event = type=event,event-name=network-changed,script-path=https://cdn.test/e.js
-Here = type=http-request,pattern=^https://e\.com,script-path=e.js
-Later = type=http-request,pattern=^https://f\.com,script-path=https://cdn.test/f.js
+Here = type=http-request,pattern=^https://e\.test,script-path=e.js
+Later = type=http-request,pattern=^https://f\.test,script-path=https://cdn.test/f.js
 network-changed script-path=https://cdn.test/net.js, tag=Loon Net
 Wake = type=event,event-name=notification,script-path=https://cdn.test/n.js
 generic script-path=https://cdn.test/tool.js, tag=Tool, timeout=60
 DNS = type=dns,script-path=https://cdn.test/dns.js
 ''';
     const resources = {
-      'https://cdn.test/ads.js': 'ads0.js',
+      'https://cdn.test/sample.js': 'ads0.js',
       'https://cdn.test/b.js': 'b0.js',
       'https://cdn.test/c.js': 'c0.js',
       'https://cdn.test/d.js': 'd0.js',
@@ -1236,16 +1241,16 @@ DNS = type=dns,script-path=https://cdn.test/dns.js
       );
 
       expect(content.script, [
-        r'Ads = type=http-response,pattern="^https?://(www\.)?a\.com/v\d{1,3}",script-path=ads0.js,requires-body=1,max-size=-1,argument="a=1,b=2"',
-        r'Loon B = type=http-response,pattern=^https:\/\/b\.com\/x,script-path=b0.js,requires-body=true,timeout=10,argument-json="{\"Block\":true,\"Region\":\"JP\",\"Limit\":5}"',
-        r'http-request = type=http-request,pattern=^https://d\.com,script-path=d0.js',
+        r'Sample = type=http-response,pattern="^https?://(www\.)?a\.test/v\d{1,3}",script-path=ads0.js,requires-body=1,max-size=-1,argument="a=1,b=2"',
+        r'Loon B = type=http-response,pattern=^https:\/\/b\.test\/x,script-path=b0.js,requires-body=true,timeout=10,argument-json="{\"Block\":true,\"Region\":\"JP\",\"Limit\":5}"',
+        r'http-request = type=http-request,pattern=^https://d\.test,script-path=d0.js',
         'cron.js = type=cron,cronexp="0 8 * * *",script-path=cron0.js',
         'Event = type=event,event-name=network-changed,script-path=e0.js',
         'Loon Net = type=event,event-name=network-changed,script-path=net0.js',
         'Tool = type=generic,script-path=tool0.js,timeout=60',
       ]);
       expect(content.resourceUrls, {
-        'https://cdn.test/ads.js',
+        'https://cdn.test/sample.js',
         'https://cdn.test/b.js',
         'https://cdn.test/d.js',
         'https://cdn.test/cron.js',
@@ -1278,7 +1283,7 @@ DNS = type=dns,script-path=https://cdn.test/dns.js
       );
 
       expect(content.script.map((line) => line.split(' = ').first), [
-        'Ads',
+        'Sample',
         'http-request',
         'cron.js',
         'Event',
@@ -1294,7 +1299,7 @@ DNS = type=dns,script-path=https://cdn.test/dns.js
 [Script]
 DNS = type=dns,script-path=https://cdn.test/dns.js
 [MITM]
-hostname = a.com
+hostname = a.test
 ''').declaredScripts,
         0,
       );
@@ -1342,7 +1347,7 @@ $line
       expect(mitmTaskName('generic script-path=t.js, tag=Tool'), 'Tool');
       expect(mitmTaskName('network-changed script-path=n.js'), 'n.js');
       expect(
-        mitmTaskName('Ads = type=http-response,pattern=a,script-path=a.js'),
+        mitmTaskName('Sample = type=http-response,pattern=a,script-path=a.js'),
         isNull,
       );
     });
@@ -1350,24 +1355,24 @@ $line
 
   group('a Quantumult X snippet', () {
     const snippet = r'''
-#!name=QX Ads
-hostname = a.com, -b.com
-host-suffix, ads.a.com, reject
-HOST, track.a.com, direct
+#!name=QX Sample
+hostname = a.test, -b.test
+host-suffix, ads.a.test, reject
+HOST, track.a.test, direct
 ip-cidr, 10.0.0.0/8, reject, no-resolve
 host-keyword, ad, proxy
 user-agent, App*, reject
-^https?://a\.com/ad url reject-dict
-^https?://a\.com/old url 302 https://a.com/new
-^https?://a\.com/api url request-body "ad":true request-body "ad":false
-^https?://a\.com/feed url response-body "ad":\[.+\] response-body "ad":[]
-^https?://a\.com/page url echo-response text/html\r\nX-Mock: 1 echo-response https://cdn.test/page.html
-^https?://a\.com/list url script-response-body https://cdn.test/list.js
-^https?://a\.com/sign url script-request-header https://cdn.test/sign.js
-^https?://a\.com/hdr url request-header (\r\n)X-Ad:.+(\r\n) request-header $1
-^https?://a\.com/cache url response-header (\r\n)Cache-Control:.+(\r\n) response-header $1Cache-Control: no-cache$2
-^https?://a\.com/jq url jsonjq-response-body '.ads=[]'
-^https?://a\.com/ua UA url-and-header reject
+^https?://a\.test/ad url reject-dict
+^https?://a\.test/old url 302 https://a.test/new
+^https?://a\.test/api url request-body "ad":true request-body "ad":false
+^https?://a\.test/feed url response-body "ad":\[.+\] response-body "ad":[]
+^https?://a\.test/page url echo-response text/html\r\nX-Mock: 1 echo-response https://cdn.test/page.html
+^https?://a\.test/list url script-response-body https://cdn.test/list.js
+^https?://a\.test/sign url script-request-header https://cdn.test/sign.js
+^https?://a\.test/hdr url request-header (\r\n)X-Ad:.+(\r\n) request-header $1
+^https?://a\.test/cache url response-header (\r\n)Cache-Control:.+(\r\n) response-header $1Cache-Control: no-cache$2
+^https?://a\.test/jq url jsonjq-response-body '.ads=[]'
+^https?://a\.test/ua UA url-and-header reject
 0 8 * * * https://cdn.test/checkin.js, tag=Check in, img-url=a.png, enabled=true
 30 0 9 * * 1-5 https://cdn.test/weekday.js
 event-network https://cdn.test/net.js, tag=Network
@@ -1387,38 +1392,38 @@ some text that is not a line of a snippet
     final content = parseMitmModule(snippet, resources: resources);
 
     test('is read without sections', () {
-      expect(content.name, 'QX Ads');
-      expect(content.hostname, ['a.com', '-b.com']);
+      expect(content.name, 'QX Sample');
+      expect(content.hostname, ['a.test', '-b.test']);
       expect(content.rules, [
-        'DOMAIN-SUFFIX,ads.a.com,REJECT',
-        'DOMAIN,track.a.com,DIRECT',
+        'DOMAIN-SUFFIX,ads.a.test,REJECT',
+        'DOMAIN,track.a.test,DIRECT',
         'IP-CIDR,10.0.0.0/8,REJECT,no-resolve',
         'DOMAIN-KEYWORD,ad,PROXY',
       ]);
       expect(content.urlRewrite, [
         r'^https?:// "\r\nUser-Agent: App[^\r\n]*\r\n" url-and-header reject',
-        r'^https?://a\.com/ad reject-dict',
-        r'^https?://a\.com/old https://a.com/new 302',
-        r'^https?://a\.com/ua UA url-and-header reject',
+        r'^https?://a\.test/ad reject-dict',
+        r'^https?://a\.test/old https://a.test/new 302',
+        r'^https?://a\.test/ua UA url-and-header reject',
       ]);
       expect(content.bodyRewrite, [
-        r'http-request ^https?://a\.com/api "\"ad\":true" "\"ad\":false"',
-        r'http-response ^https?://a\.com/feed "\"ad\":\[.+\]" "\"ad\":[]"',
-        r"http-response-jq ^https?://a\.com/jq '.ads=[]'",
+        r'http-request ^https?://a\.test/api "\"ad\":true" "\"ad\":false"',
+        r'http-response ^https?://a\.test/feed "\"ad\":\[.+\]" "\"ad\":[]"',
+        r"http-response-jq ^https?://a\.test/jq '.ads=[]'",
       ]);
       expect(content.mapLocal, [
-        r'^https?://a\.com/page data-type="file" data="page0.html" header="Content-Type:text/html|X-Mock:1"',
+        r'^https?://a\.test/page data-type="file" data="page0.html" header="Content-Type:text/html|X-Mock:1"',
       ]);
       expect(content.headerRewrite, [
-        r'http-request ^https?://a\.com/hdr header-text-replace (\r\n)X-Ad:.+(\r\n) $1',
-        r'http-response ^https?://a\.com/cache header-text-replace (\r\n)Cache-Control:.+(\r\n) "$1Cache-Control: no-cache$2"',
+        r'http-request ^https?://a\.test/hdr header-text-replace (\r\n)X-Ad:.+(\r\n) $1',
+        r'http-response ^https?://a\.test/cache header-text-replace (\r\n)Cache-Control:.+(\r\n) "$1Cache-Control: no-cache$2"',
       ]);
     });
 
     test('turns script rewrites and tasks into script lines', () {
       expect(content.script, [
-        r'list.js = type=http-response,pattern=^https?://a\.com/list,requires-body=true,script-path=list0.js',
-        r'sign.js = type=http-request,pattern=^https?://a\.com/sign,script-path=sign0.js',
+        r'list.js = type=http-response,pattern=^https?://a\.test/list,requires-body=true,script-path=list0.js',
+        r'sign.js = type=http-request,pattern=^https?://a\.test/sign,script-path=sign0.js',
         'Check in = type=cron,cronexp="0 8 * * *",script-path=checkin0.js,timeout=120',
         'weekday.js = type=cron,cronexp="30 0 9 * * 1-5",script-path=weekday0.js,timeout=120',
         'Network = type=event,event-name=network-changed,script-path=net0.js,timeout=120',
@@ -1439,19 +1444,19 @@ some text that is not a line of a snippet
     test('reads its sections when it has them', () {
       final content = parseMitmModule(r'''
 [filter_local]
-host-suffix, x.com, reject
+host-suffix, x.test, reject
 [rewrite_local]
-^https://x\.com/a url reject
-hostname = x.com
+^https://x\.test/a url reject
+hostname = x.test
 [mitm]
-hostname = y.com
+hostname = y.test
 [general]
-network_check_url = http://bing.com
+network_check_url = http://check.test
 ''');
 
-      expect(content.rules, ['DOMAIN-SUFFIX,x.com,REJECT']);
-      expect(content.urlRewrite, [r'^https://x\.com/a reject']);
-      expect(content.hostname, ['x.com', 'y.com']);
+      expect(content.rules, ['DOMAIN-SUFFIX,x.test,REJECT']);
+      expect(content.urlRewrite, [r'^https://x\.test/a reject']);
+      expect(content.hostname, ['x.test', 'y.test']);
       expect(content.skipped.single.reason, MitmModuleSkipReason.setting);
     });
   });
@@ -1459,7 +1464,7 @@ network_check_url = http://bing.com
   group('a Stash override', () {
     const override = r'''
 #!name=Ignored
-name: Stash Ads
+name: Stash Sample
 desc: Blocks ads
 arguments-version: 1
 arguments:
@@ -1480,45 +1485,45 @@ arguments:
     default: HK
 http:
   force-http-engine:
-    - a.com:80
+    - a.test:80
   mitm:
-    - a.com
-    - "*.b.com:*"
-    - c.com:8443
+    - a.test
+    - "*.b.test:*"
+    - c.test:8443
   url-rewrite:
-    - ^https?://a\.com/ad - reject-img
-    - ^https?://a\.com/old https://a.com/new 307
-    - ^https?://a\.com/in https://a.com/out transparent
+    - ^https?://a\.test/ad - reject-img
+    - ^https?://a\.test/old https://a.test/new 307
+    - ^https?://a\.test/in https://a.test/out transparent
   header-rewrite:
-    - ^https?://a\.com request-del X-Ad
-    - ^https?://a\.com response-add X-Seen 1
+    - ^https?://a\.test request-del X-Ad
+    - ^https?://a\.test response-add X-Seen 1
   body-rewrite:
-    - ^https?://a\.com/api response-replace-regex "ad":true "ad":false
-    - ^https?://a\.com/api response-jq del(.ads)
-    - ^https?://a\.com/api response-json-del ads
+    - ^https?://a\.test/api response-replace-regex "ad":true "ad":false
+    - ^https?://a\.test/api response-jq del(.ads)
+    - ^https?://a\.test/api response-json-del ads
   mock:
-    - match: ^https?://a\.com/empty
+    - match: ^https?://a\.test/empty
       text: '{}'
       status-code: 200
       headers:
         Content-Type: application/json
-    - match: ^https?://a\.com/blob
+    - match: ^https?://a\.test/blob
       base64: AAEC
-    - match: ^https?://a\.com/lines
+    - match: ^https?://a\.test/lines
       text: |
         one
         two
   script:
-    - match: ^https?://a\.com/list
+    - match: ^https?://a\.test/list
       name: list
       type: response
       require-body: true
       timeout: 10
       argument: '{"region":${args.region|json},"verbose":${args.verbose|json}}'
-    - match: ^https?://a\.com/req
+    - match: ^https?://a\.test/req
       name: missing
       type: request
-    - match: ^https?://a\.com/x
+    - match: ^https?://a\.test/x
       name: list
       type: dns
 cron:
@@ -1537,10 +1542,10 @@ script-providers:
 tiles:
   - name: panel
 rules:
-  - DOMAIN,ads.a.com,${args.policy}
-  - DOMAIN-SUFFIX,track.a.com,REJECT
+  - DOMAIN,ads.a.test,${args.policy}
+  - DOMAIN-SUFFIX,track.a.test,REJECT
   - RULE-SET,ads,REJECT
-  - DOMAIN,keep.a.com,$${args.policy}
+  - DOMAIN,keep.a.test,$${args.policy}
 dns:
   nameserver: [1.1.1.1]
 ''';
@@ -1555,7 +1560,7 @@ dns:
     );
 
     test('reads its metadata and arguments', () {
-      expect(content.name, 'Stash Ads');
+      expect(content.name, 'Stash Sample');
       expect(content.description, 'Blocks ads');
       expect(
         [
@@ -1583,31 +1588,36 @@ dns:
     });
 
     test('spreads its http section over the lists', () {
-      expect(content.hostname, ['a.com:80', 'a.com', '*.b.com', 'c.com:8443']);
+      expect(content.hostname, [
+        'a.test:80',
+        'a.test',
+        '*.b.test',
+        'c.test:8443',
+      ]);
       expect(content.urlRewrite, [
-        r'^https?://a\.com/ad reject-img',
-        r'^https?://a\.com/old https://a.com/new 307',
-        r'^https?://a\.com/in https://a.com/out header',
+        r'^https?://a\.test/ad reject-img',
+        r'^https?://a\.test/old https://a.test/new 307',
+        r'^https?://a\.test/in https://a.test/out header',
       ]);
       expect(content.headerRewrite, [
-        r'http-request ^https?://a\.com header-del X-Ad',
-        r'http-response ^https?://a\.com header-add X-Seen 1',
+        r'http-request ^https?://a\.test header-del X-Ad',
+        r'http-response ^https?://a\.test header-add X-Seen 1',
       ]);
       expect(content.bodyRewrite, [
-        r'http-response ^https?://a\.com/api "ad":true "ad":false',
-        r'http-response-jq ^https?://a\.com/api del(.ads)',
-        r'http-response-jq ^https?://a\.com/api if (.ads | . != null and . != false) then del(.ads) else . end',
+        r'http-response ^https?://a\.test/api "ad":true "ad":false',
+        r'http-response-jq ^https?://a\.test/api del(.ads)',
+        r'http-response-jq ^https?://a\.test/api if (.ads | . != null and . != false) then del(.ads) else . end',
       ]);
       expect(content.mapLocal, [
-        r'^https?://a\.com/empty data-type="text" data="{}" status-code="200" header="Content-Type:application/json"',
-        r'^https?://a\.com/blob data-type="base64" data="AAEC"',
-        r'^https?://a\.com/lines data-type="base64" data="b25lCnR3bwo="',
+        r'^https?://a\.test/empty data-type="text" data="{}" status-code="200" header="Content-Type:application/json"',
+        r'^https?://a\.test/blob data-type="base64" data="AAEC"',
+        r'^https?://a\.test/lines data-type="base64" data="b25lCnR3bwo="',
       ]);
     });
 
     test('fills its scripts from the script providers', () {
       expect(content.script, [
-        r'list = type=http-response,pattern=^https?://a\.com/list,script-path=list0.js,requires-body=true,timeout=10,argument="{\"region\":\"JP\",\"verbose\":false}"',
+        r'list = type=http-response,pattern=^https?://a\.test/list,script-path=list0.js,requires-body=true,timeout=10,argument="{\"region\":\"JP\",\"verbose\":false}"',
         'checkin = type=cron,cronexp="0 8 * * *",script-path=checkin0.js,timeout=60',
       ]);
       expect(content.declaredScripts, 3);
@@ -1616,15 +1626,15 @@ dns:
 
     test('puts its arguments in its rules', () {
       expect(content.rules, [
-        'DOMAIN,ads.a.com,REJECT',
-        'DOMAIN-SUFFIX,track.a.com,REJECT',
+        'DOMAIN,ads.a.test,REJECT',
+        'DOMAIN-SUFFIX,track.a.test,REJECT',
       ]);
       expect(
         parseMitmModule(
           override,
           values: const {'policy': 'DIRECT'},
         ).rules.first,
-        'DOMAIN,ads.a.com,DIRECT',
+        'DOMAIN,ads.a.test,DIRECT',
       );
     });
 
@@ -1639,13 +1649,13 @@ dns:
           ('rules', MitmModuleSkipReason.rule),
         ],
       );
-      expect(content.skipped[4].line, r'DOMAIN,keep.a.com,$${args.policy}');
+      expect(content.skipped[4].line, r'DOMAIN,keep.a.test,$${args.policy}');
     });
 
     test('is not taken for a Surge module or a snippet', () {
-      expect(parseMitmModule('[MITM]\nhostname = a.com').hostname, ['a.com']);
-      expect(parseMitmModule('rules:\n  - DOMAIN,a.com,REJECT').rules, [
-        'DOMAIN,a.com,REJECT',
+      expect(parseMitmModule('[MITM]\nhostname = a.test').hostname, ['a.test']);
+      expect(parseMitmModule('rules:\n  - DOMAIN,a.test,REJECT').rules, [
+        'DOMAIN,a.test,REJECT',
       ]);
       expect(parseMitmModule('name: Not a module').isEmpty, isTrue);
     });
@@ -1658,42 +1668,47 @@ dns:
   test('the user hostnames go first and module lines keep the list order', () {
     final first = parseMitmModule('''
 [MITM]
-hostname = %APPEND% a.com
-hostname = %INSERT% -b.a.com
+hostname = %APPEND% a.test
+hostname = %INSERT% -b.a.test
 [URL Rewrite]
 ^https://first _ reject
 [Rule]
-DOMAIN,first.com,REJECT
+DOMAIN,first.test,REJECT
 ''');
     final second = parseMitmModule('''
 [MITM]
-hostname = c.com
+hostname = c.test
 [URL Rewrite]
 ^https://second _ reject
 [Rule]
-DOMAIN,second.com,DIRECT
+DOMAIN,second.test,DIRECT
 ''');
 
-    final merged = mergeMitmModules(['-own.a.com'], [first, second]);
+    final merged = mergeMitmModules(['-own.a.test'], [first, second]);
 
-    expect(merged.mitm.hostname, ['-own.a.com', '-b.a.com', 'a.com', 'c.com']);
+    expect(merged.mitm.hostname, [
+      '-own.a.test',
+      '-b.a.test',
+      'a.test',
+      'c.test',
+    ]);
     expect(merged.mitm.urlRewrite, [
       '^https://first _ reject',
       '^https://second _ reject',
     ]);
     expect(merged.rules, [
-      'DOMAIN,first.com,REJECT',
-      'DOMAIN,second.com,DIRECT',
+      'DOMAIN,first.test,REJECT',
+      'DOMAIN,second.test,DIRECT',
     ]);
   });
 
   test('a resource is named by its content and keeps the extension', () {
-    final name = mitmResourceName('https://a.com/x/blank.JSON?v=1', [1, 2, 3]);
+    final name = mitmResourceName('https://a.test/x/blank.JSON?v=1', [1, 2, 3]);
 
     expect(name, endsWith('.json'));
     expect(name, hasLength(32 + '.json'.length));
-    expect(mitmResourceName('https://a.com/x/blank.JSON', [1, 2, 3]), name);
-    expect(mitmResourceName('https://a.com/x', [1, 2, 4]), hasLength(32));
+    expect(mitmResourceName('https://a.test/x/blank.JSON', [1, 2, 3]), name);
+    expect(mitmResourceName('https://a.test/x', [1, 2, 4]), hasLength(32));
   });
 
   test('a local module names its attachments by file name', () {
@@ -1703,9 +1718,9 @@ DOMAIN,second.com,DIRECT
 ^https://a data="one.json"
 ^https://b data="two.gif"
 [Script]
-Ads = type=http-response,pattern=^https://a,script-path=ads.js
+Sample = type=http-response,pattern=^https://a,script-path=sample.js
 ''',
-      resources: const {'one.json': 'h1.json', 'ads.js': 'h2.js'},
+      resources: const {'one.json': 'h1.json', 'sample.js': 'h2.js'},
     );
 
     expect(content.mapLocal, [contains('h1.json')]);
@@ -1809,7 +1824,7 @@ Ads = type=http-response,pattern=^https://a,script-path=ads.js
     test('is not added to a Stash override', () {
       expect(
         mitmAddLine(
-          'name: Ads\nhttp:\n  mitm:\n    - a.test\n',
+          'name: Sample\nhttp:\n  mitm:\n    - a.test\n',
           mitmUrlRewriteSection,
           mitmRejectLine(url),
         ),

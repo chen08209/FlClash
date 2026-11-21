@@ -95,13 +95,13 @@ hostname = %APPEND% example.com
   }
 
   test('a module downloads with the files it serves', () async {
-    bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
+    bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
 
-    final added = await action().addFromUrl(urlOf('/ads.sgmodule'));
+    final added = await action().addFromUrl(urlOf('/sample.sgmodule'));
 
     final saved = (await stored()).single;
-    expect(saved.name, 'Ads');
-    expect(saved.url, urlOf('/ads.sgmodule'));
+    expect(saved.name, 'Sample');
+    expect(saved.url, urlOf('/sample.sgmodule'));
     final resource = saved.resources[urlOf('/blank.json')]!;
     expect(resource, endsWith('.json'));
     expect(await files(appPath.mitmModulesDirPath), [added.fileName]);
@@ -119,7 +119,7 @@ hostname = %APPEND% example.com
 name: Inline
 http:
   script:
-    - match: ^https?://a\.com
+    - match: ^https?://a\.test
       name: inline
       type: response
 script-providers:
@@ -143,8 +143,8 @@ script-providers:
   });
 
   test('a resource that fails to download keeps its last copy', () async {
-    bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-    await action().addFromUrl(urlOf('/ads.sgmodule'));
+    bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
+    await action().addFromUrl(urlOf('/sample.sgmodule'));
     final resources = (await stored()).single.resources;
     bodies.remove('/blank.json');
 
@@ -164,8 +164,8 @@ script-providers:
   });
 
   test('cleaning keeps only the files something still names', () async {
-    bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-    await action().addFromUrl(urlOf('/ads.sgmodule'));
+    bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
+    await action().addFromUrl(urlOf('/sample.sgmodule'));
     final resource = (await stored()).single.resources.values.single;
     final local = await action().create(
       '[Map Local]\n^https://own data="own.gif"\n',
@@ -201,23 +201,23 @@ script-providers:
     'a module with scripts is added off and keeps the user choice',
     () async {
       bodies = {
-        '/ads.sgmodule':
+        '/sample.sgmodule':
             '''
 [Argument]
 Extra = switch,false
 [Script]
-Ads = type=http-response,pattern=^https://a,script-path=${urlOf('/ads.js')}
+Sample = type=http-response,pattern=^https://a,script-path=${urlOf('/sample.js')}
 Extra = type=http-response,pattern=^https://b,script-path=${urlOf('/extra.js')},enable={Extra}
 ''',
-        '/ads.js': r'$done({})',
+        '/sample.js': r'$done({})',
         '/extra.js': r'$done({})',
       };
 
-      await action().addFromUrl(urlOf('/ads.sgmodule'));
+      await action().addFromUrl(urlOf('/sample.sgmodule'));
       final added = (await stored()).single;
       expect(added.enabled, isFalse);
       expect(added.scripts, 2);
-      expect(added.resources.keys, [urlOf('/ads.js')]);
+      expect(added.resources.keys, [urlOf('/sample.js')]);
 
       action().putModule(added.copyWith(enabled: true, accepted: true));
       await action().setArguments((await stored()).single, const {
@@ -226,7 +226,7 @@ Extra = type=http-response,pattern=^https://b,script-path=${urlOf('/extra.js')},
 
       final changed = (await stored()).single;
       expect(changed.enabled, isTrue);
-      expect(changed.resources.keys, {urlOf('/ads.js'), urlOf('/extra.js')});
+      expect(changed.resources.keys, {urlOf('/sample.js'), urlOf('/extra.js')});
       await action().updateModule(changed);
       expect((await stored()).single.enabled, isTrue);
     },
@@ -259,13 +259,13 @@ Extra = type=http-response,pattern=^https://b,script-path=${urlOf('/extra.js')},
 
   test('a module added with scripts waits until the user answers', () async {
     bodies = {
-      '/ads.sgmodule':
-          '${module('Ads')}[Script]\n'
-          'Ads = type=cron,cronexp="0 * * * *",script-path=${urlOf('/a.js')}\n',
+      '/sample.sgmodule':
+          '${module('Sample')}[Script]\n'
+          'Sample = type=cron,cronexp="0 * * * *",script-path=${urlOf('/a.js')}\n',
       '/a.js': r'$done({})',
       '/blank.json': '{}',
     };
-    final added = await action().addFromUrl(urlOf('/ads.sgmodule'));
+    final added = await action().addFromUrl(urlOf('/sample.sgmodule'));
     expect(added.enabled, isFalse);
     expect(container.read(mitmModulesToAgreeProvider).single.id, added.id);
 
@@ -275,8 +275,8 @@ Extra = type=http-response,pattern=^https://b,script-path=${urlOf('/extra.js')},
   });
 
   test('a restore reads what each module asks from its own file', () async {
-    bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-    final added = await action().addFromUrl(urlOf('/ads.sgmodule'));
+    bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
+    final added = await action().addFromUrl(urlOf('/sample.sgmodule'));
     action().putModule(added.copyWith(id: added.id + 1));
     await File(
       join(await appPath.mitmModulesDirPath, added.fileName),
@@ -294,13 +294,13 @@ Extra = type=http-response,pattern=^https://b,script-path=${urlOf('/extra.js')},
   group('an update that brings scripts', () {
     String withScript() =>
         '''
-${module('Ads')}[Script]
-Ads = type=http-response,pattern=^https://a,script-path=${urlOf('/ads.js')}
+${module('Sample')}[Script]
+Sample = type=http-response,pattern=^https://a,script-path=${urlOf('/sample.js')}
 ''';
 
     Future<MitmModule> bringScripts() async {
-      bodies['/ads.sgmodule'] = withScript();
-      bodies['/ads.js'] = r'$done({})';
+      bodies['/sample.sgmodule'] = withScript();
+      bodies['/sample.js'] = r'$done({})';
       return action().updateModule((await stored()).single);
     }
 
@@ -310,8 +310,8 @@ Ads = type=http-response,pattern=^https://a,script-path=${urlOf('/ads.js')}
     };
 
     setUp(() async {
-      bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-      await action().addFromUrl(urlOf('/ads.sgmodule'));
+      bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
+      await action().addFromUrl(urlOf('/sample.sgmodule'));
     });
 
     test('turns off a module never agreed to and asks', () async {
@@ -359,8 +359,8 @@ Ads = type=http-response,pattern=^https://a,script-path=${urlOf('/ads.js')}
     });
 
     test('is told apart from one that only widens the hosts', () async {
-      bodies['/ads.sgmodule'] = module(
-        'Ads',
+      bodies['/sample.sgmodule'] = module(
+        'Sample',
       ).replaceFirst('example.com', 'example.com, *.example.org');
 
       final updated = await action().updateModule((await stored()).single);
@@ -391,16 +391,19 @@ Ads = type=http-response,pattern=^https://a,script-path=${urlOf('/ads.js')}
   group('an accepted module', () {
     String scripted(String pattern) =>
         '''
-#!name=Ads
+#!name=Sample
 [MITM]
 hostname = example.com
 [Script]
-Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
+Sample = type=http-response,pattern=$pattern,script-path=${urlOf('/sample.js')}
 ''';
 
     Future<MitmModule> accepted() async {
-      bodies = {'/ads.sgmodule': scripted('^https://a'), '/ads.js': 'one'};
-      await action().addFromUrl(urlOf('/ads.sgmodule'));
+      bodies = {
+        '/sample.sgmodule': scripted('^https://a'),
+        '/sample.js': 'one',
+      };
+      await action().addFromUrl(urlOf('/sample.sgmodule'));
       action().putModule(
         (await stored()).single.copyWith(enabled: true, accepted: true),
       );
@@ -412,8 +415,8 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
 
     test('stays on through an update that changes its scripts', () async {
       final ads = await accepted();
-      bodies['/ads.sgmodule'] = scripted('.*');
-      bodies['/ads.js'] = 'two';
+      bodies['/sample.sgmodule'] = scripted('.*');
+      bodies['/sample.js'] = 'two';
 
       await action().updateModule(ads);
 
@@ -425,7 +428,7 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
         'stays on through an auto update that changes its scripts',
         () async {
           final ads = await accepted();
-          bodies['/ads.js'] = 'two';
+          bodies['/sample.js'] = 'two';
           action().putModule(ads.copyWith(lastUpdateTime: DateTime.utc(2000)));
           container
               .read(patchClashConfigProvider.notifier)
@@ -508,8 +511,8 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
   });
 
   test('an update keeps what the user changed while it ran', () async {
-    bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-    await action().addFromUrl(urlOf('/ads.sgmodule'));
+    bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
+    await action().addFromUrl(urlOf('/sample.sgmodule'));
     final added = (await stored()).single;
 
     final update = action().updateModule(added);
@@ -520,13 +523,13 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
   });
 
   test('a new module goes first and may start empty', () async {
-    bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-    await action().addFromUrl(urlOf('/ads.sgmodule'));
+    bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
+    await action().addFromUrl(urlOf('/sample.sgmodule'));
 
     final created = await action().create('#!name=Mine\n[URL Rewrite]\n');
 
     final modules = await stored();
-    expect(modules.map((item) => item.name), ['Mine', 'Ads']);
+    expect(modules.map((item) => item.name), ['Mine', 'Sample']);
     expect(modules.first.isRemote, isFalse);
     expect(modules.first.enabled, isTrue);
     expect(
@@ -592,8 +595,8 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
       required bool autoUpdate,
       required Duration age,
     }) async {
-      bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-      final added = await action().addFromUrl(urlOf('/ads.sgmodule'));
+      bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
+      final added = await action().addFromUrl(urlOf('/sample.sgmodule'));
       final last = DateTime.now().subtract(age);
       action().putModule(added.copyWith(lastUpdateTime: last));
       await stored();
@@ -644,8 +647,8 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
 
     if (rsFeature) {
       test('auto update off still brings back missing content', () async {
-        bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-        final added = await action().addFromUrl(urlOf('/ads.sgmodule'));
+        bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
+        final added = await action().addFromUrl(urlOf('/sample.sgmodule'));
         await stored();
         container
             .read(patchClashConfigProvider.notifier)
@@ -666,8 +669,8 @@ Ads = type=http-response,pattern=$pattern,script-path=${urlOf('/ads.js')}
   });
 
   test('deleting a module removes its content', () async {
-    bodies = {'/ads.sgmodule': module('Ads'), '/blank.json': '{}'};
-    await action().addFromUrl(urlOf('/ads.sgmodule'));
+    bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
+    await action().addFromUrl(urlOf('/sample.sgmodule'));
 
     await action().deleteModule((await stored()).single);
 

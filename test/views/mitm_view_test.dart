@@ -757,7 +757,7 @@ void main() {
     ) async {
       await pumpView(
         tester,
-        mitm: const Mitm(hostname: ['a.com', 'bad host']),
+        mitm: const Mitm(hostname: ['a.test', 'bad host']),
         view: const AdvancedConfigView(),
       );
 
@@ -789,7 +789,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextFormField), 'a.com, b.com');
+      await tester.enterText(find.byType(TextFormField), 'a.test, b.test');
       await tester.tap(button(currentAppLocalizations.confirm));
       await tester.pumpAndSettle();
 
