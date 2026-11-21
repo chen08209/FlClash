@@ -80,6 +80,13 @@ void main() {
               ],
             },
           });
+        case 'rule.list':
+          channel.answer(message['id'], {
+            'rules': [
+              {'type': 'DOMAIN', 'payload': 'a.test', 'target': 'Proxy'},
+              {'type': 'MATCH', 'payload': '', 'target': 'DIRECT'},
+            ],
+          });
         case 'mitm.query':
           channel.answer(message['id'], {
             'capturing': true,
@@ -170,6 +177,13 @@ void main() {
         contentType: 'application/json',
       ),
     });
+  });
+
+  test('the rules in force read in match order', () async {
+    final rules = await api.getRules();
+    expect(rules.length, 2);
+    expect(rules.holds(0, type: 'DOMAIN', payload: 'a.test'), isTrue);
+    expect(rules.holds(1, type: 'DOMAIN', payload: 'a.test'), isFalse);
   });
 
   test(

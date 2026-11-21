@@ -32,6 +32,8 @@ extension ModelApi on CoreApi {
   Future<String> dumpRules(String profilePath) async =>
       (await dumpRuleSet(profilePath)).text ?? '';
 
+  Future<RuleTable> getRules() async => RuleTable.fromJson(await ruleList());
+
   Future<OutboundIpResult> probeOutboundIp(
     OutboundIpParams params, {
     Duration? guard,

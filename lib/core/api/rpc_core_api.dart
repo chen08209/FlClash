@@ -342,6 +342,9 @@ final class RpcCoreApi implements CoreApi {
       );
 
   @override
+  Future<Object?> ruleList() => _call('rule.list', (r) => _object(r));
+
+  @override
   Future<RuleSetInfoDto> compileRuleSet(String name, {String? url}) => _call(
     'ruleSet.compile',
     (r) => RuleSetInfoDto.fromJson(_object(r)),

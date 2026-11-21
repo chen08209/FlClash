@@ -5,6 +5,9 @@ import 'package:fl_clash/models/models.dart'
     show
         ConfigWarning,
         ConfigWarningLevel,
+        ConnectionEnd,
+        ConnectionFailure,
+        ConnectionTiming,
         CoreCapabilities,
         CoreMemoryStats,
         Delay,
@@ -56,6 +59,7 @@ Log logOf(LogEntry entry) => Log(
 );
 
 DnsQuery dnsQueryOf(DnsEntry entry) => DnsQuery(
+  id: entry.id,
   domain: entry.domain,
   type: entry.type,
   initiator: DnsQueryInitiator.values
@@ -108,6 +112,39 @@ TrackerInfo trackerOf(ConnectionInfo info) => TrackerInfo(
   chains: info.chains,
   rule: info.rule,
   rulePayload: info.rulePayload,
+  ruleIndex: info.ruleIndex,
+  dnsQueries: info.dnsQueries,
+  failure: switch (info.failure) {
+    final failure? => ConnectionFailure(
+      kind:
+          ConnectionFailureKind.values.asNameMap()[failure.kind] ??
+          ConnectionFailureKind.other,
+      message: failure.message,
+    ),
+    null => null,
+  },
+  timing: switch (info.timing) {
+    final timing? => ConnectionTiming(
+      accepted: DateTime.fromMillisecondsSinceEpoch(timing.accepted),
+      dnsStart: timing.dnsStart,
+      dnsEnd: timing.dnsEnd,
+      routed: timing.routed,
+      dialStart: timing.dialStart,
+      connected: timing.connected,
+      tls: timing.tls,
+      dialEnd: timing.dialEnd,
+      decrypted: timing.decrypted,
+    ),
+    null => null,
+  },
+);
+
+ConnectionEnd connectionEndOf(ConnectionEndDto end) => ConnectionEnd(
+  reason:
+      ConnectionEndReason.values.asNameMap()[end.reason] ??
+      ConnectionEndReason.error,
+  endedAt: DateTime.fromMillisecondsSinceEpoch(end.endedAt),
+  message: end.message,
 );
 
 models.MitmQueryPage mitmQueryPageOf(MitmQueryAnswer answer) =>
