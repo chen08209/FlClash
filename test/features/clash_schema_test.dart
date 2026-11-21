@@ -53,4 +53,18 @@ void main() {
     expect(groups, containsAll(group.fields['type']!.values));
     expect(groups, containsAll(group.variants.keys));
   });
+
+  test(
+    'offers every group type Concord applies, smart with its own fields',
+    () {
+      expect(
+        group.fields['type']!.values,
+        containsAll(concordSupportedKeys('group-types')),
+      );
+      expect(
+        group.variants['smart']!.keys,
+        containsAll(['tolerance', 'policy-priority']),
+      );
+    },
+  );
 }

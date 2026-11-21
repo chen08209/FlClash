@@ -612,6 +612,36 @@ void main() {
       expect(groups.single.all.map((proxy) => proxy.name), ['a']);
     });
 
+    test('keeps a smart group', () async {
+      when(() => api.proxyGroups()).thenAnswer(
+        (_) async => const ProxyGroupsDto(
+          order: ['S'],
+          groups: [
+            GroupInfo(
+              name: 'S',
+              type: 'Smart',
+              now: 'a',
+              all: ['a'],
+              testUrl: '',
+              hidden: false,
+              icon: '',
+              emptyFallback: '',
+            ),
+          ],
+          nodes: [NodeInfo(name: 'a', type: 'ss')],
+        ),
+      );
+
+      final groups = await controller.getProxiesGroups(
+        sortType: ProxiesSortType.none,
+        delayMap: const {},
+        selectedMap: const {},
+        defaultTestUrl: 'http://t',
+      );
+
+      expect(groups.single.type, GroupType.Smart);
+    });
+
     test('is empty when the Core lists no groups', () async {
       when(
         () => api.proxyGroups(),

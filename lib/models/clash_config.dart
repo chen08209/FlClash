@@ -95,6 +95,7 @@ abstract class ProxyGroup with _$ProxyGroup {
     @JsonKey(name: 'exclude-type') String? excludeType,
     @JsonKey(name: 'expected-status') String? expectedStatus,
     int? tolerance,
+    @JsonKey(name: 'policy-priority') String? policyPriority,
     LoadBalanceStrategy? strategy,
     @JsonKey(name: 'hash-key') String? hashKey,
     @JsonKey(name: 'default-selected') String? defaultSelected,
@@ -141,8 +142,11 @@ extension ProxyGroupExt on ProxyGroup {
       if (includeAllProviders == true) 'include-all-providers': true,
       if (hidden != null) 'hidden': hidden,
       if (icon?.isNotEmpty == true) 'icon': icon,
-      if (type == GroupType.URLTest && tolerance != null)
+      if ((type == GroupType.URLTest || type == GroupType.Smart) &&
+          tolerance != null)
         'tolerance': tolerance,
+      if (type == GroupType.Smart && policyPriority?.isNotEmpty == true)
+        'policy-priority': policyPriority,
       if (type == GroupType.Selector && defaultSelected?.isNotEmpty == true)
         'default-selected': defaultSelected,
       if (type == GroupType.LoadBalance && strategy != null)
@@ -215,6 +219,7 @@ const proxyGroupTextKeys = [
   'exclude-type',
   'expected-status',
   'hash-key',
+  'policy-priority',
   'default-selected',
   'empty-fallback',
   'icon',

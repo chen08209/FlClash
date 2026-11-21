@@ -78,7 +78,7 @@ enum _GroupOption {
 
   bool appliesTo(GroupType type, LoadBalanceStrategy? strategy) =>
       switch (this) {
-        tolerance => type == GroupType.URLTest,
+        tolerance => type == GroupType.URLTest || type == GroupType.Smart,
         defaultSelected => type == GroupType.Selector,
         _GroupOption.strategy => type == GroupType.LoadBalance,
         hashKey =>

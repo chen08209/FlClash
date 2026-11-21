@@ -29,6 +29,7 @@ _ProxyGroup _$ProxyGroupFromJson(Map<String, dynamic> json) => _ProxyGroup(
   excludeType: json['exclude-type'] as String?,
   expectedStatus: json['expected-status'] as String?,
   tolerance: (json['tolerance'] as num?)?.toInt(),
+  policyPriority: json['policy-priority'] as String?,
   strategy: $enumDecodeNullable(_$LoadBalanceStrategyEnumMap, json['strategy']),
   hashKey: json['hash-key'] as String?,
   defaultSelected: json['default-selected'] as String?,
@@ -63,6 +64,7 @@ Map<String, dynamic> _$ProxyGroupToJson(_ProxyGroup instance) =>
       'exclude-type': instance.excludeType,
       'expected-status': instance.expectedStatus,
       'tolerance': instance.tolerance,
+      'policy-priority': instance.policyPriority,
       'strategy': _$LoadBalanceStrategyEnumMap[instance.strategy],
       'hash-key': instance.hashKey,
       'default-selected': instance.defaultSelected,
@@ -81,6 +83,7 @@ const _$GroupTypeEnumMap = {
   GroupType.Fallback: 'fallback',
   GroupType.LoadBalance: 'load-balance',
   GroupType.Relay: 'relay',
+  GroupType.Smart: 'smart',
 };
 
 const _$LoadBalanceStrategyEnumMap = {
