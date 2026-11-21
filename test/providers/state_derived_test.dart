@@ -397,6 +397,36 @@ void main() {
     expect(container.read(navigationStateProvider).currentIndex, 0);
   });
 
+  test('on mobile, connections stays in the tools list while HTTPS is not '
+      'decrypted, and dev never decrypts', () {
+    container
+        .read(viewSizeProvider.notifier)
+        .update((_) => Size(maxMobileWidth.toDouble(), 800));
+    List<PageLabel> bar() => [
+      for (final item
+          in container.read(currentNavigationItemsStateProvider).value)
+        item.label,
+    ];
+    List<PageLabel> tools() => [
+      for (final item
+          in container.read(moreToolsSelectorStateProvider).navigationItems)
+        item.label,
+    ];
+
+    expect(bar(), isNot(contains(PageLabel.requests)));
+    expect(tools(), contains(PageLabel.requests));
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(mitm: state.mitm.copyWith(enable: true)),
+        );
+    final joinsBar =
+        rsFeature && container.read(patchClashConfigProvider).mitm.enable;
+    expect(bar().contains(PageLabel.requests), joinsBar);
+    expect(tools().contains(PageLabel.requests), !joinsBar);
+  });
+
   test('layout and page state providers compose their dependencies', () {
     final profile = Profile.normal(label: 'Primary');
     _profiles(container).replace([profile]);
