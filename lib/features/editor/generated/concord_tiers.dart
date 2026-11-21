@@ -70,6 +70,9 @@ const concordKeyTiers = <String, Map<String, ConcordTier>>{
     'geosite-matcher': ConcordTier.t2,
     'etag-support': ConcordTier.t2,
     'global-client-fingerprint': ConcordTier.t2,
+    'lgbm-auto-update': ConcordTier.t2,
+    'lgbm-update-interval': ConcordTier.t2,
+    'lgbm-url': ConcordTier.t2,
     'geodata-loader': ConcordTier.inert,
   },
   'dns': {
@@ -191,6 +194,7 @@ const concordKeyTiers = <String, Map<String, ConcordTier>>{
   },
   'profile': {
     'store-fake-ip': ConcordTier.t0,
+    'smart-collector-size': ConcordTier.t2,
     'store-selected': ConcordTier.inert,
   },
   'rule-types': {
@@ -270,6 +274,7 @@ const concordKeyTiers = <String, Map<String, ConcordTier>>{
     'url-test': ConcordTier.t0,
     'fallback': ConcordTier.t0,
     'load-balance': ConcordTier.t0,
+    'smart': ConcordTier.t0,
   },
   'proxy-groups': {
     'name': ConcordTier.t0,
@@ -294,11 +299,16 @@ const concordKeyTiers = <String, Map<String, ConcordTier>>{
     'hidden': ConcordTier.t0,
     'icon': ConcordTier.t0,
     'tolerance': ConcordTier.t0,
+    'policy-priority': ConcordTier.t0,
     'default-selected': ConcordTier.t0,
     'strategy': ConcordTier.t0,
     'hash-key': ConcordTier.t0,
     'routing-mark': ConcordTier.t2,
     'interface-name': ConcordTier.t2,
     'dialer-proxy': ConcordTier.t2,
+    'uselightgbm': ConcordTier.t2,
+    'collectdata': ConcordTier.t2,
+    'sample-rate': ConcordTier.t2,
+    'prefer-asn': ConcordTier.t2,
   },
 };

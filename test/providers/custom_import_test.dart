@@ -743,8 +743,8 @@ tun:
 
     test('a group the app cannot hold, naming it', () {
       expect(
-        () => _read('proxy-groups:\n  - {name: Smart, type: smart}\n'),
-        throwsA(_issue(.entry, item: 'Smart')),
+        () => _read('proxy-groups:\n  - {name: Odd, type: odd}\n'),
+        throwsA(_issue(.entry, item: 'Odd')),
       );
     });
   });
@@ -892,6 +892,30 @@ dns:
         container.read(profileProvider(profileId))?.overrides.dnsOverrideKeys,
         {DnsOverrideKey.enable},
       );
+    });
+
+    test('keeps the policy-priority of a smart group it saves', () async {
+      final action = container.read(profilesActionProvider.notifier);
+      final config = await action.readCustomImport(
+        profileId,
+        utf8.encode('''
+proxy-groups:
+  - {name: Smart, type: smart, proxies: [HK], policy-priority: 'HK:1.5;US:0.8'}
+rules:
+  - MATCH,Smart
+'''),
+      );
+
+      await action.importCustomProfile(profileId, config);
+      await pumpEventQueue();
+
+      final groups = await testDatabase.proxyGroupsDao.query(profileId).get();
+      expect(groups.single.definition, {
+        'name': 'Smart',
+        'type': 'smart',
+        'proxies': ['HK'],
+        'policy-priority': 'HK:1.5;US:0.8',
+      });
     });
 
     test('takes an app proxy carrying a dialer for the same proxy and gives '

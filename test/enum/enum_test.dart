@@ -10,6 +10,8 @@ void main() {
       expect(GroupType.parse('URLTEST'), GroupType.URLTest);
       expect(GroupType.parse('selector'), GroupType.Selector);
       expect(GroupType.parse('loadbalance'), GroupType.LoadBalance);
+      expect(GroupType.parse('Smart'), GroupType.Smart);
+      expect(GroupType.parse('smart'), GroupType.Smart);
     });
 
     test('throws for unsupported group type', () {
@@ -27,6 +29,7 @@ void main() {
     test('marks only computed selection types', () {
       expect(GroupType.URLTest.isComputedSelected, isTrue);
       expect(GroupType.Fallback.isComputedSelected, isTrue);
+      expect(GroupType.Smart.isComputedSelected, isTrue);
       expect(GroupType.Selector.isComputedSelected, isFalse);
     });
   });
