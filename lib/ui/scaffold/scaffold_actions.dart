@@ -28,6 +28,7 @@ class _KeywordStrip extends StatelessWidget {
               onDeleted: keyword.onDeleted,
               onPressed: onPressed,
               selected: keyword.selected,
+              opensMenu: menuItems != null,
             );
             return ConstrainedBox(
               key: ValueKey(keyword.key),
