@@ -69,6 +69,29 @@ void main() {
     );
   });
 
+  testWidgets('search takes the focus as it opens though the page holds '
+      'it', (tester) async {
+    final page = FocusNode();
+    addTearDown(page.dispose);
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: Focus(
+          focusNode: page,
+          autofocus: true,
+          child: _page(onSearch: (_) {}),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(page.hasPrimaryFocus, isTrue);
+
+    await tester.tap(find.byTooltip('Search'));
+    await tester.pumpAndSettle();
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.focusNode!.hasPrimaryFocus, isTrue);
+  });
+
   testWidgets('the find shortcut leaves a page without search alone', (
     tester,
   ) async {

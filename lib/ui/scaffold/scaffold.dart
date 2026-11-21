@@ -180,6 +180,12 @@ class ScaffoldState extends State<Scaffold>
     _searchOrigin.value = _measureSearchOrigin();
     _updateSearchState((state) => state?.withQuery(''));
     _moveSearch(open: true);
+    // The field's autofocus yields to any focus already in the page's scope.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _isSearch) {
+        _searchFocusNode.requestFocus();
+      }
+    });
   }
 
   Rect? _measureInBar(GlobalKey key) {
