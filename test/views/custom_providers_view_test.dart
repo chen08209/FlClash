@@ -353,7 +353,9 @@ void main() {
     await tester.tap(
       find.descendant(
         of: picker,
-        matching: find.textContaining('${l.filters} ('),
+        matching: find.textContaining(
+          RegExp('^${RegExp.escape(l.filters)} \\d+\$'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
