@@ -139,8 +139,8 @@ void main() {
 
   test('the update card names a prerelease by its tag, as About does', () {
     expect(
-      installedVersionName('0.9.4', builtTag: 'v0.9.4-pre.2+1'),
-      '0.9.4-pre.2+1',
+      installedVersionName('0.9.4', builtTag: 'v0.9.4-rs.2'),
+      '0.9.4-rs.2',
     );
     expect(installedVersionName('0.9.4', builtTag: ''), '0.9.4');
   });

@@ -73,7 +73,7 @@ void main() {
     );
   });
 
-  test('an rs build has no self-update asset to download', () {
+  test('a test runner outside an app bundle has nothing to replace', () {
     expect(selfUpdateAsset, isNull);
   });
 

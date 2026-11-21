@@ -451,6 +451,9 @@ counting only releases whose checksum file is uploaded. Once the API's unauthent
 back to `releases.atom`, which is not counted but carries no notes and lists bare tags too, so a tag counts there only
 after a HEAD request finds its checksum file.
 
+The rs line publishes only `-rs.N` prereleases, so it hides the channel and always reads the list, where its line
+is the rs releases alone.
+
 ### Release File Names
 
 The site, the release notes, the Homebrew cask and the in-app updater each find a release's files by name, so a change

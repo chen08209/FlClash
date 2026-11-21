@@ -112,17 +112,14 @@ class Request {
   /// Null when this build is current; throws when GitHub cannot be asked.
   Future<Map<String, dynamic>?> checkForUpdate(UpdateChannel channel) async {
     final release = await newestRelease(channel);
-    if (!rsReleasesOnGitHub) return null;
     final remote = ReleaseVersion.tryParse(release['tag_name'] as String);
     final installed = installedReleaseVersion(globalState.packageInfo.version);
     return remote != null && remote > installed ? release : null;
   }
 
-  Future<Map<String, dynamic>> newestRelease(UpdateChannel channel) {
-    return switch (channel) {
-      UpdateChannel.stable => latestRelease(),
-      UpdateChannel.pre => newestOfAllReleases(),
-    };
+  /// The rs line publishes only prereleases and offers no channel to pick.
+  Future<Map<String, dynamic>> newestRelease(UpdateChannel _) {
+    return newestOfAllReleases();
   }
 
   /// `releases/latest` never names a prerelease, so this reads the list. The
