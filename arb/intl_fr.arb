@@ -13,6 +13,7 @@
   "trafficUsage": "Trafic utilisé",
   "networkSpeed": "Débit réseau",
   "outboundMode": "Mode sortant",
+  "noProfileDirect": "Sans profil, tout le trafic passe en direct",
   "serviceStatus": "État des services",
   "serviceRestricted": "Accès restreint",
   "serviceAvailable": "Disponible",

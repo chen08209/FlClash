@@ -51,6 +51,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get outboundMode => '出站模式';
 
   @override
+  String get noProfileDirect => '未使用配置，全部直连';
+
+  @override
   String get serviceStatus => '服务状态';
 
   @override

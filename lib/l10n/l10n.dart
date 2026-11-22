@@ -192,6 +192,12 @@ abstract class AppLocalizations {
   /// **'Outbound mode'**
   String get outboundMode;
 
+  /// No description provided for @noProfileDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'No profile, all traffic goes direct'**
+  String get noProfileDirect;
+
   /// No description provided for @serviceStatus.
   ///
   /// In en, this message translates to:

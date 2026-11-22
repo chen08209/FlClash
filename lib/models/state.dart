@@ -198,7 +198,7 @@ abstract class ComputeGroupsState with _$ComputeGroupsState {
 abstract class MakeRealProfileState with _$MakeRealProfileState {
   const factory MakeRealProfileState({
     required String profilesPath,
-    required int profileId,
+    required int? profileId,
     required Map<String, dynamic> rawConfig,
     required PatchClashConfig realPatchConfig,
     @Default(ProfileOverrides()) ProfileOverrides overrides,

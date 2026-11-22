@@ -13,6 +13,7 @@
   "trafficUsage": "流量统计",
   "networkSpeed": "网络速度",
   "outboundMode": "出站模式",
+  "noProfileDirect": "未使用配置，全部直连",
   "serviceStatus": "服务状态",
   "serviceRestricted": "访问受限",
   "serviceAvailable": "可用",

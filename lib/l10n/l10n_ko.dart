@@ -51,6 +51,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get outboundMode => '아웃바운드 모드';
 
   @override
+  String get noProfileDirect => '프로필 없음, 모든 트래픽 직접 연결';
+
+  @override
   String get serviceStatus => '서비스 상태';
 
   @override

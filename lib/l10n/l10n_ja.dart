@@ -51,6 +51,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get outboundMode => 'アウトバウンドモード';
 
   @override
+  String get noProfileDirect => 'プロファイル未使用、すべて直接接続';
+
+  @override
   String get serviceStatus => 'サービスの状態';
 
   @override

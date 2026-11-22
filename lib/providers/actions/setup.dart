@@ -597,23 +597,6 @@ class SetupAction extends _$SetupAction {
     required PatchClashConfig patchConfig,
   }) async {
     final profileId = setupState.profileId;
-    if (profileId == null) {
-      final yaml = await encodeYamlTask(
-        inboundConfigOf(
-          patchConfig,
-          authentication: ref
-              .read(networkSettingProvider)
-              .authentication
-              .credentials,
-        ),
-      );
-      return (
-        yaml: yaml,
-        md5: yaml.toMd5(),
-        counts: configCountsOf(const {}),
-        base: null,
-      );
-    }
     final defaultUA = globalState.packageInfo.ua;
     final networkSetting = ref.read(
       networkSettingProvider.select(
@@ -628,7 +611,7 @@ class SetupAction extends _$SetupAction {
     final isCustom = setupState.profileType == ProfileType.custom;
     final scriptContent = isCustom ? null : await setupState.script?.content;
     final hasScript = scriptContent?.isNotEmpty == true;
-    final profileBase = !isCustom && !hasScript
+    final profileBase = profileId != null && !isCustom && !hasScript
         ? await _core.getProfileBase(profileId)
         : null;
     Map<String, dynamic> rawConfig = isCustom
@@ -639,7 +622,8 @@ class SetupAction extends _$SetupAction {
               groups: setupState.proxyGroups,
             ),
           }
-        : profileBase?.base.config ?? await _core.readConfig(profileId);
+        : profileBase?.base.config ??
+              (profileId == null ? {} : await _core.readConfig(profileId));
     final proxyGroups = isCustom ? setupState.proxyGroups : <ProxyGroup>[];
     final rules = isCustom ? setupState.rules : <Rule>[];
     if (hasScript) {
@@ -671,9 +655,13 @@ class SetupAction extends _$SetupAction {
         defaultUA: defaultUA,
         authentication: networkSetting.authentication.credentials,
         exitTargets: setupState.exitTargets,
-        outboundNames: profileBase != null && hasCustomExit
-            ? await _outboundNamesOf(profileId, profileBase.base.digest)
-            : null,
+        outboundNames: switch ((profileId, profileBase)) {
+          (final id?, final base?) when hasCustomExit => await _outboundNamesOf(
+            id,
+            base.base.digest,
+          ),
+          _ => null,
+        },
         defaultExitTarget: profileBase == null
             ? null
             : lastMatchTarget(profileBase.base.matchRules),

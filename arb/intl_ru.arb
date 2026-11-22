@@ -13,6 +13,7 @@
   "trafficUsage": "Статистика трафика",
   "networkSpeed": "Скорость сети",
   "outboundMode": "Режим исходящего трафика",
+  "noProfileDirect": "Без профиля, весь трафик напрямую",
   "serviceStatus": "Состояние сервисов",
   "serviceRestricted": "Доступ ограничен",
   "serviceAvailable": "Доступен",

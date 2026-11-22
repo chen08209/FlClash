@@ -2538,6 +2538,38 @@ void main() {
       );
     });
 
+    test('with no profile the config carries the settings and MITM, '
+        'and no rule or proxy, so everything goes direct', () async {
+      final mocks = coreMocks();
+      final scoped = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(mocks.controller),
+          setupActionProvider.overrideWith(SetupAction.new),
+        ],
+      );
+      addTearDown(scoped.dispose);
+
+      final res = await scoped
+          .read(setupActionProvider.notifier)
+          .getProfile(
+            setupState: nullProfileSetupState,
+            patchConfig: const PatchClashConfig(
+              mitm: Mitm(enable: true, hostname: ['a.example']),
+            ),
+          );
+      final config = loadYaml(res.yaml) as YamlMap;
+
+      verifyNever(() => mocks.api.readConfig(any()));
+      expect(res.base, isNull);
+      expect(config['mitm']['enable'], isTrue);
+      expect(config['mitm']['hostname'], contains('a.example'));
+      expect(config['tun'], isA<YamlMap>());
+      expect(config['dns'], isA<YamlMap>());
+      expect(config['mode'], 'rule');
+      expect(config['rules'], isEmpty);
+      expect(config.containsKey('proxies'), isFalse);
+    });
+
     test('a provider a custom profile names carries its options', () async {
       final profile = Profile.custom(label: 'p');
       final mocks = coreMocks();

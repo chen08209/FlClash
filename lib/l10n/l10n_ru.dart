@@ -51,6 +51,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get outboundMode => 'Режим исходящего трафика';
 
   @override
+  String get noProfileDirect => 'Без профиля, весь трафик напрямую';
+
+  @override
   String get serviceStatus => 'Состояние сервисов';
 
   @override
