@@ -41,12 +41,6 @@ class Navigation implements NavigationPort {
         builder: (_) => const ProfilesView(),
       ),
       NavigationItem(
-        glyph: AppGlyphs.dns,
-        label: PageLabel.dns,
-        builder: (_) => const DnsQueriesView(),
-        modes: [NavigationItemMode.moreFull],
-      ),
-      NavigationItem(
         glyph: AppGlyphs.resources,
         label: PageLabel.resources,
         builder: (_) => const ResourcesView(),

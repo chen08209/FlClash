@@ -10,11 +10,15 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/plugins/app_icon.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/detail_tabs.dart';
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/host_scaffold.dart';
 
@@ -79,8 +83,9 @@ void main() {
       ),
     );
     await tester.pump();
+    await openDetailTab(tester, 'Info');
 
-    expect(find.text('DOMAIN-SUFFIX(example.com)'), findsOneWidget);
+    expect(find.text('DOMAIN-SUFFIX,example.com'), findsOneWidget);
     expect(find.text('chrome'), findsOneWidget);
     expect(find.text('Process · UID 1000'), findsOneWidget);
     expect(find.text('1.2.3.4:8080'), findsOneWidget);
@@ -98,6 +103,131 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
   });
 
+  for (final (width, columns, platform) in [
+    (1000.0, 2, TargetPlatform.macOS),
+    (700.0, 1, TargetPlatform.macOS),
+    (400.0, 1, TargetPlatform.android),
+  ]) {
+    testWidgets('at $width wide the info sets its address in $columns '
+        'column${columns == 1 ? '' : 's'} with the route', (tester) async {
+      tester.view.physicalSize = Size(width, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      debugDefaultTargetPlatformOverride = platform;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      await tester.pumpWidget(
+        TestApp(
+          wrapInProviderScope: true,
+          homeBuilder: (child) => HostScaffold(body: child),
+          child: SheetProvider(
+            type: SheetType.page,
+            child: TrackerInfoDetailView(
+              trackerInfo: _tracker(
+                sourceIP: '1.2.3.4',
+                sourcePort: '8080',
+                chains: const ['DIRECT'],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await openDetailTab(tester, 'Info');
+
+      final path = tester.getTopLeft(find.text('Path'));
+      final traffic = tester.getTopLeft(find.text('Traffic'));
+      final address = tester.getTopLeft(find.text('Address'));
+      if (columns == 2) {
+        expect(address.dy, path.dy);
+        expect(address.dx, greaterThan(path.dx + width / 3));
+      } else {
+        expect(address.dx, path.dx);
+        expect(address.dy, greaterThan(traffic.dy));
+      }
+      expect(
+        tester
+            .getSize(
+              find.ancestor(
+                of: find.text('1.2.3.4:8080'),
+                matching: find.byType(ListRow),
+              ),
+            )
+            .height,
+        listRowMinHeight,
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 5));
+    });
+  }
+
+  testWidgets('a failed connection says so in red in its head, and leads its '
+      'info with the failure under an error glyph, its traffic without speed', (
+    tester,
+  ) async {
+    final failed = _tracker(process: 'curl', chains: const ['Proxy']).copyWith(
+      closedAt: DateTime(2026, 1, 1, 10, 30, 3),
+      download: 2048,
+      downloadSpeed: 512,
+      failure: const ConnectionFailure(
+        kind: ConnectionFailureKind.timeout,
+        message: 'i/o timeout',
+      ),
+    );
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        homeBuilder: (child) => HostScaffold(body: child),
+        child: SheetProvider(
+          type: SheetType.page,
+          child: TrackerInfoDetailView(
+            trackerInfo: failed,
+            header: TrackerInfoHeader(trackerInfo: failed),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final head = tester.widget<RichText>(
+      find.descendant(
+        of: find.byType(TrackerInfoHeader),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is RichText &&
+              widget.text.toPlainText().startsWith('curl · Proxy · '),
+        ),
+      ),
+    );
+    final spans = <TextSpan>[];
+    head.text.visitChildren((span) {
+      if (span is TextSpan && span.text == 'Failed') spans.add(span);
+      return true;
+    });
+    expect(spans.single.style?.color, isNotNull);
+    expect(head.text.toPlainText(), 'curl · Proxy · Failed · 3 s');
+
+    await openDetailTab(tester, 'Info');
+    final failure = find.ancestor(
+      of: find.text('i/o timeout'),
+      matching: find.byType(DetailRow),
+    );
+    expect(
+      find.descendant(of: failure, matching: find.byGlyph(AppGlyphs.error)),
+      findsOneWidget,
+    );
+    expect(
+      tester.getTopLeft(find.text('Timeout')).dy,
+      lessThan(tester.getTopLeft(find.text('i/o timeout')).dy),
+    );
+    expect(find.text(2048.traffic.show), findsOneWidget);
+    expect(find.textContaining('/s'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 5));
+  });
+
   testWidgets('TrackerInfoDetailView omits empty fields', (tester) async {
     await tester.pumpWidget(
       TestApp(
@@ -110,6 +240,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await openDetailTab(tester, 'Info');
 
     expect(find.textContaining('('), findsNothing);
     expect(find.text('tcp'), findsOneWidget);
@@ -136,7 +267,12 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.widgetWithText(TonalChip, 'Timeout'), findsOneWidget);
+    expect(find.text('Timeout'), findsOneWidget);
+    expect(find.byType(RecordLabel), findsNothing);
+    expect(
+      tester.widget<Text>(find.text('Timeout')).style?.color,
+      tester.element(find.byType(TrackerInfoItem)).colorScheme.error,
+    );
 
     await tester.pumpWidget(
       TestApp(
@@ -149,6 +285,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await openDetailTab(tester, 'Info');
     expect(find.text('Failed'), findsOneWidget);
     expect(find.text('dial tcp 1.2.3.4:443: i/o timeout'), findsOneWidget);
     await tester.scrollUntilVisible(
@@ -192,7 +329,7 @@ void main() {
     );
 
     expect(find.text('example.com'), findsOneWidget);
-    expect(find.text('chrome · Node · 1:15'), findsOneWidget);
+    expect(find.text('chrome · Group · 1:15'), findsOneWidget);
     expect(find.text('C'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
@@ -216,18 +353,44 @@ void main() {
     );
 
     await pumpItem(tester, open);
-    expect(find.text('4KB/s'), findsOneWidget);
-    expect(find.text('3KB'), findsOneWidget);
+    expect(_figure('4KB/s'), findsOneWidget);
+    expect(_figure('3KB'), findsOneWidget);
     expect(dot(), findsOneWidget);
 
     final closedAt = open.start.add(const Duration(seconds: 6));
     await pumpItem(tester, open.copyWith(closedAt: closedAt));
-    expect(find.textContaining('/s'), findsNothing);
-    expect(find.text('3KB'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is PlainTextLines &&
+            widget.lines.any((line) => line.text.contains('/s')),
+      ),
+      findsNothing,
+    );
+    expect(_figure('3KB'), findsOneWidget);
     expect(find.textContaining('6 s'), findsOneWidget);
     expect(dot(), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a screen reader hears an open connection called active, and '
+      'a closed one not', (tester) async {
+    final semantics = tester.ensureSemantics();
+    final open = _tracker(host: 'example.com');
+    final active = find.bySemanticsLabel(RegExp(r'\bActive\b'));
+
+    await pumpItem(tester, open);
+    expect(active, findsOneWidget);
+
+    await pumpItem(
+      tester,
+      open.copyWith(closedAt: open.start.add(const Duration(seconds: 6))),
+    );
+    expect(active, findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    semantics.dispose();
   });
 
   testWidgets('TrackerInfoDetailView lists the path from the app and rule '
@@ -266,10 +429,11 @@ void main() {
       ),
     );
     await tester.pump();
+    await openDetailTab(tester, 'Info');
 
     double topOf(String text) => tester.getTopLeft(find.text(text)).dy;
-    expect(topOf('chrome'), lessThan(topOf('DOMAIN-SUFFIX(example.com)')));
-    expect(topOf('DOMAIN-SUFFIX(example.com)'), lessThan(topOf('Auto')));
+    expect(topOf('chrome'), lessThan(topOf('DOMAIN-SUFFIX,example.com')));
+    expect(topOf('DOMAIN-SUFFIX,example.com'), lessThan(topOf('Auto')));
     expect(topOf('Auto'), lessThan(topOf('Tokyo 01')));
     expect(find.text('Proxy group · URLTest'), findsOneWidget);
     expect(find.text('Node · Trojan'), findsOneWidget);
@@ -331,30 +495,25 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('the status bar sets what it trails at its end', (tester) async {
-    tester.view.physicalSize = const Size(800, 100);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    const end = Key('end');
-    await tester.pumpWidget(
-      const TestApp(
-        wrapInProviderScope: true,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConnectionStatusBar(
-            shown: 3,
-            active: 1,
-            selected: false,
-            trailing: [SizedBox(key: end, width: 40, height: 20)],
-          ),
-        ),
-      ),
+  test('a closed connection lasts until the Core says it ended', () {
+    final start = DateTime(2026, 1, 1, 10, 30);
+    final closed = _tracker().copyWith(
+      closedAt: start.add(const Duration(seconds: 9)),
     );
 
-    expect(tester.getTopRight(find.byKey(end)).dx, 800 - 16);
-
-    await tester.pumpWidget(const SizedBox.shrink());
+    expect(trackerLifetimeText(closed, start), '9 s');
+    expect(
+      trackerLifetimeText(
+        closed.copyWith(
+          end: ConnectionEnd(
+            reason: ConnectionEndReason.local,
+            endedAt: start.add(const Duration(seconds: 4)),
+          ),
+        ),
+        start,
+      ),
+      '4 s',
+    );
   });
 
   group('the app icon of a connection', () {
@@ -412,14 +571,66 @@ void main() {
     Size wellSize(WidgetTester tester) =>
         tester.getSize(find.byType(TrackerAppWell));
 
-    testWidgets('shows the icon an app draws in its well', (tester) async {
+    testWidgets('draws the icon an app gives as it is, with no well of its '
+        'own under it', (tester) async {
       await pumpRow(tester, 'com.own', source: App());
 
       expect(find.byType(Image), findsOneWidget);
       expect(find.text('C'), findsNothing);
-      expect(wellSize(tester), const Size.square(36));
+      expect(wellSize(tester), const Size.square(40));
+      expect(tester.getSize(find.byType(Image)), const Size.square(40));
+      expect(
+        find.descendant(
+          of: find.byType(TrackerAppWell),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is ClipPath ||
+                widget is ColoredBox ||
+                widget is DecoratedBox &&
+                    (widget.decoration as ShapeDecoration).shape
+                        is! CircleBorder,
+          ),
+        ),
+        findsNothing,
+      );
 
       await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a letter stands as large as the icons the platform draws, '
+        'with the live dot on its corner', (tester) async {
+      await tester.pumpWidget(
+        TestApp(
+          child: Center(
+            child: TrackerAppWell(
+              trackerInfo: _tracker(host: 'example.com'),
+              size: 40,
+              iconBody: 0.8,
+            ),
+          ),
+        ),
+      );
+      final appWell = find.byType(TrackerAppWell);
+      final well = tester.getRect(appWell);
+      final tile = tester.getRect(
+        find.descendant(
+          of: appWell,
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is DecoratedBox &&
+                (widget.decoration as ShapeDecoration).shape is! CircleBorder,
+          ),
+        ),
+      );
+      final dot = tester.getRect(
+        find.descendant(of: appWell, matching: find.byType(Container)),
+      );
+
+      expect(find.text('E'), findsOneWidget);
+      expect(tile.size, const Size.square(32));
+      expect(tile.center, well.center);
+      expect(dot.right, tile.right + 2);
+      expect(dot.bottom, tile.bottom + 2);
     });
 
     testWidgets('shows the initial of an app where no icon can be read, or '
@@ -432,33 +643,40 @@ void main() {
       await pumpRow(tester, 'com.plain', source: App());
       expect(find.byType(Image), findsNothing);
       expect(find.text('C'), findsOneWidget);
-      expect(wellSize(tester), const Size.square(36));
+      expect(wellSize(tester), const Size.square(40));
 
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
     testWidgets('a well keeps its size while an icon loads, and takes the '
-        'generic app icon where none of its own arrives', (tester) async {
+        'letter where none of its own arrives, as it does once that is '
+        'known', (tester) async {
       for (final (process, icon) in [
         ('com.own', 'com.own.png'),
-        ('com.plain', 'default.png'),
+        ('com.plain', null),
       ]) {
         held[process] = Completer();
         await pumpRow(tester, process, source: App());
         expect(find.byType(Image), findsNothing, reason: process);
-        expect(wellSize(tester), const Size.square(36), reason: process);
+        expect(find.text('C'), findsNothing, reason: process);
+        expect(wellSize(tester), const Size.square(40), reason: process);
 
         held[process]!.complete();
         await tester.pump();
         await tester.pump();
-        expect(
-          (tester.widget<Image>(find.byType(Image)).image as FileImage)
-              .file
-              .path,
-          endsWith(icon),
-          reason: process,
-        );
-        expect(wellSize(tester), const Size.square(36), reason: process);
+        if (icon == null) {
+          expect(find.byType(Image), findsNothing, reason: process);
+          expect(find.text('C'), findsOneWidget, reason: process);
+        } else {
+          expect(
+            (tester.widget<Image>(find.byType(Image)).image as FileImage)
+                .file
+                .path,
+            endsWith(icon),
+            reason: process,
+          );
+        }
+        expect(wellSize(tester), const Size.square(40), reason: process);
         await tester.pumpWidget(const SizedBox.shrink());
       }
     });
@@ -515,10 +733,8 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(
-        (tester.widget<Image>(find.byType(Image)).image as FileImage).file.path,
-        endsWith('default.png'),
-      );
+      expect(find.byType(Image), findsNothing);
+      expect(find.text('C'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(const SizedBox.shrink());
@@ -544,8 +760,51 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
-    testWidgets('a desktop row and its app group show the icon of the '
-        'executable, not of the process name', (tester) async {
+    testWidgets('a desktop app icon is rendered with a pixel for each one '
+        'of the largest well that draws it', (tester) async {
+      const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Chrome';
+      final rendered = <int>[];
+      final source = DesktopAppIconSource(
+        cacheDir: Future.value(icons.path),
+        render: (path, size, _) async {
+          rendered.add(size);
+          return '${icons.path}/${path.isEmpty ? 'default' : 'com.own'}.png';
+        },
+      );
+      await tester.pumpWidget(
+        TestApp(
+          wrapInProviderScope: true,
+          overrides: [
+            packageIconSourceProvider.overrideWithValue(source),
+            viewSizeProvider.overrideWithBuild(
+              (_, _) => const Size(1400, 1000),
+            ),
+          ],
+          homeBuilder: (child) => HostScaffold(body: child),
+          child: TrackerInfoHeader(
+            trackerInfo: _tracker(process: 'Chrome', processPath: chrome),
+            showsMenu: false,
+          ),
+        ),
+      );
+      await tester.runAsync(() => source.getOwnPackageIcon(chrome));
+      await tester.pump();
+      await tester.pump();
+
+      final shown = tester.getSize(find.byType(Image).first);
+      expect(shown.width, 52);
+      expect(
+        rendered,
+        everyElement(
+          greaterThanOrEqualTo(shown.width * tester.view.devicePixelRatio),
+        ),
+      );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a desktop row shows the icon of the executable, not of the '
+        'process name', (tester) async {
       const helper =
           '/Applications/Google Chrome.app/Contents/Frameworks/Helpers/'
           'Google Chrome Helper.app/Contents/MacOS/Google Chrome Helper';
@@ -565,20 +824,7 @@ void main() {
         TestApp(
           overrides: [packageIconSourceProvider.overrideWithValue(source)],
           homeBuilder: (child) => HostScaffold(body: child),
-          child: Column(
-            children: [
-              TrackerInfoItem(trackerInfo: tracker, detailTitle: 'detail'),
-              Expanded(
-                child: TrackerInfoGroupedList(
-                  groups: [
-                    RecordGroup('Google Chrome Helper', [tracker]),
-                  ],
-                  grouping: RecordGrouping.app,
-                  detailTitle: 'detail',
-                ),
-              ),
-            ],
-          ),
+          child: TrackerInfoItem(trackerInfo: tracker, detailTitle: 'detail'),
         ),
       );
       await tester.runAsync(() => source.getOwnPackageIcon(helper));
@@ -594,100 +840,10 @@ void main() {
 
       await tester.pumpWidget(const SizedBox.shrink());
     });
-
-    Future<void> pumpGroups(WidgetTester tester) async {
-      await tester.pumpWidget(
-        TestApp(
-          overrides: [packageIconSourceProvider.overrideWithValue(App())],
-          homeBuilder: (child) => HostScaffold(body: child),
-          child: TrackerInfoGroupedList(
-            groups: [
-              RecordGroup('com.own', [_tracker(process: 'com.own')]),
-              RecordGroup('com.plain', [_tracker(process: 'com.plain')]),
-              RecordGroup('', [_tracker(process: '')]),
-            ],
-            grouping: RecordGrouping.app,
-            detailTitle: 'detail',
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump();
-    }
-
-    Finder header(String label) => find.ancestor(
-      of: find.textContaining(label).first,
-      matching: find.byType(CollapsibleHeader),
-    );
-
-    String otherLabel(WidgetTester tester) => tester
-        .element(find.byType(TrackerInfoGroupedList))
-        .appLocalizations
-        .other;
-
-    double labelStart(WidgetTester tester, String label) =>
-        tester.getTopLeft(find.textContaining(label).first).dx;
-
-    testWidgets('an app group heads with its icon, or the generic one where '
-        'the app has none, leaving no room for connections of no app', (
-      tester,
-    ) async {
-      await pumpGroups(tester);
-
-      expect(
-        find.descendant(of: header('com.own'), matching: find.byType(Image)),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: header('com.plain'), matching: find.byType(Image)),
-        findsOneWidget,
-      );
-      final bare = labelStart(tester, otherLabel(tester));
-      expect(labelStart(tester, 'com.plain'), bare + 24 + 8);
-      expect(labelStart(tester, 'com.own'), bare + 24 + 8);
-
-      await tester.pumpWidget(const SizedBox.shrink());
-    });
-
-    testWidgets('an app\'s icon arriving rebuilds nothing but the icon in '
-        'its own group\'s header', (tester) async {
-      held['com.own'] = Completer();
-      final built = Expando<bool>();
-      final rebuilt = <Element>[];
-      debugOnRebuildDirtyWidget = (element, _) {
-        if (built[element] ?? false) {
-          rebuilt.add(element);
-        }
-        built[element] = true;
-      };
-      addTearDown(() => debugOnRebuildDirtyWidget = null);
-      await pumpGroups(tester);
-      expect(
-        find.descendant(of: header('com.own'), matching: find.byType(Image)),
-        findsNothing,
-      );
-      rebuilt.clear();
-
-      held['com.own']!.complete();
-      await tester.pump();
-      await tester.pump();
-
-      expect(rebuilt.map((element) => element.widget.runtimeType), [
-        OwnPackageIcon,
-      ]);
-      expect(
-        find.descendant(
-          of: header('com.own'),
-          matching: find.byWidget(rebuilt.single.widget),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        labelStart(tester, 'com.own'),
-        labelStart(tester, otherLabel(tester)) + 24 + 8,
-      );
-
-      await tester.pumpWidget(const SizedBox.shrink());
-    });
   });
 }
+
+Finder _figure(String text) => find.byWidgetPredicate(
+  (widget) =>
+      widget is PlainTextLines && widget.lines.any((line) => line.text == text),
+);

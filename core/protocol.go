@@ -79,6 +79,7 @@ const (
 	mitmIssueCertificateMethod    CoreMethod = "mitm.issueCertificate"
 	mitmRunScriptMethod           CoreMethod = "mitm.runScript"
 	mitmExchangesMethod           CoreMethod = "mitm.exchanges"
+	mitmQueryMethod               CoreMethod = "mitm.query"
 	mitmExchangeMethod            CoreMethod = "mitm.exchange"
 	mitmBodyMethod                CoreMethod = "mitm.body"
 

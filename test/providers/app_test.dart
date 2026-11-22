@@ -1,10 +1,16 @@
 import 'package:fl_clash/common/fixed.dart';
+import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
+
+class _MockCore extends Mock implements CoreHandlerInterface {}
 
 void main() {
   late ProviderContainer container;
@@ -15,6 +21,38 @@ void main() {
 
   tearDown(() {
     container.dispose();
+  });
+
+  test('the rules in force are listed again each time the Core connects, '
+      'and kept while it is away', () async {
+    final core = _MockCore();
+    final rules = RuleTable.of(const [(type: 'MATCH', payload: '')]);
+    var calls = 0;
+    when(core.getRules).thenAnswer((_) async {
+      calls++;
+      return calls == 1 ? throw StateError('stopped') : rules;
+    });
+    final container = ProviderContainer(
+      overrides: [
+        coreHandlerProvider.overrideWithValue(CoreController.test(core)),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.listen(activeRulesProvider, (_, _) {}, onError: (_, _) {});
+    final status = container.read(coreStatusProvider.notifier);
+
+    await expectLater(
+      container.read(activeRulesProvider.future),
+      throwsStateError,
+    );
+    status.value = CoreStatus.connecting;
+    status.value = CoreStatus.connected;
+    expect(await container.read(activeRulesProvider.future), rules);
+
+    status.value = CoreStatus.disconnected;
+    await Future<void>.delayed(Duration.zero);
+    expect(container.read(activeRulesProvider).value, rules);
+    expect(calls, 2);
   });
 
   group('AuthorizedTunEnable provider', () {
@@ -353,10 +391,18 @@ void main() {
       notifier.close(['a', 'gone'], at: later);
       expect(notifications, 1);
 
-      notifier.sync([request('c', 2)], requestedAt: later);
+      notifier.sync(
+        [request('c', 2)],
+        requestedAt: later,
+        lineage: container.read(requestsProvider).lineage,
+      );
       expect(notifications, 2);
       expect(container.read(requestsProvider)['b']!.closedAt, later);
-      notifier.sync([request('c', 2)], requestedAt: later);
+      notifier.sync(
+        [request('c', 2)],
+        requestedAt: later,
+        lineage: container.read(requestsProvider).lineage,
+      );
       expect(notifications, 2);
 
       notifier.closeAll(at: later);

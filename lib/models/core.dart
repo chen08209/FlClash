@@ -222,10 +222,53 @@ abstract class MitmExchangeSummary with _$MitmExchangeSummary {
     @Default(0) @JsonKey(name: 'request-size') int requestSize,
     @Default(0) @JsonKey(name: 'response-size') int responseSize,
     @Default('') String error,
+    @Default('') String host,
+    @Default('') String path,
+    @Default('') @JsonKey(name: 'content-type') String contentType,
+    @Default('') @JsonKey(name: 'status-class') String statusClass,
+    @Default('') String kind,
+    @Default(false) bool rewritten,
+    @JsonKey(name: 'connection-id', fromJson: _connectionIdOf)
+    String? connectionId,
+    MitmApp? app,
   }) = _MitmExchangeSummary;
 
   factory MitmExchangeSummary.fromJson(Map<String, Object?> json) =>
       _$MitmExchangeSummaryFromJson(json);
+}
+
+/// The Go Core names a connection by a string, the rs Core by a number.
+String? _connectionIdOf(Object? id) => id?.toString();
+
+@freezed
+abstract class MitmApp with _$MitmApp {
+  const factory MitmApp({
+    @Default('') String process,
+    @Default('') @JsonKey(name: 'process-path') String processPath,
+    int? uid,
+  }) = _MitmApp;
+
+  factory MitmApp.fromJson(Map<String, Object?> json) =>
+      _$MitmAppFromJson(json);
+}
+
+/// A page of Concord's `mitm.query`, newest first.
+@freezed
+abstract class MitmQueryPage with _$MitmQueryPage {
+  const factory MitmQueryPage({
+    @Default(false) bool capturing,
+    DateTime? since,
+    @Default(0) int version,
+    @Default(0) int oldest,
+    @Default(0) int held,
+    @Default(0) int matched,
+    @Default([]) List<MitmExchangeSummary> exchanges,
+    int? next,
+    @Default([]) List<int> unmatched,
+  }) = _MitmQueryPage;
+
+  factory MitmQueryPage.fromJson(Map<String, Object?> json) =>
+      _$MitmQueryPageFromJson(json);
 }
 
 /// Every request that started after [since] is still kept.

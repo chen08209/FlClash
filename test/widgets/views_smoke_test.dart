@@ -50,7 +50,7 @@ void main() {
     'proxies': const ProxiesView(),
     'profiles': const ProfilesView(),
     'requests': const RequestsView(),
-    'dns queries': const DnsQueriesView(),
+    'dns queries': const RequestsView(segment: RequestsSegment.dns),
     'resources': const ResourcesView(),
     'logs': const LogsView(),
     'tools': const ToolsView(),

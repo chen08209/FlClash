@@ -5,15 +5,6 @@ import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-const recordTableMinWidth = 720.0;
-const recordWideTableWidth = 1000.0;
-const _recordTableMargin = 8.0;
-const _recordCellInset = 8.0;
-const _recordCellLineHeight = 20.0;
-const _denseCellLineHeight = 18.0;
-const _recordHeaderLineHeight = 16.0;
-const _recordRowPadding = 8.0;
-
 class RecordColumn<T> {
   final TableColumn layout;
   final Widget Function(BuildContext context, T item) cell;
@@ -50,13 +41,7 @@ class RecordSorter<T> {
   RecordSort? _sortedBy;
   List<T> _sorted = const [];
 
-  /// [reverse] marks a list shown bottom up, its last item on top.
-  List<T> sort(
-    List<T> items,
-    List<RecordColumn<T>> columns,
-    RecordSort? sort, {
-    bool reverse = false,
-  }) {
+  List<T> sort(List<T> items, List<RecordColumn<T>> columns, RecordSort? sort) {
     final sortKey = sort == null
         ? null
         : columns
@@ -68,20 +53,18 @@ class RecordSorter<T> {
     if (identical(_source, items) && _sortedBy == sort) {
       return _sorted;
     }
-    final shown = reverse ? items.reversed.toList() : items;
-    final keys = [for (final item in shown) sortKey(item)];
+    final keys = [for (final item in items) sortKey(item)];
     final direction = sort.descending ? -1 : 1;
     // Sorting indexes keeps ties in their shown order; collection's
     // mergeSort is stable too but measured over ten times slower.
-    final order = List.generate(shown.length, (index) => index)
+    final order = List.generate(items.length, (index) => index)
       ..sort((a, b) {
         final compared = keys[a].compareTo(keys[b]);
         return compared != 0 ? direction * compared : a - b;
       });
-    final sorted = [for (final index in order) shown[index]];
     _source = items;
     _sortedBy = sort;
-    return _sorted = reverse ? sorted.reversed.toList() : sorted;
+    return _sorted = [for (final index in order) items[index]];
   }
 }
 
@@ -128,257 +111,6 @@ mixin TableColumnWidthsMixin<T extends ConsumerStatefulWidget>
         );
   }
 }
-
-class RecordTable<T> {
-  final List<RecordColumn<T>> columns;
-  final List<TableColumn> layouts;
-  final List<double> widths;
-  final double rowHeight;
-  final bool dense;
-
-  const RecordTable._({
-    required this.columns,
-    required this.layouts,
-    required this.widths,
-    required this.rowHeight,
-    required this.dense,
-  });
-
-  double get _lineHeight =>
-      dense ? _denseCellLineHeight : _recordCellLineHeight;
-
-  AppTextStyle get _cellStyle =>
-      dense ? AppTextStyle.footnote : AppTextStyle.subheadline;
-
-  List<Widget> cellsOf(BuildContext context, T item) => [
-    for (final column in columns) column.cell(context, item),
-  ];
-}
-
-/// Builds a record list as a table once it is wide enough, with the column
-/// header held above the rows, sorting them by the column tapped and resizing
-/// columns by their edges.
-class RecordTableFrame<T> extends ConsumerStatefulWidget {
-  final String tableId;
-  final List<T> items;
-
-  /// Whether the list shows [items] bottom up, its last item on top.
-  final bool reverse;
-  final List<RecordColumn<T>> Function(double width) columnsOf;
-
-  /// Narrower than this the items are listed instead.
-  final double minWidth;
-
-  /// Sets the cells a size smaller, for a table read beside other panes.
-  final bool dense;
-  final Widget Function(
-    BuildContext context,
-    RecordTable<T>? table,
-    List<T> items,
-  )
-  builder;
-
-  const RecordTableFrame({
-    super.key,
-    required this.tableId,
-    required this.items,
-    this.reverse = false,
-    required this.columnsOf,
-    this.minWidth = recordTableMinWidth,
-    this.dense = false,
-    required this.builder,
-  });
-
-  @override
-  ConsumerState<RecordTableFrame<T>> createState() =>
-      _RecordTableFrameState<T>();
-}
-
-class _RecordTableFrameState<T> extends ConsumerState<RecordTableFrame<T>>
-    with TableColumnWidthsMixin<RecordTableFrame<T>> {
-  final _sorter = RecordSorter<T>();
-  RecordSort? _sort;
-  RecordTable<T>? _table;
-  Object? _tableInputs;
-
-  @override
-  String get tableId => widget.tableId;
-
-  RecordTable<T>? _tableOf(BuildContext context, double width) {
-    if (width < widget.minWidth) {
-      return null;
-    }
-    final rowHeight =
-        MediaQuery.textScalerOf(
-          context,
-        ).scale(widget.dense ? _denseCellLineHeight : _recordCellLineHeight) +
-        _recordRowPadding * 2;
-    // Rows are memoized on the table, so a refresh must get the same one.
-    final inputs = (
-      width,
-      columnWidths,
-      rowHeight,
-      Localizations.localeOf(context),
-      Theme.of(context),
-    );
-    final table = _table;
-    if (table != null && inputs == _tableInputs) {
-      return table;
-    }
-    final columns = widget.columnsOf(width);
-    final layouts = [for (final column in columns) column.layout];
-    _tableInputs = inputs;
-    return _table = RecordTable._(
-      dense: widget.dense,
-      columns: columns,
-      layouts: layouts,
-      widths: tableColumnWidths(
-        layouts,
-        width - _recordTableMargin * 2,
-        columnWidths,
-      ),
-      rowHeight: rowHeight,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return WidthBuilder(
-      builder: (context, width) {
-        final table = _tableOf(context, width);
-        if (table == null) {
-          return widget.builder(context, null, widget.items);
-        }
-        final items = _sorter.sort(
-          widget.items,
-          table.columns,
-          _sort,
-          reverse: widget.reverse,
-        );
-        return Padding(
-          padding: EdgeInsets.only(top: context.contentTopPadding),
-          child: MediaQuery.removePadding(
-            context: context,
-            removeTop: true,
-            child: FloatingBarScope(
-              inset: 0,
-              child: TopInsetScope(
-                inset: 4,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    MemoBuilder(
-                      inputs: [table, _sort],
-                      builder: (_) => _RecordTableHeader(
-                        table: table,
-                        sort: _sort,
-                        onSort: (column) => setState(
-                          () => _sort = nextRecordSort(_sort, column),
-                        ),
-                        onResize: (boundary, delta) => resizeColumn(
-                          table.layouts,
-                          table.widths,
-                          boundary,
-                          delta,
-                        ),
-                        onResizeEnd: saveColumnWidths,
-                        onReset: resetColumnWidths,
-                      ),
-                    ),
-                    Expanded(
-                      child: Builder(
-                        builder: (context) =>
-                            widget.builder(context, table, items),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _RecordTableHeader<T> extends StatelessWidget {
-  final RecordTable<T> table;
-  final RecordSort? sort;
-  final ValueChanged<RecordColumn<T>> onSort;
-  final void Function(int boundary, double delta) onResize;
-  final VoidCallback onResizeEnd;
-  final VoidCallback onReset;
-
-  const _RecordTableHeader({
-    required this.table,
-    required this.sort,
-    required this.onSort,
-    required this.onResize,
-    required this.onResizeEnd,
-    required this.onReset,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final height =
-        MediaQuery.textScalerOf(context).scale(_recordHeaderLineHeight) +
-        _recordRowPadding * 2;
-    final labelStyle = AppTextStyle.caption1.of(context, emphasized: true);
-    final style = labelStyle.copyWith(
-      color: colorScheme.onSurfaceVariant,
-      height: _recordHeaderLineHeight / labelStyle.fontSize!,
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: _recordTableMargin),
-      child: Surface(
-        color: context.raisedSurfaceLevel.colorOf(colorScheme),
-        shape: AppShape.all(AppCorner.fit(height)),
-        clipBehavior: Clip.antiAlias,
-        child: TableColumnResizer(
-          columns: table.layouts,
-          widths: table.widths,
-          onResize: onResize,
-          onResizeEnd: onResizeEnd,
-          onReset: onReset,
-          child: TableCells(
-            columns: table.layouts,
-            widths: table.widths,
-            height: height,
-            inset: 0,
-            cells: [
-              for (final column in table.columns)
-                RecordHeaderCell(
-                  label: column.layout.label,
-                  end: column.layout.end,
-                  style: style,
-                  inset: _recordCellInset,
-                  descending: sort?.columnId == column.id
-                      ? sort?.descending
-                      : null,
-                  onTap: column.sortKey == null ? null : () => onSort(column),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The width a fixed column takes to show [label] whole in its header.
-double recordHeaderWidth(BuildContext context, String label) =>
-    MeasureScope.of(context)
-        .computeTextSize(
-          Text(
-            label,
-            style: AppTextStyle.caption1.of(context, emphasized: true),
-          ),
-        )
-        .width
-        .ceilToDouble() +
-    _recordCellInset * 2;
 
 class RecordHeaderCell extends StatelessWidget {
   final String label;
@@ -441,98 +173,6 @@ class RecordHeaderCell extends StatelessWidget {
       childFills: true,
       onPressed: onTap,
       child: SizedBox.expand(child: content),
-    );
-  }
-}
-
-class RecordTableRow extends StatelessWidget {
-  final RecordTable<Object?> table;
-  final List<Widget> cells;
-  final bool striped;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  const RecordTableRow({
-    super.key,
-    required this.table,
-    required this.cells,
-    required this.striped,
-    this.selected = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final style = table._cellStyle.of(context);
-    final shape = AppShape.all(AppCorner.fit(table.rowHeight));
-    final level = striped ? context.raisedSurfaceLevel : context.surfaceLevel;
-    final row = PressSurface(
-      fill: striped ? level.colorOf(colorScheme) : Colors.transparent,
-      shape: shape,
-      childFills: true,
-      onPressed: onTap,
-      child: DefaultTextStyle(
-        style: style.copyWith(
-          color: colorScheme.onSurface,
-          height: table._lineHeight / style.fontSize!,
-          fontFeatures: const [FontFeature.tabularFigures()],
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        child: TableCells(
-          columns: table.layouts,
-          widths: table.widths,
-          height: table.rowHeight,
-          inset: _recordCellInset,
-          cells: cells,
-        ),
-      ),
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: _recordTableMargin),
-      child: SurfaceScope(
-        level: level,
-        child: selected
-            ? Stack(
-                children: [
-                  row,
-                  PositionedDirectional(
-                    start: 0,
-                    top: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: Container(
-                        width: 3,
-                        height: 16,
-                        decoration: ShapeDecoration(
-                          color: colorScheme.primary,
-                          shape: AppShape.full,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            : row,
-      ),
-    );
-  }
-}
-
-class RecordCellText extends StatelessWidget {
-  final String text;
-  final bool muted;
-
-  const RecordCellText(this.text, {super.key, this.muted = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text.isEmpty ? '—' : text,
-      style: muted
-          ? TextStyle(color: context.colorScheme.onSurfaceVariant)
-          : null,
     );
   }
 }

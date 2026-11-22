@@ -650,9 +650,7 @@ void main() {
       findsNWidgets(shownIds.length),
     );
     expect(
-      find.text(
-        DateTime.fromMillisecondsSinceEpoch(1700000000000).showTime.trim(),
-      ),
+      find.text(DateTime.fromMillisecondsSinceEpoch(1700000000000).showTime),
       findsNothing,
     );
     final list = tester.widget<SliverPrismList>(

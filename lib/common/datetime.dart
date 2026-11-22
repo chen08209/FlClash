@@ -68,7 +68,7 @@ extension DateTimeExtension on DateTime {
   }
 
   String get showTime {
-    return toLocal().toString().substring(10, 19);
+    return toLocal().toString().substring(11, 19);
   }
 }
 

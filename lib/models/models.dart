@@ -11,4 +11,6 @@ export 'ip_quality.dart';
 export 'profile.dart';
 export 'record_filter.dart';
 export 'references.dart';
+export 'rule_table.dart';
 export 'state.dart';
+export 'tracker_speed_sampler.dart';

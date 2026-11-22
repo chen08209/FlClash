@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/features/connection/tracker_info_item.dart';
+import 'package:fl_clash/features/connection/tracker_info_detail.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -65,6 +65,8 @@ void main() {
         child: TestApp(child: TrackerInfoDetailView(trackerInfo: trackerInfo)),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(currentAppLocalizations.connectionInfo));
     await tester.pumpAndSettle();
   }
 

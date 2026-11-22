@@ -106,6 +106,61 @@ const _$ConnectionFailureKindEnumMap = {
   ConnectionFailureKind.other: 'other',
 };
 
+_ConnectionTiming _$ConnectionTimingFromJson(Map<String, dynamic> json) =>
+    _ConnectionTiming(
+      accepted: DateTime.parse(json['accepted'] as String),
+      dnsStart: (json['dnsStart'] as num?)?.toInt(),
+      dnsEnd: (json['dnsEnd'] as num?)?.toInt(),
+      routed: (json['routed'] as num?)?.toInt(),
+      dialStart: (json['dialStart'] as num?)?.toInt(),
+      connected: (json['connected'] as num?)?.toInt(),
+      tls: (json['tls'] as num?)?.toInt(),
+      dialEnd: (json['dialEnd'] as num?)?.toInt(),
+      decrypted: (json['decrypted'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$ConnectionTimingToJson(_ConnectionTiming instance) =>
+    <String, dynamic>{
+      'accepted': instance.accepted.toIso8601String(),
+      'dnsStart': instance.dnsStart,
+      'dnsEnd': instance.dnsEnd,
+      'routed': instance.routed,
+      'dialStart': instance.dialStart,
+      'connected': instance.connected,
+      'tls': instance.tls,
+      'dialEnd': instance.dialEnd,
+      'decrypted': instance.decrypted,
+    };
+
+_ConnectionEnd _$ConnectionEndFromJson(Map<String, dynamic> json) =>
+    _ConnectionEnd(
+      reason: $enumDecode(
+        _$ConnectionEndReasonEnumMap,
+        json['reason'],
+        unknownValue: ConnectionEndReason.error,
+      ),
+      endedAt: DateTime.parse(json['endedAt'] as String),
+      message: json['message'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$ConnectionEndToJson(_ConnectionEnd instance) =>
+    <String, dynamic>{
+      'reason': _$ConnectionEndReasonEnumMap[instance.reason]!,
+      'endedAt': instance.endedAt.toIso8601String(),
+      'message': instance.message,
+    };
+
+const _$ConnectionEndReasonEnumMap = {
+  ConnectionEndReason.local: 'local',
+  ConnectionEndReason.remote: 'remote',
+  ConnectionEndReason.finished: 'finished',
+  ConnectionEndReason.timeout: 'timeout',
+  ConnectionEndReason.reset: 'reset',
+  ConnectionEndReason.core: 'core',
+  ConnectionEndReason.error: 'error',
+  ConnectionEndReason.failed: 'failed',
+};
+
 _TrackerInfo _$TrackerInfoFromJson(Map<String, dynamic> json) => _TrackerInfo(
   id: json['id'] as String,
   upload: (json['upload'] as num?)?.toInt() ?? 0,
@@ -123,6 +178,18 @@ _TrackerInfo _$TrackerInfoFromJson(Map<String, dynamic> json) => _TrackerInfo(
   failure: json['failure'] == null
       ? null
       : ConnectionFailure.fromJson(json['failure'] as Map<String, dynamic>),
+  timing: json['timing'] == null
+      ? null
+      : ConnectionTiming.fromJson(json['timing'] as Map<String, dynamic>),
+  ruleIndex: (json['ruleIndex'] as num?)?.toInt(),
+  dnsQueries:
+      (json['dnsQueries'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList() ??
+      const [],
+  end: json['end'] == null
+      ? null
+      : ConnectionEnd.fromJson(json['end'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$TrackerInfoToJson(_TrackerInfo instance) =>
@@ -139,6 +206,10 @@ Map<String, dynamic> _$TrackerInfoToJson(_TrackerInfo instance) =>
       'uploadSpeed': instance.uploadSpeed,
       'closedAt': instance.closedAt?.toIso8601String(),
       'failure': instance.failure,
+      'timing': instance.timing,
+      'ruleIndex': instance.ruleIndex,
+      'dnsQueries': instance.dnsQueries,
+      'end': instance.end,
     };
 
 _Log _$LogFromJson(Map<String, dynamic> json) => _Log(
@@ -163,6 +234,7 @@ const _$LogLevelEnumMap = {
 };
 
 _DnsQuery _$DnsQueryFromJson(Map<String, dynamic> json) => _DnsQuery(
+  id: (json['id'] as num?)?.toInt(),
   domain: json['domain'] as String,
   type: json['type'] as String,
   initiator: $enumDecodeNullable(
@@ -182,6 +254,7 @@ _DnsQuery _$DnsQueryFromJson(Map<String, dynamic> json) => _DnsQuery(
 );
 
 Map<String, dynamic> _$DnsQueryToJson(_DnsQuery instance) => <String, dynamic>{
+  'id': instance.id,
   'domain': instance.domain,
   'type': instance.type,
   'initiator': _$DnsQueryInitiatorEnumMap[instance.initiator],

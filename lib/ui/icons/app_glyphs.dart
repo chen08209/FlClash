@@ -45,6 +45,50 @@ abstract final class AppGlyphs {
   ]);
 
   static const requests = Glyph([
+    GlyphBox(3.5, 3.5, 20.5, 20.5, 5),
+    GlyphPolyline([
+      GlyphVertex(9, 16.5),
+      GlyphVertex(9, 7.8),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(6.4, 10.4),
+      GlyphVertex(9, 7.8, 0.4),
+      GlyphVertex(11.6, 10.4),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(15, 7.5),
+      GlyphVertex(15, 16.2),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(12.4, 13.6),
+      GlyphVertex(15, 16.2, 0.4),
+      GlyphVertex(17.6, 13.6),
+    ], role: GlyphRole.detail),
+  ]);
+
+  static const exchanges = Glyph([
+    GlyphBox(3.5, 3.5, 20.5, 20.5, 5),
+    GlyphPolyline([
+      GlyphVertex(7.5, 9.2),
+      GlyphVertex(16.2, 9.2),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(13.6, 6.6),
+      GlyphVertex(16.2, 9.2, 0.4),
+      GlyphVertex(13.6, 11.8),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(16.5, 14.8),
+      GlyphVertex(7.8, 14.8),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(10.4, 12.2),
+      GlyphVertex(7.8, 14.8, 0.4),
+      GlyphVertex(10.4, 17.4),
+    ], role: GlyphRole.detail),
+  ]);
+
+  static const clock = Glyph([
     GlyphCircle(12, 12, 8.8),
     GlyphPolyline([
       GlyphVertex(12, 7.2),
@@ -52,8 +96,6 @@ abstract final class AppGlyphs {
       GlyphVertex(15.2, 14),
     ], role: GlyphRole.detail),
   ]);
-
-  static const clock = requests;
 
   static const connections = Glyph([
     GlyphCircle(12, 5.2, 2.4),

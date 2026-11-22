@@ -372,6 +372,16 @@ _MitmExchangeSummary _$MitmExchangeSummaryFromJson(Map<String, dynamic> json) =>
       requestSize: (json['request-size'] as num?)?.toInt() ?? 0,
       responseSize: (json['response-size'] as num?)?.toInt() ?? 0,
       error: json['error'] as String? ?? '',
+      host: json['host'] as String? ?? '',
+      path: json['path'] as String? ?? '',
+      contentType: json['content-type'] as String? ?? '',
+      statusClass: json['status-class'] as String? ?? '',
+      kind: json['kind'] as String? ?? '',
+      rewritten: json['rewritten'] as bool? ?? false,
+      connectionId: _connectionIdOf(json['connection-id']),
+      app: json['app'] == null
+          ? null
+          : MitmApp.fromJson(json['app'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$MitmExchangeSummaryToJson(
@@ -387,7 +397,62 @@ Map<String, dynamic> _$MitmExchangeSummaryToJson(
   'request-size': instance.requestSize,
   'response-size': instance.responseSize,
   'error': instance.error,
+  'host': instance.host,
+  'path': instance.path,
+  'content-type': instance.contentType,
+  'status-class': instance.statusClass,
+  'kind': instance.kind,
+  'rewritten': instance.rewritten,
+  'connection-id': instance.connectionId,
+  'app': instance.app,
 };
+
+_MitmApp _$MitmAppFromJson(Map<String, dynamic> json) => _MitmApp(
+  process: json['process'] as String? ?? '',
+  processPath: json['process-path'] as String? ?? '',
+  uid: (json['uid'] as num?)?.toInt(),
+);
+
+Map<String, dynamic> _$MitmAppToJson(_MitmApp instance) => <String, dynamic>{
+  'process': instance.process,
+  'process-path': instance.processPath,
+  'uid': instance.uid,
+};
+
+_MitmQueryPage _$MitmQueryPageFromJson(
+  Map<String, dynamic> json,
+) => _MitmQueryPage(
+  capturing: json['capturing'] as bool? ?? false,
+  since: json['since'] == null ? null : DateTime.parse(json['since'] as String),
+  version: (json['version'] as num?)?.toInt() ?? 0,
+  oldest: (json['oldest'] as num?)?.toInt() ?? 0,
+  held: (json['held'] as num?)?.toInt() ?? 0,
+  matched: (json['matched'] as num?)?.toInt() ?? 0,
+  exchanges:
+      (json['exchanges'] as List<dynamic>?)
+          ?.map((e) => MitmExchangeSummary.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  next: (json['next'] as num?)?.toInt(),
+  unmatched:
+      (json['unmatched'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList() ??
+      const [],
+);
+
+Map<String, dynamic> _$MitmQueryPageToJson(_MitmQueryPage instance) =>
+    <String, dynamic>{
+      'capturing': instance.capturing,
+      'since': instance.since?.toIso8601String(),
+      'version': instance.version,
+      'oldest': instance.oldest,
+      'held': instance.held,
+      'matched': instance.matched,
+      'exchanges': instance.exchanges,
+      'next': instance.next,
+      'unmatched': instance.unmatched,
+    };
 
 _MitmExchangeList _$MitmExchangeListFromJson(
   Map<String, dynamic> json,

@@ -11,7 +11,6 @@ import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
-import 'package:fl_clash/views/dns_queries.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,7 +64,10 @@ void openDashboardFeed(BuildContext context, DashboardFeed feed) {
       builder: (_) => switch (feed) {
         DashboardFeed.connections ||
         DashboardFeed.requests => RequestsView(scrollController: controller),
-        DashboardFeed.dns => DnsQueriesView(scrollController: controller),
+        DashboardFeed.dns => RequestsView(
+          scrollController: controller,
+          segment: RequestsSegment.dns,
+        ),
       },
     ),
   );
@@ -114,12 +116,19 @@ mixin ConnectionsPolling<T extends ConsumerStatefulWidget>
     }
     try {
       if (pollsConnections) {
+        final lineage = ref.read(requestsProvider).lineage;
         final requestedAt = DateTime.now();
         final snapshot = await _core.getConnectionsWith(_asListed);
         if (!isCurrent()) return;
+        final requests = ref.read(requestsProvider.notifier);
+        if (!requests.sync(
+          snapshot,
+          requestedAt: requestedAt,
+          lineage: lineage,
+        )) {
+          return;
+        }
         connectionCount.value = snapshot.length;
-        final requests = ref.read(requestsProvider.notifier)
-          ..sync(snapshot, requestedAt: requestedAt);
         final next = [
           for (final trackerInfo in requests.value.list.reversed)
             if (trackerInfo.isActive) trackerInfo,
@@ -697,7 +706,7 @@ class _Exit extends StatelessWidget {
   }
 }
 
-String _timeOf(DateTime time) => time.showTime.trim();
+String _timeOf(DateTime time) => time.showTime;
 
 String _ruleKey(TrackerInfo info) =>
     '${info.rule} ${info.rulePayload}'.toLowerCase();

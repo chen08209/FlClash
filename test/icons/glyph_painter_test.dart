@@ -14,6 +14,8 @@ final _glyphs = {
   'proxies': AppGlyphs.proxies,
   'profiles': AppGlyphs.profiles,
   'requests': AppGlyphs.requests,
+  'exchanges': AppGlyphs.exchanges,
+  'clock': AppGlyphs.clock,
   'connections': AppGlyphs.connections,
   'dns': AppGlyphs.dns,
   'resources': AppGlyphs.resources,

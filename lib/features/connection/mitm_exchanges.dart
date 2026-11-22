@@ -1,74 +1,16 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/mitm_body.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'detail_tabs.dart';
-import 'mitm_body.dart';
+import 'mitm_exchange_detail.dart';
 import 'mitm_exchange_menu.dart';
-
-String _millis(int milliseconds) {
-  if (milliseconds < 1000) {
-    return '$milliseconds ms';
-  }
-  return '${(milliseconds / 1000).toStringAsFixed(1)} s';
-}
-
-String _pathOf(String url) {
-  final uri = Uri.tryParse(url);
-  if (uri == null || !uri.hasAuthority) {
-    return url;
-  }
-  final path = uri.path.isEmpty ? '/' : uri.path;
-  return uri.hasQuery ? '$path?${uri.query}' : path;
-}
-
-EdgeInsets _detailPadding(BuildContext context) => const EdgeInsets.symmetric(
-  horizontal: 16,
-).copyWith(bottom: 20 + context.bottomInset, top: context.sectionsTopPadding);
-
-String _statusText(
-  AppLocalizations appLocalizations, {
-  required bool pending,
-  required int status,
-}) {
-  if (status != 0) {
-    return '$status';
-  }
-  return pending ? appLocalizations.inProgress : '';
-}
-
-String _actionLabel(AppLocalizations appLocalizations, MitmAction action) {
-  return switch (action.kind) {
-    'url-rewrite' => appLocalizations.urlRewrite,
-    'header-rewrite' => appLocalizations.headerRewrite,
-    'body-rewrite' => appLocalizations.bodyRewrite,
-    'map-local' => appLocalizations.mapLocal,
-    'script' => appLocalizations.script,
-    _ => action.kind,
-  };
-}
-
-String _phaseLabel(AppLocalizations appLocalizations, String phase) {
-  return switch (phase) {
-    'request' => appLocalizations.request,
-    'response' => appLocalizations.response,
-    _ => phase,
-  };
-}
-
-Future<void> _copyError(BuildContext context, String text) async {
-  await Clipboard.setData(ClipboardData(text: text));
-  if (!context.mounted) return;
-  dialogs.showBanner(context.appLocalizations.copySuccess);
-}
+import 'mitm_texts.dart';
 
 /// The requests captured on a decrypted connection.
 class MitmExchangesView extends ConsumerWidget {
@@ -94,6 +36,7 @@ class MitmExchangesView extends ConsumerWidget {
     final exchanges = list?.exchanges ?? const <MitmExchangeSummary>[];
     final since = list?.since;
     final missing = since != null && trackerInfo.start.isBefore(since);
+    final waiting = errorText == null && list?.capturing != false && !missing;
     return NullStatusSwitcher(
       isLoading: loading,
       isEmpty: exchanges.isEmpty,
@@ -104,26 +47,31 @@ class MitmExchangesView extends ConsumerWidget {
             ? appLocalizations.httpCaptureOff
             : missing
             ? appLocalizations.httpRequestsMissing
-            : appLocalizations.nullTip(appLocalizations.httpRequests),
-        description: errorText,
+            : appLocalizations.noHttpRequests,
+        description: waiting ? appLocalizations.noHttpRequestsHint : errorText,
         action: errorText == null
             ? null
             : TonalButton(
                 size: TonalButtonSize.bar,
                 glyph: AppGlyphs.copy,
                 label: appLocalizations.copy,
-                onPressed: () => _copyError(context, errorText),
+                onPressed: () => dialogs.copy(errorText),
               ),
         illustration: NullStatusIllustration.requests,
       ),
       child: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: _detailPadding(context),
+            padding: detailTabPaddingOf(context),
             sliver: generateSliverSection(
+              atTop: true,
               items: exchanges,
-              itemBuilder: (exchange) => _MitmExchangeItem(exchange: exchange),
+              itemBuilder: (exchange) => _MitmExchangeItem(
+                exchange: exchange,
+                host: trackerInfo.title,
+              ),
               footer: missing ? appLocalizations.httpRequestsMissing : null,
+              last: true,
             ),
           ),
         ],
@@ -134,18 +82,27 @@ class MitmExchangesView extends ConsumerWidget {
 
 class _MitmExchangeItem extends ConsumerWidget {
   final MitmExchangeSummary exchange;
+  final String host;
 
-  const _MitmExchangeItem({required this.exchange});
+  const _MitmExchangeItem({required this.exchange, required this.host});
+
+  void _open(BuildContext context) {
+    final pane = DetailPane.maybeOf(context);
+    if (pane == null) {
+      showNestedSheet<void>(
+        context,
+        builder: (_) => MitmExchangeView(id: exchange.id),
+      );
+      return;
+    }
+    pane.push(
+      back: host,
+      builder: (_) => MitmExchangeView(id: exchange.id, inPane: true),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = context.colorScheme;
-    final failed = exchange.error.isNotEmpty;
-    final outcome = failed
-        ? exchange.error
-        : exchange.status == 0
-        ? ''
-        : '${exchange.status}';
     return ContextMenuRegion(
       menuItems: mitmExchangeMenuItems(
         context,
@@ -157,238 +114,33 @@ class _MitmExchangeItem extends ConsumerWidget {
         modules: watchLocalMitmModules(ref),
         load: () => ref.read(coreHandlerProvider).getMitmExchange(exchange.id),
       ),
-      child: ListItem(
+      child: DecorationListItem(
+        onPressed: () => _open(context),
+        contentPadding: ListItem.chevronPaddingOf(context),
         title: Text(
-          '${exchange.method} ${_pathOf(exchange.url)}',
-          maxLines: 2,
+          exchangePathOf(exchange.url),
+          maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: outcome.isEmpty
-            ? null
-            : Text(
-                outcome,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: failed ? TextStyle(color: colorScheme.error) : null,
-              ),
-        trailing: Text(
-          exchange.pending
-              ? context.appLocalizations.inProgress
-              : _millis(exchange.duration),
-          style: AppTextStyle.subheadline
-              .of(context)
-              .copyWith(color: colorScheme.onSurfaceVariant),
-        ),
-        onTap: () => showNestedSheet<void>(
-          context,
-          builder: (_) => MitmExchangeView(id: exchange.id),
-        ),
-      ),
-    );
-  }
-}
-
-class MitmExchangeView extends ConsumerWidget {
-  final int id;
-
-  const MitmExchangeView({super.key, required this.id});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final value = ref.watch(mitmExchangeProvider(id));
-    final exchange = value.value;
-    final modules = watchLocalMitmModules(ref);
-    return Scaffold(
-      title: appLocalizations.details(appLocalizations.request),
-      menuItems: exchange == null
-          ? const []
-          : mitmExchangeMenuItems(
+        subtitle: Text.rich(
+          joinedSpan([
+            (exchange.method, null),
+            ...outcomeParts(
               context,
-              ref,
-              url: exchange.url,
-              pending: exchange.pending,
               status: exchange.status,
-              responseSize: exchange.responseSize,
-              modules: modules,
-              load: () async => exchange,
-            ),
-      body: NullStatusSwitcher(
-        isLoading: value.isLoading && !value.hasValue,
-        isEmpty: exchange == null,
-        nullStatus: NullStatus(
-          label: appLocalizations.httpRequestCleared,
-          illustration: NullStatusIllustration.requests,
-        ),
-        child: exchange == null
-            ? const SizedBox.shrink()
-            : _MitmExchangeDetail(exchange: exchange),
-      ),
-    );
-  }
-}
-
-class _MitmExchangeDetail extends StatelessWidget {
-  final MitmExchange exchange;
-
-  const _MitmExchangeDetail({required this.exchange});
-
-  Widget _buildOverview(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    final overview = [
-      (appLocalizations.url, exchange.url),
-      (appLocalizations.originalUrl, exchange.originalUrl),
-      (appLocalizations.method, exchange.method),
-      (appLocalizations.protocol, exchange.proto),
-      (
-        appLocalizations.status,
-        _statusText(
-          appLocalizations,
-          pending: exchange.pending,
-          status: exchange.status,
-        ),
-      ),
-      (appLocalizations.error, exchange.error),
-      (appLocalizations.creationTime, exchange.start.showFull),
-      if (exchange.status != 0)
-        (appLocalizations.timeToFirstByte, _millis(exchange.ttfb)),
-      if (!exchange.pending)
-        (appLocalizations.duration, _millis(exchange.duration)),
-      if (exchange.requestSize > 0)
-        (appLocalizations.requestBody, exchange.requestSize.traffic.show),
-      (appLocalizations.responseBody, exchange.responseSize.traffic.show),
-    ];
-    return ListView(
-      padding: _detailPadding(context),
-      children: [
-        generateSection(
-          title: appLocalizations.basicInfo,
-          items: [
-            for (final (title, value) in overview)
-              if (value.isNotEmpty) DetailRow.text(title: title, value: value),
-          ],
-        ),
-        generateSection(
-          title: appLocalizations.matchedRules,
-          items: [
-            for (final action in exchange.actions)
-              DetailRow(
-                title: _actionLabel(appLocalizations, action),
-                value: Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  alignment: WrapAlignment.end,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (action.phase.isNotEmpty)
-                      MetaChip(
-                        label: _phaseLabel(appLocalizations, action.phase),
-                      ),
-                    if (action.detail.isNotEmpty) Text(action.detail),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    return DetailTabs(
-      tabs: [
-        (appLocalizations.overview, _buildOverview),
-        (
-          appLocalizations.request,
-          (_) => _MitmSideView(exchange: exchange, response: false),
-        ),
-        (
-          appLocalizations.response,
-          (_) => _MitmSideView(exchange: exchange, response: true),
-        ),
-      ],
-    );
-  }
-}
-
-/// One side of a request: its headers, then its body once the request ends.
-class _MitmSideView extends ConsumerWidget {
-  final MitmExchange exchange;
-  final bool response;
-
-  const _MitmSideView({required this.exchange, required this.response});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final header = response ? exchange.responseHeader : exchange.requestHeader;
-    final size = response ? exchange.responseSize : exchange.requestSize;
-    final bodyTitle = response
-        ? appLocalizations.responseBody
-        : appLocalizations.requestBody;
-    final sending = size > 0 && exchange.pending;
-    final body = size > 0 && !exchange.pending
-        ? ref.watch(
-            mitmBodyProvider(
-              exchange.id,
-              response: response,
-              contentType: mitmHeaderValue(header, 'Content-Type'),
-            ),
-          )
-        : null;
-    final content = body?.value;
-    final kept =
-        content != null && (content.bytes.isNotEmpty || content.truncated);
-    final bodyError = body != null && !body.hasValue && !body.retrying
-        ? body.error
-        : null;
-    final names = header.keys.toList()..sort();
-    return NullStatusSwitcher(
-      isLoading:
-          body != null && !body.hasValue && (body.isLoading || body.retrying),
-      isEmpty: header.isEmpty && !sending && !kept && bodyError == null,
-      nullStatus: NullStatus(
-        label: exchange.pending
-            ? appLocalizations.inProgress
-            : appLocalizations.nullTip(
-                response ? appLocalizations.response : appLocalizations.request,
-              ),
-        illustration: NullStatusIllustration.requests,
-      ),
-      child: ListView(
-        padding: _detailPadding(context),
-        children: [
-          generateSection(
-            title: response
-                ? appLocalizations.responseHeaders
-                : appLocalizations.requestHeaders,
-            items: [
-              for (final name in names)
-                for (final value in header[name]!)
-                  DetailRow.text(title: name, value: value),
-            ],
-          ),
-          if (sending)
-            generateSection(
-              title: bodyTitle,
-              items: [ListItem(title: Text(appLocalizations.inProgress))],
-            ),
-          if (kept) MitmBodySection(title: bodyTitle, content: content),
-          if (bodyError != null)
-            generateSection(
-              title: bodyTitle,
-              items: [
-                DetailRow.text(
-                  title: response
-                      ? appLocalizations.responseBodyReadFailed
-                      : appLocalizations.requestBodyReadFailed,
-                  value: userFacingErrorMessage(bodyError, appLocalizations),
-                ),
+              error: exchange.error,
+              pending: exchange.pending,
+              finished: [
+                exchange.responseSize.traffic.show,
+                httpMillisText(exchange.duration),
               ],
             ),
-        ],
+          ]),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.listSubtitleStyle.toTabular,
+        ),
+        trailing: const GlyphIcon(AppGlyphs.chevronForward),
       ),
     );
   }

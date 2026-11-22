@@ -71,37 +71,14 @@ class RecordFacet<T> {
   }
 }
 
-class RecordGrouper<T> {
-  final RecordGrouping grouping;
-  final String Function(T item) keyOf;
-
-  const RecordGrouper(this.grouping, this.keyOf);
-}
-
 class RecordGroup<T> {
-  final String key;
+  final Object key;
+  final String label;
 
   /// Top first.
   final List<T> items;
 
-  const RecordGroup(this.key, this.items);
-}
-
-/// Groups follow their item shown highest; [reverse] marks a list shown
-/// bottom up.
-List<RecordGroup<T>> groupRecords<T>(
-  List<T> items,
-  String Function(T item) keyOf, {
-  bool reverse = false,
-}) {
-  final groups = <String, List<T>>{};
-  for (final item in reverse ? items.reversed : items) {
-    (groups[keyOf(item)] ??= []).add(item);
-  }
-  return [
-    for (final MapEntry(:key, :value) in groups.entries)
-      RecordGroup(key, value),
-  ];
+  const RecordGroup(this.key, this.label, this.items);
 }
 
 extension RecordFilterIterableExt<T> on Iterable<T> {

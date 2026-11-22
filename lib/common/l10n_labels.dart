@@ -164,6 +164,23 @@ extension ConnectionFailureKindL10n on ConnectionFailureKind {
   }
 }
 
+extension ConnectionEndReasonL10n on ConnectionEndReason {
+  /// Null for [ConnectionEndReason.failed], which the failure itself names.
+  String? get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      ConnectionEndReason.local => appLocalizations.connectionEndLocal,
+      ConnectionEndReason.remote => appLocalizations.connectionEndRemote,
+      ConnectionEndReason.finished => appLocalizations.connectionEndFinished,
+      ConnectionEndReason.timeout => appLocalizations.timeout,
+      ConnectionEndReason.reset => appLocalizations.connectionEndReset,
+      ConnectionEndReason.core => appLocalizations.connectionEndCore,
+      ConnectionEndReason.error => appLocalizations.error,
+      ConnectionEndReason.failed => null,
+    };
+  }
+}
+
 extension RecordFacetKindL10n on RecordFacetKind {
   String? get title {
     final appLocalizations = currentAppLocalizations;
@@ -178,18 +195,6 @@ extension RecordFacetKindL10n on RecordFacetKind {
       RecordFacetKind.initiator ||
       RecordFacetKind.cache ||
       RecordFacetKind.rcode => null,
-    };
-  }
-}
-
-extension RecordGroupingL10n on RecordGrouping {
-  String get label {
-    final appLocalizations = currentAppLocalizations;
-    return switch (this) {
-      RecordGrouping.app => appLocalizations.app,
-      RecordGrouping.host => appLocalizations.host,
-      RecordGrouping.rule => appLocalizations.rule,
-      RecordGrouping.exit => appLocalizations.outboundExit,
     };
   }
 }

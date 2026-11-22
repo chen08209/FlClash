@@ -113,13 +113,32 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
   void close(Iterable<String> ids, {DateTime? at}) =>
       _apply((log) => log.close(ids, at ?? DateTime.now()));
 
-  void clearClosed() => _apply((log) => log.clearClosed());
-
   void closeAll({DateTime? at}) =>
       _apply((log) => log.closeAll(at ?? DateTime.now()));
 
-  void sync(List<TrackerInfo> open, {required DateTime requestedAt}) =>
-      _apply((log) => log.sync(open, requestedAt));
+  /// False, writing nothing, once a new log has replaced [lineage].
+  bool sync(
+    List<TrackerInfo> open, {
+    required DateTime requestedAt,
+    required Object lineage,
+  }) => _applyWithin(lineage, (log) => log.sync(open, requestedAt));
+
+  bool poll(
+    ConnectionPoll poll, {
+    required DateTime requestedAt,
+    required Object lineage,
+  }) => _applyWithin(lineage, (log) => log.poll(poll, requestedAt));
+
+  bool _applyWithin(
+    Object lineage,
+    ConnectionLog Function(ConnectionLog log) change,
+  ) {
+    if (!ref.mounted || !identical(state.lineage, lineage)) {
+      return false;
+    }
+    value = change(state);
+    return true;
+  }
 }
 
 @Riverpod(keepAlive: true)
@@ -135,6 +154,21 @@ class DnsQueries extends _$DnsQueries with AutoDisposeNotifierMixin {
     }
     this.value = state.append(value);
   }
+}
+
+Duration? _noRetry(int retryCount, Object error) => null;
+
+/// The rules the Core routes by, each named as a request names its rule;
+/// listed again once a config is applied or the Core connects, never retried
+/// before that.
+@Riverpod(keepAlive: true, retry: _noRetry)
+Future<RuleTable> activeRules(Ref ref) {
+  ref.listen(coreStatusProvider, (previous, next) {
+    if (next == CoreStatus.connected && previous != CoreStatus.connected) {
+      ref.invalidateSelf();
+    }
+  });
+  return ref.read(coreHandlerProvider).getRules();
 }
 
 @Riverpod(keepAlive: true)

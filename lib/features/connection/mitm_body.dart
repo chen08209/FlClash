@@ -8,23 +8,26 @@ import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart' show compute;
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 const _imageMaxHeight = 240.0;
 const _hexMaxPerLine = 16;
 const _hexPerLineStep = 4;
-const _hexPadding = 16.0;
 const _hexLineGap = 4.0;
+const _codeBlockVerticalPadding = 12.0;
 
 class MitmBodySection extends StatelessWidget {
   final String title;
   final MitmBodyContent content;
+  final bool atTop;
+  final bool last;
 
   const MitmBodySection({
     super.key,
     required this.title,
     required this.content,
+    this.atTop = false,
+    this.last = false,
   });
 
   void _open(BuildContext context) {
@@ -56,32 +59,44 @@ class MitmBodySection extends StatelessWidget {
     if (content.bytes.isEmpty) {
       return generateSection(
         title: title,
+        atTop: atTop,
         items: [ListItem(title: Text(appLocalizations.httpBodyNotKept))],
       );
     }
-    final size = Text(
-      content.bytes.length.traffic.show,
-      style: AppTextStyle.subheadline
-          .of(context)
-          .copyWith(color: context.colorScheme.onSurfaceVariant),
+    const chevron = GlyphIcon(AppGlyphs.chevronForward);
+    final size = Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        Text(
+          content.bytes.length.traffic.show,
+          style: context.listValueStyle.toTabular,
+        ),
+        chevron,
+      ],
     );
     final hex = _MitmHexView(title: title, content: content);
     return generateSection(
       title: title,
+      atTop: atTop,
       footer: _footer(appLocalizations),
+      last: last,
       items: switch (content.kind) {
         MitmBodyKind.text => [
           DecorationListItem(
             onPressed: () => _open(context),
+            minVerticalPadding: _codeBlockVerticalPadding,
             title: Text(
               content.preview,
               style: AppTextStyle.footnote.of(context).toJetBrainsMono,
             ),
           ),
           if (content.isCut)
-            ListItem(
+            DecorationListItem(
+              onPressed: () => _open(context),
+              contentPadding: ListItem.chevronPaddingOf(context),
               title: Text(appLocalizations.viewAll),
-              onTap: () => _open(context),
+              trailing: chevron,
             ),
           ListItem.open(
             title: Text(appLocalizations.hex),
@@ -96,6 +111,9 @@ class MitmBodySection extends StatelessWidget {
                 constraints: const BoxConstraints(maxHeight: _imageMaxHeight),
                 child: Image.memory(
                   content.bytes,
+                  cacheHeight:
+                      (_imageMaxHeight * MediaQuery.devicePixelRatioOf(context))
+                          .round(),
                   fit: BoxFit.contain,
                   errorBuilder: (context, _, _) =>
                       Text(appLocalizations.binaryData),
@@ -130,10 +148,7 @@ class _MitmHexView extends StatelessWidget {
   const _MitmHexView({required this.title, required this.content});
 
   Future<void> _copyBase64(BuildContext context) async {
-    final text = await compute(base64Encode, content.bytes);
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!context.mounted) return;
-    dialogs.showBanner(context.appLocalizations.copySuccess);
+    await dialogs.copy(await compute(base64Encode, content.bytes));
   }
 
   int _perLine(double width, double charWidth) {
@@ -170,17 +185,17 @@ class _MitmHexView extends StatelessWidget {
           final lineHeight = painter.height;
           painter.dispose();
           final bytes = content.bytes;
-          final perLine = _perLine(width - _hexPadding * 2, charWidth);
+          final margin = context.listInsets.margin;
+          final perLine = _perLine(width - margin * 2, charWidth);
           return ArrivalCacheExtentBuilder(
             builder: (cacheExtent) => CustomScrollView(
               scrollCacheExtent: cacheExtent,
               slivers: [
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: _hexPadding)
-                      .copyWith(
-                        top: context.contentTopPadding,
-                        bottom: 16 + context.bottomInset,
-                      ),
+                  padding: EdgeInsets.symmetric(horizontal: margin).copyWith(
+                    top: context.contentTopPadding,
+                    bottom: 16 + context.bottomInset,
+                  ),
                   sliver: SliverMainAxisGroup(
                     slivers: [
                       if (content.truncated)

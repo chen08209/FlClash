@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/features/features.dart';
+import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -20,14 +22,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/detail_tabs.dart';
 import '../helpers/glyph_finders.dart';
+import '../helpers/hidden_segments.dart';
 import '../helpers/scrollbar.dart';
-import '../helpers/record_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
 const _tableSize = Size(1400, 1000);
 const _listSize = Size(600, 1000);
+const _sheetSize = Size(800, 1000);
 
 TrackerInfo _tracker({
   required String id,
@@ -85,9 +89,9 @@ void main() {
 
   tearDown(() => container.dispose());
 
-  void seedRequests(List<TrackerInfo> requests) {
+  void seedRequests(List<TrackerInfo> requests, {int closedCapacity = 500}) {
     final notifier = container.read(requestsProvider.notifier);
-    notifier.value = ConnectionLog(500);
+    notifier.value = ConnectionLog(closedCapacity);
     for (final request in requests) {
       notifier.addRequest(request);
     }
@@ -101,6 +105,7 @@ void main() {
     WidgetTester tester, {
     Size size = _tableSize,
     Future<List<TrackerInfo>> Function()? connectionsReader,
+    bool hotKeys = false,
   }) async {
     container.read(viewSizeProvider.notifier).update((_) => size);
     tester.view.physicalSize = size;
@@ -108,72 +113,152 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    final app = TestApp(
+      child: RequestsView(connectionsReader: connectionsReader),
+    );
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: TestApp(
-          child: RequestsView(connectionsReader: connectionsReader),
-        ),
+        child: hotKeys
+            ? HotKeyManager(
+                registerHotKeys: ({required specs}) => const [],
+                hotKeyEventSource: () => const Stream.empty(),
+                child: app,
+              )
+            : app,
       ),
     );
     await tester.pump();
     await tester.pump();
   }
 
-  final stripScrollable = find
-      .ancestor(
-        of: find.byType(Chip),
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is Scrollable &&
-              widget.axisDirection == AxisDirection.right,
-        ),
+  Finder inFilterRow(Finder finder) => find.descendant(
+    of: find.byType(ConditionFilterRow<TrackerInfo, ConnectionStatus>),
+    matching: finder,
+  );
+
+  Finder statusSegment(String label) => find.descendant(
+    of: find.byType(SegmentedControl<ConnectionStatus>),
+    matching: find.text(label),
+  );
+
+  ConnectionStatus shownStatus(WidgetTester tester) => tester
+      .widget<SegmentedControl<ConnectionStatus>>(
+        find.byType(SegmentedControl<ConnectionStatus>),
       )
-      .first;
+      .value;
+
+  final addCondition = inFilterRow(find.byGlyph(AppGlyphs.add));
+
+  Finder inBlock(Finder finder) => find.descendant(
+    of: find.byType(ConditionBlock<TrackerInfo>),
+    matching: finder,
+  );
+
+  Finder inDialog(Finder finder) =>
+      find.descendant(of: find.byType(AlertDialog), matching: finder);
+
+  final dialogField = find.descendant(
+    of: find.byType(AlertDialog),
+    matching: find.byType(EditableText),
+  );
+
+  Finder removeOf(String chip) => find.descendant(
+    of: find
+        .ancestor(of: inBlock(find.text(chip)), matching: find.byType(Row))
+        .first,
+    matching: find.byGlyph(AppGlyphs.close),
+  );
 
   Finder targetOf(String host) => find.descendant(
-    of: find.byType(TrackerTargetText),
+    of: find.byType(TrackerInfoItem),
     matching: find.textContaining(host),
   );
 
-  Future<void> resize(WidgetTester tester, Size size) async {
-    container.read(viewSizeProvider.notifier).update((_) => size);
-    tester.view.physicalSize = size;
-    await tester.pumpAndSettle();
-  }
-
-  bool enabled(WidgetTester tester, String tooltip) =>
-      tester
-          .widget<IconButton>(
-            find.byWidgetPredicate(
-              (widget) => widget is IconButton && widget.tooltip == tooltip,
-            ),
-          )
-          .onPressed !=
-      null;
+  List<W> topDown<W extends Widget>(WidgetTester tester) =>
+      [...tester.widgetList<W>(find.byType(W))]..sort(
+        (a, b) => tester
+            .getTopLeft(find.byWidget(a))
+            .dy
+            .compareTo(tester.getTopLeft(find.byWidget(b)).dy),
+      );
 
   List<String> selectedRows(WidgetTester tester) => [
-    for (final element in find.byType(TrackerInfoTableRow).evaluate())
+    for (final element in find.byType(TrackerInfoItem).evaluate())
       if (tester
-          .widget<RecordTableRow>(
-            find.descendant(
-              of: find.byWidget(element.widget),
-              matching: find.byType(RecordTableRow),
-            ),
-          )
-          .selected)
-        (element.widget as TrackerInfoTableRow).trackerInfo.id,
+              .widget<DecorationListItem>(
+                find.descendant(
+                  of: find.byWidget(element.widget),
+                  matching: find.byType(DecorationListItem),
+                ),
+              )
+              .isSelected ??
+          false)
+        (element.widget as TrackerInfoItem).trackerInfo.id,
   ];
+
+  Finder rowOf(String id) => find.byWidgetPredicate(
+    (widget) => widget is TrackerInfoItem && widget.trackerInfo.id == id,
+  );
+
+  Finder inRow(String id, Finder finder) =>
+      find.descendant(of: rowOf(id), matching: finder);
 
   Future<void> teardownView(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   }
 
+  testWidgets('a sheet dragged to another height at the same width lays the '
+      'page out again without building it again', (tester) async {
+    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    container.read(viewSizeProvider.notifier).update((_) => _listSize);
+    tester.view.physicalSize = _listSize;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final height = ValueNotifier(900.0);
+    addTearDown(height.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: TestApp(
+          child: ValueListenableBuilder(
+            valueListenable: height,
+            builder: (_, value, page) => Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(height: value, child: page),
+            ),
+            child: const RequestsView(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    var built = 0;
+    debugOnRebuildDirtyWidget = (element, _) {
+      if (element.widget is Scaffold) {
+        built++;
+      }
+    };
+    addTearDown(() => debugOnRebuildDirtyWidget = null);
+
+    for (final value in [800.0, 700.0, 600.0]) {
+      height.value = value;
+      await tester.pump();
+    }
+    debugOnRebuildDirtyWidget = null;
+
+    expect(built, 0);
+    expect(targetOf('alpha.test'), findsOneWidget);
+    await teardownView(tester);
+  });
+
   testWidgets('shows the empty state without any request', (tester) async {
     await pumpRequests(tester);
 
-    expect(find.byType(NullStatus), findsOneWidget);
+    expect(find.text('No Connections yet'), findsOneWidget);
+    expect(find.text('Select a connection'), findsOneWidget);
     expect(tester.takeException(), null);
 
     await teardownView(tester);
@@ -189,9 +274,9 @@ void main() {
 
     await pumpRequests(tester);
 
-    expect(find.byType(NullStatus), findsNothing);
-    expect(find.textContaining('alpha.test'), findsWidgets);
-    expect(find.textContaining('beta.test'), findsWidgets);
+    expect(find.text('No Connections yet'), findsNothing);
+    expect(targetOf('alpha.test'), findsWidgets);
+    expect(targetOf('beta.test'), findsWidgets);
 
     await teardownView(tester);
   });
@@ -202,14 +287,14 @@ void main() {
     seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
 
     await pumpRequests(tester);
-    expect(find.textContaining('gamma.test'), findsNothing);
+    expect(targetOf('gamma.test'), findsNothing);
 
     addRequest(_tracker(id: 'c', host: 'gamma.test'));
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     await tester.pump();
 
-    expect(find.textContaining('gamma.test'), findsWidgets);
+    expect(targetOf('gamma.test'), findsWidgets);
 
     await teardownView(tester);
   });
@@ -219,7 +304,7 @@ void main() {
 
     await pumpRequests(tester);
     final total = (460 + 257835).traffic.show;
-    expect(find.text(total), findsNothing);
+    expect(inRow('a', _figure(total)), findsNothing);
 
     container.read(requestsProvider.notifier).updateTraffic({
       'a': (upload: 460, download: 257835),
@@ -228,7 +313,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text(total), findsOneWidget);
+    expect(inRow('a', _figure(total)), findsOneWidget);
 
     await teardownView(tester);
   });
@@ -278,13 +363,11 @@ void main() {
     );
     expect(label.data, requests.last.start.showFull);
     // The hint is pinned to the thumb: at the newest end the thumb center
-    // rests 24 dp (half the 48 dp minimum thumb) below the track's top edge,
-    // which the list leaves at the foot of the filter strip, 16 dp below the
-    // summary under its chips.
-    final summary = tester.getRect(find.byType(ConnectionSummary));
+    // rests 24 dp (half the 48 dp minimum thumb) below the track's top edge.
+    final track = tester.getRect(find.byType(ScrollToEndBox));
     expect(
       tester.getCenter(find.byKey(hintKey)).dy,
-      closeTo(summary.bottom + 16 + 24, 6),
+      closeTo(track.top + 24, 6),
     );
 
     await gesture.up();
@@ -297,304 +380,181 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('tapping a column header sorts the table by it, then the '
-      'other way, then back to newest first', (tester) async {
-    seedRequests([
-      _tracker(id: 'a', host: 'gamma.test', download: 10),
-      _tracker(id: 'b', host: 'alpha.test', download: 30),
-      _tracker(id: 'c', host: 'beta.test', download: 20),
-    ]);
-
-    await pumpRequests(tester);
-
-    List<String> hostsTopDown() {
-      final rows = tester
-          .widgetList<TrackerInfoTableRow>(find.byType(TrackerInfoTableRow))
-          .toList();
-      rows.sort(
-        (a, b) => tester
-            .getTopLeft(find.byWidget(a))
-            .dy
-            .compareTo(tester.getTopLeft(find.byWidget(b)).dy),
-      );
-      return [for (final row in rows) row.trackerInfo.metadata.host];
-    }
-
-    Finder sortArrow(Glyph glyph) => find.byWidgetPredicate(
-      (widget) => widget is GlyphIcon && widget.glyph == glyph,
-    );
-
-    Future<void> tapHeader(String label) async {
-      await tester.tap(find.text(label));
-      await tester.pumpAndSettle();
-    }
-
-    expect(hostsTopDown(), ['beta.test', 'alpha.test', 'gamma.test']);
-
-    await tapHeader('Total');
-    expect(hostsTopDown(), ['alpha.test', 'beta.test', 'gamma.test']);
-    expect(sortArrow(AppGlyphs.arrowDown), findsOneWidget);
-
-    await tapHeader('Total');
-    expect(hostsTopDown(), ['gamma.test', 'beta.test', 'alpha.test']);
-    expect(sortArrow(AppGlyphs.arrowUp), findsOneWidget);
-
-    await tapHeader('Total');
-    expect(hostsTopDown(), ['beta.test', 'alpha.test', 'gamma.test']);
-    expect(sortArrow(AppGlyphs.arrowDown), findsNothing);
-    expect(sortArrow(AppGlyphs.arrowUp), findsNothing);
-
-    await tapHeader('Target');
-    expect(hostsTopDown(), ['alpha.test', 'beta.test', 'gamma.test']);
-
-    await teardownView(tester);
-  });
-
-  testWidgets('dragging a column edge widens it into the columns after it, '
-      'keeps the widths and a double click gives them back', (tester) async {
-    container.listen(appSettingProvider, (_, _) {});
-    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
-
-    await pumpRequests(tester);
-
-    final handles = find.byWidgetPredicate(
-      (widget) =>
-          widget is MouseRegion &&
-          widget.cursor == SystemMouseCursors.resizeColumn,
-    );
-    double leftOf(String text) =>
-        tester.getTopLeft(find.text(text).hitTestable().last).dx;
-    final rule = leftOf('Rule');
-    final exit = leftOf('Exit');
-
-    await tester.drag(
-      handles.at(2),
-      const Offset(100, 0),
-      kind: PointerDeviceKind.mouse,
-    );
-    await tester.pump();
-
-    final moved = leftOf('Rule') - rule;
-    expect(moved, greaterThan(50));
-    expect(leftOf('Exit'), exit);
-    expect(
-      container.read(appSettingProvider).tableColumnWidths['connections']?.keys,
-      unorderedEquals(['target', 'rule']),
-    );
-
-    await tester.tap(handles.at(2), kind: PointerDeviceKind.mouse);
-    await tester.pump(const Duration(milliseconds: 50));
-    await tester.tap(handles.at(2), kind: PointerDeviceKind.mouse);
-    await tester.pumpAndSettle();
-
-    expect(leftOf('Rule'), rule);
-    expect(container.read(appSettingProvider).tableColumnWidths, isEmpty);
-
-    await teardownView(tester);
-  });
-
-  testWidgets('the table opens at the widths kept from before', (tester) async {
-    container.listen(appSettingProvider, (_, _) {});
-    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
-
-    await pumpRequests(tester);
-    final target = tester.getTopLeft(headerText('Target')).dx;
-    await teardownView(tester);
-
-    container
-        .read(appSettingProvider.notifier)
-        .update(
-          (state) => state.copyWith(
-            tableColumnWidths: {
-              'connections': {'target': 400},
-            },
-          ),
-        );
-    await pumpRequests(tester);
-
-    expect(
-      tester.getTopLeft(headerText('Rule')).dx,
-      closeTo(target + 400, 0.01),
-    );
-
-    await teardownView(tester);
-  });
-
-  testWidgets('the table sets its cells a size smaller, as footnotes', (
-    tester,
-  ) async {
-    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
-
-    await pumpRequests(tester);
-    final cell = find
-        .descendant(
-          of: find.byType(TrackerInfoTableRow),
-          matching: find.text('curl'),
-        )
-        .first;
-    expect(tester.widget<Text>(cell).style?.fontSize, isNull);
-    expect(DefaultTextStyle.of(tester.element(cell)).style.fontSize, 13);
-
-    await teardownView(tester);
-  });
-
-  testWidgets('a wide page builds only the rows in view', (tester) async {
+  testWidgets('a desktop page builds only the rows in view', (tester) async {
     seedRequests([for (var i = 0; i < 500; i++) _tracker(id: '$i')]);
 
     await pumpRequests(tester);
 
-    final built = find.byType(TrackerInfoTableRow).evaluate().length;
+    final built = find.byType(TrackerInfoItem).evaluate().length;
     expect(built, greaterThan(0));
     expect(built, lessThan(60));
 
     await teardownView(tester);
   });
 
-  testWidgets('a narrow page keeps the stacked rows', (tester) async {
+  testWidgets('every width lists its requests as rows under the minute they '
+      'opened in, without a column header', (tester) async {
     seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
 
-    await pumpRequests(tester, size: _listSize);
+    for (final size in [_listSize, _sheetSize, _tableSize]) {
+      await pumpRequests(tester, size: size);
 
-    expect(find.byType(TrackerInfoItem), findsOneWidget);
-    expect(find.byType(TrackerInfoTableRow), findsNothing);
-    expect(find.text('Target'), findsNothing);
-
-    await teardownView(tester);
-  });
-
-  testWidgets('a wide page lays the requests out under a column header', (
-    tester,
-  ) async {
-    seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test', chains: const ['Tokyo', 'Proxy']),
-    ]);
-
-    await pumpRequests(tester);
-
-    for (final label in [
-      'Time',
-      'App',
-      'Target',
-      'Rule',
-      'Exit',
-      'Speed',
-      'Duration',
-      'Total',
-    ]) {
-      expect(headerText(label), findsOneWidget);
+      expect(find.byType(TrackerInfoItem), findsOneWidget, reason: '$size');
+      expect(find.byType(RecordMinuteHeader), findsOneWidget, reason: '$size');
+      expect(find.text('Target'), findsNothing, reason: '$size');
+      expect(find.text('Requests'), findsWidgets, reason: '$size');
+      await teardownView(tester);
     }
-    expect(find.byType(TrackerInfoTableRow), findsNWidgets(2));
-    expect(find.byType(Divider), findsNothing);
-    expect(
-      tester
-          .widgetList<TrackerInfoTableRow>(find.byType(TrackerInfoTableRow))
-          .map((row) => row.striped)
-          .toSet(),
-      {true, false},
-    );
-    expect(find.byType(TrackerInfoItem), findsNothing);
-    expect(
-      find.descendant(
-        of: find.byType(TrackerInfoTableRow),
-        matching: find.text('curl'),
-      ),
-      findsNWidgets(2),
-    );
-    final rowHeights = tester
-        .widgetList(find.byType(TrackerInfoTableRow))
-        .map((row) => tester.getSize(find.byWidget(row)).height)
-        .toSet();
-    expect(rowHeights, hasLength(1));
-    expect(
-      tester.getTopLeft(find.textContaining('beta.test').first).dy,
-      greaterThan(tester.getBottomLeft(headerText('Target')).dy),
-    );
-    expect(tester.takeException(), null);
-
-    await teardownView(tester);
   });
 
-  testWidgets('tapping an exit in the table keeps only the requests using it', (
-    tester,
-  ) async {
-    seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test', chains: const ['Tokyo', 'Proxy']),
-    ]);
-
-    await pumpRequests(tester);
-
-    await tester.tap(find.widgetWithText(TonalChip, 'Tokyo'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('alpha.test'), findsNothing);
-    expect(find.textContaining('beta.test'), findsWidgets);
-
-    await teardownView(tester);
-  });
-
-  testWidgets('a wide page shows the row it selects in a card beside the '
-      'table, until the card is closed', (tester) async {
+  testWidgets('a wide page shows the row it selects in a pane beside the '
+      'list, and an empty state once the row again clears it', (tester) async {
     seedRequests([
       _tracker(id: 'a', host: 'alpha.test'),
       _tracker(id: 'b', host: 'beta.test'),
     ]);
 
     await pumpRequests(tester);
-    expect(find.byType(TrackerInfoDetailCard), findsNothing);
+    final header = find.byType(TrackerInfoHeader);
+    final empty = find.text('Select a connection');
+    expect(header, findsNothing);
+    expect(empty, findsOneWidget);
+    expect(
+      find.text(
+        'Its timeline, HTTP requests and connection details appear '
+        'here',
+      ),
+      findsOneWidget,
+    );
+    final list = tester.getRect(find.byType(ScrollToEndBox));
+    final segment = tester.getRect(
+      find.byType(ConnectedButtonBar<RequestsSegment>),
+    );
+    expect(
+      tester.getRect(find.byTooltip('Search')).left,
+      greaterThan(list.right),
+    );
+    expect(
+      tester
+          .getTopLeft(
+            find
+                .ancestor(of: empty, matching: find.byType(ClipRSuperellipse))
+                .first,
+          )
+          .dy,
+      segment.top,
+    );
 
     await tester.tap(targetOf('alpha.test'));
     await tester.pumpAndSettle();
-
-    final card = find.byType(TrackerInfoDetailCard);
-    String cardShows() => tester
-        .widget<TrackerInfoHeader>(
-          find.descendant(of: card, matching: find.byType(TrackerInfoHeader)),
-        )
-        .trackerInfo
-        .id;
-    expect(cardShows(), 'a');
-    expect(find.text('Connection details'), findsNothing);
-    expect(selectedRows(tester), ['a']);
-    expect(find.byType(TrackerInfoTableRow), findsNWidgets(2));
+    expect(find.byType(TrackerInfoDetailSheet), findsNothing);
+    expect(find.byType(TrackerSelectedDetail), findsOneWidget);
+    expect(tester.widget<TrackerInfoHeader>(header).trackerInfo.id, 'a');
+    expect(tester.getTopLeft(header).dx, greaterThanOrEqualTo(list.right));
     expect(
-      tester.getRect(card).left,
-      greaterThanOrEqualTo(
-        tester.getRect(find.byType(TrackerInfoTableRow).first).right,
-      ),
+      tester
+          .getTopLeft(
+            find
+                .ancestor(
+                  of: find.byType(TrackerSelectedDetail),
+                  matching: find.byType(ClipRSuperellipse),
+                )
+                .first,
+          )
+          .dy,
+      segment.top,
     );
+    expect(selectedRows(tester), ['a']);
+    expect(tester.getRect(find.byType(ScrollToEndBox)), list);
+
+    expect(empty, findsNothing);
 
     await tester.tap(targetOf('beta.test'));
     await tester.pumpAndSettle();
     expect(selectedRows(tester), ['b']);
-    expect(cardShows(), 'b');
-
-    await tester.tap(
-      find.descendant(of: card, matching: find.byTooltip('Close')),
-    );
+    await tester.tap(targetOf('beta.test'));
     await tester.pumpAndSettle();
-    expect(card, findsNothing);
+    expect(selectedRows(tester), isEmpty);
+    expect(empty, findsOneWidget);
+
+    await teardownView(tester);
+  });
+
+  testWidgets('a desktop page too narrow for the pane shows the row it selects '
+      'in a side sheet, until Esc closes it as it does any sheet', (
+    tester,
+  ) async {
+    seedRequests([
+      _tracker(id: 'a', host: 'alpha.test'),
+      _tracker(id: 'b', host: 'beta.test'),
+    ]);
+
+    await pumpRequests(tester, size: _sheetSize, hotKeys: true);
+    await tester.tap(targetOf('alpha.test'));
+    await tester.pumpAndSettle();
+
+    final sheet = find.byType(TrackerInfoDetailSheet);
+    expect(sheet, findsOneWidget);
+    expect(
+      tester
+          .widget<TrackerInfoHeader>(
+            find.descendant(
+              of: sheet,
+              matching: find.byType(TrackerInfoHeader),
+            ),
+          )
+          .trackerInfo
+          .id,
+      'a',
+    );
+    expect(selectedRows(tester), ['a']);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(sheet, findsNothing);
     expect(selectedRows(tester), isEmpty);
 
     await teardownView(tester);
   });
 
+  testWidgets('a selection moves between the pane and the side sheet as the '
+      'page crosses the width the pane fits', (tester) async {
+    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+
+    await pumpRequests(tester);
+    await tester.tap(targetOf('alpha.test'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TrackerInfoDetailSheet), findsNothing);
+    expect(find.byType(TrackerInfoHeader), findsOneWidget);
+
+    tester.view.physicalSize = _sheetSize;
+    await tester.pumpAndSettle();
+    expect(find.byType(TrackerInfoDetailSheet), findsOneWidget);
+    expect(find.byType(TrackerInfoHeader), findsOneWidget);
+
+    tester.view.physicalSize = _tableSize;
+    await tester.pumpAndSettle();
+    expect(find.byType(TrackerInfoDetailSheet), findsNothing);
+    expect(find.byType(TrackerInfoHeader), findsOneWidget);
+    expect(selectedRows(tester), ['a']);
+
+    await teardownView(tester);
+  });
+
   testWidgets('a narrower desktop page shows the row it selects in a side '
-      'sheet that steps to the rows around it', (tester) async {
+      'sheet, which a tap outside closes', (tester) async {
     seedRequests([
       _tracker(id: 'a', host: 'alpha.test'),
       _tracker(id: 'b', host: 'beta.test'),
     ]);
 
-    await pumpRequests(tester, size: const Size(900, 1000));
-    expect(find.byType(TrackerInfoTableRow), findsNWidgets(2));
+    await pumpRequests(tester, size: _sheetSize);
+    expect(find.byType(TrackerInfoItem), findsNWidgets(2));
 
     await tester.tap(targetOf('beta.test'));
     await tester.pumpAndSettle();
 
     final sheet = find.byType(TrackerInfoDetailSheet);
-    expect(find.byType(TrackerInfoDetailCard), findsNothing);
     expect(sheet, findsOneWidget);
     expect(
       find.descendant(of: sheet, matching: find.text('Connection details')),
@@ -623,51 +583,9 @@ void main() {
       findsOneWidget,
     );
 
-    expect(enabled(tester, 'Previous'), isFalse);
-    expect(enabled(tester, 'Next'), isTrue);
-    await tester.tap(find.byTooltip('Next'));
-    await tester.pumpAndSettle();
     expect(
-      tester
-          .widget<TrackerInfoDetailView>(
-            find.descendant(
-              of: sheet,
-              matching: find.byType(TrackerInfoDetailView),
-            ),
-          )
-          .trackerInfo
-          .id,
-      'a',
-    );
-    expect(enabled(tester, 'Previous'), isTrue);
-    expect(enabled(tester, 'Next'), isFalse);
-    await tester.tap(find.byTooltip('Next'));
-    await tester.pumpAndSettle();
-    expect(
-      tester
-          .widget<TrackerInfoDetailView>(
-            find.descendant(
-              of: sheet,
-              matching: find.byType(TrackerInfoDetailView),
-            ),
-          )
-          .trackerInfo
-          .id,
-      'a',
-    );
-    await tester.tap(find.byTooltip('Previous'));
-    await tester.pumpAndSettle();
-    expect(
-      tester
-          .widget<TrackerInfoDetailView>(
-            find.descendant(
-              of: sheet,
-              matching: find.byType(TrackerInfoDetailView),
-            ),
-          )
-          .trackerInfo
-          .id,
-      'b',
+      find.descendant(of: sheet, matching: find.byTooltip('More')),
+      findsOneWidget,
     );
 
     await tester.tapAt(const Offset(20, 500));
@@ -678,100 +596,66 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('stepping past the rows in view scrolls the list to the '
-      'selected one', (tester) async {
-    seedRequests([
-      for (var i = 0; i < 80; i++) _tracker(id: '$i', host: 'host$i.test'),
-    ]);
+  for (final (layout, size) in [
+    ('side sheet', _sheetSize),
+    ('detail pane', _tableSize),
+  ]) {
+    testWidgets('a selected connection that leaves the log and then the '
+        'list takes its $layout with it', (tester) async {
+      final open = [
+        _tracker(id: 'a', host: 'alpha.test'),
+        _tracker(id: 'b', host: 'beta.test'),
+      ];
+      seedRequests(open, closedCapacity: 1);
+      final requests = container.read(requestsProvider.notifier);
 
-    await pumpRequests(tester, size: const Size(900, 1000));
-    await tester.tap(targetOf('host79.test'));
-    await tester.pumpAndSettle();
-    for (var i = 0; i < 40; i++) {
-      await tester.tap(find.byTooltip('Next'));
+      await pumpRequests(
+        tester,
+        size: size,
+        connectionsReader: () async => open,
+      );
+      await tester.tap(targetOf('alpha.test'));
       await tester.pumpAndSettle();
-    }
-    expect(selectedRows(tester), ['39']);
-    final row = tester.getRect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is TrackerInfoTableRow && widget.trackerInfo.id == '39',
-      ),
-    );
-    expect(row.top, greaterThanOrEqualTo(0));
-    expect(row.bottom, lessThanOrEqualTo(1000));
+      final detail = find.byType(TrackerInfoHeader);
+      expect(detail, findsOneWidget);
+      expect(selectedRows(tester), ['a']);
 
-    await teardownView(tester);
-  });
+      requests.close(['a']);
+      await tester.pumpAndSettle();
+      expect(detail, findsOneWidget);
+      requests.close(['b']);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(detail, findsNothing);
+      expect(find.byType(TrackerInfoDetailSheet), findsNothing);
+      expect(selectedRows(tester), isEmpty);
 
-  testWidgets('a selected connection that leaves the log takes its card or '
-      'its sheet with it', (tester) async {
+      await teardownView(tester);
+    });
+  }
+
+  testWidgets('a row the list has just dropped still answers a tap that '
+      'lands before it is gone from the screen', (tester) async {
+    final open = _tracker(id: 'o', host: 'open.test');
     seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test'),
-    ]);
-    final requests = container.read(requestsProvider.notifier);
+      _failed(id: 'f1', host: 'one.test', second: 1),
+      _failed(id: 'f2', host: 'two.test', second: 2),
+      open,
+    ], closedCapacity: 2);
+    await pumpRequests(tester, connectionsReader: () async => [open]);
+    await tester.tap(statusSegment('Failed 2'));
+    await tester.pumpAndSettle();
 
-    await pumpRequests(tester);
-    await tester.tap(targetOf('alpha.test'));
+    addRequest(_failed(id: 'f3', host: 'three.test', second: 3));
+    await tester.binding.delayed(const Duration(milliseconds: 400));
+    await tester.tap(targetOf('one.test'));
+    expect(tester.takeException(), isNull);
     await tester.pumpAndSettle();
-    expect(find.byType(TrackerInfoDetailCard), findsOneWidget);
-    expect(find.textContaining('1 selected'), findsOneWidget);
-
-    requests.close(['a']);
-    await tester.pumpAndSettle();
-    expect(find.byType(TrackerInfoDetailCard), findsOneWidget);
-    requests.clearClosed();
-    await tester.pumpAndSettle();
-    expect(find.byType(TrackerInfoDetailCard), findsNothing);
-    expect(find.textContaining('1 selected'), findsNothing);
-
-    addRequest(_tracker(id: 'c', host: 'gamma.test'));
-    await resize(tester, const Size(900, 1000));
-    await tester.tap(targetOf('gamma.test'));
-    await tester.pumpAndSettle();
-    expect(find.byType(TrackerInfoDetailSheet), findsOneWidget);
-    requests.close(['c']);
-    requests.clearClosed();
-    await tester.pumpAndSettle();
-    expect(find.byType(TrackerInfoDetailSheet), findsNothing);
-    expect(selectedRows(tester), isEmpty);
+    expect(targetOf('one.test'), findsNothing);
+    expect(targetOf('three.test'), findsOneWidget);
 
     await teardownView(tester);
   });
-
-  testWidgets('narrowed past the card a page lets its selection go, and '
-      'widened it shows the sheet\'s connection in the card', (tester) async {
-    seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test'),
-    ]);
-
-    await pumpRequests(tester);
-    await tester.tap(targetOf('alpha.test'));
-    await tester.pumpAndSettle();
-    expect(find.byType(TrackerInfoDetailCard), findsOneWidget);
-
-    await resize(tester, const Size(1000, 1000));
-    expect(find.byType(TrackerInfoDetailCard), findsNothing);
-    expect(find.byType(TrackerInfoDetailSheet), findsNothing);
-    expect(selectedRows(tester), isEmpty);
-
-    await tester.tap(targetOf('beta.test'));
-    await tester.pumpAndSettle();
-    expect(find.byType(TrackerInfoDetailSheet), findsOneWidget);
-
-    await resize(tester, const Size(1100, 1000));
-    expect(find.byType(TrackerInfoDetailSheet), findsNothing);
-    expect(find.byType(TrackerInfoDetailCard), findsOneWidget);
-    expect(selectedRows(tester), ['b']);
-
-    await teardownView(tester);
-  });
-
-  Finder barButton(String tooltip) => find.byWidgetPredicate(
-    (widget) => widget is AppBarActionButton && widget.data.tooltip == tooltip,
-  );
 
   Future<void> openMenu(WidgetTester tester, String host) async {
     await tester.tap(
@@ -813,24 +697,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(targetOf('beta.test'), findsNothing);
     expect(targetOf('alpha.test'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(ConnectionFacetBar),
-        matching: find.byType(SelectionCheck),
-      ),
-      findsOneWidget,
-    );
+    expect(inBlock(find.text('Equals curl')), findsOneWidget);
 
     await openMenu(tester, 'alpha.test');
     await tester.tap(find.text('Hide this host'));
     await tester.pumpAndSettle();
     expect(targetOf('alpha.test'), findsNothing);
-    await tester.scrollUntilVisible(
-      find.widgetWithText(Chip, '-host:alpha.test'),
-      100,
-      scrollable: stripScrollable,
-    );
-    expect(find.widgetWithText(Chip, '-host:alpha.test'), findsOneWidget);
+    expect(inBlock(find.text('Excludes alpha.test')), findsOneWidget);
 
     await teardownView(tester);
   });
@@ -844,28 +717,21 @@ void main() {
 
     await pumpRequests(tester, connectionsReader: () async => live);
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text(total.traffic.show), findsNothing);
+    expect(inRow('a', _figure(total.traffic.show)), findsNothing);
 
     live = [open.copyWith(download: total)];
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text(total.traffic.show), findsOneWidget);
-    final speed = find.byWidgetPredicate(
-      (widget) => '${widget.runtimeType}' == '_SpeedCell',
-    );
-    String speedText() => tester
-        .widget<RecordCellText>(
-          find.descendant(of: speed, matching: find.byType(RecordCellText)),
-        )
-        .text;
-    expect(speedText(), isNotEmpty);
+    expect(inRow('a', _figure(total.traffic.show)), findsOneWidget);
+    final speed = inRow('a', _figureContaining('/s'));
+    expect(speed, findsOneWidget);
 
     live = [];
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
-    expect(find.text(total.traffic.show), findsOneWidget);
-    expect(speedText(), isEmpty);
+    expect(inRow('a', _figure(total.traffic.show)), findsOneWidget);
+    expect(speed, findsNothing);
 
     await teardownView(tester);
   });
@@ -879,25 +745,22 @@ void main() {
 
     await pumpRequests(tester, connectionsReader: () async => live);
     await tester.pump(const Duration(seconds: 1));
-    Finder inRow(String text) => find.descendant(
-      of: find.byType(RecordTableRow),
-      matching: find.text(text),
-    );
-    expect(inRow('Route A'), findsOneWidget);
+    Finder inRoute(String text) => inRow('a', find.textContaining(text));
+    expect(inRoute('Route A'), findsOneWidget);
 
     live = [
       open.copyWith(chains: ['Route B'], download: 10),
     ];
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
-    expect(inRow('Route A'), findsNothing);
-    expect(inRow('Route B'), findsOneWidget);
+    expect(inRoute('Route A'), findsNothing);
+    expect(inRoute('Route B'), findsOneWidget);
 
     await teardownView(tester);
   });
 
-  testWidgets('a refresh rebuilds the traffic cells on screen rather than '
-      'their rows, however long the log', (tester) async {
+  testWidgets('a refresh rebuilds the rows on screen rather than the log\'s '
+      'rows, however long the log', (tester) async {
     final start = DateTime.utc(2026);
     final closed = [
       for (var i = 0; i < 2000; i++)
@@ -921,55 +784,183 @@ void main() {
     await pumpRequests(tester, connectionsReader: () async => open(++round));
     await tester.pump(const Duration(seconds: 2));
     var rows = 0;
-    var cells = 0;
-    final others = <String>{};
     debugOnRebuildDirtyWidget = (element, _) {
-      final type = '${element.widget.runtimeType}';
-      if (element.widget is RecordTableRow) {
+      if (element.widget is TrackerInfoItem) {
         rows++;
-      } else if (type == '_SpeedCell' || type == '_TotalCell') {
-        cells++;
-      } else {
-        others.add(type);
       }
     };
     addTearDown(() => debugOnRebuildDirtyWidget = null);
-    for (var frame = 0; frame < 90 && cells == 0; frame++) {
+    for (var frame = 0; frame < 90 && rows == 0; frame++) {
       await tester.pump(const Duration(milliseconds: 16));
     }
     debugOnRebuildDirtyWidget = null;
 
-    expect(rows, 0);
-    expect(others, isNot(contains('KeepAlive')));
-    expect(others, isNot(contains('_RecordTableHeader<TrackerInfo>')));
-    expect(cells, greaterThan(0));
+    expect(rows, greaterThan(0));
+    expect(rows, lessThan(60));
     expect(
-      cells,
+      rows,
       lessThanOrEqualTo(
-        2 * find.byType(RecordTableRow, skipOffstage: false).evaluate().length,
+        find.byType(TrackerInfoItem, skipOffstage: false).evaluate().length,
       ),
     );
 
     await teardownView(tester);
   });
 
-  testWidgets('the table scrollbar leaves no room for the bar above it', (
-    tester,
-  ) async {
-    seedRequests([for (var i = 0; i < 200; i++) _tracker(id: '$i')]);
+  Finder dotOf(String id) => inRow(
+    id,
+    find.descendant(
+      of: find.byType(TrackerAppWell),
+      matching: find.byType(PositionedDirectional),
+    ),
+  );
 
-    await pumpRequests(tester);
+  testWidgets('one refresh shows a row closing and another row\'s traffic '
+      'moving', (tester) async {
+    final a = _tracker(id: 'a', host: 'alpha.test', download: 1024);
+    final b = _tracker(id: 'b', host: 'beta.test');
+    seedRequests([a, b]);
+    var live = [a, b];
+    const total = 3 * 1024 * 1024;
 
-    await revealScrollbarThumb(
-      tester,
-      scrollable: find
-          .descendant(
-            of: find.byType(ScrollToEndBox),
-            matching: find.byType(Scrollable),
-          )
-          .first,
+    await pumpRequests(tester, connectionsReader: () async => live);
+    await tester.pump(const Duration(seconds: 1));
+    expect(dotOf('a'), findsOneWidget);
+    expect(inRow('a', _figureContaining('/s')), findsOneWidget);
+
+    live = [b.copyWith(download: total, upload: 4096)];
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(dotOf('a'), findsNothing);
+    expect(inRow('a', _figureContaining('/s')), findsNothing);
+    expect(inRow('a', _figure(1024.traffic.show)), findsOneWidget);
+    expect(dotOf('b'), findsOneWidget);
+    expect(inRow('b', _figure((total + 4096).traffic.show)), findsOneWidget);
+
+    await teardownView(tester);
+  });
+
+  testWidgets('a row shows a host that arrives late, then a failure, each in a '
+      'refresh that moves its traffic', (tester) async {
+    final open = _tracker(id: 'a', host: '');
+    seedRequests([open]);
+    var live = [open];
+
+    await pumpRequests(tester, connectionsReader: () async => live);
+    await tester.pump(const Duration(seconds: 1));
+    expect(targetOf('1.1.1.1'), findsOneWidget);
+    expect(inRow('a', find.textContaining('Timeout')), findsNothing);
+
+    final late = open.copyWith(
+      metadata: open.metadata.copyWith(host: 'late.test'),
+      download: 1024,
     );
-    expect(scrollbarPainter(tester).padding.resolve(TextDirection.ltr).top, 0);
+    live = [late];
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(targetOf('late.test'), findsOneWidget);
+    expect(inRow('a', _figure(1024.traffic.show)), findsOneWidget);
+
+    live = [
+      late.copyWith(
+        failure: const ConnectionFailure(kind: ConnectionFailureKind.timeout),
+        download: 2048,
+      ),
+    ];
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(inRow('a', find.textContaining('Timeout')), findsOneWidget);
+    expect(inRow('a', _figure(2048.traffic.show)), findsOneWidget);
+
+    await teardownView(tester);
+  });
+
+  testWidgets('rows built again after scrolling away show their own '
+      'connection\'s latest traffic', (tester) async {
+    final start = DateTime.utc(2026);
+    var round = 0;
+    List<TrackerInfo> open() => [
+      for (var i = 0; i < 200; i++)
+        _tracker(
+          id: 'o$i',
+          download: round * 1000 + i,
+        ).copyWith(start: start.add(Duration(seconds: i))),
+    ];
+    seedRequests(open());
+    var live = open();
+
+    await pumpRequests(tester, connectionsReader: () async => live);
+    await tester.pump(const Duration(seconds: 1));
+    final list = find.byType(ScrollToEndBox);
+    final shown = {
+      for (final row in tester.widgetList<TrackerInfoItem>(
+        find.byType(TrackerInfoItem),
+      ))
+        row.trackerInfo.id,
+    };
+
+    await tester.drag(list, const Offset(0, -3000));
+    await tester.pump();
+    expect(
+      find
+          .byType(TrackerInfoItem)
+          .evaluate()
+          .map((element) => (element.widget as TrackerInfoItem).trackerInfo.id),
+      everyElement(isNot(isIn(shown))),
+    );
+    round = 7;
+    live = open();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.drag(list, const Offset(0, 6000));
+    await tester.pumpAndSettle();
+
+    final latest = {
+      for (final trackerInfo in live) trackerInfo.id: trackerInfo,
+    };
+    final rows = tester
+        .widgetList<TrackerInfoItem>(find.byType(TrackerInfoItem))
+        .toList();
+    expect(rows, isNotEmpty);
+    for (final row in rows) {
+      final id = row.trackerInfo.id;
+      expect(
+        inRow(id, _figure(latest[id]!.download.traffic.show)),
+        findsOneWidget,
+        reason: id,
+      );
+    }
+
+    await teardownView(tester);
+  });
+
+  testWidgets('an open row the refresh keeps still ticks its duration each '
+      'second', (tester) async {
+    final a = _tracker(id: 'a', host: 'alpha.test');
+    seedRequests([a]);
+
+    await pumpRequests(tester, connectionsReader: () async => [a]);
+    await tester.pump(const Duration(seconds: 1));
+    var rows = 0;
+    var ticks = 0;
+    debugOnRebuildDirtyWidget = (element, _) {
+      if (element.widget is TrackerInfoItem) {
+        rows++;
+      } else if (element.widget is ListenableBuilder &&
+          element.findAncestorWidgetOfExactType<TrackerLifetime>() != null) {
+        ticks++;
+      }
+    };
+    addTearDown(() => debugOnRebuildDirtyWidget = null);
+    for (var second = 1; second <= 3; second++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+    debugOnRebuildDirtyWidget = null;
+
+    expect(rows, 0);
+    expect(ticks, greaterThanOrEqualTo(3));
 
     await teardownView(tester);
   });
@@ -997,16 +988,17 @@ void main() {
 
     await teardownView(tester);
   });
+
   Finder inMenu(Finder finder) =>
       find.descendant(of: find.byType(PopupMenu), matching: finder);
 
+  final more = find.descendant(
+    of: find.byType(AppBar),
+    matching: find.byGlyph(AppGlyphs.more),
+  );
+
   Future<void> openSubMenu(WidgetTester tester, String label) async {
-    await tester.tap(
-      find.descendant(
-        of: find.byType(AppBar),
-        matching: find.byGlyph(AppGlyphs.more),
-      ),
-    );
+    await tester.tap(more);
     await tester.pumpAndSettle();
     await tester.tap(inMenu(find.text(label)));
     await tester.pumpAndSettle();
@@ -1032,32 +1024,56 @@ void main() {
     return copied;
   }
 
-  testWidgets('a paused list still shows at once what the user clears from '
-      'it', (tester) async {
-    seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test'),
-    ]);
-    container.read(requestsProvider.notifier).close(['a']);
-    final open = container.read(requestsProvider)['b']!;
+  for (final (layout, size) in [
+    ('side sheet', _sheetSize),
+    ('detail pane', _tableSize),
+  ]) {
+    testWidgets('a connection the log lets go while the list, off its head, '
+        'keeps its row stays in its $layout', (tester) async {
+      final open = [
+        for (var index = 0; index < 60; index++)
+          _tracker(id: '$index', host: 'h$index.test'),
+      ];
+      seedRequests(open, closedCapacity: 5);
+      final requests = container.read(requestsProvider.notifier);
 
-    await pumpRequests(tester, connectionsReader: () async => [open]);
-    await tester.pump(const Duration(seconds: 1));
-    await tester.tap(barButton('Pause refreshing'));
-    await tester.pumpAndSettle();
-    expect(targetOf('alpha.test'), findsOneWidget);
+      await pumpRequests(
+        tester,
+        size: size,
+        connectionsReader: () async => open,
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(ScrollToEndBox), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      final id = tester
+          .widgetList<TrackerInfoItem>(
+            find.byType(TrackerInfoItem).hitTestable(),
+          )
+          .first
+          .trackerInfo
+          .id;
+      await tester.tap(targetOf('h$id.test').hitTestable().first);
+      await tester.pumpAndSettle();
 
-    await openSubMenu(tester, 'Clear closed connections');
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.pumpAndSettle();
-    expect(targetOf('alpha.test'), findsNothing);
-    expect(targetOf('beta.test'), findsOneWidget);
-    expect(barButton('Resume refreshing'), findsOneWidget);
+      requests.close([id]);
+      requests.close([for (var index = 55; index < 60; index++) '$index']);
+      expect(container.read(requestsProvider)[id], isNull);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
 
-    await teardownView(tester);
-  });
+      expect(selectedRows(tester), [id]);
+      final header = find.byType(TrackerInfoHeader);
+      expect(header, findsOneWidget);
+      expect(
+        tester.widget<TrackerInfoHeader>(header).trackerInfo.isActive,
+        isFalse,
+      );
 
-  testWidgets('a connection closed right after pausing leaves the list at '
+      await teardownView(tester);
+    });
+  }
+
+  testWidgets('a connection closed from its menu leaves the list at '
       'once, though a refresh was already queued', (tester) async {
     final core = _MockCore();
     final alpha = _tracker(id: 'a', host: 'alpha.test');
@@ -1082,19 +1098,15 @@ void main() {
 
     await pumpRequests(tester, connectionsReader: () async => live);
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('Active 2'));
+    await tester.tap(statusSegment('Active 2'));
     await tester.pumpAndSettle();
-    await tester.tap(targetOf('alpha.test'));
-    await tester.pumpAndSettle();
+    await openMenu(tester, 'alpha.test');
 
     addRequest(_tracker(id: 'c', host: 'gamma.test'));
-    await tester.tap(barButton('Pause refreshing'));
-    await openMenu(tester, 'alpha.test');
     await tester.tap(find.text('Close connection'));
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
     verify(() => core.closeConnection('a')).called(1);
-    expect(barButton('Resume refreshing'), findsOneWidget);
     expect(targetOf('alpha.test'), findsNothing);
 
     await teardownView(tester);
@@ -1115,44 +1127,93 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('a phone\'s detail offers what the connection allows as it is '
-      'now', (tester) async {
-    final open = _tracker(id: 'a', host: 'alpha.test');
-    seedRequests([open]);
-    var live = [open];
+  testWidgets('a phone\'s detail head closes the connection, and the menu in '
+      'the sheet\'s bar copies it but sets no filter', (tester) async {
+    final core = _MockCore();
+    when(() => core.closeConnection(any())).thenAnswer((_) async {});
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+      ],
+    );
+    globalState.container = container;
+    final open = _tracker(id: 'a', host: 'alpha.test', process: 'chrome');
+    seedRequests([
+      open,
+      _tracker(id: 'b', host: 'beta.test', process: 'slack'),
+    ]);
 
     await pumpRequests(
       tester,
       size: _listSize,
-      connectionsReader: () async => live,
+      connectionsReader: () async => [open],
     );
-    await tester.pump(const Duration(seconds: 1));
     await tester.tap(find.text('alpha.test'));
     await tester.pumpAndSettle();
-    final sheetMore = find.byGlyph(AppGlyphs.more).last;
-    await tester.tap(sheetMore);
+
+    final detail = find.byType(TrackerInfoDetailView);
+    expect(detail, findsOneWidget);
+    final header = find.byType(TrackerInfoHeader);
+    Finder inHeader(Finder finder) =>
+        find.descendant(of: header, matching: finder);
+    expect(find.text('Connection details'), findsOneWidget);
+    final handle = find.byType(SheetDragHandle);
+    final scale = tester.getRect(handle).height / SheetDragHandle.height;
+    expect(
+      (tester.getTopLeft(header).dy - tester.getTopLeft(handle).dy) / scale,
+      closeTo(sheetAppBarHeight + appBarContentGap, 0.01),
+    );
+    expect(inHeader(find.byTooltip('More')), findsNothing);
+    await tester.tap(inHeader(find.byTooltip('Close connection')));
+    await tester.pump();
+    verify(() => core.closeConnection('a')).called(1);
+
+    await tester.tap(
+      find.descendant(
+        of: find.ancestor(of: header, matching: find.byType(Scaffold)).first,
+        matching: find.byTooltip('More'),
+      ),
+    );
     await tester.pumpAndSettle();
-    expect(find.text('Close connection'), findsOneWidget);
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    for (final label in ['Copy host', 'Copy destination', 'Copy summary']) {
+      expect(find.text(label), findsOneWidget);
+    }
+    expect(find.text('Only this app'), findsNothing);
+    expect(find.text('Hide this host'), findsNothing);
+
+    await teardownView(tester);
+  });
+
+  testWidgets('a phone\'s detail opens half way with its head and tabs in '
+      'view, and its content swiped up opens it all the way', (tester) async {
+    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    double sheetTop() => tester.getTopLeft(find.byType(SheetDragHandle)).dy;
+
+    await pumpRequests(tester, size: _listSize);
+    await tester.tap(find.text('alpha.test'));
     await tester.pumpAndSettle();
 
-    live = [];
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pumpAndSettle();
-    await tester.tap(sheetMore);
-    await tester.pumpAndSettle();
-    expect(find.text('Copy host'), findsOneWidget);
-    expect(find.text('Close connection'), findsNothing);
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pumpAndSettle();
+    expect(
+      sheetTop(),
+      closeTo(_listSize.height * (1 - snapSheetDetents.first), 1),
+    );
+    expect(
+      tester.getBottomLeft(find.byType(SegmentedControl<int>)).dy,
+      lessThan(_listSize.height),
+    );
 
-    container.read(requestsProvider.notifier).clearClosed();
-    await tester.pump(const Duration(seconds: 1));
+    await tester.flingFrom(
+      Offset(_listSize.width / 2, _listSize.height - 80),
+      const Offset(0, -150),
+      900,
+    );
     await tester.pumpAndSettle();
-    await tester.tap(sheetMore);
-    await tester.pumpAndSettle();
-    expect(find.text('Copy host'), findsOneWidget);
-    expect(find.text('Close connection'), findsNothing);
+    expect(
+      sheetTop(),
+      closeTo(_listSize.height * (1 - snapSheetDetents.last), 1),
+    );
 
     await teardownView(tester);
   });
@@ -1177,19 +1238,24 @@ void main() {
     Finder inHeader(Finder finder) =>
         find.descendant(of: header, matching: finder);
     expect(inHeader(find.text('alpha.test')), findsOneWidget);
-    expect(inHeader(find.textContaining('Active · ')), findsOneWidget);
+    expect(
+      inHeader(find.textContaining('curl · Proxy · Active ')),
+      findsOneWidget,
+    );
 
     live = [];
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
-    expect(inHeader(find.textContaining('Active · ')), findsNothing);
-    expect(inHeader(find.textContaining('Closed · ')), findsOneWidget);
+    expect(inHeader(find.textContaining('Active')), findsNothing);
+    expect(inHeader(find.text('curl · Proxy · Closed')), findsOneWidget);
 
     await teardownView(tester);
   });
 
   testWidgets('a detail runs its path to the node it left by, shows speeds '
-      'only while open, and copies an address on a press', (tester) async {
+      'only while open, and copies an address on a press but not a time', (
+    tester,
+  ) async {
     final open = _tracker(id: 'a', host: 'alpha.test');
     seedRequests([open]);
     var live = [open];
@@ -1199,36 +1265,80 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.tap(targetOf('alpha.test'));
     await tester.pumpAndSettle();
+    await openDetailTab(tester, 'Info');
 
     final steps = tester
-        .widgetList<TrackerPathStep>(find.byType(TrackerPathStep))
+        .widgetList<TrackerRailRow>(find.byType(TrackerRailRow))
         .toList();
     expect(
-      [for (final step in steps) (step.title, step.last)],
-      [('curl', false), ('DOMAIN(alpha.test)', false), ('Proxy', true)],
+      [for (final step in steps) (step.title, step.mark)],
+      [
+        ('curl', RailMark.step),
+        ('DOMAIN,alpha.test', RailMark.step),
+        ('Proxy', RailMark.end),
+      ],
     );
-    List<int?> speeds() => [
-      for (final column in tester.widgetList<TrackerTrafficColumn>(
-        find.byType(TrackerTrafficColumn),
-      ))
-        column.speed,
-    ];
-    expect(speeds(), [0, 0]);
+    Finder speeds() => find.descendant(
+      of: find.byType(TrackerTrafficSummary),
+      matching: find.textContaining('/s'),
+    );
+    expect(speeds(), findsNWidgets(2));
 
     await tester.tap(find.text('1.1.1.1:443').last);
+    await tester.pump();
+    expect(copied, ['1.1.1.1:443']);
+    final created = find.ancestor(
+      of: find.text('Creation time'),
+      matching: find.byType(DetailRow),
+    );
+    await tester.ensureVisible(created);
+    await tester.tap(created);
     await tester.pump();
     expect(copied, ['1.1.1.1:443']);
 
     live = [];
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
-    expect(speeds(), [null, null]);
+    expect(speeds(), findsNothing);
+
+    await teardownView(tester);
+  });
+
+  testWidgets('a detail names what routed a connection no rule matched in '
+      'its path', (tester) async {
+    seedRequests([
+      _tracker(
+        id: 'a',
+        host: 'alpha.test',
+        chains: ['DIRECT'],
+      ).copyWith(rule: '', rulePayload: ''),
+      _tracker(
+        id: 'b',
+        host: 'beta.test',
+        chains: ['Tokyo', 'GLOBAL'],
+      ).copyWith(rule: '', rulePayload: ''),
+    ]);
+
+    await pumpRequests(tester);
+    String ruleStep() => tester
+        .widgetList<TrackerRailRow>(find.byType(TrackerRailRow))
+        .firstWhere((step) => step.subtitle == 'Rule')
+        .title;
+    await tester.tap(targetOf('alpha.test'));
+    await tester.pumpAndSettle();
+    await openDetailTab(tester, 'Info');
+    expect(ruleStep(), 'No rule');
+
+    await tester.tap(targetOf('beta.test'));
+    await tester.pumpAndSettle();
+    await openDetailTab(tester, 'Info');
+    expect(ruleStep(), 'Global mode');
 
     await teardownView(tester);
   });
 
   testWidgets('connections head the minute they opened in, newest first, '
-      'under headers that do not fold', (tester) async {
+      'under headers', (tester) async {
     seedRequests([
       _tracker(
         id: 'a',
@@ -1246,14 +1356,11 @@ void main() {
 
     await pumpRequests(tester, size: _listSize);
 
-    final headers = tester
-        .widgetList<CollapsibleHeader>(find.byType(CollapsibleHeader))
-        .toList();
+    final headers = topDown<RecordMinuteHeader>(tester);
     expect(
       [for (final header in headers) (header.label, header.count)],
       [('01-01 10:07', 2), ('01-01 10:05', 1)],
     );
-    expect(headers.every((header) => header.onToggle == null), isTrue);
     double topOf(String host) => tester.getTopLeft(find.text(host)).dy;
     expect(topOf('gamma.test'), lessThan(topOf('beta.test')));
     expect(topOf('beta.test'), lessThan(topOf('alpha.test')));
@@ -1280,9 +1387,7 @@ void main() {
 
     expect(
       [
-        for (final header in tester.widgetList<CollapsibleHeader>(
-          find.byType(CollapsibleHeader),
-        ))
+        for (final header in topDown<RecordMinuteHeader>(tester))
           (header.label, header.count),
       ],
       [('01-01 12:02', 2), ('01-01 12:01', 1)],
@@ -1324,112 +1429,328 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('scrolled off the top, the list holds new connections behind '
-      'a pill that brings them in', (tester) async {
-    seedRequests([
-      for (var i = 0; i < 60; i++) _tracker(id: '$i', host: 'host$i.test'),
-    ]);
+  for (final (layout, size) in [('pane', _tableSize), ('sheet', _listSize)]) {
+    testWidgets('a $layout\'s head counts an open connection\'s age without '
+        'new traffic', (tester) async {
+      final open = _tracker(
+        id: 'a',
+        host: 'alpha.test',
+      ).copyWith(start: DateTime.now().subtract(const Duration(seconds: 10)));
+      seedRequests([open]);
 
-    await pumpRequests(tester, size: _listSize);
+      final unanswered = Completer<List<TrackerInfo>>();
+      await pumpRequests(
+        tester,
+        size: size,
+        connectionsReader: () => unanswered.future,
+      );
+      await tester.tap(targetOf('alpha.test'));
+      await tester.pumpAndSettle();
+      final head = find.descendant(
+        of: find.byType(TrackerInfoHeader),
+        matching: find.descendant(
+          of: find.byType(TrackerLifetime),
+          matching: find.byType(RichText),
+        ),
+      );
+      String age() => tester.widget<RichText>(head).text.toPlainText();
+      final before = age();
+
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 1100)),
+      );
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(age(), isNot(before));
+
+      await teardownView(tester);
+    });
+  }
+
+  testWidgets('at the top, new connections go straight in above the rows '
+      'while one is selected, and on a phone while a pointer is over the '
+      'list', (tester) async {
+    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    await pumpRequests(tester);
+    Future<void> refresh() async {
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      await tester.pump();
+    }
+
+    double topOf(String host) => tester.getTopLeft(targetOf(host)).dy;
+
+    await tester.tap(targetOf('alpha.test'));
     await tester.pumpAndSettle();
-    final list = find.byType(CustomScrollView);
-    ScrollPosition position() => tester
-        .state<ScrollableState>(
-          find.descendant(of: list, matching: find.byType(Scrollable)),
-        )
-        .position;
+    addRequest(_tracker(id: 'b', host: 'beta.test'));
+    await refresh();
+    expect(topOf('beta.test'), lessThan(topOf('alpha.test')));
+    expect(selectedRows(tester), ['a']);
 
-    await tester.drag(list, const Offset(0, -300));
+    await tester.tap(targetOf('alpha.test'));
     await tester.pumpAndSettle();
-    final offset = position().pixels;
-    expect(offset, greaterThan(0));
-
-    addRequest(_tracker(id: 'new', host: 'new.test'));
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.pump();
-
-    expect(find.text('1 new connection'), findsOneWidget);
-    expect(find.text('new.test', skipOffstage: false), findsNothing);
-    expect(position().pixels, offset);
-
-    await tester.tap(find.text('1 new connection'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('1 new connection'), findsNothing);
-    expect(position().pixels, 0);
-    expect(find.text('new.test'), findsOneWidget);
+    expect(selectedRows(tester), isEmpty);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: tester.getCenter(targetOf('alpha.test')));
+    addRequest(_tracker(id: 'c', host: 'gamma.test'));
+    await refresh();
+    expect(topOf('gamma.test'), lessThan(topOf('beta.test')));
 
     await teardownView(tester);
   });
 
-  testWidgets('the menu clears the closed connections and keeps the open '
-      'ones', (tester) async {
-    seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test'),
-    ]);
-    container.read(requestsProvider.notifier).close(['a']);
-    final open = container.read(requestsProvider)['b']!;
+  testWidgets(
+    'on desktop a list at the top keeps new connections out while the '
+    'pointer rests on it, and takes them in as it leaves',
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+    (tester) async {
+      seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+      await pumpRequests(tester);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(
+        location: tester.getCenter(targetOf('alpha.test')),
+      );
+      await tester.pump();
 
+      addRequest(_tracker(id: 'b', host: 'beta.test'));
+      container.read(requestsProvider.notifier).close(['a']);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      expect(targetOf('beta.test'), findsNothing);
+      expect(
+        tester.widget<TrackerInfoItem>(rowOf('a')).trackerInfo.isActive,
+        isFalse,
+      );
+
+      await mouse.moveTo(tester.getCenter(find.text('Connections').first));
+      await tester.pump();
+      expect(targetOf('beta.test'), findsOneWidget);
+
+      await teardownView(tester);
+    },
+  );
+
+  testWidgets('a list hidden behind another segment builds nothing as '
+      'connections open, move and close, and shown again takes the rows '
+      'that changed a few a frame', (tester) async {
+    var live = [
+      for (var i = 0; i < 6; i++) _tracker(id: 'a$i', host: 'a$i.test'),
+    ];
+    seedRequests(live);
     await pumpRequests(
       tester,
       size: _listSize,
-      connectionsReader: () async => [open],
+      connectionsReader: () async => live,
     );
-    expect(find.text('alpha.test'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('DNS').first);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
 
-    await openSubMenu(tester, 'Clear closed connections');
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.pumpAndSettle();
+    final hiddenBuilds = countHiddenSegmentBuilds();
+    live = [
+      for (final trackerInfo in live.skip(3))
+        trackerInfo.copyWith(download: trackerInfo.download + 2048),
+      _tracker(id: 'b', host: 'b.test'),
+    ];
+    addRequest(live.last);
+    for (var second = 0; second < 3; second++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
+    expect(hiddenBuilds(), 0);
 
-    expect(find.text('alpha.test'), findsNothing);
-    expect(find.text('beta.test'), findsOneWidget);
+    final builtByFrame = <List<String>>[];
+    debugOnRebuildDirtyWidget = (element, _) {
+      if (element.widget case TrackerInfoItem(:final trackerInfo)) {
+        builtByFrame.last.add(trackerInfo.id);
+      }
+    };
+    addTearDown(() => debugOnRebuildDirtyWidget = null);
+    await tester.tap(find.text('Connections').first);
+    for (var frame = 0; frame < 8; frame++) {
+      builtByFrame.add([]);
+      await tester.pump();
+    }
+    debugOnRebuildDirtyWidget = null;
+
+    const closed = {'a0', 'a1', 'a2'};
+    expect(builtByFrame.first, contains('b'));
+    expect(builtByFrame.first.where(closed.contains), isEmpty);
+    expect(
+      builtByFrame.expand((ids) => ids).where(closed.contains),
+      unorderedEquals(closed),
+    );
+    for (final id in closed) {
+      expect(
+        tester.widget<TrackerInfoItem>(rowOf(id)).trackerInfo.isActive,
+        isFalse,
+      );
+    }
 
     await teardownView(tester);
   });
 
-  testWidgets('a facet chip lists its values with their counts, stays open '
-      'while they toggle, and its All clears them', (tester) async {
+  for (final (layout, size) in [
+    ('phone list', _listSize),
+    ('desktop list', _tableSize),
+  ]) {
+    testWidgets('scrolled off the top, a $layout keeps the rows in view where '
+        'they are as connections open, and shows those at its top', (
+      tester,
+    ) async {
+      seedRequests([
+        for (var i = 0; i < 60; i++) _tracker(id: '$i', host: 'host$i.test'),
+      ]);
+
+      await pumpRequests(tester, size: size);
+      await tester.pumpAndSettle();
+      final rows = find.byType(TrackerInfoItem);
+      final list = find
+          .ancestor(of: rows.first, matching: find.byType(Scrollable))
+          .first;
+      List<(String, double)> inView() {
+        final bounds = tester.getRect(list);
+        return [
+          for (final element in rows.evaluate())
+            if (tester.getRect(find.byWidget(element.widget)) case final rect
+                when rect.bottom > bounds.top && rect.top < bounds.bottom)
+              ((element.widget as TrackerInfoItem).trackerInfo.id, rect.top),
+        ]..sort((a, b) => a.$2.compareTo(b.$2));
+      }
+
+      await tester.drag(list, const Offset(0, -300));
+      await tester.pumpAndSettle();
+      final before = inView();
+      expect(before.map((row) => row.$1), isNot(contains('59')));
+
+      for (var i = 0; i < 3; i++) {
+        addRequest(_tracker(id: 'new$i', host: 'new$i.test'));
+      }
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+
+      expect(inView(), before);
+      expect(find.byType(FilledButton), findsNothing);
+
+      await tester.drag(list, const Offset(0, 3000));
+      await tester.pumpAndSettle();
+
+      expect(inView().first.$1, 'new2');
+
+      await teardownView(tester);
+    });
+  }
+
+  testWidgets('a refresh that moves the status counts leaves the condition '
+      'block as it was', (tester) async {
+    final open = [
+      _tracker(id: 'a', host: 'alpha.test'),
+      _tracker(id: 'b', host: 'beta.test'),
+    ];
+    seedRequests(open);
+    await pumpRequests(
+      tester,
+      size: _listSize,
+      connectionsReader: () async => [...open],
+    );
+    await tester.tap(addCondition);
+    await tester.pumpAndSettle();
+    await tester.enterText(dialogField, 'alpha');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(TextButton, 'Add'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ConditionBlock<TrackerInfo>), findsOneWidget);
+
+    var blocks = 0;
+    var segments = 0;
+    debugOnRebuildDirtyWidget = (element, _) {
+      if (element.widget is ConditionBlock<TrackerInfo>) {
+        blocks++;
+      } else if (element.widget is SegmentedControl<ConnectionStatus>) {
+        segments++;
+      }
+    };
+    addTearDown(() => debugOnRebuildDirtyWidget = null);
+    open.add(_tracker(id: 'c', host: 'gamma.test'));
+    addRequest(open.last);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    debugOnRebuildDirtyWidget = null;
+
+    expect(segments, greaterThan(0));
+    expect(blocks, 0);
+
+    await teardownView(tester);
+  });
+
+  testWidgets('the block keeps a row to each field, whose conditions and '
+      'picked values widen it while the rows narrow, and edits each in place', (
+    tester,
+  ) async {
     seedRequests([
       _tracker(id: 'a', host: 'alpha.test'),
       _tracker(id: 'b', host: 'beta.test', process: 'chrome'),
-      _tracker(id: 'c', host: 'gamma.test', process: 'chrome'),
+      _tracker(id: 'c', host: 'gamma.test', process: 'slack'),
     ]);
 
     await pumpRequests(tester, size: _listSize);
-    await tester.scrollUntilVisible(
-      find.widgetWithText(Chip, 'App'),
-      100,
-      scrollable: stripScrollable,
-    );
+    expect(find.byType(ConditionBlock<TrackerInfo>), findsNothing);
+    await openMenu(tester, 'beta.test');
+    await tester.tap(find.text('Only this app'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(Chip, 'App'));
-    await tester.pumpAndSettle();
-    expect(inMenu(find.text('curl')), findsOneWidget);
-    expect(inMenu(find.text('2')), findsOneWidget);
-    await tester.tap(inMenu(find.text('chrome')));
-    await tester.pumpAndSettle();
+    expect(targetOf('alpha.test'), findsNothing);
 
-    expect(find.byType(PopupMenu), findsOneWidget);
-    expect(find.textContaining('alpha.test'), findsNothing);
-    expect(find.textContaining('beta.test'), findsWidgets);
-
-    await tester.tapAt(const Offset(300, 900));
+    await tester.tap(addCondition);
     await tester.pumpAndSettle();
-    expect(find.byType(PopupMenu), findsNothing);
-    expect(
-      tester.widget<Chip>(find.widgetWithText(Chip, 'App · 1')).selected,
-      isTrue,
-    );
-
-    await tester.tap(find.widgetWithText(Chip, 'App · 1'));
+    await tester.tap(inDialog(find.text('App')));
     await tester.pumpAndSettle();
-    await tester.tap(inMenu(find.text('All')));
+    expect(find.text('Connections shown: 1'), findsOneWidget);
+    await tester.enterText(dialogField, 'curl');
+    await tester.pump();
+    expect(find.text('Connections shown: 2'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Add'));
     await tester.pumpAndSettle();
+    expect(targetOf('alpha.test'), findsWidgets);
+    expect(targetOf('beta.test'), findsWidgets);
+    expect(targetOf('gamma.test'), findsNothing);
+    expect(inBlock(find.text('Equals chrome')), findsOneWidget);
+    expect(inBlock(find.text('Contains curl')), findsOneWidget);
+    expect(inBlock(find.text('or')), findsOneWidget);
 
-    expect(find.byType(PopupMenu), findsNothing);
-    expect(find.widgetWithText(Chip, 'App'), findsOneWidget);
-    expect(find.textContaining('alpha.test'), findsWidgets);
+    await tester.tap(addCondition);
+    await tester.pumpAndSettle();
+    await tester.enterText(dialogField, 'beta');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(TextButton, 'Add'));
+    await tester.pumpAndSettle();
+    expect(targetOf('alpha.test'), findsNothing);
+    expect(targetOf('beta.test'), findsWidgets);
+    expect(inBlock(find.text('Host')), findsOneWidget);
+
+    await tester.tap(inBlock(find.text('Contains beta')));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit condition'), findsOneWidget);
+    expect(tester.widget<EditableText>(dialogField).controller.text, 'beta');
+    await tester.enterText(dialogField, 'alpha');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(TextButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(inBlock(find.text('Contains beta')), findsNothing);
+    expect(inBlock(find.text('Contains alpha')), findsOneWidget);
+    expect(targetOf('alpha.test'), findsWidgets);
+    expect(targetOf('beta.test'), findsNothing);
+
+    await tester.tap(removeOf('Contains alpha'));
+    await tester.pumpAndSettle();
+    expect(inBlock(find.text('Host')), findsNothing);
+    expect(targetOf('beta.test'), findsWidgets);
+
+    await tester.tap(inBlock(find.text('Clear all')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ConditionBlock<TrackerInfo>), findsNothing);
+    expect(targetOf('gamma.test'), findsWidgets);
 
     await teardownView(tester);
   });
@@ -1444,17 +1765,15 @@ void main() {
     ]);
 
     await pumpRequests(tester, size: _listSize);
-    await tester.tap(find.widgetWithText(Chip, 'Failed 4'));
+    await tester.tap(statusSegment('Failed 4'));
     await tester.pumpAndSettle();
 
-    final rows = tester.widgetList<TrackerInfoItem>(
-      find.byType(TrackerInfoItem),
-    );
+    final rows = topDown<TrackerInfoItem>(tester);
     expect(rows.map((row) => row.trackerInfo.id), ['o', 't2']);
     expect(find.widgetWithText(TonalChip, '×3'), findsOneWidget);
-    expect(find.widgetWithText(TonalChip, 'Timeout'), findsNWidgets(2));
+    expect(find.text('curl · Timeout'), findsNWidgets(2));
 
-    await tester.tap(find.widgetWithText(Chip, 'All 5'));
+    await tester.tap(statusSegment('All 5'));
     await tester.pumpAndSettle();
     expect(find.byType(TrackerInfoItem), findsNWidgets(5));
     expect(find.widgetWithText(TonalChip, '×3'), findsNothing);
@@ -1462,132 +1781,141 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('grouping by app heads each app folded, unfolds one on a tap '
-      'and is kept for the page', (tester) async {
+  testWidgets('settings that kept a grouping still load, and leave every '
+      'width listed by minute', (tester) async {
     seedRequests([
       _tracker(id: 'a', host: 'alpha.test'),
       _tracker(id: 'b', host: 'beta.test', process: 'chrome'),
-      _tracker(id: 'c', host: 'gamma.test'),
     ]);
+    final kept = AppSettingProps.fromJson(
+      jsonDecode('{"hideIp": true, "recordGroupings": {"requests": "app"}}')
+          as Map<String, Object?>,
+    );
+    expect(kept.hideIp, isTrue);
     container.listen(appSettingProvider, (_, _) {});
+    container.read(appSettingProvider.notifier).update((_) => kept);
 
     await pumpRequests(tester, size: _listSize);
-    await openSubMenu(tester, 'Group by');
-    await tester.tap(inMenu(find.text('App')));
     await tester.pumpAndSettle();
+    final headers = tester.widgetList<RecordMinuteHeader>(
+      find.byType(RecordMinuteHeader),
+    );
+    expect(headers, hasLength(1));
+    expect(headers.single.label, contains(':'));
+    expect(targetOf('alpha.test'), findsWidgets);
+    expect(targetOf('beta.test'), findsWidgets);
 
-    final headers = find.byType(CollapsibleHeader);
-    final shown =
-        [for (var i = 0; i < headers.evaluate().length; i++) headers.at(i)]
-          ..sort(
-            (a, b) =>
-                tester.getTopLeft(a).dy.compareTo(tester.getTopLeft(b).dy),
-          );
+    await teardownView(tester);
+    await pumpRequests(tester);
+    await tester.pumpAndSettle();
+    expect(find.byType(RecordMinuteHeader), findsOneWidget);
+    expect(find.byType(TrackerInfoItem), findsNWidgets(2));
+
+    await teardownView(tester);
+  });
+
+  for (final (layout, size, inset) in [
+    ('a desktop list', _sheetSize, 20.0),
+    ('a phone list', const Size(390, 844), 16.0),
+  ]) {
+    testWidgets('in $layout the add button, the app bar\'s buttons and the '
+        'rows end on one line', (tester) async {
+      seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+
+      await pumpRequests(tester, size: size);
+      double rightGap(Finder finder) =>
+          size.width - tester.getRect(finder.first).right;
+      final barEnd = find.ancestor(of: more, matching: find.byType(IconButton));
+      final add = find.ancestor(
+        of: addCondition,
+        matching: find.byType(IconButton),
+      );
+      final row = find.descendant(
+        of: find.byType(TrackerInfoItem),
+        matching: find.byType(Card),
+      );
+
+      expect(rightGap(barEnd), inset);
+      expect(rightGap(add), inset);
+      expect(rightGap(row), inset);
+
+      await teardownView(tester);
+    });
+  }
+
+  testWidgets('the menu closes the active connections only once that is '
+      'confirmed, and offers no grouping', (tester) async {
+    final core = _MockCore();
+    when(core.closeConnections).thenAnswer((_) async {});
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+      ],
+    );
+    globalState.container = container;
+    final alpha = _tracker(id: 'a', host: 'alpha.test');
+    final beta = _tracker(id: 'b', host: 'beta.test');
+    seedRequests([alpha, beta]);
+
+    await pumpRequests(tester, connectionsReader: () async => [alpha, beta]);
+    await tester.tap(more);
+    await tester.pumpAndSettle();
     expect(
       [
-        for (final header in shown)
-          (
-            tester.widget<CollapsibleHeader>(header).label,
-            tester.widget<CollapsibleHeader>(header).count,
-          ),
+        for (final item in tester.widgetList<PopupMenu>(find.byType(PopupMenu)))
+          for (final entry in item.items) (entry.label, entry.danger),
       ],
-      [('curl', 2), ('chrome', 1)],
+      [('Close all active connections', true)],
     );
-    expect(find.textContaining('alpha.test'), findsNothing);
-    expect(find.textContaining('beta.test'), findsNothing);
+
+    await tester.tap(inMenu(find.text('Close all active connections')));
+    await tester.pumpAndSettle();
     expect(
-      container.read(appSettingProvider).recordGroupings['requests'],
-      'app',
+      find.textContaining('2 active connections will close.'),
+      findsOneWidget,
     );
-
-    await tester.tap(
-      find.byWidgetPredicate(
-        (widget) => widget is CollapsibleHeader && widget.label == 'chrome',
-      ),
-    );
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
     await tester.pumpAndSettle();
+    verifyNever(core.closeConnections);
 
-    expect(find.textContaining('beta.test'), findsWidgets);
-    expect(find.textContaining('alpha.test'), findsNothing);
+    await openSubMenu(tester, 'Close all active connections');
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pumpAndSettle();
+    verify(core.closeConnections).called(1);
 
     await teardownView(tester);
   });
 
-  testWidgets('grouping opens on the newest group and ungrouping returns to '
-      'the newest request', (tester) async {
-    seedRequests([
-      for (var i = 0; i < 60; i++)
-        _tracker(id: '$i', host: 'host$i.test', process: 'app$i'),
-    ]);
-    container.listen(appSettingProvider, (_, _) {});
-
-    await pumpRequests(tester, size: _listSize);
-    await tester.pumpAndSettle();
-    await openSubMenu(tester, 'Group by');
-    await tester.tap(inMenu(find.text('App')));
-    await tester.pumpAndSettle();
-
-    final grouped = tester.state<ScrollableState>(
-      find.descendant(
-        of: find.byType(CustomScrollView),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    expect(grouped.position.maxScrollExtent, greaterThan(0));
-    expect(grouped.position.pixels, 0);
-    final top = find.byType(CollapsibleHeader).first;
-    expect(tester.widget<CollapsibleHeader>(top).label, 'app59');
-
-    await openSubMenu(tester, 'Group by');
-    await tester.tap(inMenu(find.text('None')));
-    await tester.pumpAndSettle();
-
-    final byMinute = tester.state<ScrollableState>(
-      find.descendant(
-        of: find.byType(CustomScrollView),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    expect(byMinute.position.pixels, 0);
-    expect(find.textContaining('host59.test'), findsWidgets);
-
-    await teardownView(tester);
-  });
-
-  testWidgets('a wide page offers the facets in a bar beside the table, '
-      'and narrower in the strip', (tester) async {
-    seedRequests([
-      _tracker(id: 'a', host: 'alpha.test'),
-      _tracker(id: 'b', host: 'beta.test', process: 'chrome'),
-      _tracker(id: 'c', host: 'gamma.test', process: 'chrome'),
-    ]);
+  testWidgets('the menu greys out closing with no connection open, and the '
+      'DNS queries clear the cache from theirs', (tester) async {
+    seedRequests([_tracker(id: 'a', host: 'alpha.test')]);
+    container.read(requestsProvider.notifier).close(['a']);
 
     await pumpRequests(tester);
-    final bar = find.byType(ConnectionFacetBar);
-    Finder inBar(Finder finder) => find.descendant(of: bar, matching: finder);
-    expect(bar, findsOneWidget);
-    expect(find.widgetWithText(Chip, 'App'), findsNothing);
-    expect(find.widgetWithText(Chip, 'All 3'), findsOneWidget);
-    expect(inBar(find.text('App')), findsOneWidget);
-    expect(inBar(find.text('chrome')), findsOneWidget);
-    expect(inBar(find.text('2')), findsOneWidget);
-
-    expect(inBar(find.byType(SelectionCheck)), findsNothing);
-    await tester.tap(inBar(find.text('chrome')));
+    await tester.tap(more);
     await tester.pumpAndSettle();
-    expect(find.textContaining('alpha.test'), findsNothing);
-    expect(find.textContaining('beta.test'), findsWidgets);
-    expect(inBar(find.byType(SelectionCheck)), findsOneWidget);
-
-    await tester.tap(inBar(find.text('All')));
+    final close = tester
+        .widgetList<PopupMenu>(find.byType(PopupMenu))
+        .expand((menu) => menu.items)
+        .single;
+    expect(close.label, 'Close all active connections');
+    expect(close.onPressed, isNull);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
-    expect(find.textContaining('alpha.test'), findsWidgets);
-    expect(inBar(find.text('All')), findsNothing);
 
-    await teardownView(tester);
-    await pumpRequests(tester, size: const Size(1100, 1000));
-    expect(bar, findsNothing);
-    expect(find.widgetWithText(Chip, 'App'), findsOneWidget);
+    await tester.tap(find.text('DNS'));
+    await tester.pumpAndSettle();
+    await tester.tap(more);
+    await tester.pumpAndSettle();
+    expect(
+      [
+        for (final item in tester.widgetList<PopupMenu>(find.byType(PopupMenu)))
+          for (final entry in item.items) entry.label,
+      ],
+      ['Clear DNS cache'],
+    );
 
     await teardownView(tester);
   });
@@ -1606,158 +1934,140 @@ void main() {
     await tester.enterText(find.byType(TextField), 'app:chrome -host:gamma');
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
-    expect(find.textContaining('alpha.test'), findsNothing);
-    expect(find.textContaining('beta.test'), findsWidgets);
-    expect(find.textContaining('gamma.test'), findsNothing);
+    expect(targetOf('alpha.test'), findsNothing);
+    expect(targetOf('beta.test'), findsWidgets);
+    expect(targetOf('gamma.test'), findsNothing);
     await tester.enterText(find.byType(TextField), '');
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
-    expect(find.textContaining('alpha.test'), findsWidgets);
+    expect(targetOf('alpha.test'), findsWidgets);
 
-    await tester.scrollUntilVisible(
-      find.widgetWithText(Chip, '+ Condition'),
-      100,
-      scrollable: stripScrollable,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(Chip, '+ Condition'));
+    await tester.tap(addCondition);
     await tester.pumpAndSettle();
     expect(find.text('Add condition'), findsOneWidget);
-    await tester.enterText(
-      find.descendant(
-        of: find.byType(FormRowTextField),
-        matching: find.byType(EditableText),
-      ),
-      'alpha',
-    );
-    await tester.tap(find.text('Exclude matches'));
+    await tester.enterText(dialogField, 'alpha');
+    await tester.tap(inDialog(find.text('Excludes')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Add'));
+    expect(find.text('Connections shown: 2'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Add'));
     await tester.pumpAndSettle();
 
     expect(find.text('Add condition'), findsNothing);
-    expect(find.textContaining('alpha.test'), findsNothing);
-    expect(find.textContaining('beta.test'), findsWidgets);
-    final chip = find.widgetWithText(Chip, '-host:alpha');
-    await tester.scrollUntilVisible(chip, 100, scrollable: stripScrollable);
+    expect(targetOf('alpha.test'), findsNothing);
+    expect(targetOf('beta.test'), findsWidgets);
+    expect(inBlock(find.text('Excludes alpha')), findsOneWidget);
+    await tester.tap(removeOf('Excludes alpha'));
     await tester.pumpAndSettle();
-    await tester.tap(chip);
-    await tester.pumpAndSettle();
-    expect(chip, findsNothing);
-    expect(find.textContaining('alpha.test'), findsWidgets);
+    expect(find.byType(ConditionBlock<TrackerInfo>), findsNothing);
+    expect(targetOf('alpha.test'), findsWidgets);
 
     await teardownView(tester);
   });
 
-  testWidgets('a condition from the form keeps the spaces in its value and '
-      'shows it in quotes', (tester) async {
+  testWidgets('the add button asks in a dialog, whose values from the list '
+      'fill the field and whose count follows the draft', (tester) async {
+    seedRequests([
+      _tracker(id: 'a', host: 'alpha.test', process: 'Google Chrome'),
+      _tracker(id: 'b', host: 'beta.test', process: 'chrome'),
+      _tracker(id: 'c', host: 'gamma.test', process: 'chrome'),
+    ]);
+
+    await pumpRequests(tester, size: _listSize);
+    await tester.tap(addCondition);
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    final addButton = find.widgetWithText(TextButton, 'Add');
+    expect(tester.widget<TextButton>(addButton).onPressed, isNull);
+    expect(find.text('Connections shown: 3'), findsOneWidget);
+    expect(inDialog(find.text('Host in the list')), findsOneWidget);
+
+    await tester.tap(inDialog(find.text('App')));
+    await tester.pumpAndSettle();
+    expect(inDialog(find.text('App in the list')), findsOneWidget);
+    expect(inDialog(find.text('Google Chrome')), findsOneWidget);
+    await tester.tap(inDialog(find.text('chrome')));
+    await tester.pump();
+    expect(tester.widget<EditableText>(dialogField).controller.text, 'chrome');
+    expect(find.text('Connections shown: 3'), findsOneWidget);
+    await tester.tap(inDialog(find.text('Equals')));
+    await tester.pumpAndSettle();
+    expect(find.text('Connections shown: 2'), findsOneWidget);
+    await tester.tap(inDialog(find.text('Not equal')));
+    await tester.pumpAndSettle();
+    expect(find.text('Connections shown: 1'), findsOneWidget);
+    await tester.tap(inDialog(find.text('Equals')));
+    await tester.pumpAndSettle();
+    await tester.tap(addButton);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(targetOf('alpha.test'), findsNothing);
+    expect(targetOf('beta.test'), findsWidgets);
+    expect(inBlock(find.text('Equals chrome')), findsOneWidget);
+
+    await teardownView(tester);
+  });
+
+  testWidgets('typed on without a pause, the count catches up with the last '
+      'value, and a new field counts afresh', (tester) async {
+    seedRequests([
+      _tracker(id: 'a', host: 'alpha.test', process: 'Google Chrome'),
+      _tracker(id: 'b', host: 'beta.test', process: 'chrome'),
+      _tracker(id: 'c', host: 'gamma.test', process: 'chrome'),
+      _tracker(id: 'd', host: 'chrome.test'),
+    ]);
+
+    await pumpRequests(tester, size: _listSize);
+    await tester.tap(addCondition);
+    await tester.pumpAndSettle();
+    for (final typed in ['c', 'ch', 'chr', 'chro', 'chrom', 'chrome']) {
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: typed,
+          selection: TextSelection.collapsed(offset: typed.length),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('Connections shown: 1'), findsOneWidget);
+    expect(inDialog(find.text('chrome.test')), findsOneWidget);
+
+    await tester.tap(inDialog(find.text('App')));
+    await tester.pumpAndSettle();
+    expect(find.text('Connections shown: 3'), findsOneWidget);
+    expect(inDialog(find.text('Google Chrome')), findsOneWidget);
+
+    await teardownView(tester);
+  });
+
+  testWidgets('a condition from the dialog keeps the spaces in its value', (
+    tester,
+  ) async {
     seedRequests([
       _tracker(id: 'a', host: 'alpha.test', process: 'Google Chrome'),
       _tracker(id: 'b', host: 'beta.test', process: 'chrome'),
     ]);
 
     await pumpRequests(tester, size: _listSize);
-    await tester.scrollUntilVisible(
-      find.widgetWithText(Chip, '+ Condition'),
-      100,
-      scrollable: stripScrollable,
-    );
+    await tester.tap(addCondition);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(Chip, '+ Condition'));
+    await tester.tap(inDialog(find.text('App')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Host'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('App').last);
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.descendant(
-        of: find.byType(FormRowTextField),
-        matching: find.byType(EditableText),
-      ),
-      'Google Chrome',
-    );
-    await tester.tap(find.byTooltip('Add'));
+    await tester.enterText(dialogField, 'Google Chrome');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(TextButton, 'Add'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('alpha.test'), findsWidgets);
-    expect(find.textContaining('beta.test'), findsNothing);
-    await tester.scrollUntilVisible(
-      find.widgetWithText(Chip, 'app:"Google Chrome"'),
-      100,
-      scrollable: stripScrollable,
-    );
-    expect(find.widgetWithText(Chip, 'app:"Google Chrome"'), findsOneWidget);
+    expect(targetOf('alpha.test'), findsWidgets);
+    expect(targetOf('beta.test'), findsNothing);
+    expect(inBlock(find.text('Contains Google Chrome')), findsOneWidget);
 
     await teardownView(tester);
   });
 
-  testWidgets('a desktop page sums up what it shows along its foot, and a '
-      'phone under its filter strip', (tester) async {
-    final open = _tracker(id: 'a', host: 'alpha.test');
-    seedRequests([
-      open,
-      _tracker(id: 'b', host: 'beta.test', process: 'chrome'),
-      _tracker(id: 'c', host: 'gamma.test', process: 'chrome'),
-    ]);
-
-    await pumpRequests(tester, connectionsReader: () async => [open]);
-    await tester.pump(const Duration(milliseconds: 400));
-    final bar = find.byType(ConnectionStatusBar);
-    Finder inBar(Finder finder) => find.descendant(of: bar, matching: finder);
-    expect(find.byType(ConnectionSummary), findsNothing);
-    expect(inBar(find.text('Showing 3 · Active 1')), findsOneWidget);
-    expect(inBar(find.textContaining('This run ↓')), findsOneWidget);
-    expect(
-      inBar(find.byType(HttpCaptureEntry)),
-      [if (rsFeature) findsOneWidget].firstOrNull ?? findsNothing,
-    );
-
-    await tester.tap(targetOf('beta.test'));
-    await tester.pumpAndSettle();
-    expect(
-      inBar(find.text('Showing 3 · Active 1 · 1 selected')),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.widgetWithText(Chip, 'Active 1'));
-    await tester.pumpAndSettle();
-    expect(
-      inBar(find.text('Showing 1 · Active 1 · 1 selected')),
-      findsOneWidget,
-    );
-
-    await teardownView(tester);
-    await pumpRequests(
-      tester,
-      size: _listSize,
-      connectionsReader: () async => [open],
-    );
-    await tester.pump(const Duration(milliseconds: 400));
-    final summary = find.byType(ConnectionSummary);
-    expect(bar, findsNothing);
-    expect(
-      find.descendant(
-        of: summary,
-        matching: find.textContaining('Active 1 · This run ↓'),
-      ),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.widgetWithText(Chip, 'Active 1'));
-    await tester.pumpAndSettle();
-    expect(
-      find.descendant(
-        of: summary,
-        matching: find.text('1 after filtering · Active 1'),
-      ),
-      findsOneWidget,
-    );
-
-    await teardownView(tester);
-  });
-
-  testWidgets('the status chips count the connections and show one status '
-      'at a time, and a tapped exit narrows the exit facet', (tester) async {
+  testWidgets('the status segments count the connections and show one '
+      'status at a time', (tester) async {
     final open = _tracker(id: 'a', host: 'alpha.test');
     seedRequests([
       open,
@@ -1766,45 +2076,27 @@ void main() {
 
     await pumpRequests(tester, connectionsReader: () async => [open]);
     await tester.pump(const Duration(milliseconds: 400));
-    Chip chip(String label) =>
-        tester.widget<Chip>(find.widgetWithText(Chip, label));
-    expect(chip('All 2').selected, isTrue);
-    expect(chip('Active 1').selected, isFalse);
-    expect(
-      [
-        for (final chip in tester.widgetList<Chip>(find.byType(Chip)))
-          if (chip.label.startsWith('Decrypted')) chip.label,
-      ],
-      [if (rsFeature) 'Decrypted 0'],
-    );
+    expect(statusSegment('All 2'), findsOneWidget);
+    expect(statusSegment('Active 1'), findsOneWidget);
+    expect(statusSegment('Failed 1'), findsOneWidget);
+    expect(shownStatus(tester), ConnectionStatus.all);
 
-    await tester.tap(find.widgetWithText(Chip, 'Failed 1'));
+    await tester.tap(statusSegment('Failed 1'));
     await tester.pumpAndSettle();
-    expect(chip('Failed 1').selected, isTrue);
-    expect(chip('All 2').selected, isFalse);
-    expect(find.textContaining('alpha.test'), findsNothing);
-    expect(find.widgetWithText(TonalChip, 'Timeout'), findsOneWidget);
+    expect(shownStatus(tester), ConnectionStatus.failed);
+    expect(targetOf('alpha.test'), findsNothing);
+    expect(find.text('curl · Timeout'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(Chip, 'Active 1'));
+    await tester.tap(statusSegment('Active 1'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('alpha.test'), findsWidgets);
-    expect(find.textContaining('beta.test'), findsNothing);
+    expect(shownStatus(tester), ConnectionStatus.active);
+    expect(targetOf('alpha.test'), findsWidgets);
+    expect(targetOf('beta.test'), findsNothing);
 
-    await tester.tap(find.widgetWithText(Chip, 'All 2'));
+    await tester.tap(more);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(TonalChip, 'Tokyo'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('alpha.test'), findsNothing);
-    expect(
-      find.descendant(
-        of: find.byType(ConnectionFacetBar),
-        matching: find.text('Tokyo'),
-      ),
-      findsOneWidget,
-    );
-
-    await openSubMenu(tester, 'Group by');
     expect(inMenu(find.text('Filter')), findsNothing);
+    expect(inMenu(find.text('Group by')), findsNothing);
 
     await teardownView(tester);
   });
@@ -1815,30 +2107,42 @@ void main() {
       _tracker(id: 'r499', host: 'latest.test'),
     ];
 
-    Future<int> rowsBuiltBy(WidgetTester tester, void Function() change) async {
+    var trafficBuilt = 0;
+    Future<int> rowsBuiltBy(
+      WidgetTester tester,
+      void Function() change, {
+      int frames = 1,
+    }) async {
       var built = 0;
+      trafficBuilt = 0;
       debugOnRebuildDirtyWidget = (element, _) {
         final widget = element.widget;
-        if (widget is TrackerInfoItem || widget is TrackerInfoTableRow) {
+        if (widget is TrackerInfoItem) {
           built++;
+        } else if (widget is TrackerTraffic) {
+          trafficBuilt++;
         }
       };
       addTearDown(() => debugOnRebuildDirtyWidget = null);
       change();
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.pump();
+      for (var frame = 0; frame < frames; frame++) {
+        await tester.pump();
+      }
       debugOnRebuildDirtyWidget = null;
       return built;
     }
 
     for (final (name, size) in const [
-      ('list', _listSize),
-      ('table', _tableSize),
+      ('phone list', _listSize),
+      ('desktop list', _tableSize),
     ]) {
       testWidgets('a full $name builds only the request added', (tester) async {
         seedRequests(full);
         await pumpRequests(tester, size: size);
         await tester.pump(const Duration(seconds: 1));
+        // The list widens past the viewport once the empty pane stops moving.
+        await tester.pump();
 
         final built = await rowsBuiltBy(
           tester,
@@ -1850,8 +2154,8 @@ void main() {
       });
     }
 
-    testWidgets('traffic rebuilds only the list row it reaches, and its '
-        'detail opens on the latest', (tester) async {
+    testWidgets('traffic rebuilds only the figures of the row it reaches, '
+        'and its detail opens on the latest', (tester) async {
       seedRequests(full);
       await pumpRequests(tester, size: _listSize);
       await tester.pump(const Duration(seconds: 1));
@@ -1861,42 +2165,14 @@ void main() {
         () => container.read(requestsProvider.notifier).updateTraffic({
           'r499': (upload: 0, download: 2048),
         }),
+        frames: 8,
       );
-      expect(built, 1);
+      expect(built, 0);
+      expect(trafficBuilt, 1);
 
       await tester.tap(find.text('latest.test'));
       await tester.pumpAndSettle();
-      expect(
-        find.descendant(
-          of: find.byType(TrackerInfoDetailView),
-          matching: find.text(2048.traffic.show),
-        ),
-        findsOneWidget,
-      );
-
-      await teardownView(tester);
-    });
-
-    testWidgets('traffic rebuilds only the grouped row it reaches, and its '
-        'detail opens on the latest', (tester) async {
-      seedRequests(full);
-      await pumpRequests(tester, size: _listSize);
-      await openSubMenu(tester, 'Group by');
-      await tester.tap(inMenu(find.text('App')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byType(CollapsibleHeader));
-      await tester.pumpAndSettle();
-
-      final built = await rowsBuiltBy(
-        tester,
-        () => container.read(requestsProvider.notifier).updateTraffic({
-          'r499': (upload: 0, download: 2048),
-        }),
-      );
-      expect(built, 1);
-
-      await tester.tap(find.text('latest.test'));
-      await tester.pumpAndSettle();
+      await openDetailTab(tester, 'Info');
       expect(
         find.descendant(
           of: find.byType(TrackerInfoDetailView),
@@ -1910,24 +2186,25 @@ void main() {
   });
 
   if (rsFeature) {
-    testWidgets('the bar says whether capture records and opens its panel', (
-      tester,
-    ) async {
-      container
-          .read(patchClashConfigProvider.notifier)
-          .update(
-            (state) => state.copyWith(
-              mitm: state.mitm.copyWith(enable: true, capture: true),
-            ),
-          );
-      await pumpRequests(tester);
+    testWidgets(
+      'the eye button says whether capture records and opens its panel',
+      (tester) async {
+        container
+            .read(patchClashConfigProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                mitm: state.mitm.copyWith(enable: true, capture: true),
+              ),
+            );
+        await pumpRequests(tester);
 
-      await tester.tap(find.text(currentAppLocalizations.httpCapturing));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip(currentAppLocalizations.httpCapturing));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(HttpCaptureView), findsOneWidget);
-      await teardownView(tester);
-    });
+        expect(find.byType(HttpCaptureView), findsOneWidget);
+        await teardownView(tester);
+      },
+    );
 
     testWidgets('turning decryption on from capture leaves the tools list '
         'for the connections in the bottom bar', (tester) async {
@@ -1965,3 +2242,14 @@ void main() {
 }
 
 class _MockCore extends Mock implements CoreHandlerInterface {}
+
+Finder _figure(String text) => find.byWidgetPredicate(
+  (widget) =>
+      widget is PlainTextLines && widget.lines.any((line) => line.text == text),
+);
+
+Finder _figureContaining(String text) => find.byWidgetPredicate(
+  (widget) =>
+      widget is PlainTextLines &&
+      widget.lines.any((line) => line.text.contains(text)),
+);

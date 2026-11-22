@@ -3765,7 +3765,7 @@ as bool,
 /// @nodoc
 mixin _$MitmExchangeSummary {
 
- int get id; DateTime get start; bool get pending; int get duration; String get method; String get url; int get status;@JsonKey(name: 'request-size') int get requestSize;@JsonKey(name: 'response-size') int get responseSize; String get error;
+ int get id; DateTime get start; bool get pending; int get duration; String get method; String get url; int get status;@JsonKey(name: 'request-size') int get requestSize;@JsonKey(name: 'response-size') int get responseSize; String get error; String get host; String get path;@JsonKey(name: 'content-type') String get contentType;@JsonKey(name: 'status-class') String get statusClass; String get kind; bool get rewritten;@JsonKey(name: 'connection-id', fromJson: _connectionIdOf) String? get connectionId; MitmApp? get app;
 /// Create a copy of MitmExchangeSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3779,20 +3779,20 @@ $MitmExchangeSummaryCopyWith<MitmExchangeSummary> get copyWith => _$MitmExchange
 @override
 bool operator ==(Object other) {
   final _this = this as MitmExchangeSummary;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmExchangeSummary&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.start, _this.start) || other.start == _this.start)&&(identical(other.pending, _this.pending) || other.pending == _this.pending)&&(identical(other.duration, _this.duration) || other.duration == _this.duration)&&(identical(other.method, _this.method) || other.method == _this.method)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.requestSize, _this.requestSize) || other.requestSize == _this.requestSize)&&(identical(other.responseSize, _this.responseSize) || other.responseSize == _this.responseSize)&&(identical(other.error, _this.error) || other.error == _this.error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmExchangeSummary&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.start, _this.start) || other.start == _this.start)&&(identical(other.pending, _this.pending) || other.pending == _this.pending)&&(identical(other.duration, _this.duration) || other.duration == _this.duration)&&(identical(other.method, _this.method) || other.method == _this.method)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.requestSize, _this.requestSize) || other.requestSize == _this.requestSize)&&(identical(other.responseSize, _this.responseSize) || other.responseSize == _this.responseSize)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.host, _this.host) || other.host == _this.host)&&(identical(other.path, _this.path) || other.path == _this.path)&&(identical(other.contentType, _this.contentType) || other.contentType == _this.contentType)&&(identical(other.statusClass, _this.statusClass) || other.statusClass == _this.statusClass)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.rewritten, _this.rewritten) || other.rewritten == _this.rewritten)&&(identical(other.connectionId, _this.connectionId) || other.connectionId == _this.connectionId)&&(identical(other.app, _this.app) || other.app == _this.app));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as MitmExchangeSummary;
-  return Object.hash(runtimeType,_this.id,_this.start,_this.pending,_this.duration,_this.method,_this.url,_this.status,_this.requestSize,_this.responseSize,_this.error);
+  return Object.hash(runtimeType,_this.id,_this.start,_this.pending,_this.duration,_this.method,_this.url,_this.status,_this.requestSize,_this.responseSize,_this.error,_this.host,_this.path,_this.contentType,_this.statusClass,_this.kind,_this.rewritten,_this.connectionId,_this.app);
 }
 
 @override
 String toString() {
   final _this = this as MitmExchangeSummary;
-  return 'MitmExchangeSummary(id: ${_this.id}, start: ${_this.start}, pending: ${_this.pending}, duration: ${_this.duration}, method: ${_this.method}, url: ${_this.url}, status: ${_this.status}, requestSize: ${_this.requestSize}, responseSize: ${_this.responseSize}, error: ${_this.error})';
+  return 'MitmExchangeSummary(id: ${_this.id}, start: ${_this.start}, pending: ${_this.pending}, duration: ${_this.duration}, method: ${_this.method}, url: ${_this.url}, status: ${_this.status}, requestSize: ${_this.requestSize}, responseSize: ${_this.responseSize}, error: ${_this.error}, host: ${_this.host}, path: ${_this.path}, contentType: ${_this.contentType}, statusClass: ${_this.statusClass}, kind: ${_this.kind}, rewritten: ${_this.rewritten}, connectionId: ${_this.connectionId}, app: ${_this.app})';
 }
 
 
@@ -3803,11 +3803,11 @@ abstract mixin class $MitmExchangeSummaryCopyWith<$Res>  {
   factory $MitmExchangeSummaryCopyWith(MitmExchangeSummary value, $Res Function(MitmExchangeSummary) _then) = _$MitmExchangeSummaryCopyWithImpl;
 @useResult
 $Res call({
- int id, DateTime start, bool pending, int duration, String method, String url, int status,@JsonKey(name: 'request-size') int requestSize,@JsonKey(name: 'response-size') int responseSize, String error
+ int id, DateTime start, bool pending, int duration, String method, String url, int status,@JsonKey(name: 'request-size') int requestSize,@JsonKey(name: 'response-size') int responseSize, String error, String host, String path,@JsonKey(name: 'content-type') String contentType,@JsonKey(name: 'status-class') String statusClass, String kind, bool rewritten,@JsonKey(name: 'connection-id', fromJson: _connectionIdOf) String? connectionId, MitmApp? app
 });
 
 
-
+$MitmAppCopyWith<$Res>? get app;
 
 }
 /// @nodoc
@@ -3820,7 +3820,7 @@ class _$MitmExchangeSummaryCopyWithImpl<$Res>
 
 /// Create a copy of MitmExchangeSummary
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? start = null,Object? pending = null,Object? duration = null,Object? method = null,Object? url = null,Object? status = null,Object? requestSize = null,Object? responseSize = null,Object? error = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? start = null,Object? pending = null,Object? duration = null,Object? method = null,Object? url = null,Object? status = null,Object? requestSize = null,Object? responseSize = null,Object? error = null,Object? host = null,Object? path = null,Object? contentType = null,Object? statusClass = null,Object? kind = null,Object? rewritten = null,Object? connectionId = freezed,Object? app = freezed,}) {
   return _then(MitmExchangeSummary(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,start: null == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
@@ -3832,10 +3832,30 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as int,requestSize: null == requestSize ? _self.requestSize : requestSize // ignore: cast_nullable_to_non_nullable
 as int,responseSize: null == responseSize ? _self.responseSize : responseSize // ignore: cast_nullable_to_non_nullable
 as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String,
+as String,host: null == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,contentType: null == contentType ? _self.contentType : contentType // ignore: cast_nullable_to_non_nullable
+as String,statusClass: null == statusClass ? _self.statusClass : statusClass // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,rewritten: null == rewritten ? _self.rewritten : rewritten // ignore: cast_nullable_to_non_nullable
+as bool,connectionId: freezed == connectionId ? _self.connectionId : connectionId // ignore: cast_nullable_to_non_nullable
+as String?,app: freezed == app ? _self.app : app // ignore: cast_nullable_to_non_nullable
+as MitmApp?,
   ));
 }
+/// Create a copy of MitmExchangeSummary
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$MitmAppCopyWith<$Res>? get app {
+    if (_self.app == null) {
+    return null;
+  }
 
+  return $MitmAppCopyWith<$Res>(_self.app!, (value) {
+    return _then(_self.copyWith(app: value));
+  });
+}
 }
 
 
@@ -3917,10 +3937,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  DateTime start,  bool pending,  int duration,  String method,  String url,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  DateTime start,  bool pending,  int duration,  String method,  String url,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error,  String host,  String path, @JsonKey(name: 'content-type')  String contentType, @JsonKey(name: 'status-class')  String statusClass,  String kind,  bool rewritten, @JsonKey(name: 'connection-id', fromJson: _connectionIdOf)  String? connectionId,  MitmApp? app)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MitmExchangeSummary() when $default != null:
-return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_that.url,_that.status,_that.requestSize,_that.responseSize,_that.error);case _:
+return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_that.url,_that.status,_that.requestSize,_that.responseSize,_that.error,_that.host,_that.path,_that.contentType,_that.statusClass,_that.kind,_that.rewritten,_that.connectionId,_that.app);case _:
   return orElse();
 
 }
@@ -3938,10 +3958,10 @@ return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  DateTime start,  bool pending,  int duration,  String method,  String url,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  DateTime start,  bool pending,  int duration,  String method,  String url,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error,  String host,  String path, @JsonKey(name: 'content-type')  String contentType, @JsonKey(name: 'status-class')  String statusClass,  String kind,  bool rewritten, @JsonKey(name: 'connection-id', fromJson: _connectionIdOf)  String? connectionId,  MitmApp? app)  $default,) {final _that = this;
 switch (_that) {
 case _MitmExchangeSummary():
-return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_that.url,_that.status,_that.requestSize,_that.responseSize,_that.error);case _:
+return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_that.url,_that.status,_that.requestSize,_that.responseSize,_that.error,_that.host,_that.path,_that.contentType,_that.statusClass,_that.kind,_that.rewritten,_that.connectionId,_that.app);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3958,10 +3978,10 @@ return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  DateTime start,  bool pending,  int duration,  String method,  String url,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  DateTime start,  bool pending,  int duration,  String method,  String url,  int status, @JsonKey(name: 'request-size')  int requestSize, @JsonKey(name: 'response-size')  int responseSize,  String error,  String host,  String path, @JsonKey(name: 'content-type')  String contentType, @JsonKey(name: 'status-class')  String statusClass,  String kind,  bool rewritten, @JsonKey(name: 'connection-id', fromJson: _connectionIdOf)  String? connectionId,  MitmApp? app)?  $default,) {final _that = this;
 switch (_that) {
 case _MitmExchangeSummary() when $default != null:
-return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_that.url,_that.status,_that.requestSize,_that.responseSize,_that.error);case _:
+return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_that.url,_that.status,_that.requestSize,_that.responseSize,_that.error,_that.host,_that.path,_that.contentType,_that.statusClass,_that.kind,_that.rewritten,_that.connectionId,_that.app);case _:
   return null;
 
 }
@@ -3973,7 +3993,7 @@ return $default(_that.id,_that.start,_that.pending,_that.duration,_that.method,_
 @JsonSerializable()
 
 class _MitmExchangeSummary implements MitmExchangeSummary {
-  const _MitmExchangeSummary({required this.id, required this.start, this.pending = false, this.duration = 0, this.method = '', this.url = '', this.status = 0, @JsonKey(name: 'request-size') this.requestSize = 0, @JsonKey(name: 'response-size') this.responseSize = 0, this.error = ''});
+  const _MitmExchangeSummary({required this.id, required this.start, this.pending = false, this.duration = 0, this.method = '', this.url = '', this.status = 0, @JsonKey(name: 'request-size') this.requestSize = 0, @JsonKey(name: 'response-size') this.responseSize = 0, this.error = '', this.host = '', this.path = '', @JsonKey(name: 'content-type') this.contentType = '', @JsonKey(name: 'status-class') this.statusClass = '', this.kind = '', this.rewritten = false, @JsonKey(name: 'connection-id', fromJson: _connectionIdOf) this.connectionId, this.app});
   factory _MitmExchangeSummary.fromJson(Map<String, dynamic> json) => _$MitmExchangeSummaryFromJson(json);
 
 @override final  int id;
@@ -3986,6 +4006,14 @@ class _MitmExchangeSummary implements MitmExchangeSummary {
 @override@JsonKey(name: 'request-size') final  int requestSize;
 @override@JsonKey(name: 'response-size') final  int responseSize;
 @override@JsonKey() final  String error;
+@override@JsonKey() final  String host;
+@override@JsonKey() final  String path;
+@override@JsonKey(name: 'content-type') final  String contentType;
+@override@JsonKey(name: 'status-class') final  String statusClass;
+@override@JsonKey() final  String kind;
+@override@JsonKey() final  bool rewritten;
+@override@JsonKey(name: 'connection-id', fromJson: _connectionIdOf) final  String? connectionId;
+@override final  MitmApp? app;
 
 /// Create a copy of MitmExchangeSummary
 /// with the given fields replaced by the non-null parameter values.
@@ -4000,18 +4028,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmExchangeSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.start, start) || other.start == start)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.method, method) || other.method == method)&&(identical(other.url, url) || other.url == url)&&(identical(other.status, status) || other.status == status)&&(identical(other.requestSize, requestSize) || other.requestSize == requestSize)&&(identical(other.responseSize, responseSize) || other.responseSize == responseSize)&&(identical(other.error, error) || other.error == error));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmExchangeSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.start, start) || other.start == start)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.method, method) || other.method == method)&&(identical(other.url, url) || other.url == url)&&(identical(other.status, status) || other.status == status)&&(identical(other.requestSize, requestSize) || other.requestSize == requestSize)&&(identical(other.responseSize, responseSize) || other.responseSize == responseSize)&&(identical(other.error, error) || other.error == error)&&(identical(other.host, host) || other.host == host)&&(identical(other.path, path) || other.path == path)&&(identical(other.contentType, contentType) || other.contentType == contentType)&&(identical(other.statusClass, statusClass) || other.statusClass == statusClass)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.rewritten, rewritten) || other.rewritten == rewritten)&&(identical(other.connectionId, connectionId) || other.connectionId == connectionId)&&(identical(other.app, app) || other.app == app));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,start,pending,duration,method,url,status,requestSize,responseSize,error);
+    return Object.hash(runtimeType,id,start,pending,duration,method,url,status,requestSize,responseSize,error,host,path,contentType,statusClass,kind,rewritten,connectionId,app);
 }
 
 @override
 String toString() {
-    return 'MitmExchangeSummary(id: $id, start: $start, pending: $pending, duration: $duration, method: $method, url: $url, status: $status, requestSize: $requestSize, responseSize: $responseSize, error: $error)';
+    return 'MitmExchangeSummary(id: $id, start: $start, pending: $pending, duration: $duration, method: $method, url: $url, status: $status, requestSize: $requestSize, responseSize: $responseSize, error: $error, host: $host, path: $path, contentType: $contentType, statusClass: $statusClass, kind: $kind, rewritten: $rewritten, connectionId: $connectionId, app: $app)';
 }
 
 
@@ -4022,11 +4050,11 @@ abstract mixin class _$MitmExchangeSummaryCopyWith<$Res> implements $MitmExchang
   factory _$MitmExchangeSummaryCopyWith(_MitmExchangeSummary value, $Res Function(_MitmExchangeSummary) _then) = __$MitmExchangeSummaryCopyWithImpl;
 @override @useResult
 $Res call({
- int id, DateTime start, bool pending, int duration, String method, String url, int status,@JsonKey(name: 'request-size') int requestSize,@JsonKey(name: 'response-size') int responseSize, String error
+ int id, DateTime start, bool pending, int duration, String method, String url, int status,@JsonKey(name: 'request-size') int requestSize,@JsonKey(name: 'response-size') int responseSize, String error, String host, String path,@JsonKey(name: 'content-type') String contentType,@JsonKey(name: 'status-class') String statusClass, String kind, bool rewritten,@JsonKey(name: 'connection-id', fromJson: _connectionIdOf) String? connectionId, MitmApp? app
 });
 
 
-
+@override $MitmAppCopyWith<$Res>? get app;
 
 }
 /// @nodoc
@@ -4039,7 +4067,7 @@ class __$MitmExchangeSummaryCopyWithImpl<$Res>
 
 /// Create a copy of MitmExchangeSummary
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? start = null,Object? pending = null,Object? duration = null,Object? method = null,Object? url = null,Object? status = null,Object? requestSize = null,Object? responseSize = null,Object? error = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? start = null,Object? pending = null,Object? duration = null,Object? method = null,Object? url = null,Object? status = null,Object? requestSize = null,Object? responseSize = null,Object? error = null,Object? host = null,Object? path = null,Object? contentType = null,Object? statusClass = null,Object? kind = null,Object? rewritten = null,Object? connectionId = freezed,Object? app = freezed,}) {
   return _then(_MitmExchangeSummary(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,start: null == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
@@ -4051,7 +4079,609 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as int,requestSize: null == requestSize ? _self.requestSize : requestSize // ignore: cast_nullable_to_non_nullable
 as int,responseSize: null == responseSize ? _self.responseSize : responseSize // ignore: cast_nullable_to_non_nullable
 as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String,
+as String,host: null == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,contentType: null == contentType ? _self.contentType : contentType // ignore: cast_nullable_to_non_nullable
+as String,statusClass: null == statusClass ? _self.statusClass : statusClass // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,rewritten: null == rewritten ? _self.rewritten : rewritten // ignore: cast_nullable_to_non_nullable
+as bool,connectionId: freezed == connectionId ? _self.connectionId : connectionId // ignore: cast_nullable_to_non_nullable
+as String?,app: freezed == app ? _self.app : app // ignore: cast_nullable_to_non_nullable
+as MitmApp?,
+  ));
+}
+
+/// Create a copy of MitmExchangeSummary
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$MitmAppCopyWith<$Res>? get app {
+    if (_self.app == null) {
+    return null;
+  }
+
+  return $MitmAppCopyWith<$Res>(_self.app!, (value) {
+    return _then(_self.copyWith(app: value));
+  });
+}
+}
+
+
+/// @nodoc
+mixin _$MitmApp {
+
+ String get process;@JsonKey(name: 'process-path') String get processPath; int? get uid;
+/// Create a copy of MitmApp
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmAppCopyWith<MitmApp> get copyWith => _$MitmAppCopyWithImpl<MitmApp>(this as MitmApp, _$identity);
+
+  /// Serializes this MitmApp to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmApp;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmApp&&(identical(other.process, _this.process) || other.process == _this.process)&&(identical(other.processPath, _this.processPath) || other.processPath == _this.processPath)&&(identical(other.uid, _this.uid) || other.uid == _this.uid));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as MitmApp;
+  return Object.hash(runtimeType,_this.process,_this.processPath,_this.uid);
+}
+
+@override
+String toString() {
+  final _this = this as MitmApp;
+  return 'MitmApp(process: ${_this.process}, processPath: ${_this.processPath}, uid: ${_this.uid})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmAppCopyWith<$Res>  {
+  factory $MitmAppCopyWith(MitmApp value, $Res Function(MitmApp) _then) = _$MitmAppCopyWithImpl;
+@useResult
+$Res call({
+ String process,@JsonKey(name: 'process-path') String processPath, int? uid
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmAppCopyWithImpl<$Res>
+    implements $MitmAppCopyWith<$Res> {
+  _$MitmAppCopyWithImpl(this._self, this._then);
+
+  final MitmApp _self;
+  final $Res Function(MitmApp) _then;
+
+/// Create a copy of MitmApp
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? process = null,Object? processPath = null,Object? uid = freezed,}) {
+  return _then(MitmApp(
+process: null == process ? _self.process : process // ignore: cast_nullable_to_non_nullable
+as String,processPath: null == processPath ? _self.processPath : processPath // ignore: cast_nullable_to_non_nullable
+as String,uid: freezed == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmApp].
+extension MitmAppPatterns on MitmApp {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmApp value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmApp() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmApp value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmApp():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmApp value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmApp() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String process, @JsonKey(name: 'process-path')  String processPath,  int? uid)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmApp() when $default != null:
+return $default(_that.process,_that.processPath,_that.uid);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String process, @JsonKey(name: 'process-path')  String processPath,  int? uid)  $default,) {final _that = this;
+switch (_that) {
+case _MitmApp():
+return $default(_that.process,_that.processPath,_that.uid);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String process, @JsonKey(name: 'process-path')  String processPath,  int? uid)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmApp() when $default != null:
+return $default(_that.process,_that.processPath,_that.uid);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _MitmApp implements MitmApp {
+  const _MitmApp({this.process = '', @JsonKey(name: 'process-path') this.processPath = '', this.uid});
+  factory _MitmApp.fromJson(Map<String, dynamic> json) => _$MitmAppFromJson(json);
+
+@override@JsonKey() final  String process;
+@override@JsonKey(name: 'process-path') final  String processPath;
+@override final  int? uid;
+
+/// Create a copy of MitmApp
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmAppCopyWith<_MitmApp> get copyWith => __$MitmAppCopyWithImpl<_MitmApp>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$MitmAppToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmApp&&(identical(other.process, process) || other.process == process)&&(identical(other.processPath, processPath) || other.processPath == processPath)&&(identical(other.uid, uid) || other.uid == uid));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,process,processPath,uid);
+}
+
+@override
+String toString() {
+    return 'MitmApp(process: $process, processPath: $processPath, uid: $uid)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmAppCopyWith<$Res> implements $MitmAppCopyWith<$Res> {
+  factory _$MitmAppCopyWith(_MitmApp value, $Res Function(_MitmApp) _then) = __$MitmAppCopyWithImpl;
+@override @useResult
+$Res call({
+ String process,@JsonKey(name: 'process-path') String processPath, int? uid
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmAppCopyWithImpl<$Res>
+    implements _$MitmAppCopyWith<$Res> {
+  __$MitmAppCopyWithImpl(this._self, this._then);
+
+  final _MitmApp _self;
+  final $Res Function(_MitmApp) _then;
+
+/// Create a copy of MitmApp
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? process = null,Object? processPath = null,Object? uid = freezed,}) {
+  return _then(_MitmApp(
+process: null == process ? _self.process : process // ignore: cast_nullable_to_non_nullable
+as String,processPath: null == processPath ? _self.processPath : processPath // ignore: cast_nullable_to_non_nullable
+as String,uid: freezed == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$MitmQueryPage {
+
+ bool get capturing; DateTime? get since; int get version; int get oldest; int get held; int get matched; List<MitmExchangeSummary> get exchanges; int? get next; List<int> get unmatched;
+/// Create a copy of MitmQueryPage
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmQueryPageCopyWith<MitmQueryPage> get copyWith => _$MitmQueryPageCopyWithImpl<MitmQueryPage>(this as MitmQueryPage, _$identity);
+
+  /// Serializes this MitmQueryPage to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmQueryPage;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmQueryPage&&(identical(other.capturing, _this.capturing) || other.capturing == _this.capturing)&&(identical(other.since, _this.since) || other.since == _this.since)&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.oldest, _this.oldest) || other.oldest == _this.oldest)&&(identical(other.held, _this.held) || other.held == _this.held)&&(identical(other.matched, _this.matched) || other.matched == _this.matched)&&const DeepCollectionEquality().equals(other.exchanges, _this.exchanges)&&(identical(other.next, _this.next) || other.next == _this.next)&&const DeepCollectionEquality().equals(other.unmatched, _this.unmatched));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as MitmQueryPage;
+  return Object.hash(runtimeType,_this.capturing,_this.since,_this.version,_this.oldest,_this.held,_this.matched,const DeepCollectionEquality().hash(_this.exchanges),_this.next,const DeepCollectionEquality().hash(_this.unmatched));
+}
+
+@override
+String toString() {
+  final _this = this as MitmQueryPage;
+  return 'MitmQueryPage(capturing: ${_this.capturing}, since: ${_this.since}, version: ${_this.version}, oldest: ${_this.oldest}, held: ${_this.held}, matched: ${_this.matched}, exchanges: ${_this.exchanges}, next: ${_this.next}, unmatched: ${_this.unmatched})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmQueryPageCopyWith<$Res>  {
+  factory $MitmQueryPageCopyWith(MitmQueryPage value, $Res Function(MitmQueryPage) _then) = _$MitmQueryPageCopyWithImpl;
+@useResult
+$Res call({
+ bool capturing, DateTime? since, int version, int oldest, int held, int matched, List<MitmExchangeSummary> exchanges, int? next, List<int> unmatched
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmQueryPageCopyWithImpl<$Res>
+    implements $MitmQueryPageCopyWith<$Res> {
+  _$MitmQueryPageCopyWithImpl(this._self, this._then);
+
+  final MitmQueryPage _self;
+  final $Res Function(MitmQueryPage) _then;
+
+/// Create a copy of MitmQueryPage
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? capturing = null,Object? since = freezed,Object? version = null,Object? oldest = null,Object? held = null,Object? matched = null,Object? exchanges = null,Object? next = freezed,Object? unmatched = null,}) {
+  return _then(MitmQueryPage(
+capturing: null == capturing ? _self.capturing : capturing // ignore: cast_nullable_to_non_nullable
+as bool,since: freezed == since ? _self.since : since // ignore: cast_nullable_to_non_nullable
+as DateTime?,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as int,oldest: null == oldest ? _self.oldest : oldest // ignore: cast_nullable_to_non_nullable
+as int,held: null == held ? _self.held : held // ignore: cast_nullable_to_non_nullable
+as int,matched: null == matched ? _self.matched : matched // ignore: cast_nullable_to_non_nullable
+as int,exchanges: null == exchanges ? _self.exchanges : exchanges // ignore: cast_nullable_to_non_nullable
+as List<MitmExchangeSummary>,next: freezed == next ? _self.next : next // ignore: cast_nullable_to_non_nullable
+as int?,unmatched: null == unmatched ? _self.unmatched : unmatched // ignore: cast_nullable_to_non_nullable
+as List<int>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmQueryPage].
+extension MitmQueryPagePatterns on MitmQueryPage {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmQueryPage value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmQueryPage() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmQueryPage value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmQueryPage():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmQueryPage value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmQueryPage() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool capturing,  DateTime? since,  int version,  int oldest,  int held,  int matched,  List<MitmExchangeSummary> exchanges,  int? next,  List<int> unmatched)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmQueryPage() when $default != null:
+return $default(_that.capturing,_that.since,_that.version,_that.oldest,_that.held,_that.matched,_that.exchanges,_that.next,_that.unmatched);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool capturing,  DateTime? since,  int version,  int oldest,  int held,  int matched,  List<MitmExchangeSummary> exchanges,  int? next,  List<int> unmatched)  $default,) {final _that = this;
+switch (_that) {
+case _MitmQueryPage():
+return $default(_that.capturing,_that.since,_that.version,_that.oldest,_that.held,_that.matched,_that.exchanges,_that.next,_that.unmatched);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool capturing,  DateTime? since,  int version,  int oldest,  int held,  int matched,  List<MitmExchangeSummary> exchanges,  int? next,  List<int> unmatched)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmQueryPage() when $default != null:
+return $default(_that.capturing,_that.since,_that.version,_that.oldest,_that.held,_that.matched,_that.exchanges,_that.next,_that.unmatched);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _MitmQueryPage implements MitmQueryPage {
+  const _MitmQueryPage({this.capturing = false, this.since, this.version = 0, this.oldest = 0, this.held = 0, this.matched = 0,  List<MitmExchangeSummary> exchanges = const [], this.next,  List<int> unmatched = const []}): _exchanges = exchanges,_unmatched = unmatched;
+  factory _MitmQueryPage.fromJson(Map<String, dynamic> json) => _$MitmQueryPageFromJson(json);
+
+@override@JsonKey() final  bool capturing;
+@override final  DateTime? since;
+@override@JsonKey() final  int version;
+@override@JsonKey() final  int oldest;
+@override@JsonKey() final  int held;
+@override@JsonKey() final  int matched;
+ final  List<MitmExchangeSummary> _exchanges;
+@override@JsonKey() List<MitmExchangeSummary> get exchanges {
+  if (_exchanges is EqualUnmodifiableListView) return _exchanges;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_exchanges);
+}
+
+@override final  int? next;
+ final  List<int> _unmatched;
+@override@JsonKey() List<int> get unmatched {
+  if (_unmatched is EqualUnmodifiableListView) return _unmatched;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_unmatched);
+}
+
+
+/// Create a copy of MitmQueryPage
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmQueryPageCopyWith<_MitmQueryPage> get copyWith => __$MitmQueryPageCopyWithImpl<_MitmQueryPage>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$MitmQueryPageToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmQueryPage&&(identical(other.capturing, capturing) || other.capturing == capturing)&&(identical(other.since, since) || other.since == since)&&(identical(other.version, version) || other.version == version)&&(identical(other.oldest, oldest) || other.oldest == oldest)&&(identical(other.held, held) || other.held == held)&&(identical(other.matched, matched) || other.matched == matched)&&const DeepCollectionEquality().equals(other.exchanges, _exchanges)&&(identical(other.next, next) || other.next == next)&&const DeepCollectionEquality().equals(other.unmatched, _unmatched));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,capturing,since,version,oldest,held,matched,const DeepCollectionEquality().hash(_exchanges),next,const DeepCollectionEquality().hash(_unmatched));
+}
+
+@override
+String toString() {
+    return 'MitmQueryPage(capturing: $capturing, since: $since, version: $version, oldest: $oldest, held: $held, matched: $matched, exchanges: $exchanges, next: $next, unmatched: $unmatched)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmQueryPageCopyWith<$Res> implements $MitmQueryPageCopyWith<$Res> {
+  factory _$MitmQueryPageCopyWith(_MitmQueryPage value, $Res Function(_MitmQueryPage) _then) = __$MitmQueryPageCopyWithImpl;
+@override @useResult
+$Res call({
+ bool capturing, DateTime? since, int version, int oldest, int held, int matched, List<MitmExchangeSummary> exchanges, int? next, List<int> unmatched
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmQueryPageCopyWithImpl<$Res>
+    implements _$MitmQueryPageCopyWith<$Res> {
+  __$MitmQueryPageCopyWithImpl(this._self, this._then);
+
+  final _MitmQueryPage _self;
+  final $Res Function(_MitmQueryPage) _then;
+
+/// Create a copy of MitmQueryPage
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? capturing = null,Object? since = freezed,Object? version = null,Object? oldest = null,Object? held = null,Object? matched = null,Object? exchanges = null,Object? next = freezed,Object? unmatched = null,}) {
+  return _then(_MitmQueryPage(
+capturing: null == capturing ? _self.capturing : capturing // ignore: cast_nullable_to_non_nullable
+as bool,since: freezed == since ? _self.since : since // ignore: cast_nullable_to_non_nullable
+as DateTime?,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as int,oldest: null == oldest ? _self.oldest : oldest // ignore: cast_nullable_to_non_nullable
+as int,held: null == held ? _self.held : held // ignore: cast_nullable_to_non_nullable
+as int,matched: null == matched ? _self.matched : matched // ignore: cast_nullable_to_non_nullable
+as int,exchanges: null == exchanges ? _self._exchanges : exchanges // ignore: cast_nullable_to_non_nullable
+as List<MitmExchangeSummary>,next: freezed == next ? _self.next : next // ignore: cast_nullable_to_non_nullable
+as int?,unmatched: null == unmatched ? _self._unmatched : unmatched // ignore: cast_nullable_to_non_nullable
+as List<int>,
   ));
 }
 

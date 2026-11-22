@@ -1,24 +1,65 @@
 import 'dart:collection';
+import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 
 import 'common.dart';
+import 'tracker_speed_sampler.dart';
 
 /// A connection is announced before the Core stores it, so one missing from a
 /// snapshot this soon after it opened may still be opening.
 const _openingGrace = Duration(seconds: 1);
 
+const _noSpeed = -1;
+
+/// Changes past this many are dropped oldest first, and a reader that missed
+/// them reads the whole log again.
+const _changesKept = 8192;
+
+enum ConnectionChangeKind { opened, changed, closed, removed }
+
+typedef ConnectionChange = ({ConnectionChangeKind kind, String id});
+
+class _Entry {
+  /// Traffic as of the last write here; the log's arrays hold the latest.
+  TrackerInfo info;
+  final int slot;
+
+  final int seq;
+
+  _Entry(this.info, this.slot, this.seq);
+}
+
 class _Entries {
-  final byId = <String, TrackerInfo>{};
+  final byId = <String, _Entry>{};
   final closedOrder = Queue<String>();
 
   /// Never before the latest start held.
   DateTime? latestStart;
 
-  /// A snapshot asked for before this may list what was cleared.
-  DateTime? clearedAt;
+  /// As each was last held, oldest first.
+  final trimmed = <String, TrackerInfo>{};
 
-  final trimmed = <String>{};
+  var upload = Int64List(0);
+  var download = Int64List(0);
+  var uploadSpeed = Int64List(0);
+  var downloadSpeed = Int64List(0);
+  var open = Uint8List(0);
+  var generations = Int32List(0);
+  var listedIn = Int32List(0);
+  var polls = 0;
+  final bySlot = <_Entry?>[];
+  final freeSlots = <int>[];
+  var slots = 0;
+  var seq = 0;
+
+  var failed = 0;
+
+  final changes = Queue<(int, ConnectionChange)>();
+
+  var changesFrom = 0;
+  var changeCount = 0;
+  ({int dnsQueryId, int changeCount, List<String> ids})? resolved;
 }
 
 /// The connections of this run in the order they opened: every open one, and
@@ -38,16 +79,109 @@ class ConnectionLog {
   ConnectionLog._(this.closedCapacity, this._entries, this.revision);
 
   List<TrackerInfo> get list =>
-      _list ??= List.unmodifiable(_entries.byId.values);
+      _list ??= List.unmodifiable(_entries.byId.values.map(_infoOf));
 
   int get length => _entries.byId.length;
 
+  /// A poll's slots hold only within one lineage.
+  Object get lineage => _entries;
+
+  /// A slot freed and taken again holds another connection.
+  Int32List get slotGenerations =>
+      Int32List.sublistView(_entries.generations, 0, _entries.slots).sublist(0);
+
   int get activeCount => _entries.byId.length - _entries.closedOrder.length;
 
-  TrackerInfo? operator [](String id) => _entries.byId[id];
+  int get failedCount => _entries.failed;
+
+  TrackerInfo? operator [](String id) {
+    final entry = _entries.byId[id];
+    return entry == null ? null : _infoOf(entry);
+  }
+
+  /// [id] as held, or as last held if the log has since trimmed it.
+  TrackerInfo? lastOf(String id) => this[id] ?? _entries.trimmed[id];
+
+  /// When every connection the log no longer knows had closed by.
+  DateTime? get forgottenBy => _entries.trimmed.values.firstOrNull?.closedAt;
+
+  /// The connections DNS query [dnsQueryId] resolved for, newest first.
+  List<String> resolvedBy(int dnsQueryId) {
+    final entries = _entries;
+    final last = entries.resolved;
+    if (last != null &&
+        last.dnsQueryId == dnsQueryId &&
+        last.changeCount == entries.changeCount) {
+      return last.ids;
+    }
+    final found = List<String>.unmodifiable(
+      [
+        for (final entry in entries.byId.values)
+          if (entry.info.dnsQueries.contains(dnsQueryId)) entry.info.id,
+      ].reversed,
+    );
+    final ids =
+        last != null &&
+            last.dnsQueryId == dnsQueryId &&
+            const ListEquality<String>().equals(last.ids, found)
+        ? last.ids
+        : found;
+    entries.resolved = (
+      dnsQueryId: dnsQueryId,
+      changeCount: entries.changeCount,
+      ids: ids,
+    );
+    return ids;
+  }
+
+  /// Orders connections that opened at the same instant.
+  int? seqOf(String id) => _entries.byId[id]?.seq;
+
+  /// What changed after [revision] other than traffic, oldest first, or null
+  /// when the changes no longer reach that far back.
+  List<ConnectionChange>? changesSince(int revision) {
+    if (revision < _entries.changesFrom || revision > this.revision) {
+      return null;
+    }
+    return [
+      for (final (at, change) in _entries.changes)
+        if (at > revision && at <= this.revision) change,
+    ];
+  }
+
+  TrackerInfo _infoOf(_Entry entry) {
+    final entries = _entries;
+    final slot = entry.slot;
+    final info = entry.info;
+    final upload = entries.upload[slot];
+    final download = entries.download[slot];
+    final uploadSpeed = entries.uploadSpeed[slot];
+    final downloadSpeed = entries.downloadSpeed[slot];
+    if (info.upload == upload &&
+        info.download == download &&
+        (info.uploadSpeed ?? _noSpeed) == uploadSpeed &&
+        (info.downloadSpeed ?? _noSpeed) == downloadSpeed) {
+      return info;
+    }
+    return entry.info = info.copyWith(
+      upload: upload,
+      download: download,
+      uploadSpeed: uploadSpeed == _noSpeed ? null : uploadSpeed,
+      downloadSpeed: downloadSpeed == _noSpeed ? null : downloadSpeed,
+    );
+  }
 
   ConnectionLog _next() =>
       ConnectionLog._(closedCapacity, _entries, revision + 1);
+
+  void _record(ConnectionChangeKind kind, String id) {
+    _entries.changeCount++;
+    final changes = _entries.changes;
+    changes.add((revision + 1, (kind: kind, id: id)));
+    while (changes.length > _changesKept) {
+      _entries.changesFrom = changes.removeFirst().$1;
+    }
+  }
 
   ConnectionLog open(Iterable<TrackerInfo> trackerInfos) {
     final byId = _entries.byId;
@@ -55,32 +189,46 @@ class ConnectionLog {
     var changed = false;
     var late = false;
     for (final trackerInfo in trackerInfos) {
-      if (byId.containsKey(trackerInfo.id)) {
+      if (byId[trackerInfo.id] case final entry?) {
+        changed = _takeQueries(entry, trackerInfo.dnsQueries) || changed;
         continue;
       }
       late = _appendWasLate(trackerInfo) || late;
       changed = true;
     }
+    if (!changed) {
+      return this;
+    }
     if (late) {
       _placeLate(placed);
     }
-    return changed ? _next() : this;
+    _trim();
+    return _next();
+  }
+
+  /// Only the opening event names a connection's DNS queries, and a snapshot
+  /// can reach the log first.
+  bool _takeQueries(_Entry entry, List<int> queries) {
+    if (queries.isEmpty || entry.info.dnsQueries.isNotEmpty) {
+      return false;
+    }
+    _replace(entry, _infoOf(entry).copyWith(dnsQueries: queries));
+    _record(ConnectionChangeKind.changed, entry.info.id);
+    return true;
   }
 
   ConnectionLog updateTraffic(Map<String, RequestTraffic> traffic) {
-    final byId = _entries.byId;
+    final entries = _entries;
     var changed = false;
     traffic.forEach((id, traffic) {
-      final trackerInfo = byId[id];
-      if (trackerInfo == null ||
-          trackerInfo.upload == traffic.upload &&
-              trackerInfo.download == traffic.download) {
+      final slot = entries.byId[id]?.slot;
+      if (slot == null ||
+          entries.upload[slot] == traffic.upload &&
+              entries.download[slot] == traffic.download) {
         return;
       }
-      byId[id] = trackerInfo.copyWith(
-        upload: traffic.upload,
-        download: traffic.download,
-      );
+      entries.upload[slot] = traffic.upload;
+      entries.download[slot] = traffic.download;
       changed = true;
     });
     return changed ? _next() : this;
@@ -98,61 +246,41 @@ class ConnectionLog {
     return _next();
   }
 
-  ConnectionLog clearClosed() {
-    final closedOrder = _entries.closedOrder;
-    if (closedOrder.isEmpty) {
-      return this;
-    }
-    final byId = _entries.byId;
-    for (final id in closedOrder) {
-      byId.remove(id);
-    }
-    closedOrder.clear();
-    _entries.clearedAt = DateTime.now();
-    _forgetLatestIfEmpty();
-    return _next();
-  }
-
   ConnectionLog closeAll(DateTime at) => close([
-    for (final trackerInfo in _entries.byId.values)
-      if (trackerInfo.isActive) trackerInfo.id,
+    for (final entry in _entries.byId.values)
+      if (entry.info.isActive) entry.info.id,
   ], at);
 
   /// [requestedAt] is when [open] was asked for: a connection opened after
   /// it is missing from the snapshot however late the answer comes.
   ConnectionLog sync(List<TrackerInfo> open, DateTime requestedAt) {
-    final byId = _entries.byId;
+    final entries = _entries;
+    final byId = entries.byId;
     final placed = byId.length;
-    final clearedAt = _entries.clearedAt;
-    final stale = clearedAt != null && requestedAt.isBefore(clearedAt);
-    final trimmed = _entries.trimmed;
+    final trimmed = entries.trimmed;
     final listed = <String>{};
     var changed = false;
     var late = false;
     for (final trackerInfo in open) {
       listed.add(trackerInfo.id);
-      final known = byId[trackerInfo.id];
-      if (known == null) {
-        if (stale || trimmed.contains(trackerInfo.id)) {
+      final entry = byId[trackerInfo.id];
+      if (entry == null) {
+        if (trimmed.containsKey(trackerInfo.id)) {
           continue;
         }
         late = _appendWasLate(trackerInfo) || late;
         changed = true;
-      } else if (known.isActive) {
-        final next = _keepingSpeed(trackerInfo, known);
-        if (next != known) {
-          byId[trackerInfo.id] = next;
-          changed = true;
-        }
+      } else if (entry.info.isActive) {
+        changed = _takeSnapshot(entry, trackerInfo) || changed;
       }
     }
     final settled = requestedAt.subtract(_openingGrace);
     final gone = [
-      for (final trackerInfo in byId.values)
-        if (trackerInfo.isActive &&
-            !listed.contains(trackerInfo.id) &&
-            trackerInfo.start.isBefore(settled))
-          trackerInfo.id,
+      for (final entry in byId.values)
+        if (entry.info.isActive &&
+            !listed.contains(entry.info.id) &&
+            entry.info.start.isBefore(settled))
+          entry.info.id,
     ];
     for (final id in gone) {
       changed = _close(id, requestedAt) || changed;
@@ -167,44 +295,194 @@ class ConnectionLog {
     return _next();
   }
 
-  /// An unranked snapshot has no speeds; it keeps the last ranked ones.
-  static TrackerInfo _keepingSpeed(TrackerInfo next, TrackerInfo known) {
-    if (next.uploadSpeed != null || next.downloadSpeed != null) {
+  /// Like [sync], from what changed since the poll [poll] was taken after;
+  /// the slots it learns are written back into its samples for the next.
+  ConnectionLog poll(ConnectionPoll poll, DateTime requestedAt) {
+    final entries = _entries;
+    final byId = entries.byId;
+    final placed = byId.length;
+    final samples = poll.samples;
+    var changed = false;
+    var late = false;
+    for (final (index, trackerInfo) in poll.fresh.indexed) {
+      var entry = byId[trackerInfo.id];
+      if (entry == null) {
+        if (entries.trimmed.containsKey(trackerInfo.id)) {
+          continue;
+        }
+        late = _appendWasLate(trackerInfo) || late;
+        changed = true;
+        entry = byId[trackerInfo.id]!;
+      } else if (entry.info.isActive) {
+        changed = _takeSnapshot(entry, trackerInfo) || changed;
+      }
+      final at = poll.freshAt[index];
+      samples.slots[at] = entry.slot;
+      samples.generations[at] = entries.generations[entry.slot];
+    }
+    final stamp = ++entries.polls;
+    var listedOpen = 0;
+    for (var index = 0; index < samples.length; index++) {
+      final slot = samples.slots[index];
+      if (slot >= 0 &&
+          entries.generations[slot] == samples.generations[index] &&
+          entries.open[slot] == 1 &&
+          entries.listedIn[slot] != stamp) {
+        entries.listedIn[slot] = stamp;
+        listedOpen++;
+        changed = _takeSample(slot, samples, index) || changed;
+      }
+    }
+    if (listedOpen < activeCount) {
+      final settled = requestedAt.subtract(_openingGrace);
+      final gone = [
+        for (var slot = 0; slot < entries.slots; slot++)
+          if (entries.open[slot] == 1 && entries.listedIn[slot] != stamp)
+            if (entries.bySlot[slot]! case final entry
+                when entry.info.start.isBefore(settled))
+              entry,
+      ]..sort(_inLogOrder);
+      for (final entry in gone) {
+        changed = _close(entry.info.id, requestedAt) || changed;
+      }
+    }
+    if (!changed) {
+      return this;
+    }
+    if (late) {
+      _placeLate(placed);
+    }
+    _trim();
+    return _next();
+  }
+
+  static int _inLogOrder(_Entry a, _Entry b) {
+    final byStart = a.info.start.compareTo(b.info.start);
+    return byStart != 0 ? byStart : a.seq - b.seq;
+  }
+
+  bool _takeSample(int slot, TrackerSamples samples, int index) {
+    final entries = _entries;
+    final upload = samples.uploadAt(index);
+    final download = samples.downloadAt(index);
+    final uploadSpeed = samples.uploadSpeedAt(index);
+    final downloadSpeed = samples.downloadSpeedAt(index);
+    if (entries.upload[slot] == upload &&
+        entries.download[slot] == download &&
+        entries.uploadSpeed[slot] == uploadSpeed &&
+        entries.downloadSpeed[slot] == downloadSpeed) {
+      return false;
+    }
+    entries.upload[slot] = upload;
+    entries.download[slot] = download;
+    entries.uploadSpeed[slot] = uploadSpeed;
+    entries.downloadSpeed[slot] = downloadSpeed;
+    return true;
+  }
+
+  bool _takeSnapshot(_Entry entry, TrackerInfo snapshot) {
+    final entries = _entries;
+    final slot = entry.slot;
+    final ranked =
+        snapshot.uploadSpeed != null || snapshot.downloadSpeed != null;
+    var moved = false;
+    if (entries.upload[slot] != snapshot.upload ||
+        entries.download[slot] != snapshot.download) {
+      entries.upload[slot] = snapshot.upload;
+      entries.download[slot] = snapshot.download;
+      moved = true;
+    }
+    if (ranked) {
+      final uploadSpeed = snapshot.uploadSpeed ?? _noSpeed;
+      final downloadSpeed = snapshot.downloadSpeed ?? _noSpeed;
+      if (entries.uploadSpeed[slot] != uploadSpeed ||
+          entries.downloadSpeed[slot] != downloadSpeed) {
+        entries.uploadSpeed[slot] = uploadSpeed;
+        entries.downloadSpeed[slot] = downloadSpeed;
+        moved = true;
+      }
+    }
+    final known = _infoOf(entry);
+    final next = _keepingKnown(snapshot, known);
+    if (next == known) {
+      return moved;
+    }
+    _replace(entry, next);
+    _record(ConnectionChangeKind.changed, next.id);
+    return true;
+  }
+
+  /// An unranked snapshot keeps the last speeds, and one without DNS queries,
+  /// as a dev Core's always is, keeps those its opening event named.
+  static TrackerInfo _keepingKnown(TrackerInfo next, TrackerInfo known) {
+    final ranked = next.uploadSpeed != null || next.downloadSpeed != null;
+    final keepsQueries = next.dnsQueries.isEmpty && known.dnsQueries.isNotEmpty;
+    if (ranked && !keepsQueries) {
       return next;
     }
     return next.copyWith(
-      uploadSpeed: known.uploadSpeed,
-      downloadSpeed: known.downloadSpeed,
+      uploadSpeed: ranked ? next.uploadSpeed : known.uploadSpeed,
+      downloadSpeed: ranked ? next.downloadSpeed : known.downloadSpeed,
+      dnsQueries: keepsQueries ? known.dnsQueries : next.dnsQueries,
     );
   }
 
   bool _close(String id, DateTime at) {
-    final trackerInfo = _entries.byId[id];
-    if (trackerInfo == null || !trackerInfo.isActive) {
+    final entry = _entries.byId[id];
+    if (entry == null || !entry.info.isActive) {
       return false;
     }
-    _entries.byId[id] = trackerInfo.copyWith(
-      closedAt: at,
-      uploadSpeed: null,
-      downloadSpeed: null,
+    _replace(
+      entry,
+      _infoOf(
+        entry,
+      ).copyWith(closedAt: at, uploadSpeed: null, downloadSpeed: null),
     );
     _entries.closedOrder.add(id);
+    _entries.open[entry.slot] = 0;
+    _record(ConnectionChangeKind.closed, id);
     return true;
   }
 
+  void _replace(_Entry entry, TrackerInfo info) {
+    final entries = _entries;
+    if ((entry.info.failure != null) != (info.failure != null)) {
+      entries.failed += info.failure != null ? 1 : -1;
+    }
+    entry.info = info;
+    _writeTraffic(entry.slot, info);
+  }
+
+  void _writeTraffic(int slot, TrackerInfo info) {
+    final entries = _entries;
+    entries.upload[slot] = info.upload;
+    entries.download[slot] = info.download;
+    entries.uploadSpeed[slot] = info.uploadSpeed ?? _noSpeed;
+    entries.downloadSpeed[slot] = info.downloadSpeed ?? _noSpeed;
+  }
+
   void _trim() {
-    final closedOrder = _entries.closedOrder;
+    final entries = _entries;
+    final closedOrder = entries.closedOrder;
     if (closedOrder.length <= closedCapacity) {
       return;
     }
-    final trimmed = _entries.trimmed;
+    final trimmed = entries.trimmed;
     while (closedOrder.length > closedCapacity) {
       final id = closedOrder.removeFirst();
-      _entries.byId.remove(id);
-      trimmed.add(id);
+      final entry = entries.byId.remove(id)!;
+      trimmed[id] = _infoOf(entry);
       if (trimmed.length > closedCapacity) {
-        trimmed.remove(trimmed.first);
+        trimmed.remove(trimmed.keys.first);
       }
+      if (entry.info.failure != null) {
+        entries.failed--;
+      }
+      entries.freeSlots.add(entry.slot);
+      entries.generations[entry.slot]++;
+      entries.bySlot[entry.slot] = null;
+      entries.open[entry.slot] = 0;
+      _record(ConnectionChangeKind.removed, id);
     }
     _forgetLatestIfEmpty();
   }
@@ -215,34 +493,67 @@ class ConnectionLog {
     }
   }
 
+  int _takeSlot() {
+    final entries = _entries;
+    if (entries.freeSlots.isNotEmpty) {
+      return entries.freeSlots.removeLast();
+    }
+    final slot = entries.slots++;
+    if (slot == entries.upload.length) {
+      final capacity = slot == 0 ? 64 : slot * 2;
+      Int64List grown(Int64List from) => Int64List(capacity)..setAll(0, from);
+      entries.upload = grown(entries.upload);
+      entries.download = grown(entries.download);
+      entries.uploadSpeed = grown(entries.uploadSpeed);
+      entries.downloadSpeed = grown(entries.downloadSpeed);
+      entries.open = Uint8List(capacity)..setAll(0, entries.open);
+      entries.generations = Int32List(capacity)..setAll(0, entries.generations);
+      entries.listedIn = Int32List(capacity)..setAll(0, entries.listedIn);
+    }
+    entries.bySlot.add(null);
+    return slot;
+  }
+
   bool _appendWasLate(TrackerInfo trackerInfo) {
-    _entries.byId[trackerInfo.id] = trackerInfo;
-    final latest = _entries.latestStart;
+    final entries = _entries;
+    final entry = _Entry(trackerInfo, _takeSlot(), entries.seq++);
+    entries.byId[trackerInfo.id] = entry;
+    entries.bySlot[entry.slot] = entry;
+    entries.open[entry.slot] = trackerInfo.isActive ? 1 : 0;
+    _writeTraffic(entry.slot, trackerInfo);
+    if (trackerInfo.failure != null) {
+      entries.failed++;
+    }
+    if (!trackerInfo.isActive) {
+      entries.closedOrder.add(trackerInfo.id);
+    }
+    _record(ConnectionChangeKind.opened, trackerInfo.id);
+    final latest = entries.latestStart;
     if (latest != null && trackerInfo.start.isBefore(latest)) {
       return true;
     }
-    _entries.latestStart = trackerInfo.start;
+    entries.latestStart = trackerInfo.start;
     return false;
   }
 
   void _placeLate(int placed) {
     final byId = _entries.byId;
     final all = byId.values.toList(growable: false);
-    int byStart(TrackerInfo a, TrackerInfo b) => a.start.compareTo(b.start);
+    int byStart(_Entry a, _Entry b) => a.info.start.compareTo(b.info.start);
     final appended = all.sublist(placed);
     mergeSort(appended, compare: byStart);
-    final earliest = appended.first.start;
+    final earliest = appended.first.info.start;
     var from = placed;
-    while (from > 0 && all[from - 1].start.isAfter(earliest)) {
+    while (from > 0 && all[from - 1].info.start.isAfter(earliest)) {
       from--;
     }
     final moved = [...all.sublist(from, placed), ...appended];
     mergeSort(moved, compare: byStart);
-    for (final trackerInfo in all.skip(from)) {
-      byId.remove(trackerInfo.id);
+    for (final entry in all.skip(from)) {
+      byId.remove(entry.info.id);
     }
-    for (final trackerInfo in moved) {
-      byId[trackerInfo.id] = trackerInfo;
+    for (final entry in moved) {
+      byId[entry.info.id] = entry;
     }
   }
 

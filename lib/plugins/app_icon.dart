@@ -11,6 +11,20 @@ import 'package:rust_api/rust_api.dart' show appIconFile;
 String appIconIdOf(Metadata metadata) =>
     metadata.processPath.isNotEmpty ? metadata.processPath : metadata.process;
 
+/// The share of its square a square icon from [AppIconSource] visibly fills,
+/// measured on what each platform renders: macOS draws every app on Apple's
+/// grid, 824 of 1024; GNOME's square icons leave 16 of 256 clear on each
+/// side; Windows and Android icons reach the edges.
+const appIconBodies = (macOS: 0.805, android: 1.0, windows: 1.0, linux: 0.875);
+
+double get hostAppIconBody => system.isMacOS
+    ? appIconBodies.macOS
+    : system.isAndroid
+    ? appIconBodies.android
+    : system.isWindows
+    ? appIconBodies.windows
+    : appIconBodies.linux;
+
 /// The empty id is the platform's generic app icon, which also stands in for
 /// an app whose own icon cannot be had.
 abstract class AppIconSource {

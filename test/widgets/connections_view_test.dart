@@ -8,14 +8,11 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import '../helpers/record_finders.dart';
 import '../helpers/test_app.dart';
-import 'package:prism_ui/prism_ui.dart';
 import '../helpers/core_connections.dart';
 
 void main() {
@@ -89,10 +86,10 @@ void main() {
 
     await tester.scrollUntilVisible(
       find.textContaining('host-0.com'),
-      800,
+      -800,
       scrollable: find
           .descendant(
-            of: find.byType(TrackerInfoGroupedList),
+            of: find.byType(RecordMinuteList<String>),
             matching: find.byType(Scrollable),
           )
           .first,
@@ -211,40 +208,9 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    registerConnectionsPresenter<RankedTrackerInfos>();
-    verifyNever(() => core.getConnectionsWith<RankedTrackerInfos>(any()));
+    registerConnectionsPresenter<ConnectionPoll>();
+    verifyNever(() => core.getConnectionsWith<ConnectionPoll>(any()));
     expect(find.byType(NullStatus), findsOneWidget);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  testWidgets('a wide table shows every column, a narrower one gives up the '
-      'rule first', (tester) async {
-    await pumpConnections(
-      tester,
-      connectionsReader: () async => buildConnections(2),
-    );
-    const headers = [
-      'Time',
-      'App',
-      'Target',
-      'Rule',
-      'Exit',
-      'Speed',
-      'Duration',
-      'Total',
-    ];
-    tester.view.physicalSize = const Size(1600, 900);
-    await tester.pump(const Duration(seconds: 1));
-    for (final label in headers) {
-      final header = tester.renderObject<RenderParagraph>(headerText(label));
-      expect(header.didExceedMaxLines, isFalse, reason: label);
-    }
-
-    tester.view.physicalSize = const Size(860, 900);
-    await tester.pump(const Duration(seconds: 1));
-    expect(headerText('Rule'), findsNothing);
-    expect(headerText('Duration'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -331,33 +297,6 @@ void main() {
     expect(tester.takeException(), null);
 
     await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  test('a list off its end counts only the new connections it would show', () {
-    final controller = TrackerInfoListController();
-    addTearDown(controller.dispose);
-    TrackerInfo connection(String id, String network) => TrackerInfo(
-      id: id,
-      start: DateTime.utc(2026),
-      metadata: Metadata(network: network, host: '$id.test'),
-      chains: const ['Proxy'],
-      rule: 'MATCH',
-      rulePayload: '',
-    );
-    final shown = [connection('a', 'tcp')];
-    controller
-      ..resumeAutoScrollToEnd(shown)
-      ..setAutoScrollToEnd(false)
-      ..setTrackerInfos(
-        [...shown, connection('b', 'udp'), connection('c', 'tcp')],
-        shown: (list) => [
-          for (final item in list)
-            if (item.metadata.network == 'tcp') item,
-        ],
-      );
-
-    expect(controller.value.pending, 1);
-    expect(controller.value.trackerInfos.map((item) => item.id), ['a']);
   });
 }
 

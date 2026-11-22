@@ -46,6 +46,12 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
         'url': 'https://example.com',
         'value': 42,
       },
+      CoreMethod.ruleList => {
+        'rules': [
+          {'type': 'DOMAIN-SUFFIX', 'payload': 'example.com', 'target': 'A'},
+          {'type': 'MATCH', 'payload': '', 'target': 'DIRECT'},
+        ],
+      },
       CoreMethod.connectionList => {
         'connections': [
           {
@@ -146,6 +152,34 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
             'response-size': 0,
           },
         ],
+      },
+      CoreMethod.mitmQuery => {
+        'capturing': true,
+        'version': 9,
+        'oldest': 3,
+        'held': 2,
+        'matched': 2,
+        'exchanges': [
+          {
+            'id': 8,
+            'start': '2026-10-28T00:00:02Z',
+            'duration': 30,
+            'method': 'POST',
+            'url': 'https://a.test/x?y=1',
+            'status': 502,
+            'request-size': 10,
+            'response-size': 20,
+            'host': 'a.test',
+            'path': '/x?y=1',
+            'content-type': 'application/json',
+            'status-class': '5xx',
+            'kind': 'json',
+            'rewritten': true,
+            'connection-id': 41,
+            'app': {'process': 'curl', 'process-path': '/usr/bin/curl'},
+          },
+        ],
+        'next': 8,
       },
       CoreMethod.routeWatch => {
         'core-epoch': 1,
@@ -364,6 +398,25 @@ void main() {
     expect(cleared, isNull);
   });
 
+  test('every connection\'s requests are read a page at a time in the '
+      'shape Concord answers', () async {
+    final handler = _RecordingCoreHandler();
+
+    final page = await handler.queryMitmExchanges(before: 20, limit: 64);
+
+    expect(handler.calls[CoreMethod.mitmQuery], {'before': 20, 'limit': 64});
+    expect(page.version, 9);
+    expect(page.oldest, 3);
+    expect(page.next, 8);
+    final exchange = page.exchanges.single;
+    expect(exchange.path, '/x?y=1');
+    expect(exchange.statusClass, '5xx');
+    expect(exchange.kind, 'json');
+    expect(exchange.rewritten, isTrue);
+    expect(exchange.connectionId, '41');
+    expect(exchange.app?.processPath, '/usr/bin/curl');
+  });
+
   test('the MITM certificate is read, and a missing answer fails', () async {
     final handler = _RecordingCoreHandler();
 
@@ -404,6 +457,28 @@ void main() {
     expect(await handler.validateConfig('/config.yaml'), isNull);
     expect(handler.calls[CoreMethod.configValidate], {'path': '/config.yaml'});
   });
+
+  test(
+    'getRules tells which rule stands at each place, in match order',
+    () async {
+      final handler = _RecordingCoreHandler();
+
+      final rules = await handler.getRules();
+
+      expect(rules.length, 2);
+      expect(
+        rules.holds(0, type: 'DOMAIN-SUFFIX', payload: 'example.com'),
+        isTrue,
+      );
+      expect(rules.holds(1, type: 'MATCH', payload: ''), isTrue);
+      expect(rules.holds(0, type: 'DOMAIN', payload: 'example.com'), isFalse);
+      expect(
+        rules.holds(0, type: 'DOMAIN-SUFFIX', payload: 'example.co'),
+        isFalse,
+      );
+      expect(rules.holds(2, type: 'MATCH', payload: ''), isFalse);
+    },
+  );
 
   test('dumpRuleSet sends the rule set path', () async {
     final handler = _RecordingCoreHandler();

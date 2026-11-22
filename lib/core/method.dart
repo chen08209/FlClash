@@ -31,6 +31,7 @@ enum CoreMethod {
   providerGet('provider.get'),
   providerUpdate('provider.update'),
   providerSideLoad('provider.sideLoad'),
+  ruleList('rule.list'),
   ruleSetDump('ruleSet.dump'),
   ruleSetCompile('ruleSet.compile'),
   geoUpdate('geo.update'),
@@ -58,6 +59,7 @@ enum CoreMethod {
   mitmIssueCertificate('mitm.issueCertificate'),
   mitmRunScript('mitm.runScript'),
   mitmExchanges('mitm.exchanges'),
+  mitmQuery('mitm.query'),
   mitmExchange('mitm.exchange'),
   mitmBody('mitm.body'),
 

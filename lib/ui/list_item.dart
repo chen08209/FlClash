@@ -248,6 +248,7 @@ class ListItem<T> extends StatelessWidget {
           horizontalTitleGap: horizontalTitleGap,
           minVerticalPadding: minVerticalPadding,
           alignment: alignment,
+          minHeight: minTileHeight ?? listRowMinHeight,
           onPressed: onTap,
         ),
       );
@@ -280,6 +281,16 @@ class ListItem<T> extends StatelessWidget {
   // The glyph's stroke ends 6.7 inside its box; iOS's ends 0.7 inside its own.
   /// What the chevron glyph leaves beside its stroke.
   static const chevronInset = 6.0;
+
+  /// A row's padding when it ends in a chevron, whose stroke then meets the
+  /// margin the row's other ends keep.
+  static EdgeInsetsDirectional chevronPaddingOf(BuildContext context) {
+    final insets = context.listInsets;
+    return EdgeInsetsDirectional.only(
+      start: insets.leading,
+      end: insets.trailing - chevronInset,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

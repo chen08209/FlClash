@@ -11,7 +11,8 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 
-export 'package:fl_clash/plugins/app_icon.dart' show appIconIdOf;
+export 'package:fl_clash/plugins/app_icon.dart'
+    show appIconBodies, appIconIdOf, hostAppIconBody;
 
 const _maxCachedIconBytes = 16 << 20;
 
@@ -481,7 +482,6 @@ class OwnPackageIcon extends ConsumerStatefulWidget {
 class _OwnPackageIconState extends ConsumerState<OwnPackageIcon>
     with _PackageIconLoader<OwnPackageIcon> {
   var _holdsRoom = false;
-  ImageProvider? _fallback;
 
   @override
   String packageNameOf(OwnPackageIcon widget) => widget.packageName;
@@ -494,7 +494,6 @@ class _OwnPackageIconState extends ConsumerState<OwnPackageIcon>
     final cached = source?.getCachedOwnPackageIcon(packageName);
     final load = cached == null ? source?.getOwnPackageIcon(packageName) : null;
     _holdsRoom = load != null;
-    _fallback = null;
     return (cached?.icon, load);
   }
 
@@ -504,19 +503,17 @@ class _OwnPackageIconState extends ConsumerState<OwnPackageIcon>
       super.onLoaded(loaded);
       return;
     }
-    setState(() {
-      _fallback = ref.read(packageIconSourceProvider)?.getCachedPackageIcon('');
-    });
+    setState(() => _holdsRoom = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final size = widget.size;
-    final shown = icon ?? _fallback;
+    final icon = this.icon;
     return widget.builder(
       context,
-      shown != null
-          ? packageIconImage(shown, size)
+      icon != null
+          ? packageIconImage(icon, size)
           : _holdsRoom
           ? SizedBox.square(dimension: size)
           : null,

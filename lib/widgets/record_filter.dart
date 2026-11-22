@@ -2,21 +2,16 @@ import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'record.dart';
 
 @immutable
 class RecordFilterState {
   final List<RecordFilter> filters;
-  final RecordGrouping? grouping;
 
-  const RecordFilterState({this.filters = const [], this.grouping});
+  const RecordFilterState({this.filters = const []});
 }
 
 typedef RecordFacetOptions = Map<RecordFacetKind, List<String>>;
@@ -27,8 +22,6 @@ const _optionsEquality = MapEquality<RecordFacetKind, List<String>>(
 
 class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
   final List<RecordFacet<T>> facets;
-  final List<RecordGrouper<T>> groupers;
-  final ValueChanged<RecordGrouping?>? onGroupingChanged;
 
   // Apart from [value] so a list refresh, which only moves [options] when a
   // value comes or goes, leaves the bar and its chips alone.
@@ -36,26 +29,12 @@ class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
   final _pinnedKeywords = ValueNotifier<List<ScaffoldKeyword>>(const []);
   final options = ValueNotifier<RecordFacetOptions>(const {});
 
-  RecordFilterController({
-    required this.facets,
-    this.groupers = const [],
-    RecordGrouping? grouping,
-    this.onGroupingChanged,
-  }) : super(
-         RecordFilterState(
-           grouping: groupers.any((grouper) => grouper.grouping == grouping)
-               ? grouping
-               : null,
-         ),
-       );
+  RecordFilterController({required this.facets})
+    : super(const RecordFilterState());
 
   List<RecordFilter> get filters => value.filters;
 
   bool get isFiltering => filters.isNotEmpty;
-
-  RecordGrouper<T>? get grouper => groupers.firstWhereOrNull(
-    (grouper) => grouper.grouping == value.grouping,
-  );
 
   RecordFacet<T>? facetOf(RecordFacetKind kind) =>
       facets.firstWhereOrNull((facet) => facet.kind == kind);
@@ -81,7 +60,7 @@ class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
       pinned ? _pinnedKeywords : _keywords;
 
   void _setFilters(List<RecordFilter> filters) {
-    value = RecordFilterState(filters: filters, grouping: value.grouping);
+    value = RecordFilterState(filters: filters);
     _updateKeywords();
   }
 
@@ -126,14 +105,6 @@ class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
     _pinnedKeywords.value = pinned;
   }
 
-  void setGrouping(RecordGrouping? grouping) {
-    if (grouping == value.grouping) {
-      return;
-    }
-    value = RecordFilterState(filters: filters, grouping: grouping);
-    onGroupingChanged?.call(grouping);
-  }
-
   /// Offers the values [items] take, read before any filter narrows them.
   void offer(Iterable<T> items) {
     final next = <RecordFacetKind, List<String>>{};
@@ -161,15 +132,9 @@ class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
   List<T> apply(List<T> items) =>
       isFiltering ? items.whereFilters(facets, filters).toList() : items;
 
-  List<RecordGroup<T>>? groupsOf(List<T> items, {bool reverse = false}) {
-    final keyOf = grouper?.keyOf;
-    return keyOf == null ? null : groupRecords(items, keyOf, reverse: reverse);
-  }
-
   List<PopupMenuItem> menuItems(BuildContext context, {required bool pinned}) {
     final appLocalizations = context.appLocalizations;
     final options = this.options.value;
-    final grouping = value.grouping;
     return [
       if (!pinned && options.isNotEmpty)
         PopupMenuItem(
@@ -189,24 +154,6 @@ class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
                 ),
           ],
         ),
-      if (groupers.isNotEmpty)
-        PopupMenuItem(
-          glyph: AppGlyphs.layers,
-          label: appLocalizations.groupBy,
-          subItems: [
-            PopupMenuItem(
-              label: appLocalizations.none,
-              checked: grouping == null,
-              onPressed: () => setGrouping(null),
-            ),
-            for (final grouper in groupers)
-              PopupMenuItem(
-                label: grouper.grouping.label,
-                checked: grouping == grouper.grouping,
-                onPressed: () => setGrouping(grouper.grouping),
-              ),
-          ],
-        ),
     ];
   }
 
@@ -217,25 +164,6 @@ class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
     options.dispose();
     super.dispose();
   }
-}
-
-RecordGrouping? savedRecordGrouping(WidgetRef ref, String pageId) {
-  final name = ref.read(appSettingProvider).recordGroupings[pageId];
-  return RecordGrouping.values.asNameMap()[name];
-}
-
-void saveRecordGrouping(
-  WidgetRef ref,
-  String pageId,
-  RecordGrouping? grouping,
-) {
-  ref.read(appSettingProvider.notifier).update((state) {
-    final groupings = {...state.recordGroupings}..remove(pageId);
-    if (grouping != null) {
-      groupings[pageId] = grouping.name;
-    }
-    return state.copyWith(recordGroupings: groupings);
-  });
 }
 
 /// Lets a value tapped in a row narrow the list it sits in.
@@ -256,61 +184,4 @@ class RecordFilterScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(RecordFilterScope oldWidget) => false;
-}
-
-/// Lays [groups] out folded under their headers, newest first whatever way
-/// the list reads ungrouped.
-class RecordGroupedList<T> extends StatelessWidget {
-  final List<RecordGroup<T>> groups;
-  final RecordGrouping grouping;
-  final ScrollController? controller;
-  final EdgeInsetsGeometry? padding;
-  final double estimatedItemExtent;
-  final Widget Function(BuildContext context, T item, int index) itemBuilder;
-  final Widget? Function(RecordGroup<T> group)? leadingOf;
-  final Widget? Function(RecordGroup<T> group)? trailingOf;
-
-  const RecordGroupedList({
-    super.key,
-    required this.groups,
-    required this.grouping,
-    this.controller,
-    this.padding,
-    this.estimatedItemExtent = recordListEstimatedExtent,
-    required this.itemBuilder,
-    this.leadingOf,
-    this.trailingOf,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final other = context.appLocalizations.other;
-    return ArrivalCacheExtentBuilder(
-      builder: (cacheExtent) => CustomScrollView(
-        controller: controller,
-        scrollCacheExtent: cacheExtent,
-        slivers: [
-          SliverPadding(
-            padding: padding ?? EdgeInsets.zero,
-            sliver: SliverCollapsibleGroups(
-              key: ValueKey(grouping),
-              estimatedItemExtent: estimatedItemExtent,
-              groups: [
-                for (final group in groups)
-                  CollapsibleGroup(
-                    key: group.key,
-                    label: group.key.isEmpty ? other : group.key,
-                    itemCount: group.items.length,
-                    leading: leadingOf?.call(group),
-                    trailing: trailingOf?.call(group),
-                  ),
-              ],
-              itemBuilder: (context, group, index) =>
-                  itemBuilder(context, groups[group].items[index], index),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -1,3 +1,5 @@
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -6,14 +8,21 @@ TrackerInfo _tracker(
   String host = 'example.com',
   String process = 'curl',
   List<String> chains = const ['Proxy'],
+  String? rule = 'DOMAIN',
+  String specialProxy = '',
 }) {
   return TrackerInfo(
     id: id,
     start: DateTime.utc(2026),
-    metadata: Metadata(network: 'tcp', host: host, process: process),
+    metadata: Metadata(
+      network: 'tcp',
+      host: host,
+      process: process,
+      specialProxy: specialProxy,
+    ),
     chains: chains,
-    rule: 'DOMAIN',
-    rulePayload: host,
+    rule: rule ?? '',
+    rulePayload: rule == null ? '' : host,
   );
 }
 
@@ -65,8 +74,78 @@ void main() {
     expect(ConnectionQuery.parse('host:""').conditions, isEmpty);
   });
 
+  test('an = after the colon asks for the whole value', () {
+    final query = ConnectionQuery.parse('host:=github.com -app:=chrome app:=');
+    expect(query.conditions, [
+      ConnectionCondition(
+        ConnectionField.host,
+        'github.com',
+        match: ConditionMatch.equals,
+      ),
+      ConnectionCondition(
+        ConnectionField.app,
+        'chrome',
+        excludes: true,
+        match: ConditionMatch.equals,
+      ),
+    ]);
+    expect(query.text, 'app:=');
+    expect('${query.conditions.last}', '-app:=chrome');
+    expect(matching('host:=GitHub.com'), ['b']);
+    expect(matching('host:github.com'), ['a', 'b']);
+    expect(matching('app:=chrome'), ['a', 'c']);
+    expect(matching('app:="google chrome"'), isEmpty);
+    expect(matching('app:="google chrome helper"'), ['e']);
+  });
+
   test('an excluding condition drops what it holds', () {
     expect(matching('app:chrome -host:doubleclick'), ['a', 'e']);
     expect(matching('-app:chrome -app:curl'), ['d']);
+  });
+
+  test('a connection no rule matched names what routed it', () {
+    final appLocalizations = currentAppLocalizations;
+    final unruled = [
+      _tracker('global', rule: null, chains: ['Tokyo', 'GLOBAL']),
+      _tracker('direct', rule: null, chains: ['DIRECT']),
+      _tracker(
+        'listener',
+        rule: null,
+        chains: ['GLOBAL'],
+        specialProxy: 'GLOBAL',
+      ),
+    ];
+    expect(
+      [
+        for (final tracker in unruled)
+          trackerRuleText(appLocalizations, tracker),
+      ],
+      [
+        appLocalizations.connectionRuleGlobal,
+        appLocalizations.connectionRuleNone,
+        appLocalizations.connectionRuleNone,
+      ],
+    );
+    expect(
+      trackerRuleText(appLocalizations, trackers.first),
+      'DOMAIN(api.github.com)',
+    );
+    final ruleFacet = trackerInfoFacets.firstWhere(
+      (facet) => facet.kind == RecordFacetKind.rule,
+    );
+    expect(ruleFacet.valuesOf(unruled.first), [
+      appLocalizations.connectionRuleGlobal,
+    ]);
+    expect(ruleFacet.valuesOf(trackers.first), ['DOMAIN']);
+    final query = ConnectionQuery.parse(
+      'rule:"${appLocalizations.connectionRuleNone}"',
+    );
+    expect(
+      [
+        for (final tracker in unruled)
+          if (query.matcher(tracker)) tracker.id,
+      ],
+      ['direct', 'listener'],
+    );
   });
 }

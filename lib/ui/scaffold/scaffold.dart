@@ -86,6 +86,9 @@ class Scaffold extends StatefulWidget {
 
   /// A line under the [keywords] strip, as a summary of what they select.
   final Widget? keywordsCaption;
+
+  /// A bar of the page's own under the app bar, in place of [keywords].
+  final Widget? header;
   final bool? resizeToAvoidBottomInset;
   final VoidCallback? backAction;
 
@@ -113,6 +116,7 @@ class Scaffold extends StatefulWidget {
     this.confirmationAction,
     this.keywords,
     this.keywordsCaption,
+    this.header,
     this.resizeToAvoidBottomInset,
     this.canSort = false,
   });
@@ -886,12 +890,15 @@ class ScaffoldState extends State<Scaffold>
     _searchFillsBar = isCompactBar(context, ViewScope.isMobileOf(context));
     _searchDocked = form.hasDockedSearch;
     final keywords = widget.keywords;
+    final header = widget.header;
     final docked = form.dockedSearch;
     return PrismScaffold(
       bar: _buildAppBar(backAction, form),
       body: SortModeScope(sorting: _sorting, child: widget.body),
       headerListenable: keywords,
-      headerBuilder: keywords == null
+      headerBuilder: header != null
+          ? (_) => header
+          : keywords == null
           ? null
           : (_) => keywords.value.isEmpty
                 ? null

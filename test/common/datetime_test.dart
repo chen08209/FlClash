@@ -26,7 +26,7 @@ void main() {
 
       expect(dateTime.show, '2026-05-27');
       expect(dateTime.showFull, '2026-05-27 14:03:09');
-      expect(dateTime.showTime, ' 14:03:09');
+      expect(dateTime.showTime, '14:03:09');
     });
 
     test('formats offset timestamps in the system time zone', () {

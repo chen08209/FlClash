@@ -4,6 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -235,6 +236,11 @@ class Dialogs {
       return;
     }
     BannerHost.maybeOf(context)?.show(text, level: level, onTap: onTap);
+  }
+
+  Future<void> copy(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    showBanner(currentAppLocalizations.copySuccess);
   }
 
   void showFailures(List<UpdatingMessage> failures) {

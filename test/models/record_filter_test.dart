@@ -19,10 +19,6 @@ _Item _item(String id, {String network = 'tcp', String app = 'curl'}) =>
 
 List<String> _ids(Iterable<_Item> items) => [for (final item in items) item.id];
 
-List<String> _layout(List<RecordGroup<_Item>> groups) => [
-  for (final group in groups) '${group.key}: ${_ids(group.items).join(' ')}',
-];
-
 void main() {
   group('whereFilters', () {
     final items = [
@@ -92,32 +88,6 @@ void main() {
 
     test('leaves out empty values', () {
       expect(_facets.last.optionsOf([_item('a', app: '')]), isEmpty);
-    });
-  });
-
-  group('groupRecords', () {
-    final items = [
-      _item('a'),
-      _item('b', app: 'chrome'),
-      _item('c'),
-      _item('d', app: 'chrome'),
-      _item('e', app: 'git'),
-    ];
-
-    test('orders groups by the first item each shows', () {
-      expect(_layout(groupRecords(items, (item) => item.app)), [
-        'curl: a c',
-        'chrome: b d',
-        'git: e',
-      ]);
-    });
-
-    test('a list shown bottom up leads with its newest group and item', () {
-      expect(_layout(groupRecords(items, (item) => item.app, reverse: true)), [
-        'git: e',
-        'chrome: d b',
-        'curl: c a',
-      ]);
     });
   });
 }

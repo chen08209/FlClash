@@ -8,18 +8,15 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Says on the connections page whether HTTP capture records, and opens
-/// [HttpCaptureView]; a phone's bar, which the feed title shares, holds it as
-/// a toggle-styled button rather than a labeled chip.
+/// Says in the requests page's bar whether HTTP capture records, as a toggled
+/// button, and opens [HttpCaptureView].
 class HttpCaptureEntry extends ConsumerWidget {
-  const HttpCaptureEntry({super.key, required this.isAndroid});
-
-  final bool isAndroid;
+  const HttpCaptureEntry({super.key});
 
   Future<void> _open(BuildContext context, WidgetRef ref) async {
     await showNestedSheet<void>(
       context,
-      builder: (_) => HttpCaptureView(isAndroid: isAndroid),
+      builder: (_) => const HttpCaptureView(),
     );
     if (context.mounted) {
       _giveWayToBar(context, ref);
@@ -44,66 +41,105 @@ class HttpCaptureEntry extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final capturing = ref.watch(
-      patchClashConfigProvider.select(
-        (state) => state.mitm.enable && state.mitm.capture,
-      ),
-    );
+    final capturing = ref.watch(patchClashConfigProvider.select(httpCapturing));
     final label = capturing
         ? appLocalizations.httpCapturing
         : appLocalizations.httpCaptureOff;
-    if (ref.watch(isMobileViewProvider)) {
-      return AppBarActionButton(
-        data: IconButtonData(
-          glyph: AppGlyphs.eye,
-          tooltip: label,
-          isSelected: capturing,
-          onPressed: () => _open(context, ref),
-        ),
-      );
-    }
-    return Chip(
-      label: label,
-      selected: capturing,
-      onPressed: () => _open(context, ref),
+    return AppBarActionButton(
+      data: IconButtonData(
+        glyph: AppGlyphs.eye,
+        tooltip: label,
+        isSelected: capturing,
+        onPressed: () => _open(context, ref),
+      ),
     );
   }
 }
 
-class HttpCaptureView extends ConsumerWidget {
-  const HttpCaptureView({super.key, required this.isAndroid});
+bool httpCapturing(PatchClashConfig state) =>
+    state.mitm.enable && state.mitm.capture;
 
-  final bool isAndroid;
+void _update(WidgetRef ref, Mitm Function(Mitm) update) {
+  ref
+      .read(patchClashConfigProvider.notifier)
+      .update((state) => state.copyWith(mitm: update(state.mitm)));
+}
 
-  void _update(WidgetRef ref, Mitm Function(Mitm) update) {
-    ref
-        .read(patchClashConfigProvider.notifier)
-        .update((state) => state.copyWith(mitm: update(state.mitm)));
-  }
+/// Turns capture on and off, and leads to decryption's settings while
+/// decryption, which capture needs, is off.
+class HttpCaptureSwitch extends ConsumerWidget {
+  final bool last;
+
+  const HttpCaptureSwitch({super.key, this.last = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final (enable, capture, limit) = ref.watch(
+    final (enable, capture) = ref.watch(
       patchClashConfigProvider.select(
-        (state) => (
-          state.mitm.enable,
-          state.mitm.capture,
-          state.mitm.captureLimit(isAndroid: isAndroid),
-        ),
+        (state) => (state.mitm.enable, state.mitm.capture),
       ),
     );
     final noHost = ref.watch(
       patchClashConfigProvider.select(
         (state) =>
-            state.mitm.enable &&
-            state.mitm.capture &&
+            httpCapturing(state) &&
             state.mitm.hostname.every((line) => line.startsWith('-')),
       ),
     );
     final hasModule = ref.watch(
       mitmModulesProvider.select(
         (state) => state.value?.any((module) => module.enabled) == true,
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        generateSection(
+          items: [
+            ListItem.toggle(
+              title: Text(appLocalizations.httpCapture),
+              value: capture,
+              onChanged: enable
+                  ? (value) =>
+                        _update(ref, (state) => state.copyWith(capture: value))
+                  : null,
+            ),
+          ],
+          footer: switch ((enable, noHost && !hasModule)) {
+            (false, _) => appLocalizations.httpCaptureNeedsDecryption,
+            (true, true) => appLocalizations.httpCaptureNoHosts,
+            (true, false) => appLocalizations.httpCaptureDesc,
+          },
+          last: last && enable,
+        ),
+        if (!enable)
+          generateSection(
+            items: [
+              ListItem.open(
+                leading: const GlyphIcon(AppGlyphs.lockOpen),
+                title: Text(appLocalizations.goToMitmSettings),
+                widget: const AdvancedConfigView(),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+class HttpCaptureView extends ConsumerWidget {
+  const HttpCaptureView({super.key, this.isAndroid});
+
+  final bool? isAndroid;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final isAndroid = this.isAndroid ?? system.isAndroid;
+    final limit = ref.watch(
+      patchClashConfigProvider.select(
+        (state) => state.mitm.captureLimit(isAndroid: isAndroid),
       ),
     );
     final options = mitmCaptureOptions(isAndroid: isAndroid);
@@ -115,35 +151,7 @@ class HttpCaptureView extends ConsumerWidget {
           bottom: 16 + context.bottomInset,
         ),
         children: [
-          generateSection(
-            items: [
-              ListItem.toggle(
-                title: Text(appLocalizations.httpCapture),
-                value: capture,
-                onChanged: enable
-                    ? (value) => _update(
-                        ref,
-                        (state) => state.copyWith(capture: value),
-                      )
-                    : null,
-              ),
-            ],
-            footer: switch ((enable, noHost && !hasModule)) {
-              (false, _) => appLocalizations.httpCaptureNeedsDecryption,
-              (true, true) => appLocalizations.httpCaptureNoHosts,
-              (true, false) => appLocalizations.httpCaptureDesc,
-            },
-          ),
-          if (!enable)
-            generateSection(
-              items: [
-                ListItem.open(
-                  leading: const GlyphIcon(AppGlyphs.lockOpen),
-                  title: Text(appLocalizations.goToMitmSettings),
-                  widget: AdvancedConfigView(isAndroid: isAndroid),
-                ),
-              ],
-            ),
+          const HttpCaptureSwitch(),
           generateSection(
             items: [
               ListItem<int>.options(
@@ -163,6 +171,7 @@ class HttpCaptureView extends ConsumerWidget {
               mitmCaptureBytes(isAndroid: isAndroid).traffic.show,
               mitmMaxBodySize(isAndroid: isAndroid).traffic.show,
             ),
+            last: true,
           ),
         ],
       ),

@@ -1,13 +1,12 @@
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/features/connection/tracker_info_list.dart';
+import 'package:fl_clash/features/connection/connection.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/views/dashboard/widgets/connection_stats.dart';
-import 'package:fl_clash/views/dns_queries.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -140,15 +139,20 @@ void main() {
   testWidgets('every count opens its own list in a sheet', (tester) async {
     await pumpCard(tester);
 
-    for (final (label, view) in [
-      ('Live connections', RequestsView),
-      ('Recent requests', RequestsView),
-      ('DNS queries', DnsQueriesView),
+    for (final (label, list) in [
+      ('Live connections', ConditionFilterRow<TrackerInfo, ConnectionStatus>),
+      ('Recent requests', ConditionFilterRow<TrackerInfo, ConnectionStatus>),
+      ('DNS queries', ConditionFilterRow<DnsQuery, DnsStatus>),
     ]) {
       await tester.tap(_stat(label));
       await tester.pumpAndSettle();
 
-      expect(find.byType(view), findsOneWidget);
+      final view = find.byType(RequestsView);
+      expect(view, findsOneWidget);
+      expect(
+        find.descendant(of: view, matching: find.byType(list)),
+        findsOneWidget,
+      );
       expect(
         tester.getTopLeft(find.byType(SheetDragHandle)).dy,
         closeTo(_mobileSize.height * (1 - snapSheetDetents.first), 1),
@@ -156,13 +160,13 @@ void main() {
 
       await tester.tapAt(const Offset(200, 20));
       await tester.pumpAndSettle();
-      expect(find.byType(view), findsNothing);
+      expect(view, findsNothing);
     }
 
     await teardownCard(tester);
   });
 
-  testWidgets('the requests sheet keeps the newest request at its top while '
+  testWidgets('the requests sheet keeps the newest request at its end while '
       'it is dragged and requests arrive', (tester) async {
     final notifier = container.read(requestsProvider.notifier);
     var next = 0;
@@ -173,7 +177,7 @@ void main() {
     await tester.tap(_stat('Recent requests'));
     await tester.pumpAndSettle();
     final list = find.descendant(
-      of: find.byType(TrackerInfoGroupedList),
+      of: find.byType(RecordFeedView<String>),
       matching: find.byType(Scrollable),
     );
     ScrollPosition position() =>
@@ -190,14 +194,14 @@ void main() {
       }
       await gesture.moveBy(const Offset(0, -6));
       await tester.pump(const Duration(milliseconds: 16));
-      expect(position().pixels, 0);
+      expect(position().pixels, position().maxScrollExtent);
     }
     await gesture.up();
     await tester.pumpAndSettle();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
 
-    expect(position().pixels, 0);
+    expect(position().pixels, position().maxScrollExtent);
     expect(find.textContaining('host-${next - 1}.test'), findsWidgets);
 
     await teardownCard(tester);

@@ -162,6 +162,7 @@ func TestEveryCoreMethodConstantIsDispatchable(t *testing.T) {
 		mitmIssueCertificateMethod:    mitmAbsent,
 		mitmRunScriptMethod:           mitmAbsent,
 		mitmExchangesMethod:           mitmAbsent,
+		mitmQueryMethod:               mitmAbsent,
 		mitmExchangeMethod:            mitmAbsent,
 		mitmBodyMethod:                mitmAbsent,
 	}

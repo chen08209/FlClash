@@ -1429,9 +1429,12 @@ other direction.
 
 ### High-Frequency Buffers
 
-`logsProvider`, `requestsProvider`, `dnsQueriesProvider` and `trafficsProvider` hold a `FixedList`
+`logsProvider`, `dnsQueriesProvider` and `trafficsProvider` hold a `FixedList`
 (`lib/common/fixed.dart`), which trades a normal copy-on-write for a shared
-buffer tagged with a generation counter:
+buffer tagged with a generation counter. `requestsProvider` holds a
+`ConnectionLog` (`lib/models/connection_log.dart`), which shares its entries the
+same way: `open`, `close`, `sync` and `updateTraffic` change them in place and
+return a wrapper one `revision` ahead, and the rules below hold for it too.
 
 - `append` mutates the buffer in place and returns a new wrapper one generation
   ahead. That is what providers publish, so `updateShouldNotify` still fires.

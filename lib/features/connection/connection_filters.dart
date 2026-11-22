@@ -4,17 +4,14 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum ConnectionStatus { all, active, failed, decrypted }
+enum ConnectionStatus { all, active, failed }
 
 extension ConnectionStatusExt on ConnectionStatus {
   bool holds(TrackerInfo trackerInfo) => switch (this) {
     ConnectionStatus.all => true,
     ConnectionStatus.active => trackerInfo.isActive,
     ConnectionStatus.failed => trackerInfo.failure != null,
-    ConnectionStatus.decrypted => trackerInfo.metadata.mitm,
   };
 
   String get label {
@@ -23,120 +20,137 @@ extension ConnectionStatusExt on ConnectionStatus {
       ConnectionStatus.all => appLocalizations.connectionsAll,
       ConnectionStatus.active => appLocalizations.connectionsActive,
       ConnectionStatus.failed => appLocalizations.connectionsFailed,
-      ConnectionStatus.decrypted => appLocalizations.connectionsDecrypted,
     };
   }
 }
 
-/// Offered with how many connections hold each value.
-const connectionFacetKinds = [
-  RecordFacetKind.app,
-  RecordFacetKind.proxy,
-  RecordFacetKind.rule,
-  RecordFacetKind.network,
-];
-
-String connectionFacetTitle(RecordFacetKind kind) {
-  final appLocalizations = currentAppLocalizations;
-  return switch (kind) {
-    RecordFacetKind.app => appLocalizations.app,
-    RecordFacetKind.proxy => appLocalizations.outboundExit,
-    RecordFacetKind.rule => appLocalizations.rule,
-    _ => appLocalizations.protocol,
-  };
-}
-
-/// The connections page's filters: one status, and any values of the facets,
-/// which its strip offers with their counts.
-class ConnectionFilterController extends RecordFilterController<TrackerInfo> {
-  final _strip = ValueNotifier<List<ScaffoldKeyword>>(const []);
-  final _barStrip = ValueNotifier<List<ScaffoldKeyword>>(const []);
+/// A list's filters: one of [statuses], the first keeping all, values of the
+/// facets, and conditions; one field's widen each other, fields narrow.
+class ConditionFilterController<T extends Object, S extends Enum>
+    extends RecordFilterController<T> {
   final _counted = ValueNotifier(0);
-  var _status = ConnectionStatus.all;
-  var _conditions = const <ConnectionCondition>[];
 
-  /// Ends the strip with a chip that asks for a condition to add.
-  final VoidCallback? onAskCondition;
-  var _statusCounts = const <ConnectionStatus, int>{};
-  var _valueCounts = const <RecordFacetKind, Map<String, int>>{};
+  final List<S> statuses;
+  final List<RecordField<T>> fields;
+  final String Function(S status) labelOf;
+  final bool Function(S status, T item) _statusHolds;
+  final String Function(String count) showsText;
+  final String Function(String field) valuesInText;
+  final String Function() _conditionTip;
+  final RecordField<T>? Function(RecordFacetKind kind)? _fieldOf;
+  final Iterable<String> Function(RecordField<T> field, T item)?
+  _suggestedValuesOf;
+  late S _status = statuses.first;
+  var _conditions = <RecordCondition<T>>[];
+  var _statusCounts = <S, int>{};
+  List<T> Function() _offered = () => const [];
 
-  ConnectionFilterController({
-    super.groupers,
-    super.grouping,
-    super.onGroupingChanged,
-    this.onAskCondition,
-  }) : super(facets: trackerInfoFacets) {
-    _updateStrip();
-    addListener(_updateStrip);
-  }
+  ConditionFilterController({
+    required super.facets,
+    required this.statuses,
+    required this.fields,
+    required this.labelOf,
+    required bool Function(S status, T item) statusHolds,
+    required this.showsText,
+    required this.valuesInText,
+    required String Function() conditionTip,
+    RecordField<T>? Function(RecordFacetKind kind)? fieldOf,
+    Iterable<String> Function(RecordField<T> field, T item)? suggestedValuesOf,
+  }) : _statusHolds = statusHolds,
+       _conditionTip = conditionTip,
+       _fieldOf = fieldOf,
+       _suggestedValuesOf = suggestedValuesOf;
 
-  ConnectionFilterController.saved(
-    WidgetRef ref,
-    String pageId, {
-    VoidCallback? onAskCondition,
-  }) : this(
-         onAskCondition: onAskCondition,
-         groupers: trackerInfoGroupers,
-         grouping: savedRecordGrouping(ref, pageId),
-         onGroupingChanged: (grouping) =>
-             saveRecordGrouping(ref, pageId, grouping),
-       );
+  bool statusHolds(S status, T item) => _statusHolds(status, item);
 
-  ConnectionStatus get status => _status;
+  String get conditionTip => _conditionTip();
 
-  set status(ConnectionStatus status) {
+  /// The field a facet's value widens, as an equals condition on it would.
+  RecordField<T>? fieldOf(RecordFacetKind kind) => _fieldOf?.call(kind);
+
+  /// The values of [field] a draft suggests, which may be fewer than match.
+  Iterable<String> suggestedValuesOf(RecordField<T> field, T item) =>
+      _suggestedValuesOf?.call(field, item) ?? field.valuesOf(item);
+
+  S get status => _status;
+
+  set status(S status) {
     if (status == _status) {
       return;
     }
     _status = status;
-    _updateStrip();
     notifyListeners();
   }
 
   @override
   bool get isFiltering =>
-      super.isFiltering ||
-      _status != ConnectionStatus.all ||
-      _conditions.isNotEmpty;
+      super.isFiltering || _status != statuses.first || _conditions.isNotEmpty;
 
-  List<ConnectionCondition> get conditions => _conditions;
+  List<RecordCondition<T>> get conditions => _conditions;
 
-  void addCondition(ConnectionCondition condition) {
+  void addCondition(RecordCondition<T> condition) {
     if (_conditions.contains(condition)) {
       return;
     }
     _conditions = [..._conditions, condition];
-    _updateStrip();
     notifyListeners();
   }
 
-  void removeCondition(ConnectionCondition condition) {
+  /// Lets [condition] alone through for its field, keeping what excludes.
+  void onlyCondition(RecordCondition<T> condition) {
+    _conditions = [
+      for (final kept in _conditions)
+        if (kept.excludes || kept.field != condition.field) kept,
+      condition,
+    ];
+    notifyListeners();
+  }
+
+  void removeCondition(RecordCondition<T> condition) {
     _conditions = [..._conditions]..remove(condition);
-    _updateStrip();
     notifyListeners();
   }
 
-  @override
-  ValueListenable<List<ScaffoldKeyword>> keywordsOf({required bool pinned}) =>
-      _strip;
+  void replace(Object previous, RecordCondition<T> next) {
+    if (previous is RecordFilter) {
+      remove(previous);
+      addCondition(next);
+      return;
+    }
+    final index = _conditions.indexOf(previous as RecordCondition<T>);
+    if (index < 0 || _conditions.contains(next)) {
+      removeCondition(previous);
+      addCondition(next);
+      return;
+    }
+    _conditions = [..._conditions]..[index] = next;
+    notifyListeners();
+  }
 
-  ValueListenable<List<ScaffoldKeyword>> get barKeywords => _barStrip;
+  /// Narrows [kind] to [value], dropping the conditions that widened it.
+  void only(RecordFacetKind kind, String value) {
+    final field = fieldOf(kind);
+    _conditions = [
+      for (final condition in _conditions)
+        if (condition.excludes || condition.field != field) condition,
+    ];
+    clear(kind);
+    add(RecordFilter(kind, value));
+    notifyListeners();
+  }
 
+  void clearConditions() {
+    _conditions = [];
+    for (final filter in [...filters]) {
+      remove(filter);
+    }
+    notifyListeners();
+  }
+
+  /// Notifies as the counts [offer] takes change.
   Listenable get counted => _counted;
 
-  int countOf(ConnectionStatus status) => _statusCounts[status] ?? 0;
-
-  int countOfValue(RecordFacetKind kind, String value) =>
-      _valueCounts[kind]?[value] ?? 0;
-
-  /// The most held first, then any selected that no connection holds now.
-  List<String> valuesOf(RecordFacetKind kind) {
-    final counts = _valueCounts[kind] ?? const {};
-    return {
-      ...counts.keys.sorted((a, b) => counts[b]! - counts[a]!),
-      ...selectedOf(kind),
-    }.toList();
-  }
+  int countOf(S status) => _statusCounts[status] ?? 0;
 
   List<String> selectedOf(RecordFacetKind kind) => [
     for (final filter in filters)
@@ -152,176 +166,221 @@ class ConnectionFilterController extends RecordFilterController<TrackerInfo> {
   }
 
   @override
-  List<PopupMenuItem> menuItems(BuildContext context, {required bool pinned}) =>
-      super.menuItems(context, pinned: true);
-
-  @override
-  List<TrackerInfo> apply(List<TrackerInfo> items) {
-    final filtered = super.apply(items);
-    if (_status == ConnectionStatus.all && _conditions.isEmpty) {
-      return filtered;
-    }
-    final matches = ConnectionQuery(_conditions).matcher;
-    return [
-      for (final item in filtered)
-        if (_status.holds(item) && matches(item)) item,
-    ];
+  List<T> apply(List<T> items) {
+    final shows = this.shows;
+    return shows == null ? items : items.where(shows).toList();
   }
 
-  /// [apply], with the failed view's repeated dials to one target as the
-  /// newest of them, counted.
-  ({List<TrackerInfo> items, Map<String, int> repeats}) present(
-    List<TrackerInfo> items,
-  ) {
-    final shown = apply(items);
-    if (_status != ConnectionStatus.failed) {
-      return (items: shown, repeats: const {});
+  bool Function(T item)? get shows {
+    final matches = _matcherOf(_conditions, filters);
+    final status = _status;
+    if (status == statuses.first && matches == null) {
+      return null;
     }
-    final newest = <Object, TrackerInfo>{};
-    final repeats = <String, int>{};
-    for (final item in shown.reversed) {
-      final metadata = item.metadata;
-      final key = (
-        item.failure?.kind,
-        metadata.network,
-        item.title,
-        metadata.destinationPort,
-        metadata.process,
+    return (item) => statusHolds(status, item) && (matches?.call(item) ?? true);
+  }
+
+  FieldDraft<T> draftOn(RecordField<T> field, {Object? replacing}) {
+    final (:excluding, :rows) = _rowsOf(
+      [
+        for (final condition in _conditions)
+          if (condition != replacing) condition,
+      ],
+      [
+        for (final filter in filters)
+          if (filter != replacing) filter,
+      ],
+    );
+    final row = rows.remove(field);
+    final holdsOthers = conditionsMatcher(excluding, rows.values);
+    final groups = <String, _DraftGroup<T>>{};
+    final valueCounts = <String, int>{};
+    for (final item in _offered()) {
+      for (final value in suggestedValuesOf(field, item)) {
+        if (value.isNotEmpty) {
+          valueCounts[value] = (valueCounts[value] ?? 0) + 1;
+        }
+      }
+      if (!statusHolds(_status, item) || !holdsOthers(item)) {
+        continue;
+      }
+      final group = groups[field.valuesOf(item).join('\u0000')] ??= _DraftGroup(
+        item,
       );
-      final kept = newest[key];
-      if (kept == null) {
-        newest[key] = item;
+      if (row == null || row.any((holds) => holds(item))) {
+        group.inRow++;
       } else {
-        repeats[kept.id] = (repeats[kept.id] ?? 1) + 1;
+        group.outOfRow++;
       }
     }
-    return (items: newest.values.toList().reversed.toList(), repeats: repeats);
+    return FieldDraft._(
+      groups: groups.values.toList(),
+      widens: row != null,
+      values: [
+        for (final entry in valueCounts.entries.sorted(
+          (a, b) => b.value - a.value,
+        ))
+          (entry.key, entry.key.toLowerCase(), entry.value),
+      ],
+    );
   }
 
+  bool Function(T)? _matcherOf(
+    List<RecordCondition<T>> conditions,
+    List<RecordFilter> filters,
+  ) {
+    if (conditions.isEmpty && filters.isEmpty) {
+      return null;
+    }
+    final (:excluding, :rows) = _rowsOf(conditions, filters);
+    return conditionsMatcher(excluding, rows.values);
+  }
+
+  ConditionRows<T> _rowsOf(
+    List<RecordCondition<T>> conditions,
+    List<RecordFilter> filters,
+  ) {
+    final (:excluding, :rows) = conditionRows(conditions);
+    for (final filter in filters) {
+      final facet = facetOf(filter.kind);
+      if (facet != null) {
+        (rows[fieldOf(filter.kind) ?? filter.kind] ??= []).add(
+          (item) => facet.valuesOf(item).contains(filter.value),
+        );
+      }
+    }
+    return (excluding: excluding, rows: rows);
+  }
+
+  /// Counts the statuses only: a page filtered by conditions reads no facet
+  /// options, which would cost a pass over every item on each refresh.
   @override
-  void offer(Iterable<TrackerInfo> items) {
-    super.offer(items);
-    final statusCounts = {
-      for (final status in ConnectionStatus.values) status: 0,
-    };
-    final valueCounts = {
-      for (final kind in connectionFacetKinds) kind: <String, int>{},
-    };
-    for (final item in items) {
-      for (final status in ConnectionStatus.values) {
-        if (status.holds(item)) {
+  void offer(Iterable<T> items) {
+    final offered = items is List<T> ? items : items.toList();
+    final statusCounts = {for (final status in statuses) status: 0};
+    for (final item in offered) {
+      for (final status in statuses) {
+        if (statusHolds(status, item)) {
           statusCounts[status] = statusCounts[status]! + 1;
         }
       }
-      for (final kind in connectionFacetKinds) {
-        final counts = valueCounts[kind]!;
-        for (final value in facetOf(kind)!.valuesOf(item)) {
-          if (value.isNotEmpty) {
-            counts[value] = (counts[value] ?? 0) + 1;
-          }
-        }
-      }
     }
-    const equality = DeepCollectionEquality();
-    if (equality.equals(statusCounts, _statusCounts) &&
-        equality.equals(valueCounts, _valueCounts)) {
+    offerCounts(statusCounts, () => offered);
+  }
+
+  /// [items] is read only when a draft needs them.
+  void offerCounts(Map<S, int> statusCounts, List<T> Function() items) {
+    _offered = items;
+    if (MapEquality<S, int>().equals(statusCounts, _statusCounts)) {
       return;
     }
     _statusCounts = statusCounts;
-    _valueCounts = valueCounts;
-    _updateStrip();
     _counted.value++;
-  }
-
-  List<PopupMenuItem> _menuOf(RecordFacetKind kind) {
-    final facet = facetOf(kind)!;
-    final selected = selectedOf(kind);
-    return [
-      PopupMenuItem(
-        label: ConnectionStatus.all.label,
-        checked: selected.isEmpty,
-        onPressed: () => clear(kind),
-      ),
-      for (final (index, value) in valuesOf(kind).indexed)
-        PopupMenuItem(
-          label: facet.label(value),
-          subtitle: '${countOfValue(kind, value)}',
-          checked: selected.contains(value),
-          keepsOpen: true,
-          section: index == 0 ? const PopupMenuSection() : null,
-          onPressed: () => toggle(RecordFilter(kind, value)),
-        ),
-    ];
-  }
-
-  void _updateStrip() {
-    final strip = <ScaffoldKeyword>[
-      for (final status in [
-        ConnectionStatus.all,
-        ConnectionStatus.active,
-        ConnectionStatus.failed,
-        if (rsFeature) ConnectionStatus.decrypted,
-      ])
-        ScaffoldKeyword(
-          key: status,
-          label: '${status.label} ${_statusCounts[status] ?? 0}',
-          selected: _status == status,
-          onPressed: () => this.status = status,
-        ),
-    ];
-    final menus = <ScaffoldKeyword>[];
-    for (final kind in connectionFacetKinds) {
-      final selected = selectedOf(kind).length;
-      if ((_valueCounts[kind] ?? const {}).isEmpty && selected == 0) {
-        continue;
-      }
-      final title = connectionFacetTitle(kind);
-      menus.add(
-        ScaffoldKeyword(
-          key: kind,
-          label: selected == 0 ? title : '$title · $selected',
-          selected: selected > 0,
-          startsSection: menus.isEmpty,
-          menuItems: () => _menuOf(kind),
-        ),
-      );
-    }
-    final onAskCondition = this.onAskCondition;
-    final others = [
-      for (final (index, filter)
-          in filters
-              .where((filter) => !connectionFacetKinds.contains(filter.kind))
-              .indexed)
-        ScaffoldKeyword(
-          key: filter,
-          label: facetOf(filter.kind)?.label(filter.value) ?? filter.value,
-          onDeleted: () => remove(filter),
-          startsSection: index == 0,
-        ),
-      for (final (index, condition) in _conditions.indexed)
-        ScaffoldKeyword(
-          key: condition,
-          label: '$condition',
-          onDeleted: () => removeCondition(condition),
-          startsSection: index == 0,
-        ),
-      if (onAskCondition != null)
-        ScaffoldKeyword(
-          key: ConnectionCondition,
-          label: '+ ${currentAppLocalizations.condition}',
-          onPressed: onAskCondition,
-          startsSection: _conditions.isEmpty,
-        ),
-    ];
-    _strip.value = [...strip, ...menus, ...others];
-    _barStrip.value = [...strip, ...others];
   }
 
   @override
   void dispose() {
-    _strip.dispose();
-    _barStrip.dispose();
     _counted.dispose();
     super.dispose();
+  }
+}
+
+typedef ConnectionFilterController =
+    ConditionFilterController<TrackerInfo, ConnectionStatus>;
+
+ConnectionFilterController connectionFilters() => ConditionFilterController(
+  facets: trackerInfoFacets,
+  statuses: ConnectionStatus.values,
+  fields: ConnectionField.values,
+  labelOf: (status) => status.label,
+  statusHolds: (status, item) => status.holds(item),
+  showsText: (count) => currentAppLocalizations.conditionShows(count),
+  valuesInText: (field) => currentAppLocalizations.conditionValuesIn(field),
+  conditionTip: () => currentAppLocalizations.conditionTip,
+  fieldOf: (kind) => switch (kind) {
+    RecordFacetKind.app => ConnectionField.app,
+    RecordFacetKind.proxy => ConnectionField.exit,
+    RecordFacetKind.rule => ConnectionField.rule,
+    RecordFacetKind.network => ConnectionField.net,
+    _ => null,
+  },
+  suggestedValuesOf: (field, item) => switch (field) {
+    ConnectionField.host => [
+      item.metadata.host.isNotEmpty ? item.metadata.host : item.title,
+    ],
+    ConnectionField.app => [item.metadata.process],
+    ConnectionField.ip => [item.metadata.destinationIP],
+    _ => field.valuesOf(item),
+  },
+);
+
+extension ConnectionFilters on ConnectionFilterController {
+  bool get mergesRepeats => status == ConnectionStatus.failed;
+}
+
+Object trackerRepeatKeyOf(TrackerInfo trackerInfo) {
+  final metadata = trackerInfo.metadata;
+  return (
+    trackerInfo.failure?.kind,
+    metadata.network,
+    trackerInfo.title,
+    metadata.destinationPort,
+    metadata.process,
+  );
+}
+
+class _DraftGroup<T> {
+  final T sample;
+  var inRow = 0;
+  var outOfRow = 0;
+
+  _DraftGroup(this.sample);
+}
+
+/// The items that pass all but one field's row, grouped by what they hold in
+/// that field, so that a draft is matched once per distinct value.
+class FieldDraft<T extends Object> {
+  final List<_DraftGroup<T>> _groups;
+  final bool _widens;
+  final List<(String, String, int)> _values;
+
+  FieldDraft._({
+    required List<_DraftGroup<T>> groups,
+    required bool widens,
+    required List<(String, String, int)> values,
+  }) : _groups = groups,
+       _widens = widens,
+       _values = values;
+
+  int get shown => _groups.fold(0, (count, group) => count + group.inRow);
+
+  int countWith(RecordCondition<T> draft) {
+    var count = 0;
+    for (final group in _groups) {
+      final holds = draft.holds(group.sample);
+      if (draft.excludes) {
+        count += holds ? 0 : group.inRow;
+      } else if (_widens) {
+        count += group.inRow + (holds ? group.outOfRow : 0);
+      } else {
+        count += holds ? group.inRow : 0;
+      }
+    }
+    return count;
+  }
+
+  /// The values the field holds most, those holding [text] if any.
+  List<(String, int)> suggestionsOf(String text, {int limit = 4}) {
+    final needle = text.trim().toLowerCase();
+    final found = <(String, int)>[];
+    for (final (value, lower, count) in _values) {
+      if (lower.contains(needle)) {
+        found.add((value, count));
+        if (found.length == limit) {
+          break;
+        }
+      }
+    }
+    return found;
   }
 }

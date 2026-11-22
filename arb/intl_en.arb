@@ -186,10 +186,9 @@
   "connections": "Connections",
   "liveConnections": "Live connections",
   "speed": "Speed",
-  "disconnectActiveConnections": "Disconnect all active connections",
-  "clearClosedConnections": "Clear closed connections",
-  "newConnections": "{count, plural, =1{1 new connection} other{{count} new connections}}",
-  "@newConnections": {
+  "closeActiveConnections": "Close all active connections",
+  "closeActiveConnectionsTip": "{count, plural, =1{1 active connection will close.} other{{count} active connections will close.}} Apps using them reconnect on their own, though downloads and calls in progress may drop.",
+  "@closeActiveConnectionsTip": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -200,45 +199,95 @@
   "connectionsActive": "Active",
   "connectionsFailed": "Failed",
   "connectionsDecrypted": "Decrypted",
+  "connectionRuleGlobal": "Global mode",
+  "connectionRuleNone": "No rule",
   "failureRefused": "Refused",
   "failureUnreachable": "Unreachable",
   "failureDns": "DNS failed",
+  "dnsNoSuchDomain": "No such domain",
+  "dnsServerFailure": "The upstream failed",
+  "dnsRefused": "Refused by the upstream",
+  "dnsTimedOut": "Query timed out",
+  "dnsBlockedByRule": "Blocked by a rule",
   "failureHandshake": "Handshake failed",
   "failureOther": "Other error",
-  "previousItem": "Previous",
-  "nextItem": "Next",
   "connectionClosed": "Closed",
+  "timeline": "Timeline",
+  "connectionInfo": "Info",
+  "decryption": "Decryption",
+  "connectionRuleIndex": "#{number}",
+  "handshake": "Handshake",
+  "now": "Now",
+  "mitmCertificateRefused": "Certificate refused",
+  "connectionEndLocal": "Closed locally",
+  "connectionEndRemote": "Closed by the remote",
+  "connectionEndFinished": "Finished",
+  "connectionEndReset": "Reset",
+  "connectionEndCore": "Closed by the Core",
+  "fakeIpMapping": "fake-ip mapping",
+  "dnsFromHosts": "From hosts",
   "condition": "Condition",
   "addCondition": "Add condition",
   "conditionField": "Field",
-  "conditionExcludes": "Exclude matches",
+  "conditionContains": "Contains",
+  "conditionEquals": "Equals",
   "conditionTip": "Conditions on one field match any of them, on different fields all. Search takes the same form, as in host:github.com -app:chrome.",
-  "connectionsShown": "Showing {count}",
-  "@connectionsShown": {
+  "conditionNotContains": "Excludes",
+  "conditionNotEquals": "Not equal",
+  "editCondition": "Edit condition",
+  "conditionValuesIn": "{field} in the list",
+  "@conditionValuesIn": {
     "placeholders": {
-      "count": {
-        "type": "int"
+      "field": {
+        "type": "String"
       }
     }
   },
-  "connectionsFiltered": "{count} after filtering",
-  "@connectionsFiltered": {
+  "conditionShows": "Connections shown: {count}",
+  "@conditionShows": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "String"
       }
     }
   },
-  "selectedCount": "{count} selected",
-  "@selectedCount": {
+  "conditionRows": "Any in a row, every row",
+  "clearAll": "Clear all",
+  "conditionOr": "or",
+  "selectConnection": "Select a connection",
+  "selectConnectionHint": "Its timeline, HTTP requests and connection details appear here",
+  "selectDnsQuery": "Select a query",
+  "selectDnsQueryHint": "Its answers, upstream and related connections appear here",
+  "relatedConnections": "Related connections",
+  "upstream": "Upstream",
+  "dnsQueryFields": "Query",
+  "dnsQueryAskedBy": "Asked by {initiator}",
+  "@dnsQueryAskedBy": {
     "placeholders": {
-      "count": {
-        "type": "int"
+      "initiator": {
+        "type": "String"
       }
     }
   },
-  "thisRun": "This run",
+  "dnsConditionTip": "Conditions on one field match any of them, on different fields all.",
+  "dnsConditionValuesIn": "{field} in the list",
+  "@dnsConditionValuesIn": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "dnsConditionShows": "Queries shown: {count}",
+  "@dnsConditionShows": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "connectionPath": "Path",
+  "processPath": "Process path",
   "proxyNode": "Node",
   "closingTime": "Closed at",
   "processUid": "UID {uid}",
@@ -250,10 +299,12 @@
     }
   },
   "onlyThisApp": "Only this app",
+  "onlyThisDomain": "Only this domain",
   "hideThisHost": "Hide this host",
+  "copySummary": "Copy summary",
+  "copyDomain": "Copy domain",
+  "copyAnswers": "Copy answers",
   "viewHttp": "View HTTP",
-  "pauseRefreshing": "Pause refreshing",
-  "resumeRefreshing": "Resume refreshing",
   "inbound": "Inbound",
   "intranetIP": "Intranet IP",
   "view": "View",
@@ -423,7 +474,6 @@
   "iconStylePlain": "Plain",
   "iconStyleHidden": "Hidden",
   "filter": "Filter",
-  "groupBy": "Group by",
   "hideTimeoutProxies": "Hide timed-out proxies",
   "stackMode": "Stack mode",
   "network": "Network",
@@ -1123,7 +1173,25 @@
     }
   },
   "httpRequests": "HTTP requests",
+  "httpRequestCount": "{count, plural, =1{1 HTTP request} other{{count} HTTP requests}}",
+  "@httpRequestCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "latestHttpRequest": "Latest {request}",
+  "@latestHttpRequest": {
+    "placeholders": {
+      "request": {
+        "type": "String"
+      }
+    }
+  },
   "httpRequestsMissing": "Requests made before capture was on, or since cleared, are not listed.",
+  "noHttpRequests": "No requests yet",
+  "noHttpRequestsHint": "This connection is decrypted, and the HTTP requests on it will appear here",
   "httpRequestCleared": "This request is no longer kept",
   "httpCaptureOff": "Capture is off",
   "httpCapturing": "Capturing",
@@ -1132,7 +1200,9 @@
   "inProgress": "In progress",
   "method": "Method",
   "originalUrl": "Original URL",
-  "timeToFirstByte": "Time to first byte",
+  "httpTiming": "Timing",
+  "httpWaiting": "Waiting",
+  "httpReceiving": "Receiving",
   "requestBody": "Request body",
   "response": "Response",
   "responseBody": "Response body",
@@ -1335,5 +1405,29 @@
   "coreRunningDesc": "The app is connected to the core",
   "forceRestartCore": "Force restart",
   "vpnPermissionNotGranted": "VPN permission was not granted, so the VPN did not start. An always-on VPN set for another app also blocks it.",
-  "vpnServiceStartFailed": "The VPN service could not start."
+  "vpnServiceStartFailed": "The VPN service could not start.",
+  "requestPath": "Path",
+  "statusCode": "Status code",
+  "contentKind": "Type",
+  "httpRewritten": "Rewritten",
+  "owningConnection": "Connection",
+  "selectHttpRequest": "Select a request",
+  "selectHttpRequestHint": "Its request, response and timing appear here",
+  "httpConditionShows": "Requests shown: {count}",
+  "@httpConditionShows": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "httpConditionValuesIn": "{field} in the list",
+  "@httpConditionValuesIn": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "httpConditionTip": "Conditions on one field match any of them, on different fields all."
 }

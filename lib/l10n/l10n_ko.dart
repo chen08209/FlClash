@@ -562,14 +562,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get speed => '속도';
 
   @override
-  String get disconnectActiveConnections => '활성 연결 모두 끊기';
+  String get closeActiveConnections => '활성 연결 모두 닫기';
 
   @override
-  String get clearClosedConnections => '종료된 연결 기록 지우기';
-
-  @override
-  String newConnections(int count) {
-    return '새 연결 $count개';
+  String closeActiveConnectionsTip(int count) {
+    return '활성 연결 $count개를 모두 닫을까요? 사용 중인 앱은 스스로 다시 연결하지만 진행 중인 다운로드나 통화는 끊길 수 있습니다.';
   }
 
   @override
@@ -585,6 +582,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get connectionsDecrypted => '복호화됨';
 
   @override
+  String get connectionRuleGlobal => '전역 모드';
+
+  @override
+  String get connectionRuleNone => '규칙 없음';
+
+  @override
   String get failureRefused => '거부됨';
 
   @override
@@ -594,19 +597,72 @@ class AppLocalizationsKo extends AppLocalizations {
   String get failureDns => 'DNS 확인 실패';
 
   @override
+  String get dnsNoSuchDomain => '도메인이 존재하지 않음';
+
+  @override
+  String get dnsServerFailure => '업스트림 오류';
+
+  @override
+  String get dnsRefused => '업스트림이 거부함';
+
+  @override
+  String get dnsTimedOut => '쿼리 시간 초과';
+
+  @override
+  String get dnsBlockedByRule => '규칙으로 차단됨';
+
+  @override
   String get failureHandshake => '핸드셰이크 실패';
 
   @override
   String get failureOther => '기타 오류';
 
   @override
-  String get previousItem => '이전';
-
-  @override
-  String get nextItem => '다음';
-
-  @override
   String get connectionClosed => '종료됨';
+
+  @override
+  String get timeline => '타임라인';
+
+  @override
+  String get connectionInfo => '정보';
+
+  @override
+  String get decryption => '복호화';
+
+  @override
+  String connectionRuleIndex(Object number) {
+    return '$number번째';
+  }
+
+  @override
+  String get handshake => '핸드셰이크';
+
+  @override
+  String get now => '지금';
+
+  @override
+  String get mitmCertificateRefused => '클라이언트가 인증서를 거부함';
+
+  @override
+  String get connectionEndLocal => '로컬에서 닫힘';
+
+  @override
+  String get connectionEndRemote => '원격에서 닫힘';
+
+  @override
+  String get connectionEndFinished => '종료됨';
+
+  @override
+  String get connectionEndReset => '재설정됨';
+
+  @override
+  String get connectionEndCore => '코어가 닫음';
+
+  @override
+  String get fakeIpMapping => 'fake-ip 매핑';
+
+  @override
+  String get dnsFromHosts => 'hosts에서';
 
   @override
   String get condition => '조건';
@@ -618,32 +674,87 @@ class AppLocalizationsKo extends AppLocalizations {
   String get conditionField => '필드';
 
   @override
-  String get conditionExcludes => '일치 항목 제외';
+  String get conditionContains => '포함';
+
+  @override
+  String get conditionEquals => '같음';
 
   @override
   String get conditionTip =>
       '같은 필드의 조건은 하나만 맞으면 되고, 다른 필드의 조건은 모두 맞아야 합니다. 검색창도 같은 형식을 씁니다. 예: host:github.com -app:chrome';
 
   @override
-  String connectionsShown(int count) {
-    return '$count개 표시';
+  String get conditionNotContains => '포함 안 함';
+
+  @override
+  String get conditionNotEquals => '같지 않음';
+
+  @override
+  String get editCondition => '조건 편집';
+
+  @override
+  String conditionValuesIn(String field) {
+    return '현재 연결의 $field';
   }
 
   @override
-  String connectionsFiltered(int count) {
-    return '필터 후 $count개';
+  String conditionShows(String count) {
+    return '연결 $count개로 좁혀집니다';
   }
 
   @override
-  String selectedCount(int count) {
-    return '$count개 선택됨';
+  String get conditionRows => '같은 줄은 하나만, 모든 줄은 모두 충족';
+
+  @override
+  String get clearAll => '모두 지우기';
+
+  @override
+  String get conditionOr => '또는';
+
+  @override
+  String get selectConnection => '연결을 선택하세요';
+
+  @override
+  String get selectConnectionHint => '타임라인, HTTP 요청, 연결 정보가 여기에 표시됩니다';
+
+  @override
+  String get selectDnsQuery => '쿼리를 선택하세요';
+
+  @override
+  String get selectDnsQueryHint => '응답, 업스트림, 관련 연결이 여기에 표시됩니다';
+
+  @override
+  String get relatedConnections => '관련 연결';
+
+  @override
+  String get upstream => '업스트림';
+
+  @override
+  String get dnsQueryFields => '쿼리';
+
+  @override
+  String dnsQueryAskedBy(String initiator) {
+    return '$initiator에서 요청';
   }
 
   @override
-  String get thisRun => '이번 실행';
+  String get dnsConditionTip => '같은 필드의 조건은 하나만 맞으면 되고, 다른 필드의 조건은 모두 맞아야 합니다.';
+
+  @override
+  String dnsConditionValuesIn(String field) {
+    return '현재 쿼리의 $field';
+  }
+
+  @override
+  String dnsConditionShows(String count) {
+    return '쿼리 $count개로 좁혀집니다';
+  }
 
   @override
   String get connectionPath => '경로';
+
+  @override
+  String get processPath => '프로세스 경로';
 
   @override
   String get proxyNode => '노드';
@@ -660,16 +771,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get onlyThisApp => '이 앱만 보기';
 
   @override
+  String get onlyThisDomain => '이 도메인만 보기';
+
+  @override
   String get hideThisHost => '이 호스트 숨기기';
 
   @override
+  String get copySummary => '요약 복사';
+
+  @override
+  String get copyDomain => '도메인 복사';
+
+  @override
+  String get copyAnswers => '응답 복사';
+
+  @override
   String get viewHttp => 'HTTP 보기';
-
-  @override
-  String get pauseRefreshing => '새로 고침 일시 중지';
-
-  @override
-  String get resumeRefreshing => '새로 고침 재개';
 
   @override
   String get inbound => '인바운드';
@@ -1197,9 +1314,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get filter => '필터';
-
-  @override
-  String get groupBy => '분류';
 
   @override
   String get hideTimeoutProxies => '시간 초과된 프록시 숨기기';
@@ -3308,7 +3422,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get httpRequests => 'HTTP 요청';
 
   @override
+  String httpRequestCount(int count) {
+    return 'HTTP 요청 $count개';
+  }
+
+  @override
+  String latestHttpRequest(String request) {
+    return '최근 $request';
+  }
+
+  @override
   String get httpRequestsMissing => '캡처를 켜기 전에 보냈거나 이미 지워진 요청은 표시되지 않습니다.';
+
+  @override
+  String get noHttpRequests => '아직 요청이 없습니다';
+
+  @override
+  String get noHttpRequestsHint => '이 연결은 복호화되었으며, 그 위의 HTTP 요청이 여기에 표시됩니다';
 
   @override
   String get httpRequestCleared => '이 요청의 기록은 지워졌습니다';
@@ -3335,7 +3465,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get originalUrl => '원래 URL';
 
   @override
-  String get timeToFirstByte => '첫 바이트까지 시간';
+  String get httpTiming => '소요 시간';
+
+  @override
+  String get httpWaiting => '응답 대기';
+
+  @override
+  String get httpReceiving => '수신';
 
   @override
   String get requestBody => '요청 본문';
@@ -3988,4 +4124,39 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'VPN 서비스를 시작하지 못했습니다.';
+
+  @override
+  String get requestPath => '경로';
+
+  @override
+  String get statusCode => '상태 코드';
+
+  @override
+  String get contentKind => '유형';
+
+  @override
+  String get httpRewritten => '재작성됨';
+
+  @override
+  String get owningConnection => '소속 연결';
+
+  @override
+  String get selectHttpRequest => '요청을 선택하세요';
+
+  @override
+  String get selectHttpRequestHint => '요청, 응답, 소요 시간이 여기에 표시됩니다';
+
+  @override
+  String httpConditionShows(String count) {
+    return '요청 $count개로 좁혀집니다';
+  }
+
+  @override
+  String httpConditionValuesIn(String field) {
+    return '현재 요청의 $field';
+  }
+
+  @override
+  String get httpConditionTip =>
+      '같은 필드의 조건은 하나만 맞으면 되고, 다른 필드의 조건은 모두 맞아야 합니다.';
 }

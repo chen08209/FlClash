@@ -271,6 +271,14 @@ abstract class CoreHandlerInterface {
     );
   }
 
+  Future<RuleTable> getRules() {
+    return _query(
+      CoreMethod.ruleList,
+      (data) => data as RuleTable,
+      model: RuleTable.fromJson,
+    );
+  }
+
   Future<String> dumpRuleSet(String path) {
     return _query(
       CoreMethod.ruleSetDump,
@@ -418,6 +426,20 @@ abstract class CoreHandlerInterface {
       CoreMethod.mitmExchanges,
       _model(MitmExchangeList.fromJson),
       arguments: {'id': connectionId},
+    );
+  }
+
+  /// Every connection's requests from [before] down, or with [since] only
+  /// those changed after that page's version.
+  Future<MitmQueryPage> queryMitmExchanges({
+    int? before,
+    int? since,
+    required int limit,
+  }) {
+    return _query(
+      CoreMethod.mitmQuery,
+      _model(MitmQueryPage.fromJson),
+      arguments: {'before': ?before, 'since': ?since, 'limit': limit},
     );
   }
 

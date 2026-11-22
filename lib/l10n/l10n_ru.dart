@@ -586,22 +586,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get speed => 'Скорость';
 
   @override
-  String get disconnectActiveConnections => 'Разорвать все активные соединения';
+  String get closeActiveConnections => 'Закрыть все активные соединения';
 
   @override
-  String get clearClosedConnections => 'Очистить закрытые соединения';
-
-  @override
-  String newConnections(int count) {
+  String closeActiveConnectionsTip(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count новых соединения',
-      many: '$count новых соединений',
-      few: '$count новых соединения',
-      one: '$count новое соединение',
+      other: 'Закрыть $count активного соединения?',
+      many: 'Закрыть $count активных соединений?',
+      few: 'Закрыть $count активных соединения?',
+      one: 'Закрыть $count активное соединение?',
     );
-    return '$_temp0';
+    return '$_temp0 Приложения переподключатся сами, но текущие загрузки и звонки могут прерваться.';
   }
 
   @override
@@ -617,6 +614,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get connectionsDecrypted => 'Расшифрованные';
 
   @override
+  String get connectionRuleGlobal => 'Глобальный режим';
+
+  @override
+  String get connectionRuleNone => 'Без правила';
+
+  @override
   String get failureRefused => 'Отклонено';
 
   @override
@@ -626,19 +629,72 @@ class AppLocalizationsRu extends AppLocalizations {
   String get failureDns => 'Ошибка DNS';
 
   @override
+  String get dnsNoSuchDomain => 'Домен не существует';
+
+  @override
+  String get dnsServerFailure => 'Сбой вышестоящего сервера';
+
+  @override
+  String get dnsRefused => 'Вышестоящий сервер отклонил запрос';
+
+  @override
+  String get dnsTimedOut => 'Время запроса истекло';
+
+  @override
+  String get dnsBlockedByRule => 'Заблокировано правилом';
+
+  @override
   String get failureHandshake => 'Ошибка рукопожатия';
 
   @override
   String get failureOther => 'Другая ошибка';
 
   @override
-  String get previousItem => 'Предыдущее';
-
-  @override
-  String get nextItem => 'Следующее';
-
-  @override
   String get connectionClosed => 'Закрыто';
+
+  @override
+  String get timeline => 'Хронология';
+
+  @override
+  String get connectionInfo => 'Сведения';
+
+  @override
+  String get decryption => 'Расшифровка';
+
+  @override
+  String connectionRuleIndex(Object number) {
+    return '№ $number';
+  }
+
+  @override
+  String get handshake => 'Рукопожатие';
+
+  @override
+  String get now => 'Сейчас';
+
+  @override
+  String get mitmCertificateRefused => 'Клиент отклонил сертификат';
+
+  @override
+  String get connectionEndLocal => 'Закрыто локально';
+
+  @override
+  String get connectionEndRemote => 'Закрыто удалённой стороной';
+
+  @override
+  String get connectionEndFinished => 'Завершено';
+
+  @override
+  String get connectionEndReset => 'Сброшено';
+
+  @override
+  String get connectionEndCore => 'Закрыто ядром';
+
+  @override
+  String get fakeIpMapping => 'Сопоставление fake-ip';
+
+  @override
+  String get dnsFromHosts => 'Из hosts';
 
   @override
   String get condition => 'Условие';
@@ -650,32 +706,90 @@ class AppLocalizationsRu extends AppLocalizations {
   String get conditionField => 'Поле';
 
   @override
-  String get conditionExcludes => 'Исключить совпадения';
+  String get conditionContains => 'Содержит';
+
+  @override
+  String get conditionEquals => 'Равно';
 
   @override
   String get conditionTip =>
       'Условия по одному полю объединяются через «или», по разным полям — через «и». Поиск понимает ту же запись, например host:github.com -app:chrome.';
 
   @override
-  String connectionsShown(int count) {
-    return 'Показано: $count';
+  String get conditionNotContains => 'Не содержит';
+
+  @override
+  String get conditionNotEquals => 'Не равно';
+
+  @override
+  String get editCondition => 'Изменить условие';
+
+  @override
+  String conditionValuesIn(String field) {
+    return '$field в списке';
   }
 
   @override
-  String connectionsFiltered(int count) {
-    return 'После фильтра: $count';
+  String conditionShows(String count) {
+    return 'Останется соединений: $count';
   }
 
   @override
-  String selectedCount(int count) {
-    return 'Выбрано: $count';
+  String get conditionRows => 'В строке — любое, строки — все';
+
+  @override
+  String get clearAll => 'Очистить всё';
+
+  @override
+  String get conditionOr => 'или';
+
+  @override
+  String get selectConnection => 'Выберите соединение';
+
+  @override
+  String get selectConnectionHint =>
+      'Здесь появятся его хронология, HTTP-запросы и сведения о соединении';
+
+  @override
+  String get selectDnsQuery => 'Выберите DNS-запрос';
+
+  @override
+  String get selectDnsQueryHint =>
+      'Здесь появятся ответы, вышестоящий сервер и связанные соединения';
+
+  @override
+  String get relatedConnections => 'Связанные соединения';
+
+  @override
+  String get upstream => 'Вышестоящий сервер';
+
+  @override
+  String get dnsQueryFields => 'Запрос';
+
+  @override
+  String dnsQueryAskedBy(String initiator) {
+    return 'Запросил: $initiator';
   }
 
   @override
-  String get thisRun => 'Этот запуск';
+  String get dnsConditionTip =>
+      'Условия по одному полю объединяются через «или», по разным полям — через «и».';
+
+  @override
+  String dnsConditionValuesIn(String field) {
+    return '$field в списке';
+  }
+
+  @override
+  String dnsConditionShows(String count) {
+    return 'Останется запросов: $count';
+  }
 
   @override
   String get connectionPath => 'Маршрут';
+
+  @override
+  String get processPath => 'Путь процесса';
 
   @override
   String get proxyNode => 'Узел';
@@ -692,16 +806,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onlyThisApp => 'Только это приложение';
 
   @override
+  String get onlyThisDomain => 'Только этот домен';
+
+  @override
   String get hideThisHost => 'Скрыть этот хост';
 
   @override
+  String get copySummary => 'Копировать сводку';
+
+  @override
+  String get copyDomain => 'Копировать домен';
+
+  @override
+  String get copyAnswers => 'Копировать ответы';
+
+  @override
   String get viewHttp => 'Показать HTTP';
-
-  @override
-  String get pauseRefreshing => 'Приостановить обновление';
-
-  @override
-  String get resumeRefreshing => 'Возобновить обновление';
 
   @override
   String get inbound => 'Входящие';
@@ -1240,9 +1360,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get filter => 'Фильтр';
-
-  @override
-  String get groupBy => 'Группировка';
 
   @override
   String get hideTimeoutProxies => 'Скрывать прокси с таймаутом';
@@ -3401,8 +3518,33 @@ class AppLocalizationsRu extends AppLocalizations {
   String get httpRequests => 'HTTP-запросы';
 
   @override
+  String httpRequestCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count HTTP-запроса',
+      many: '$count HTTP-запросов',
+      few: '$count HTTP-запроса',
+      one: '$count HTTP-запрос',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String latestHttpRequest(String request) {
+    return 'Последний: $request';
+  }
+
+  @override
   String get httpRequestsMissing =>
       'Запросы, отправленные до включения захвата или уже удалённые, не показаны.';
+
+  @override
+  String get noHttpRequests => 'Запросов пока нет';
+
+  @override
+  String get noHttpRequestsHint =>
+      'Это соединение расшифровано, и его HTTP-запросы появятся здесь';
 
   @override
   String get httpRequestCleared => 'Запись этого запроса удалена';
@@ -3430,7 +3572,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get originalUrl => 'Исходный URL';
 
   @override
-  String get timeToFirstByte => 'Время до первого байта';
+  String get httpTiming => 'Время';
+
+  @override
+  String get httpWaiting => 'Ожидание ответа';
+
+  @override
+  String get httpReceiving => 'Получение';
 
   @override
   String get requestBody => 'Тело запроса';
@@ -4104,4 +4252,39 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'Не удалось запустить службу VPN.';
+
+  @override
+  String get requestPath => 'Путь';
+
+  @override
+  String get statusCode => 'Код ответа';
+
+  @override
+  String get contentKind => 'Тип';
+
+  @override
+  String get httpRewritten => 'Изменённые';
+
+  @override
+  String get owningConnection => 'Соединение';
+
+  @override
+  String get selectHttpRequest => 'Выберите запрос';
+
+  @override
+  String get selectHttpRequestHint => 'Здесь появятся запрос, ответ и время';
+
+  @override
+  String httpConditionShows(String count) {
+    return 'Останется запросов: $count';
+  }
+
+  @override
+  String httpConditionValuesIn(String field) {
+    return '$field в списке';
+  }
+
+  @override
+  String get httpConditionTip =>
+      'Условия по одному полю объединяются через «или», по разным полям — через «и».';
 }

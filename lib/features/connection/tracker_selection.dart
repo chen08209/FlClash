@@ -8,7 +8,12 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'tracker_info_item.dart';
+import 'connection_rows.dart';
+import 'tracker_menu.dart';
+import 'tracker_app_well.dart';
+import 'tracker_clock.dart';
+import 'tracker_texts.dart';
+import 'tracker_info_detail.dart';
 
 /// Where a page shows the connection a row opens beside its list, the rows
 /// select it here rather than each opening a sheet of its own.
@@ -29,6 +34,50 @@ class TrackerSelection extends InheritedWidget {
   @override
   bool updateShouldNotify(TrackerSelection oldWidget) =>
       selected != oldWidget.selected || onSelect != oldWidget.onSelect;
+}
+
+void showTrackerInfoDetail(
+  BuildContext context,
+  TrackerInfo trackerInfo,
+  String title, {
+  bool opensRequests = false,
+}) {
+  // A connection cleared from the log keeps the state it was last seen in.
+  var current = trackerInfo;
+  final actions = TrackerMenuScope.of(context);
+  showNestedSheet<void>(
+    context,
+    builder: (_) => TrackerMenuScope(
+      actions: actions ?? const TrackerMenuActions(),
+      child: DetailSheet(
+        title: title,
+        menu: Consumer(
+          builder: (context, ref, _) => DetailMenuButton(
+            items: () => trackerDetailMenuItems(context, ref, current),
+          ),
+        ),
+        child: TrackerClock(
+          child: Consumer(
+            builder: (context, ref, _) {
+              current =
+                  ref.watch(
+                    requestsProvider.select((log) => log[trackerInfo.id]),
+                  ) ??
+                  current;
+              return TrackerInfoDetailView(
+                trackerInfo: current,
+                opensRequests: opensRequests,
+                header: TrackerInfoHeader(
+                  trackerInfo: current,
+                  showsMenu: false,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 void openTrackerInfo(
@@ -125,249 +174,139 @@ class _TrackerSelectedState extends State<TrackerSelected> {
   Widget build(BuildContext context) => widget.builder(context, _isSelected);
 }
 
-class TrackerInfoHeader extends StatelessWidget {
+class TrackerInfoHeader extends ConsumerWidget {
   final TrackerInfo trackerInfo;
 
-  /// Sets the header a size smaller, for a detail read beside a table.
-  final bool compact;
+  /// Off where a sheet's bar holds the menu.
+  final bool showsMenu;
 
   const TrackerInfoHeader({
     super.key,
     required this.trackerInfo,
-    this.compact = false,
+    this.showsMenu = true,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
-    final colorScheme = context.colorScheme;
-    final metadata = trackerInfo.metadata;
-    final active = trackerInfo.isActive;
-    final subtitle = [
-      trackerInfo.progressText,
-      metadata.network.toUpperCase(),
-      metadata.destinationPort,
-    ].where((part) => part.isNotEmpty).join(' · ');
-    final state = active
-        ? appLocalizations.connectionsActive
-        : appLocalizations.connectionClosed;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 12,
-      children: [
-        Row(
-          spacing: 12,
-          children: [
-            TrackerAppWell(trackerInfo: trackerInfo, size: compact ? 40 : 44),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 2,
-                children: [
-                  Text(
-                    trackerInfo.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.headline.of(context),
-                  ),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.caption1
-                        .of(context)
-                        .copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-          ],
+    final close = TrackerMenuScope.of(context)?.close;
+    return DetailHeader(
+      well: (size) => TrackerAppWell(trackerInfo: trackerInfo, size: size),
+      title: trackerInfo.title,
+      subtitle: TrackerLifetime(
+        trackerInfo: trackerInfo,
+        builder: (lifetime) => Text.rich(
+          TextSpan(
+            children: [
+              for (final (index, part) in trackerHeadlineParts(
+                appLocalizations,
+                trackerInfo,
+                lifetime,
+              ).indexed) ...[
+                if (index > 0) const TextSpan(text: ' · '),
+                TextSpan(
+                  text: part.text,
+                  style: part.failed
+                      ? TextStyle(color: context.colorScheme.error)
+                      : null,
+                ),
+              ],
+            ],
+          ),
         ),
-        Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            TrackerLifetime(
-              trackerInfo: trackerInfo,
-              builder: (lifetime) => TonalChip(
-                label: '$state · $lifetime',
-                color: active
-                    ? colorScheme.successContainer
-                    : context.raisedSurfaceLevel.colorOf(colorScheme),
-                foregroundColor: active
-                    ? colorScheme.onSuccessContainer
-                    : colorScheme.onSurfaceVariant,
-              ),
+      ),
+      actions: [
+        if (close != null && trackerInfo.isActive)
+          AppBarActionButton(
+            data: IconButtonData(
+              glyph: AppGlyphs.block,
+              tooltip: appLocalizations.closeConnection,
+              onPressed: () => close(trackerInfo),
             ),
-            ...trackerLabels(context, trackerInfo),
-          ],
-        ),
+            icon: GlyphIcon(AppGlyphs.block, color: context.colorScheme.error),
+          ),
+        if (showsMenu)
+          DetailMenuButton(
+            items: () => trackerDetailMenuItems(context, ref, trackerInfo),
+          ),
       ],
     );
   }
 }
 
-/// The selected connection beside the list, as its latest version.
-class TrackerInfoDetailCard extends ConsumerWidget {
-  final String id;
-  final VoidCallback onClose;
-
-  const TrackerInfoDetailCard({
-    super.key,
-    required this.id,
-    required this.onClose,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final trackerInfo = ref.watch(requestsProvider.select((log) => log[id]));
-    if (trackerInfo == null) {
-      return const SizedBox.shrink();
-    }
-    return Card(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 8, 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TrackerInfoHeader(
-                    trackerInfo: trackerInfo,
-                    compact: true,
-                  ),
-                ),
-                PopupAnchor(
-                  targetBuilder: (open) => IconButton(
-                    tooltip: context.appLocalizations.more,
-                    onPressed: open,
-                    icon: const GlyphIcon(AppGlyphs.more),
-                  ),
-                  popupBuilder: (context) => PopupMenu(
-                    items: trackerInfoMenuItems(
-                      context,
-                      trackerInfo,
-                      inDetail: true,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: context.appLocalizations.close,
-                  onPressed: onClose,
-                  icon: const GlyphIcon(AppGlyphs.close),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: MediaQuery.removePadding(
-              context: context,
-              removeTop: true,
-              removeBottom: true,
-              child: BottomInsetScope(
-                inset: 0,
-                child: TopInsetScope(
-                  inset: 8,
-                  child: TrackerInfoDetailView(
-                    trackerInfo: trackerInfo,
-                    compact: true,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The selected connection in a side sheet, stepping to the rows around it.
-/// Its bar has no room for a title beside the steps, so the connection's
-/// header heads its body instead.
-class TrackerInfoDetailSheet extends StatelessWidget {
+/// The detail of the selected connection, while the log or [rows] hold it.
+class TrackerSelectedDetail extends StatelessWidget {
   final ValueListenable<String?> selected;
+  final ConnectionRows rows;
 
   /// Read out rather than shown.
   final String title;
-  final void Function(int step)? onStep;
-  final bool Function(int step)? canStep;
 
-  /// Changes what [canStep] says besides [selected].
-  final Listenable? refresh;
-
-  /// The page's, which a sheet over it does not inherit.
-  final TrackerMenuActions? actions;
-
-  const TrackerInfoDetailSheet({
+  const TrackerSelectedDetail({
     super.key,
     required this.selected,
+    required this.rows,
     required this.title,
-    this.onStep,
-    this.canStep,
-    this.refresh,
-    this.actions,
   });
 
   @override
   Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    final onStep = this.onStep;
-    final canStep = this.canStep ?? (_) => true;
-    return ListenableBuilder(
-      listenable: Listenable.merge([selected, refresh]),
-      builder: (context, _) => Consumer(
-        builder: (context, ref, _) {
-          final id = selected.value;
-          final trackerInfo = id == null
-              ? null
-              : ref.watch(requestsProvider.select((log) => log[id]));
-          return Scaffold(
-            titleWidget: Semantics(
-              header: true,
-              label: title,
-              child: const SizedBox.shrink(),
-            ),
-            iconActions: [
-              if (onStep != null) ...[
-                IconButtonData(
-                  glyph: AppGlyphs.chevronUp,
-                  tooltip: appLocalizations.previousItem,
-                  onPressed: canStep(-1) ? () => onStep(-1) : null,
-                ),
-                IconButtonData(
-                  glyph: AppGlyphs.chevronDown,
-                  tooltip: appLocalizations.nextItem,
-                  onPressed: canStep(1) ? () => onStep(1) : null,
-                ),
-              ],
-            ],
-            menuItems: trackerInfo == null
-                ? const []
-                : trackerInfoMenuItems(
-                    context,
-                    trackerInfo,
-                    actions: actions,
-                    inDetail: true,
-                  ),
-            body: trackerInfo == null
-                ? const SizedBox.shrink()
-                : TrackerInfoDetailView(
-                    key: ValueKey(trackerInfo.id),
-                    trackerInfo: trackerInfo,
-                    header: TrackerInfoHeader(
-                      trackerInfo: trackerInfo,
-                      compact: true,
-                    ),
-                    compact: true,
-                  ),
-          );
-        },
+    return Semantics(
+      label: title,
+      explicitChildNodes: true,
+      child: ValueListenableBuilder(
+        valueListenable: selected,
+        builder: (context, id, _) => Consumer(
+          builder: (context, ref, _) {
+            if (id == null) {
+              return const SizedBox.shrink();
+            }
+            final trackerInfo = ref.watch(
+              requestsProvider.select((log) => log[id]),
+            );
+            if (trackerInfo != null) {
+              return _detail(trackerInfo);
+            }
+            return ListenableBuilder(
+              listenable: rows,
+              builder: (context, _) => switch (rows.heldInfoOf(id)) {
+                final trackerInfo? => _detail(trackerInfo),
+                null => const SizedBox.shrink(),
+              },
+            );
+          },
+        ),
       ),
     );
   }
+
+  Widget _detail(TrackerInfo trackerInfo) => DetailPane(
+    key: ValueKey(trackerInfo.id),
+    child: TrackerInfoDetailView(
+      trackerInfo: trackerInfo,
+      header: TrackerInfoHeader(trackerInfo: trackerInfo),
+    ),
+  );
+}
+
+/// The selected connection in a side sheet.
+class TrackerInfoDetailSheet extends StatelessWidget {
+  final ValueListenable<String?> selected;
+  final ConnectionRows rows;
+
+  /// Read out rather than shown.
+  final String title;
+
+  const TrackerInfoDetailSheet({
+    super.key,
+    required this.selected,
+    required this.rows,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) => TopInsetScope(
+    inset: MediaQuery.paddingOf(context).top + 16,
+    child: TrackerSelectedDetail(selected: selected, rows: rows, title: title),
+  );
 }

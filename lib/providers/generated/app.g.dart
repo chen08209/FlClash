@@ -428,7 +428,7 @@ final class RequestsProvider
   }
 }
 
-String _$requestsHash() => r'910bc955dd3684e366c59502c2494295c7ddbbca';
+String _$requestsHash() => r'f212f4034a9e68265ef76296f78e0063b9a49c16';
 
 abstract class _$Requests extends $Notifier<ConnectionLog> {
   ConnectionLog build();
@@ -499,6 +499,55 @@ abstract class _$DnsQueries extends $Notifier<FixedList<DnsQuery>> {
     return element.handleCreate(ref, build);
   }
 }
+
+/// The rules the Core routes by, each named as a request names its rule;
+/// listed again once a config is applied or the Core connects, never retried
+/// before that.
+
+@ProviderFor(activeRules)
+final activeRulesProvider = ActiveRulesProvider._();
+
+/// The rules the Core routes by, each named as a request names its rule;
+/// listed again once a config is applied or the Core connects, never retried
+/// before that.
+
+final class ActiveRulesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<RuleTable>,
+          RuleTable,
+          FutureOr<RuleTable>
+        >
+    with $FutureModifier<RuleTable>, $FutureProvider<RuleTable> {
+  /// The rules the Core routes by, each named as a request names its rule;
+  /// listed again once a config is applied or the Core connects, never retried
+  /// before that.
+  ActiveRulesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: _noRetry,
+        name: r'activeRulesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$activeRulesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<RuleTable> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<RuleTable> create(Ref ref) {
+    return activeRules(ref);
+  }
+}
+
+String _$activeRulesHash() => r'10d9b0ae5309d15ace7d97dea4630cb94e2de101';
 
 @ProviderFor(DnsQueryCount)
 final dnsQueryCountProvider = DnsQueryCountProvider._();

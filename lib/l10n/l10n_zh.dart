@@ -558,14 +558,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get speed => '速度';
 
   @override
-  String get disconnectActiveConnections => '断开全部活动连接';
+  String get closeActiveConnections => '关闭全部活动连接';
 
   @override
-  String get clearClosedConnections => '清空已关闭记录';
-
-  @override
-  String newConnections(int count) {
-    return '$count 条新连接';
+  String closeActiveConnectionsTip(int count) {
+    return '关闭全部 $count 条活动连接？正在使用它们的应用会自行重连，进行中的下载或通话可能中断。';
   }
 
   @override
@@ -581,6 +578,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connectionsDecrypted => '已解密';
 
   @override
+  String get connectionRuleGlobal => '全局模式';
+
+  @override
+  String get connectionRuleNone => '未经规则';
+
+  @override
   String get failureRefused => '连接被拒绝';
 
   @override
@@ -590,19 +593,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String get failureDns => 'DNS 解析失败';
 
   @override
+  String get dnsNoSuchDomain => '域名不存在';
+
+  @override
+  String get dnsServerFailure => '上游出错';
+
+  @override
+  String get dnsRefused => '上游拒绝了查询';
+
+  @override
+  String get dnsTimedOut => '查询超时';
+
+  @override
+  String get dnsBlockedByRule => '被规则拦截';
+
+  @override
   String get failureHandshake => '握手失败';
 
   @override
   String get failureOther => '其他错误';
 
   @override
-  String get previousItem => '上一条';
-
-  @override
-  String get nextItem => '下一条';
-
-  @override
   String get connectionClosed => '已关闭';
+
+  @override
+  String get timeline => '时间线';
+
+  @override
+  String get connectionInfo => '信息';
+
+  @override
+  String get decryption => '解密';
+
+  @override
+  String connectionRuleIndex(Object number) {
+    return '第 $number 条';
+  }
+
+  @override
+  String get handshake => '握手';
+
+  @override
+  String get now => '现在';
+
+  @override
+  String get mitmCertificateRefused => '客户端拒绝了证书';
+
+  @override
+  String get connectionEndLocal => '本地关闭';
+
+  @override
+  String get connectionEndRemote => '对端关闭';
+
+  @override
+  String get connectionEndFinished => '已结束';
+
+  @override
+  String get connectionEndReset => '被重置';
+
+  @override
+  String get connectionEndCore => '被核心关闭';
+
+  @override
+  String get fakeIpMapping => 'fake-ip 映射';
+
+  @override
+  String get dnsFromHosts => '来自 hosts';
 
   @override
   String get condition => '条件';
@@ -614,32 +670,87 @@ class AppLocalizationsZh extends AppLocalizations {
   String get conditionField => '字段';
 
   @override
-  String get conditionExcludes => '反向（排除匹配项）';
+  String get conditionContains => '包含';
+
+  @override
+  String get conditionEquals => '等于';
 
   @override
   String get conditionTip =>
-      '同一字段的条件满足其一即可，不同字段的条件都要满足。搜索框支持同样的写法，如 host:github.com -app:chrome。';
+      '同一字段的条件满足其一即可，不同字段的都要满足。搜索框里也能这样写：host:github.com -app:slack';
 
   @override
-  String connectionsShown(int count) {
-    return '显示 $count 条';
+  String get conditionNotContains => '不包含';
+
+  @override
+  String get conditionNotEquals => '不等于';
+
+  @override
+  String get editCondition => '编辑条件';
+
+  @override
+  String conditionValuesIn(String field) {
+    return '当前连接里的$field';
   }
 
   @override
-  String connectionsFiltered(int count) {
-    return '筛选后 $count 条';
+  String conditionShows(String count) {
+    return '将筛出 $count 条连接';
   }
 
   @override
-  String selectedCount(int count) {
-    return '已选 $count';
+  String get conditionRows => '同一行满足其一，各行都要满足';
+
+  @override
+  String get clearAll => '清除全部';
+
+  @override
+  String get conditionOr => '或';
+
+  @override
+  String get selectConnection => '选择一条连接';
+
+  @override
+  String get selectConnectionHint => '这里会显示它的时间线、HTTP 请求和连接信息';
+
+  @override
+  String get selectDnsQuery => '选择一次查询';
+
+  @override
+  String get selectDnsQueryHint => '这里会显示它的应答、上游，以及相关的连接';
+
+  @override
+  String get relatedConnections => '相关的连接';
+
+  @override
+  String get upstream => '上游';
+
+  @override
+  String get dnsQueryFields => '查询';
+
+  @override
+  String dnsQueryAskedBy(String initiator) {
+    return '$initiator发起';
   }
 
   @override
-  String get thisRun => '本次运行';
+  String get dnsConditionTip => '同一字段的条件满足其一即可，不同字段的都要满足。';
+
+  @override
+  String dnsConditionValuesIn(String field) {
+    return '当前查询里的$field';
+  }
+
+  @override
+  String dnsConditionShows(String count) {
+    return '将筛出 $count 次查询';
+  }
 
   @override
   String get connectionPath => '链路';
+
+  @override
+  String get processPath => '进程路径';
 
   @override
   String get proxyNode => '节点';
@@ -656,16 +767,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onlyThisApp => '只看此应用';
 
   @override
+  String get onlyThisDomain => '只看此域名';
+
+  @override
   String get hideThisHost => '隐藏此主机';
 
   @override
+  String get copySummary => '复制摘要';
+
+  @override
+  String get copyDomain => '复制域名';
+
+  @override
+  String get copyAnswers => '复制应答';
+
+  @override
   String get viewHttp => '查看 HTTP';
-
-  @override
-  String get pauseRefreshing => '暂停刷新';
-
-  @override
-  String get resumeRefreshing => '继续刷新';
 
   @override
   String get inbound => '入站';
@@ -1190,9 +1307,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get filter => '筛选';
-
-  @override
-  String get groupBy => '分类';
 
   @override
   String get hideTimeoutProxies => '隐藏超时代理';
@@ -3197,7 +3311,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get httpRequests => 'HTTP 请求';
 
   @override
+  String httpRequestCount(int count) {
+    return '$count 个 HTTP 请求';
+  }
+
+  @override
+  String latestHttpRequest(String request) {
+    return '最近一次 $request';
+  }
+
+  @override
   String get httpRequestsMissing => '抓包开启前发出或已被清除的请求不在列表中。';
+
+  @override
+  String get noHttpRequests => '还没有请求';
+
+  @override
+  String get noHttpRequestsHint => '这条连接已经解密，上面的 HTTP 请求会出现在这里';
 
   @override
   String get httpRequestCleared => '这条请求的记录已清除';
@@ -3224,7 +3354,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get originalUrl => '原 URL';
 
   @override
-  String get timeToFirstByte => '首字节耗时';
+  String get httpTiming => '耗时';
+
+  @override
+  String get httpWaiting => '等待响应';
+
+  @override
+  String get httpReceiving => '接收';
 
   @override
   String get requestBody => '请求体';
@@ -3864,4 +4000,38 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get vpnServiceStartFailed => 'VPN 服务无法启动。';
+
+  @override
+  String get requestPath => '路径';
+
+  @override
+  String get statusCode => '状态码';
+
+  @override
+  String get contentKind => '类型';
+
+  @override
+  String get httpRewritten => '已改写';
+
+  @override
+  String get owningConnection => '所属连接';
+
+  @override
+  String get selectHttpRequest => '选择一个请求';
+
+  @override
+  String get selectHttpRequestHint => '这里会显示它的请求、响应和耗时';
+
+  @override
+  String httpConditionShows(String count) {
+    return '将筛出 $count 个请求';
+  }
+
+  @override
+  String httpConditionValuesIn(String field) {
+    return '当前请求里的$field';
+  }
+
+  @override
+  String get httpConditionTip => '同一字段的条件满足其一即可，不同字段的都要满足。';
 }

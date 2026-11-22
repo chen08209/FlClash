@@ -145,8 +145,6 @@ enum RecordFacetKind {
   rcode,
 }
 
-enum RecordGrouping { app, host, rule, exit }
-
 extension RecordToneExt on RecordTone {
   Color? accentColor(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -481,6 +479,17 @@ enum DashboardWidget {
 }
 
 enum DnsQueryInitiator { app, rule, direct, proxy, other }
+
+enum ConnectionEndReason {
+  local,
+  remote,
+  finished,
+  timeout,
+  reset,
+  core,
+  error,
+  failed,
+}
 
 enum IpType { residential, mobile, business, hosting }
 

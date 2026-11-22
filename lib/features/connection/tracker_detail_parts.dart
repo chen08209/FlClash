@@ -1,308 +1,249 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/ui/ui.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 
-/// A titled group in a connection's detail. [compact] sets it a size
-/// smaller, for a detail read beside a table.
-class TrackerDetailSection extends StatelessWidget {
-  final String title;
-  final bool compact;
-  final EdgeInsets padding;
-  final String? footer;
-  final Widget child;
-
-  const TrackerDetailSection({
-    super.key,
-    required this.title,
-    required this.compact,
-    this.padding = EdgeInsets.zero,
-    this.footer,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final secondary = context.colorScheme.onSurfaceVariant;
-    final inset = EdgeInsets.symmetric(horizontal: compact ? 4 : 6);
-    final footer = this.footer;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 6,
-      children: [
-        Padding(
-          padding: inset,
-          child: Semantics(
-            header: true,
-            child: Text(
-              title,
-              style: AppTextStyle.caption1
-                  .of(context, emphasized: true)
-                  .copyWith(color: secondary),
-            ),
-          ),
-        ),
-        Card(
-          radius: compact ? AppCorner.md : AppCorner.xl,
-          padding: padding,
-          child: child,
-        ),
-        if (footer != null)
-          Padding(
-            padding: inset,
-            child: Text(
-              footer,
-              style: AppTextStyle.caption1
-                  .of(context)
-                  .copyWith(color: secondary),
-            ),
-          ),
-      ],
-    );
+/// A rule as a profile writes it, type and payload on one line.
+String trackerRuleLine(AppLocalizations appLocalizations, TrackerInfo info) {
+  if (info.rule.isEmpty) {
+    return trackerRuleText(appLocalizations, info);
   }
+  return info.rulePayload.isEmpty
+      ? info.rule
+      : '${info.rule},${info.rulePayload}';
 }
 
-/// One hop of a connection's path, on a rail that runs to the next.
-class TrackerPathStep extends StatelessWidget {
+enum RailMark { step, end, error }
+
+/// A row of a connection's path or timeline, its point on a rail that runs
+/// on through the rows above and below it, level with the title.
+class TrackerRailRow extends StatelessWidget {
   final String title;
   final String subtitle;
-  final String? trailing;
-  final Color? trailingColor;
+  final Widget? trailing;
+  final RailMark mark;
+  final bool first;
   final bool last;
-  final bool monospace;
-  final bool compact;
+  final VoidCallback? onPressed;
 
-  const TrackerPathStep({
+  const TrackerRailRow({
     super.key,
     required this.title,
-    required this.subtitle,
+    this.subtitle = '',
     this.trailing,
-    this.trailingColor,
+    this.mark = RailMark.step,
+    this.first = false,
     this.last = false,
-    this.monospace = false,
-    required this.compact,
+    this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final secondary = colorScheme.onSurfaceVariant;
-    final titleStyle = monospace
-        ? (compact ? AppTextStyle.caption1 : AppTextStyle.footnote)
-              .of(context)
-              .toJetBrainsMono
-        : (compact ? AppTextStyle.footnote : AppTextStyle.subheadline).of(
-            context,
-            emphasized: last,
-          );
+    final subtitleStyle = context.listSubtitleStyle;
     final trailing = this.trailing;
+    final insets = context.listInsets;
+    final opens = onPressed != null;
     return CustomPaint(
-      painter: _RailPainter(
+      foregroundPainter: _RailPainter(
+        x: insets.leading + listLeadingSlotWidth / 2,
+        subtitleLine: subtitle.isEmpty
+            ? 0
+            : MediaQuery.textScalerOf(context).scale(subtitleStyle.fontSize!) *
+                  subtitleStyle.height!,
         ring: colorScheme.outline,
         line: Divider.colorOf(context),
-        end: last ? colorScheme.primary : null,
-        diameter: compact ? 9 : 10,
+        fill: switch (mark) {
+          RailMark.step => null,
+          RailMark.end => colorScheme.primary,
+          RailMark.error => colorScheme.error,
+        },
+        above: !first,
+        below: !last,
         textDirection: Directionality.of(context),
       ),
-      child: Padding(
-        padding: EdgeInsetsDirectional.only(
-          start: _RailPainter.width + 12,
-          bottom: last ? 0 : (compact ? 10 : 12),
+      child: DecorationListItem(
+        separated: false,
+        onPressed: onPressed,
+        contentPadding: opens ? ListItem.chevronPaddingOf(context) : null,
+        leading: const SizedBox(width: listLeadingSlotWidth),
+        title: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: mark == RailMark.end
+              ? AppTextStyle.body.of(context, emphasized: true)
+              : null,
         ),
-        child: Row(
-          spacing: 8,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: titleStyle),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.caption1
-                        .of(context)
-                        .copyWith(color: secondary),
-                  ),
-                ],
+        subtitle: subtitle.isEmpty
+            ? null
+            : Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: subtitleStyle.toTabular,
               ),
-            ),
-            if (trailing != null)
-              Text(
-                trailing,
-                style: (compact ? AppTextStyle.caption1 : AppTextStyle.footnote)
-                    .of(context)
-                    .toTabular
-                    .copyWith(color: trailingColor ?? secondary),
+        trailing: trailing == null && !opens
+            ? null
+            : DefaultTextStyle.merge(
+                style: subtitleStyle.toTabular,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 4,
+                  children: [
+                    ?trailing,
+                    if (opens) const GlyphIcon(Glyphs.chevronForward),
+                  ],
+                ),
               ),
-          ],
-        ),
       ),
     );
   }
 }
 
 class _RailPainter extends CustomPainter {
-  static const width = 10.0;
-  static const _top = 5.0;
+  static const _radius = 5.0;
   static const _stroke = 1.7;
+  static const _rail = 1.5;
+  static const _gap = 3.0;
 
+  final double x;
+
+  /// A row centers its text, so the title's line centers above this.
+  final double subtitleLine;
   final Color ring;
   final Color line;
-
-  /// Fills the point of the hop the path ends on.
-  final Color? end;
-  final double diameter;
+  final Color? fill;
+  final bool above;
+  final bool below;
   final TextDirection textDirection;
 
   const _RailPainter({
+    required this.x,
+    required this.subtitleLine,
     required this.ring,
     required this.line,
-    required this.end,
-    required this.diameter,
+    required this.fill,
+    required this.above,
+    required this.below,
     required this.textDirection,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final x = textDirection == TextDirection.rtl
-        ? size.width - width / 2
-        : width / 2;
-    final center = Offset(x, _top + diameter / 2);
-    final end = this.end;
-    if (end != null) {
-      canvas.drawCircle(center, diameter / 2, Paint()..color = end);
-      return;
+    final dx = textDirection == TextDirection.rtl ? size.width - x : x;
+    final dy = (size.height - subtitleLine) / 2;
+    final center = Offset(dx, dy);
+    final fill = this.fill;
+    if (fill != null) {
+      canvas.drawCircle(center, _radius, Paint()..color = fill);
+    } else {
+      canvas.drawCircle(
+        center,
+        _radius - _stroke / 2,
+        Paint()
+          ..color = ring
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = _stroke,
+      );
     }
-    canvas.drawCircle(
-      center,
-      (diameter - _stroke) / 2,
-      Paint()
-        ..color = ring
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = _stroke,
-    );
-    canvas.drawRect(
-      Rect.fromLTRB(x - 0.75, _top + diameter + 3, x + 0.75, size.height),
-      Paint()..color = line,
-    );
+    final paint = Paint()..color = line;
+    if (above) {
+      canvas.drawRect(
+        Rect.fromLTRB(dx - _rail / 2, 0, dx + _rail / 2, dy - _radius - _gap),
+        paint,
+      );
+    }
+    if (below) {
+      canvas.drawRect(
+        Rect.fromLTRB(
+          dx - _rail / 2,
+          dy + _radius + _gap,
+          dx + _rail / 2,
+          size.height,
+        ),
+        paint,
+      );
+    }
   }
 
   @override
   bool shouldRepaint(_RailPainter oldDelegate) =>
+      x != oldDelegate.x ||
+      subtitleLine != oldDelegate.subtitleLine ||
       ring != oldDelegate.ring ||
       line != oldDelegate.line ||
-      end != oldDelegate.end ||
-      diameter != oldDelegate.diameter ||
+      fill != oldDelegate.fill ||
+      above != oldDelegate.above ||
+      below != oldDelegate.below ||
       textDirection != oldDelegate.textDirection;
 }
 
-class TrackerTrafficColumn extends StatelessWidget {
-  final String label;
-  final Color mark;
-  final int total;
-  final int? speed;
-  final bool compact;
+/// A connection's download and upload, each on a card of its own with its
+/// speed while open.
+class TrackerTrafficSummary extends StatelessWidget {
+  final TrackerInfo trackerInfo;
 
-  const TrackerTrafficColumn({
-    super.key,
-    required this.label,
-    required this.mark,
-    required this.total,
-    required this.speed,
-    required this.compact,
-  });
+  const TrackerTrafficSummary({super.key, required this.trackerInfo});
 
   @override
   Widget build(BuildContext context) {
-    final secondary = context.colorScheme.onSurfaceVariant;
-    final caption = AppTextStyle.caption1
-        .of(context)
-        .toTabular
-        .copyWith(color: secondary);
-    final speed = this.speed;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final appLocalizations = context.appLocalizations;
+    final active = trackerInfo.isActive;
+    return Row(
+      spacing: 8,
       children: [
-        Row(
-          spacing: 6,
-          children: [
-            DecoratedBox(
-              decoration: ShapeDecoration(
-                color: mark,
-                shape: const CircleBorder(),
-              ),
-              child: const SizedBox.square(dimension: 6),
-            ),
-            Flexible(child: Text(label, style: caption)),
-          ],
+        Expanded(
+          child: _TrafficCell(
+            glyph: AppGlyphs.arrowDown,
+            label: appLocalizations.download,
+            bytes: trackerInfo.download,
+            speed: active ? trackerInfo.downloadSpeed ?? 0 : null,
+          ),
         ),
-        Text(
-          total.traffic.show,
-          style: (compact ? AppTextStyle.subheadline : AppTextStyle.headline)
-              .of(context, emphasized: true)
-              .toTabular,
+        Expanded(
+          child: _TrafficCell(
+            glyph: AppGlyphs.arrowUp,
+            label: appLocalizations.upload,
+            bytes: trackerInfo.upload,
+            speed: active ? trackerInfo.uploadSpeed ?? 0 : null,
+          ),
         ),
-        if (speed != null) Text('${speed.traffic.show}/s', style: caption),
       ],
     );
   }
 }
 
-/// A labeled value in a connection's detail, copied on a press.
-class TrackerDetailRow extends StatelessWidget {
-  final String title;
-  final String value;
-  final bool monospace;
-  final bool compact;
+class _TrafficCell extends StatelessWidget {
+  final Glyph glyph;
+  final String label;
+  final int bytes;
+  final int? speed;
 
-  const TrackerDetailRow({
-    super.key,
-    required this.title,
-    required this.value,
-    this.monospace = false,
-    required this.compact,
+  const _TrafficCell({
+    required this.glyph,
+    required this.label,
+    required this.bytes,
+    required this.speed,
   });
-
-  Future<void> _copy(BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: value));
-    if (!context.mounted) return;
-    dialogs.showBanner(context.appLocalizations.copySuccess);
-  }
 
   @override
   Widget build(BuildContext context) {
-    final text = compact ? AppTextStyle.footnote : AppTextStyle.subheadline;
-    final valueStyle = monospace
-        ? (compact ? AppTextStyle.caption1 : AppTextStyle.footnote)
-              .of(context)
-              .toJetBrainsMono
-        : text.of(context);
-    return PressSurface(
-      fill: const Color(0x00000000),
-      shape: AppShape.all(compact ? AppCorner.sm : AppCorner.md),
-      minimum: BoxConstraints(minHeight: compact ? 32 : 44),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 14 : 16,
-        vertical: compact ? 7 : 10,
-      ),
-      onPressed: () => _copy(context),
-      child: Row(
-        spacing: 16,
-        children: [
+    final speed = this.speed;
+    return FigureCard(
+      glyph: glyph,
+      label: label,
+      figure: bytes.traffic.show,
+      below: [
+        if (speed != null)
           Text(
-            title,
-            style: text
-                .of(context)
-                .copyWith(color: context.colorScheme.onSurfaceVariant),
+            '${speed.traffic.show}/s',
+            maxLines: 1,
+            style: context.listCaptionStyle.toTabular,
           ),
-          Expanded(
-            child: Text(value, textAlign: TextAlign.end, style: valueStyle),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }

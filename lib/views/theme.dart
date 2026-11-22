@@ -792,12 +792,9 @@ class _FontFamilyItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.fontFamily),
     );
     final preview = Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(
-        context.listInsets.leading,
-        listRowVerticalPadding,
-        context.listInsets.trailing - ListItem.chevronInset,
-        listRowVerticalPadding,
-      ),
+      padding: ListItem.chevronPaddingOf(
+        context,
+      ).copyWith(top: listRowVerticalPadding, bottom: listRowVerticalPadding),
       child: Row(
         spacing: 12,
         children: [

@@ -124,7 +124,8 @@ Color marks the one item that differs, never the structure around it.
 - **Text**: titles and values `onSurface`, labels and secondary lines `onSurfaceVariant`. `outline` is not a text
   color, and a value is never tinted primary.
 - **Marks** that only identify, a country badge, a group or service icon, a source avatar, sit on a neutral well with
-  `onSurfaceVariant`.
+  `onSurfaceVariant`. An app's own icon is drawn bare, with no well; an app without one gets a letter on a filled tile
+  as large as the platform's icons look (`appIconBodies` in `lib/plugins/app_icon.dart`).
 - `primaryContainer`, `secondaryContainer`, and `tertiaryContainer` are neither surface nor selection fills. Keep
   them out of cards, rows, marks, and navigation indicators. The code editor's completion popup is the one exception:
   it fills the highlighted suggestion with `primaryContainer` (`lib/features/editor/completion_popup.dart`).

@@ -10,23 +10,31 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'connection_poller.dart';
 import 'http_capture.dart';
+import 'requests_detail_pane.dart';
 
-/// Every connection of this run, open or closed, newest first. The log the
-/// Core's events keep is shown as it changes; polling the open connections
-/// adds their speeds and settles what the events missed.
+export 'requests_detail_pane.dart' show RequestsSegment;
+
+/// Every connection of this run, open or closed, newest first, and in a
+/// segment of their own the DNS queries. The log the Core's events keep is
+/// shown as it changes; polling the open connections adds their speeds and
+/// settles what the events missed.
 class RequestsView extends ConsumerStatefulWidget {
   final ScrollController? scrollController;
+  final RequestsSegment segment;
   final Future<List<TrackerInfo>> Function()? connectionsReader;
+  final MitmQuery? httpQuery;
 
   const RequestsView({
     super.key,
     this.scrollController,
+    this.segment = RequestsSegment.connections,
     @visibleForTesting this.connectionsReader,
+    @visibleForTesting this.httpQuery,
   });
 
   @override
@@ -38,46 +46,57 @@ class _RequestsViewState extends ConsumerState<RequestsView>
         WidgetsBindingObserver,
         ActivePollingMixin<RequestsView>,
         RouteMotionHoldMixin<RequestsView> {
-  final _list = TrackerInfoListController();
-  late final _filters = ConnectionFilterController.saved(
-    ref,
-    'requests',
-    onAskCondition: _askCondition,
-  );
-  late final ScrollController _scrollController;
-  late final _physics = FollowEndScrollPhysics(
-    isFollowing: () => _list.value.autoScrollToEnd,
-  );
+  final _rows = ConnectionRows();
+  var _query = '';
+  var _rowsQuery = '';
+  final _filters = connectionFilters();
   final _selected = ValueNotifier<String?>(null);
+  late var _segment = widget.segment;
 
-  /// The rows as the list shows them, top down.
-  Iterable<TrackerInfo> Function() _shownOrder = () => const [];
-  var _cardShown = false;
+  /// Each segment shown so far, kept as it was left while another shows.
+  final _bodies = <RequestsSegment, Widget>{};
+  final _kept = <RequestsSegment, Offstage>{};
+  final _scrollControllers = <RequestsSegment, ScrollController>{};
+
+  /// Hidden segments that missed a change, brought up to date when shown.
+  final _behind = <RequestsSegment>{};
+  final _dnsFeed = DnsQueryFeed();
+  final _dnsFilters = dnsFilters();
+  final _dnsSelected = ValueNotifier<DnsQuery?>(null);
+  List<DnsQuery>? _dnsOffered;
+  final _httpFeed = HttpRequestFeed();
+  final _httpFilters = httpFilters();
+  final _httpSelected = ValueNotifier<int?>(null);
+  List<MitmExchangeSummary>? _httpOffered;
+  var _httpRuns = 0;
+
   BuildContext? _sheet;
-  final _paused = ValueNotifier(false);
+
+  /// Whether the detail stands beside the list rather than in a sheet.
+  var _split = false;
   late final _menuActions = TrackerMenuActions(
     close: _closeConnection,
     onlyApp: _onlyApp,
     hideHost: _hideHost,
   );
-  TrackerInfosState? _presentedState;
-  _Presented? _presented;
-  var _ranking = TrackerRanking.empty;
-  var _reads = 0;
-  var _shownRead = 0;
+  final _poller = ConnectionPoller();
 
   CoreController get _core => ref.read(coreHandlerProvider);
 
   /// The dashboard's sheet can show over this page, each refreshing its own.
   late final _refreshTag = (FunctionTag.requests, this);
+  late final _dnsRefreshTag = (FunctionTag.dnsQueries, this);
 
   @override
   void initState() {
     super.initState();
-    _scrollController =
-        widget.scrollController ?? sheetScrollController(context);
+    _rows
+      ..addListener(_offerCounts)
+      ..addListener(_dropGone);
+    _dnsFeed.addListener(_offerDns);
+    _httpFeed.addListener(_offerHttp);
     _follow();
-    _filters.addListener(_forgetPresented);
+    _filters.addListener(_showWhere);
     ref.listenManual(requestsProvider.select((state) => state.revision), (
       _,
       _,
@@ -85,18 +104,90 @@ class _RequestsViewState extends ConsumerState<RequestsView>
       _dropGone();
       _scheduleRefresh();
     });
+    ref.listenManual(patchClashConfigProvider.select(httpCapturing), (
+      _,
+      capturing,
+    ) {
+      if (!capturing) {
+        _httpSelected.value = null;
+        _httpFeed.hovered = false;
+      }
+    });
+    ref.listenManual(coreStatusProvider, (previous, next) {
+      if (previous == CoreStatus.connected && next != CoreStatus.connected) {
+        _httpFeed.reset();
+        _httpSelected.value = null;
+      }
+    });
+    _setDnsQueries(ref.read(dnsQueriesProvider).list);
+    ref.listenManual(dnsQueriesProvider.select((state) => state.revision), (
+      _,
+      _,
+    ) {
+      throttler.call(_dnsRefreshTag, () {
+        if (!mounted) {
+          return;
+        }
+        updateWhenRouteSettled(
+          () => _setDnsQueries(ref.read(dnsQueriesProvider).list),
+        );
+      }, duration: renderThrottleDuration);
+    });
+  }
+
+  void _followDns() {
+    _dnsFeed.following = true;
+    _setDnsQueries(ref.read(dnsQueriesProvider).list);
+  }
+
+  void _setDnsQueries(List<DnsQuery> dnsQueries) {
+    if (_segment != RequestsSegment.dns) {
+      _behind.add(RequestsSegment.dns);
+      return;
+    }
+    _dnsFeed.offer(dnsQueries);
+  }
+
+  void _offerDns() {
+    final shown = _dnsFeed.items;
+    if (identical(shown, _dnsOffered)) {
+      return;
+    }
+    _dnsOffered = shown;
+    _dnsFilters.offer(shown);
+    final selected = _dnsSelected.value;
+    if (selected != null && !shown.any((query) => identical(query, selected))) {
+      _dnsSelected.value = null;
+    }
+  }
+
+  void _offerHttp() {
+    final shown = _httpFeed.items;
+    if (identical(shown, _httpOffered)) {
+      return;
+    }
+    _httpOffered = shown;
+    _httpFilters.offer(shown);
   }
 
   @override
   void dispose() {
     throttler.cancel(_refreshTag);
-    if (widget.scrollController == null) {
-      _scrollController.dispose();
+    throttler.cancel(_dnsRefreshTag);
+    for (final controller in _scrollControllers.values) {
+      if (controller != widget.scrollController) {
+        controller.dispose();
+      }
     }
-    _list.dispose();
+    _rows.dispose();
     _filters.dispose();
     _selected.dispose();
-    _paused.dispose();
+    _dnsFeed.dispose();
+    _dnsFilters.dispose();
+    _dnsSelected.dispose();
+    _httpFeed.dispose();
+    _httpFilters.dispose();
+    _httpSelected.dispose();
     super.dispose();
   }
 
@@ -104,64 +195,79 @@ class _RequestsViewState extends ConsumerState<RequestsView>
   Duration get pollInterval => const Duration(seconds: 1);
 
   @override
-  Future<void> poll(PollGuard isCurrent) => _readConnections();
+  Future<void> poll(PollGuard isCurrent) async {
+    await Future.wait([
+      _readConnections(),
+      if (_segment == RequestsSegment.http) _readHttp(),
+    ]);
+  }
 
-  Future<void> _readConnections() async {
-    final read = ++_reads;
-    final rank = rankAfter(_ranking);
-    final requestedAt = DateTime.now();
+  Future<void> _readHttp() async {
+    final query =
+        widget.httpQuery ??
+        (ref.read(coreStatusProvider) == CoreStatus.connected
+            ? _core.queryMitmExchanges
+            : null);
+    if (query == null || !httpCapturing(ref.read(patchClashConfigProvider))) {
+      return;
+    }
     try {
-      final connectionsReader = widget.connectionsReader;
-      final ranked = connectionsReader != null
-          ? rank(await connectionsReader())
-          : ref.read(coreStatusProvider) == CoreStatus.connected
-          ? await _core.getConnectionsWith(rank)
-          : rank(const []);
-      // A refresh after closing a connection can overlap a poll.
-      if (read < _shownRead || !mounted) {
-        return;
-      }
-      _shownRead = read;
-      _ranking = ranked.ranking;
-      ref
-          .read(requestsProvider.notifier)
-          .sync(ranked.trackerInfos, requestedAt: requestedAt);
+      await _httpFeed.read(query);
     } catch (error) {
       commonPrint.log(
-        'updateConnections error: $error',
+        'queryMitmExchanges error: $error',
         logLevel: coreFailureLogLevel(error),
       );
     }
-  }
-
-  /// Pausing holds only the refresh each poll brings; what the user does to
-  /// the log shows at once.
-  void _scheduleRefresh({bool evenPaused = false}) {
-    if (_paused.value && !evenPaused) {
+    if (!mounted) {
       return;
     }
-    if (evenPaused) {
-      // A refresh already queued would swallow this one, then find the list
-      // paused and drop it.
-      throttler.cancel(_refreshTag);
+    final restarted = _httpFeed.runs != _httpRuns;
+    _httpRuns = _httpFeed.runs;
+    final selected = _httpSelected.value;
+    if (selected != null &&
+        (restarted || !_httpFeed.items.any((item) => item.id == selected))) {
+      _httpSelected.value = null;
     }
+  }
+
+  Future<void> _readConnections() => _poller.read(
+    ref,
+    reader: widget.connectionsReader,
+    mounted: () => mounted,
+  );
+
+  void _scheduleRefresh() {
     throttler.call(_refreshTag, () {
-      if (!mounted || _paused.value && !evenPaused) {
+      if (!mounted) {
         return;
       }
       updateWhenRouteSettled(() {
-        _list.setTrackerInfos(
-          ref.read(requestsProvider).list,
-          shown: (items) => _filters.present(items).items,
-        );
-        _filters.offer(_list.value.trackerInfos);
+        if (_segment != RequestsSegment.connections) {
+          _behind.add(RequestsSegment.connections);
+          return;
+        }
+        _rows.update(ref.read(requestsProvider));
       });
     }, duration: renderThrottleDuration);
   }
 
-  void _follow() {
-    _list.resumeAutoScrollToEnd(ref.read(requestsProvider).list);
-    _filters.offer(_list.value.trackerInfos);
+  void _follow() => _rows.follow(ref.read(requestsProvider));
+
+  void _offerCounts() => _filters.offerCounts(_rows.counts, () => _rows.held);
+
+  void _showWhere() {
+    _rowsQuery = _query;
+    final searched = trackerInfoQueryMatcher(_query);
+    final filtered = _filters.shows;
+    _rows.showWhere(
+      searched == null
+          ? filtered
+          : filtered == null
+          ? searched
+          : (trackerInfo) => searched(trackerInfo) && filtered(trackerInfo),
+      repeatKeyOf: _filters.mergesRepeats ? trackerRepeatKeyOf : null,
+    );
   }
 
   Future<void> _close(Future<void> Function() close) async {
@@ -170,42 +276,176 @@ class _RequestsViewState extends ConsumerState<RequestsView>
       await _readConnections();
     }
     if (mounted) {
-      _scheduleRefresh(evenPaused: true);
+      _scheduleRefresh();
     }
   }
 
-  String get _detailTitle {
+  String get _detailTitle => _detailTitleOf(context);
+
+  String _detailTitleOf(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return appLocalizations.details(appLocalizations.connection);
   }
 
-  void _select(TrackerInfo trackerInfo) {
+  void _setSegment(RequestsSegment segment) {
+    if (segment == _segment) {
+      return;
+    }
+    setState(() => _segment = segment);
+    _searchShown();
+    final behind = _behind.remove(segment);
+    switch (segment) {
+      case RequestsSegment.connections when behind:
+        _rows.catchUp(ref.read(requestsProvider));
+      case RequestsSegment.dns when behind:
+        _setDnsQueries(ref.read(dnsQueriesProvider).list);
+      case RequestsSegment.http:
+        unawaited(_readHttp());
+      case RequestsSegment.connections || RequestsSegment.dns:
+        break;
+    }
+  }
+
+  void _openConnection(TrackerInfo trackerInfo) {
+    _setSegment(RequestsSegment.connections);
     _selected.value = trackerInfo.id;
-    if (!_cardShown && _sheet == null) {
+  }
+
+  void _search(String query) {
+    _query = query;
+    _searchShown();
+  }
+
+  /// A hidden segment takes the search when shown.
+  void _searchShown() {
+    switch (_segment) {
+      case RequestsSegment.connections:
+        if (_rowsQuery != _query) {
+          _showWhere();
+        }
+      case RequestsSegment.dns:
+        _dnsFeed.search(_query);
+      case RequestsSegment.http:
+        _httpFeed.search(_query);
+    }
+  }
+
+  void _selectDns(DnsQuery dnsQuery) {
+    if (ViewScope.isMobileOf(context, listen: false)) {
+      showDnsQueryDetail(context, dnsQuery);
+      return;
+    }
+    _dnsSelected.value = _split && identical(_dnsSelected.value, dnsQuery)
+        ? null
+        : dnsQuery;
+    _showSelected();
+  }
+
+  void _selectHttp(MitmExchangeSummary exchange) {
+    if (ViewScope.isMobileOf(context, listen: false)) {
+      showNestedSheet<void>(
+        context,
+        builder: (_) =>
+            MitmExchangeView(id: exchange.id, showsConnection: true),
+      );
+      return;
+    }
+    _httpSelected.value = _split && _httpSelected.value == exchange.id
+        ? null
+        : exchange.id;
+    _showSelected();
+  }
+
+  void _showSelected() {
+    if (!_split && _sheet == null) {
       _openSheet();
     }
   }
 
+  Future<void> _clearDnsCache() async {
+    final appLocalizations = context.appLocalizations;
+    var cleared = false;
+    try {
+      await _core.clearDnsCache();
+      cleared = true;
+    } catch (error) {
+      commonPrint.log(
+        'clearDnsCache error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
+    if (!mounted) {
+      return;
+    }
+    dialogs.showBanner(
+      cleared
+          ? appLocalizations.dnsCacheCleared
+          : appLocalizations.clearDnsCacheFailed,
+      level: cleared ? BannerLevel.success : BannerLevel.error,
+    );
+  }
+
+  /// Beside the list, choosing the selected row again empties the pane.
+  void _select(TrackerInfo trackerInfo) {
+    if (_split && _selected.value == trackerInfo.id) {
+      _selected.value = null;
+      return;
+    }
+    _selected.value = trackerInfo.id;
+    _showSelected();
+  }
+
+  /// The selection of the segment shown, which closing the sheet drops.
   Future<void> _openSheet() async {
+    final segment = _segment;
+    final dnsQuery = _dnsSelected.value;
+    final httpId = _httpSelected.value;
     await showNestedSheet<void>(
       context,
       builder: (context) {
         _sheet = context;
-        return TrackerInfoDetailSheet(
-          selected: _selected,
-          title: _detailTitle,
-          refresh: _list,
-          actions: _menuActions,
-          onStep: _step,
-          canStep: (step) => _stepTarget(step) != null,
-        );
+        return switch (segment) {
+          RequestsSegment.connections => TrackerMenuScope(
+            actions: _menuActions,
+            child: TrackerClock(
+              child: TrackerInfoDetailSheet(
+                selected: _selected,
+                rows: _rows,
+                title: _detailTitle,
+              ),
+            ),
+          ),
+          RequestsSegment.dns => DnsQueryDetailSheet(dnsQuery: dnsQuery!),
+          RequestsSegment.http => MitmExchangeView(
+            id: httpId!,
+            showsConnection: true,
+          ),
+        };
       },
     );
     _sheet = null;
-    if (mounted && !_cardShown) {
-      _selected.value = null;
+    if (mounted && !_split) {
+      _dropSelectionsBut(null);
     }
   }
+
+  void _dropSelectionsBut(RequestsSegment? kept) {
+    if (kept != RequestsSegment.connections) {
+      _selected.value = null;
+    }
+    if (kept != RequestsSegment.dns) {
+      _dnsSelected.value = null;
+    }
+    if (kept != RequestsSegment.http) {
+      _httpSelected.value = null;
+    }
+  }
+
+  bool get _hasSelection => switch (_segment) {
+    RequestsSegment.connections => _selected.value != null,
+    RequestsSegment.dns => _dnsSelected.value != null,
+    RequestsSegment.http => _httpSelected.value != null,
+  };
 
   void _closeSheet() {
     final sheet = _sheet;
@@ -214,60 +454,21 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     }
   }
 
-  /// A filtered-out connection stays selected, as the log still holds it.
+  /// A filtered-out connection stays selected, as the log or the rows still
+  /// hold it.
   void _dropGone() {
     final id = _selected.value;
-    if (id != null && ref.read(requestsProvider)[id] == null) {
+    if (id != null && _infoOf(id) == null) {
       _selected.value = null;
       _closeSheet();
     }
   }
 
-  /// Narrowed past the card, the selection goes with it, as a sheet opening
-  /// on its own would cover the list; widened, the card takes the sheet's.
-  void _setCardShown(bool cardShown) {
-    if (cardShown == _cardShown) {
-      return;
-    }
-    _cardShown = cardShown;
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || cardShown != _cardShown) {
-        return;
-      }
-      if (cardShown) {
-        _closeSheet();
-      } else {
-        _selected.value = null;
-      }
-    });
-  }
-
-  String? _stepTarget(int step) {
-    final order = _shownOrder().toList();
-    final index = order.indexWhere((info) => info.id == _selected.value);
-    final next = index + step;
-    return index >= 0 && next >= 0 && next < order.length
-        ? order[next].id
-        : null;
-  }
-
-  void _step(int step) {
-    if (_stepTarget(step) case final id?) {
-      _selected.value = id;
-    }
-  }
-
-  void _togglePaused() {
-    _paused.value = !_paused.value;
-    if (!_paused.value) {
-      _scheduleRefresh();
-    }
-  }
+  TrackerInfo? _infoOf(String id) =>
+      ref.read(requestsProvider)[id] ?? _rows.heldInfoOf(id);
 
   void _onlyApp(TrackerInfo trackerInfo) {
-    _filters
-      ..clear(RecordFacetKind.app)
-      ..add(RecordFilter(RecordFacetKind.app, trackerInfo.metadata.process));
+    _filters.only(RecordFacetKind.app, trackerInfo.metadata.process);
   }
 
   void _hideHost(TrackerInfo trackerInfo) {
@@ -281,451 +482,308 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     );
   }
 
-  void _forgetPresented() => _presented = null;
-
-  _Presented _present(TrackerInfosState state) {
-    final presented = _presented;
-    if (presented != null && identical(state, _presentedState)) {
-      return presented;
-    }
-    final (:items, :repeats) = _filters.present(state.list);
-    _presentedState = state;
-    return _presented = (
-      items: items,
-      repeats: repeats,
-      active: items.where((item) => item.isActive).length,
-    );
-  }
-
-  Widget _buildCounts(
-    Widget Function(BuildContext context, _Presented presented) builder,
-  ) {
-    return ListenableBuilder(
-      listenable: Listenable.merge([_list, _filters]),
-      builder: (context, _) => builder(context, _present(_list.value)),
-    );
-  }
-
-  Future<void> _askCondition() async {
-    final condition = await showConnectionConditionForm(context);
-    if (condition != null && mounted) {
-      _filters.addCondition(condition);
-    }
-  }
-
   Future<void> _closeConnection(TrackerInfo trackerInfo) =>
       _close(() => _core.closeConnection(trackerInfo.id));
 
-  List<PopupMenuItem> _buildMenuItems(bool pinned) {
+  Future<void> _closeActiveConnections() async {
+    final count = ref.read(requestsProvider).activeCount;
+    if (count == 0) {
+      return;
+    }
     final appLocalizations = context.appLocalizations;
-    return [
-      ..._filters.menuItems(context, pinned: pinned),
-      PopupMenuItem(
-        glyph: AppGlyphs.block,
-        label: appLocalizations.disconnectActiveConnections,
-        section: const PopupMenuSection(),
-        onPressed: () => _close(_core.closeConnections),
+    final confirmed = await dialogs.showMessage(
+      title: appLocalizations.closeActiveConnections,
+      message: TextSpan(
+        text: appLocalizations.closeActiveConnectionsTip(count),
       ),
-      PopupMenuItem(
-        glyph: AppGlyphs.clearAll,
-        label: appLocalizations.clearClosedConnections,
-        onPressed: () {
-          ref.read(requestsProvider.notifier).clearClosed();
-          _scheduleRefresh(evenPaused: true);
-        },
-      ),
-    ];
+      confirmText: appLocalizations.close,
+      destructive: true,
+    );
+    if (confirmed == true && mounted) {
+      await _close(_core.closeConnections);
+    }
+  }
+
+  List<PopupMenuItem> _buildMenuItems({required bool hasActive}) {
+    final appLocalizations = context.appLocalizations;
+    return switch (_segment) {
+      RequestsSegment.connections => [
+        PopupMenuItem(
+          glyph: AppGlyphs.block,
+          label: appLocalizations.closeActiveConnections,
+          danger: true,
+          onPressed: hasActive ? _closeActiveConnections : null,
+        ),
+      ],
+      RequestsSegment.http => const [],
+      RequestsSegment.dns => [
+        PopupMenuItem(
+          glyph: AppGlyphs.broom,
+          label: appLocalizations.clearDnsCache,
+          onPressed: _clearDnsCache,
+        ),
+      ],
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    final body = RecordFilterScope(
-      onFilter: _filters.add,
-      child: ValueListenableBuilder<TrackerInfosState>(
-        valueListenable: _list,
-        builder: (context, state, _) => ListenableBuilder(
-          listenable: _filters,
-          builder: (context, _) => _buildBody(state),
-        ),
-      ),
+    final hasActive = ref.watch(
+      requestsProvider.select((log) => log.activeCount > 0),
     );
-    return ListenableBuilder(
-      listenable: Listenable.merge([_filters, _filters.options, _paused]),
-      child: body,
-      builder: (context, body) => LayoutBuilder(
-        builder: (context, constraints) {
-          final pinned = !ViewScope.isMobileOf(context);
-          final facetBar = pinned && constraints.maxWidth >= _facetBarMinWidth;
-          final cardShown =
-              pinned && constraints.maxWidth >= _detailCardMinWidth;
-          _setCardShown(cardShown);
-          return Scaffold(
-            title: context.appLocalizations.connections,
-            searchState: AppBarSearchState(onSearch: _list.search),
-            keywords: facetBar
-                ? _filters.barKeywords
-                : _filters.keywordsOf(pinned: pinned),
-            keywordsCaption: pinned
-                ? null
-                : _buildCounts(
-                    (context, presented) => ConnectionSummary(
-                      shown: presented.items.length,
-                      active: presented.active,
-                      filtering:
-                          _filters.isFiltering || _list.value.isSearching,
-                    ),
-                  ),
-            statusActions: [
-              if (rsFeature && !pinned)
-                HttpCaptureEntry(isAndroid: system.isAndroid),
-            ],
-            iconActions: [
-              IconButtonData(
-                glyph: AppGlyphs.playPause(_paused.value ? 0 : 1),
-                tooltip: _paused.value
-                    ? context.appLocalizations.resumeRefreshing
-                    : context.appLocalizations.pauseRefreshing,
-                onPressed: _togglePaused,
-              ),
-            ],
-            menuItems: _buildMenuItems(pinned),
-            body: _DetailMode(
-              cardShown: cardShown,
-              child: TrackerMenuScope(
-                actions: _menuActions,
-                child: pinned
-                    ? Column(
-                        children: [
-                          Expanded(child: _buildFacetRow(body!, facetBar)),
-                          _buildStatusBar(cardShown),
-                        ],
-                      )
-                    : _buildFacetRow(body!, facetBar),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildStatusBar(bool cardShown) {
-    return Builder(
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: context.bottomInset),
-        child: _buildCounts(
-          (context, presented) => ValueListenableBuilder(
-            valueListenable: _selected,
-            builder: (context, selected, _) => ConnectionStatusBar(
-              shown: presented.items.length,
-              active: presented.active,
-              selected: cardShown && selected != null,
-              trailing: [
-                if (rsFeature) HttpCaptureEntry(isAndroid: system.isAndroid),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFacetRow(Widget body, bool facetBar) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final body = Stack(
+      fit: StackFit.passthrough,
       children: [
-        if (facetBar)
-          SizedBox(
-            width: connectionFacetBarWidth,
-            child: Builder(
-              builder: (context) => ConnectionFacetBar(
-                controller: _filters,
-                padding: EdgeInsetsDirectional.only(
-                  start: 8,
-                  top: context.contentTopPadding,
-                  bottom: 16 + context.bottomInset,
-                ),
-              ),
-            ),
-          ),
-        Expanded(key: const ValueKey('list'), child: body),
+        for (final segment in RequestsSegment.values)
+          if (segment == _segment || _bodies.containsKey(segment))
+            _keptSegment(segment),
       ],
     );
-  }
-
-  Widget _buildBody(TrackerInfosState state) {
-    final appLocalizations = context.appLocalizations;
-    final (items: connections, :repeats, active: _) = _present(state);
-    return NullStatusSwitcher(
-      isEmpty: connections.isEmpty && state.pending == 0,
-      isSearching: state.isSearching || _filters.isFiltering,
-      nullStatus: NullStatus(
-        label: appLocalizations.nullTip(appLocalizations.connections),
-        illustration: NullStatusIllustration.connections,
-      ),
-      child: _buildDetailLayout(
-        (cardShown) => Stack(
-          children: [
-            TrackerRepeats(
-              counts: repeats,
-              child: TrackerClock(
-                child: RecordTableFrame<TrackerInfo>(
-                  tableId: 'connections',
-                  items: connections,
-                  reverse: true,
-                  columnsOf: (width) =>
-                      trackerInfoColumns(context, width: width),
-                  minWidth: cardShown ? 0 : recordTableMinWidth,
-                  dense: true,
-                  builder: (context, table, connections) => _buildList(
-                    state,
-                    table,
-                    connections,
-                    padding: EdgeInsets.only(
-                      top: context.contentTopPadding,
-                      bottom: 16 + context.bottomInset,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            if (state.pending > 0)
-              PositionedDirectional(
-                top: context.contentTopPadding + 8,
-                start: 0,
-                end: 0,
-                child: Center(
-                  child: _NewConnectionsButton(
-                    count: state.pending,
-                    onPressed: _follow,
-                  ),
-                ),
-              ),
-          ],
+    final mobile = ViewScope.isMobileOf(context);
+    return TrackerMenuScope(
+      actions: _menuActions,
+      child: TrackerClock(
+        child: WidthBuilder(
+          builder: (context, width) {
+            final split = !mobile && width >= _splitMinWidth;
+            if (split != _split) {
+              _split = split;
+              WidgetsBinding.instance.addPostFrameCallback(
+                (_) => _settleDetail(),
+              );
+            }
+            return _buildPage(body, split: split, hasActive: hasActive);
+          },
         ),
       ),
     );
   }
 
-  /// A desktop page selects the row it opens: wide, it shows the selected
-  /// connection in a card beside the list, and narrower, in a side sheet.
-  Widget _buildDetailLayout(Widget Function(bool cardShown) builder) {
-    if (ViewScope.isMobileOf(context)) {
-      return builder(false);
+  /// A hidden segment's list keeps its place and does no work: its clock
+  /// stops and the changes it misses wait for it to show.
+  Widget _keptSegment(RequestsSegment segment) {
+    final shown = segment == _segment;
+    if (_kept[segment] case final kept? when kept.offstage != shown) {
+      return kept;
     }
+    return _kept[segment] = Offstage(
+      key: ValueKey(segment),
+      offstage: !shown,
+      child: ExcludeFocus(
+        excluding: !shown,
+        child: TickerMode(
+          enabled: shown,
+          child: _bodies[segment] ??= _buildSegment(segment),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegment(RequestsSegment segment) {
+    final scrollController = _scrollControllers[segment] =
+        segment == widget.segment
+        ? widget.scrollController ?? sheetScrollController(context)
+        : sheetScrollController(context);
+    return switch (segment) {
+      RequestsSegment.connections => TrackerClock(
+        child: RecordFilterScope(
+          onFilter: _filters.add,
+          child: ListenableBuilder(
+            listenable: _rows,
+            builder: (context, _) => _buildBody(context, scrollController),
+          ),
+        ),
+      ),
+      RequestsSegment.http => _buildHttp(scrollController),
+      RequestsSegment.dns => DnsQueryList(
+        feed: _dnsFeed,
+        filters: _dnsFilters,
+        scrollController: scrollController,
+        selected: _dnsSelected,
+        onSelect: _selectDns,
+        onFollow: _followDns,
+      ),
+    };
+  }
+
+  /// The selection moves between the sheet and the pane as the page's width
+  /// crosses where the pane fits.
+  void _settleDetail() {
+    if (!mounted) {
+      return;
+    }
+    if (_split) {
+      _closeSheet();
+      return;
+    }
+    _dropSelectionsBut(_segment);
+    if (_hasSelection && _sheet == null) {
+      _openSheet();
+    }
+  }
+
+  Widget _buildPage(
+    Widget body, {
+    required bool split,
+    required bool hasActive,
+  }) {
+    final mobile = ViewScope.isMobileOf(context);
+    final list = mobile
+        ? body
+        : TrackerSelection(selected: _selected, onSelect: _select, child: body);
+    final header = _buildHeader();
+    return Scaffold(
+      title: PageLabel.requests.label,
+      searchState: AppBarSearchState(onSearch: _search),
+      header: split ? null : header,
+      statusActions: [if (rsFeature) const HttpCaptureEntry()],
+      menuItems: _buildMenuItems(hasActive: hasActive),
+      body: split ? _buildSplit(header, list) : list,
+    );
+  }
+
+  /// The bar spans both panes; the list keeps its header to itself, and the
+  /// pane beside it starts level with the header.
+  Widget _buildSplit(Widget header, Widget list) {
     return Builder(
       builder: (context) {
-        final cardShown = _DetailMode.cardShownOf(context);
-        return TrackerSelection(
-          selected: _selected,
-          onSelect: _select,
-          child: !cardShown
-              ? builder(false)
-              : Row(
+        final barInset = MediaQuery.paddingOf(context).top;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: _listWidth,
+              child: Padding(
+                padding: EdgeInsets.only(top: barInset),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(child: builder(true)),
-                    ValueListenableBuilder(
-                      valueListenable: _selected,
-                      builder: (context, id, _) => id == null
-                          ? const SizedBox.shrink()
-                          : Padding(
-                              padding: EdgeInsetsDirectional.only(
-                                top: context.contentTopPadding,
-                                end: 16,
-                                bottom: 16 + context.bottomInset,
-                              ),
-                              child: SizedBox(
-                                width: _detailCardWidth,
-                                child: TrackerInfoDetailCard(
-                                  id: id,
-                                  onClose: () => _selected.value = null,
-                                ),
-                              ),
-                            ),
+                    header,
+                    Expanded(
+                      child: MediaQuery.removePadding(
+                        context: context,
+                        removeTop: true,
+                        child: FloatingBarScope(
+                          inset: 0,
+                          child: TopInsetScope(inset: 0, child: list),
+                        ),
+                      ),
                     ),
                   ],
                 ),
+              ),
+            ),
+            Expanded(
+              child: RequestsDetailPane(
+                segment: _segment,
+                selected: _selected,
+                rows: _rows,
+                dnsSelected: _dnsSelected,
+                httpSelected: _httpSelected,
+                detailTitle: _detailTitle,
+                top: _headerTop,
+                onOpenConnection: _openConnection,
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildList(
-    TrackerInfosState state,
-    RecordTable<TrackerInfo>? table,
-    List<TrackerInfo> connections, {
-    required EdgeInsets padding,
-  }) {
-    final detailTitle = _detailTitle;
-    final grouping = _filters.value.grouping;
-    final groups = grouping != null
-        ? _filters.groupsOf(connections, reverse: true)
-        : table == null
-        ? trackerInfoMinuteGroups(connections, DateTime.now())
-        : null;
-    _shownOrder = groups != null
-        ? () => groups.expand((group) => group.items)
-        : () => connections.reversed;
-    if (groups != null) {
-      final count = groups.fold(0, (sum, group) => sum + group.items.length);
-      return _FollowTop(
-        controller: _scrollController,
-        following: state.autoScrollToEnd,
-        onLeave: () => _list.setAutoScrollToEnd(false),
-        onReturn: _follow,
-        child: FloatingScrollbar(
-          controller: _scrollController,
-          hintBuilder: (fraction) {
-            var index = (fraction * (count - 1)).round();
-            for (final group in groups) {
-              if (index < group.items.length) {
-                return group.items[index].start.showFull;
-              }
-              index -= group.items.length;
-            }
-            return '';
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(top: _headerTop, bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: context.listInsets.margin,
+            ),
+            child: ConnectedButtonBar<RequestsSegment>(
+              segments: [
+                (
+                  RequestsSegment.connections,
+                  context.appLocalizations.connections,
+                ),
+                if (rsFeature) (RequestsSegment.http, 'HTTP'),
+                (RequestsSegment.dns, 'DNS'),
+              ],
+              value: _segment,
+              onChanged: _setSegment,
+            ),
+          ),
+          switch (_segment) {
+            RequestsSegment.connections => ConditionFilterRow(
+              controller: _filters,
+            ),
+            RequestsSegment.http => Consumer(
+              builder: (_, ref, _) =>
+                  ref.watch(patchClashConfigProvider.select(httpCapturing))
+                  ? ConditionFilterRow(controller: _httpFilters)
+                  : const SizedBox.shrink(),
+            ),
+            RequestsSegment.dns => ConditionFilterRow(controller: _dnsFilters),
           },
-          child: TrackerInfoGroupedList(
-            groups: groups,
-            grouping: grouping,
-            controller: _scrollController,
-            padding: padding,
-            table: table,
-            detailTitle: detailTitle,
-            onClose: _closeConnection,
-          ),
+        ],
+      ),
+    );
+  }
+
+  /// Until capture is on, the list's place holds the switch that turns it on.
+  Widget _buildHttp(ScrollController scrollController) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final capturing = ref.watch(
+          patchClashConfigProvider.select(httpCapturing),
+        );
+        if (!capturing) {
+          return ListView(
+            padding: context.listInsets.page(bottom: 16 + context.bottomInset),
+            children: const [HttpCaptureSwitch(last: true)],
+          );
+        }
+        return HttpRequestList(
+          feed: _httpFeed,
+          filters: _httpFilters,
+          scrollController: scrollController,
+          selected: _httpSelected,
+          onSelect: _selectHttp,
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context, ScrollController scrollController) {
+    final appLocalizations = context.appLocalizations;
+    return TrackerRepeats(
+      counts: _rows.repeats,
+      child: RecordFeedView<String>(
+        rows: _rows,
+        isEmpty: _rows.shownCount == 0,
+        isSearching: SearchQuery(_query).isNotEmpty || _filters.isFiltering,
+        nullStatus: NullStatus(
+          label: appLocalizations.nullTip(appLocalizations.connections),
+          illustration: NullStatusIllustration.connections,
         ),
-      );
-    }
-    return Align(
-      alignment: Alignment.topCenter,
-      child: FloatingScrollbar(
-        controller: _scrollController,
-        hintBuilder: (fraction) {
-          final index = (fraction * (connections.length - 1)).round();
-          return connections[index].start.showFull;
-        },
-        child: ScrollToEndBox(
-          controller: _scrollController,
-          enable: state.autoScrollToEnd,
-          onCancelToEnd: () => _list.setAutoScrollToEnd(false),
-          onResumeToEnd: _follow,
-          child: TrackerInfoList(
-            reverse: true,
-            shrinkWrap: true,
-            physics: _physics,
-            controller: _scrollController,
-            padding: padding,
-            trackerInfos: connections,
-            table: table,
-            detailTitle: detailTitle,
-            onClose: _closeConnection,
-          ),
+        controller: scrollController,
+        timeAt: (fraction) => _rows.atFraction(fraction)?.start,
+        following: _rows.following,
+        onStopFollowing: () => _rows.following = false,
+        onFollow: _follow,
+        onHover: (hovered) => _rows.hovered = hovered,
+        itemBuilder: trackerInfoRows(
+          _rows,
+          detailTitle: _detailTitleOf(context),
+          onClose: _closeConnection,
         ),
       ),
     );
   }
 }
 
-typedef _Presented = ({
-  List<TrackerInfo> items,
-  Map<String, int> repeats,
-  int active,
-});
-
-class _DetailMode extends InheritedWidget {
-  final bool cardShown;
-
-  const _DetailMode({required this.cardShown, required super.child});
-
-  static bool cardShownOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<_DetailMode>()?.cardShown ??
-      false;
-
-  @override
-  bool updateShouldNotify(_DetailMode oldWidget) =>
-      cardShown != oldWidget.cardShown;
-}
-
-const _facetBarMinWidth = 1240.0;
-const _detailCardMinWidth = 1040.0;
-const _detailCardWidth = 360.0;
-
-/// Tells a list that reads newest first when the reader leaves its top and
-/// comes back to it, and takes it back to the top once it follows again.
-class _FollowTop extends StatefulWidget {
-  final ScrollController controller;
-  final bool following;
-  final VoidCallback onLeave;
-  final VoidCallback onReturn;
-  final Widget child;
-
-  const _FollowTop({
-    required this.controller,
-    required this.following,
-    required this.onLeave,
-    required this.onReturn,
-    required this.child,
-  });
-
-  @override
-  State<_FollowTop> createState() => _FollowTopState();
-}
-
-class _FollowTopState extends State<_FollowTop> {
-  @override
-  void didUpdateWidget(_FollowTop oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.following && !oldWidget.following) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final controller = widget.controller;
-        if (mounted && widget.following && controller.hasClients) {
-          controller.jumpTo(controller.position.minScrollExtent);
-        }
-      });
-    }
-  }
-
-  bool _handleScrollNotification(ScrollNotification notification) {
-    if (notification.depth != 0 ||
-        notification is! ScrollUpdateNotification &&
-            notification is! ScrollEndNotification) {
-      return false;
-    }
-    final metrics = notification.metrics;
-    final atTop = metrics.pixels <= metrics.minScrollExtent;
-    if (widget.following && !atTop) {
-      widget.onLeave();
-    } else if (!widget.following &&
-        atTop &&
-        notification is ScrollEndNotification) {
-      widget.onReturn();
-    }
-    return false;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: _handleScrollNotification,
-      child: widget.child,
-    );
-  }
-}
-
-class _NewConnectionsButton extends StatelessWidget {
-  final int count;
-  final VoidCallback onPressed;
-
-  const _NewConnectionsButton({required this.count, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton.icon(
-      onPressed: onPressed,
-      icon: const GlyphIcon(AppGlyphs.arrowUp, fill: 1),
-      label: Text(context.appLocalizations.newConnections(count)),
-    );
-  }
-}
+const _listWidth = 392.0;
+const _headerTop = 4.0;
+final _splitMinWidth = _listWidth + RequestsDetailPane.minWidth;

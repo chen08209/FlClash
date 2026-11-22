@@ -2,11 +2,12 @@ import 'dart:ui';
 
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/connection/connection.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('DnsQueriesState.list', () {
+  group('DnsQueryFeed.shown', () {
     setUpAll(() => loadAppLocalizations(const Locale('en')));
 
     DnsQuery dnsQuery(
@@ -26,19 +27,24 @@ void main() {
       time: DateTime.utc(2026),
     );
 
-    final state = DnsQueriesState(
-      dnsQueries: [
-        dnsQuery('a.test', initiator: DnsQueryInitiator.app),
-        dnsQuery('b.test', type: 'AAAA', answers: ['2001:DB8::1']),
-        dnsQuery('c.test', rcode: 'NXDOMAIN'),
-        dnsQuery('d.test', initiator: DnsQueryInitiator.direct, cached: true),
-      ],
-    );
+    final queries = [
+      dnsQuery('a.test', initiator: DnsQueryInitiator.app),
+      dnsQuery('b.test', type: 'AAAA', answers: ['2001:DB8::1']),
+      dnsQuery('c.test', rcode: 'NXDOMAIN'),
+      dnsQuery('d.test', initiator: DnsQueryInitiator.direct, cached: true),
+    ];
 
-    List<String> domains(DnsQueriesState state) =>
-        state.list.map((dnsQuery) => dnsQuery.domain).toList();
+    DnsQueryFeed searched(List<DnsQuery> queries, String query) =>
+        DnsQueryFeed()
+          ..offer(queries)
+          ..search(query);
 
-    List<String> filtered(RecordFacetKind kind, String value) => state.list
+    List<String> domains(List<DnsQuery> queries, String query) => searched(
+      queries,
+      query,
+    ).shown.map((dnsQuery) => dnsQuery.domain).toList();
+
+    List<String> filtered(RecordFacetKind kind, String value) => queries
         .whereFilters(dnsQueryFacets, [RecordFilter(kind, value)])
         .map((dnsQuery) => dnsQuery.domain)
         .toList();
@@ -53,49 +59,47 @@ void main() {
     });
 
     test('the initiator and a cache hit are chips', () {
-      expect(state.dnsQueries[3].tags, ['A', 'Direct', 'Cache']);
+      expect(queries[3].tags, ['A', 'Direct', 'Cache']);
     });
 
     test('an unknown initiator and a clean rcode are not chips', () {
-      expect(state.dnsQueries[1].tags, ['AAAA']);
+      expect(queries[1].tags, ['AAAA']);
     });
 
     test('query matches the domain or an answer, case-insensitively', () {
-      expect(domains(state.copyWith(query: 'C.TEST')), ['c.test']);
-      expect(domains(state.copyWith(query: '2001:db8')), ['b.test']);
+      expect(domains(queries, 'C.TEST'), ['c.test']);
+      expect(domains(queries, '2001:db8'), ['b.test']);
     });
 
     test('query matches the upstream, the error and the chips', () {
-      final state = DnsQueriesState(
-        dnsQueries: [
-          DnsQuery(
-            domain: 'a.test',
-            type: 'A',
-            upstream: 'https://dns.example/dns-query',
-            time: DateTime.utc(2026),
-          ),
-          DnsQuery(
-            domain: 'b.test',
-            type: 'AAAA',
-            error: 'i/o timeout',
-            time: DateTime.utc(2026),
-          ),
-        ],
-      );
-      expect(domains(state.copyWith(query: 'dns.example')), ['a.test']);
-      expect(domains(state.copyWith(query: 'timeout')), ['b.test']);
-      expect(domains(state.copyWith(query: 'aaaa')), ['b.test']);
+      final queries = [
+        DnsQuery(
+          domain: 'a.test',
+          type: 'A',
+          upstream: 'https://dns.example/dns-query',
+          time: DateTime.utc(2026),
+        ),
+        DnsQuery(
+          domain: 'b.test',
+          type: 'AAAA',
+          error: 'i/o timeout',
+          time: DateTime.utc(2026),
+        ),
+      ];
+      expect(domains(queries, 'dns.example'), ['a.test']);
+      expect(domains(queries, 'timeout'), ['b.test']);
+      expect(domains(queries, 'aaaa'), ['b.test']);
     });
 
     test('every query term has to match', () {
-      expect(domains(state.copyWith(query: 'test app')), ['a.test']);
-      expect(domains(state.copyWith(query: 'a.test aaaa')), isEmpty);
+      expect(domains(queries, 'test app'), ['a.test']);
+      expect(domains(queries, 'a.test aaaa'), isEmpty);
     });
 
     test('is searching once a query is set', () {
-      expect(state.isSearching, isFalse);
-      expect(state.copyWith(query: '  ').isSearching, isFalse);
-      expect(state.copyWith(query: 'a').isSearching, isTrue);
+      expect(searched(queries, '').isSearching, isFalse);
+      expect(searched(queries, '  ').isSearching, isFalse);
+      expect(searched(queries, 'a').isSearching, isTrue);
     });
   });
 
@@ -178,7 +182,7 @@ void main() {
     });
   });
 
-  group('TrackerInfosState.list', () {
+  group('trackerInfoQueryMatcher', () {
     Metadata meta({
       String network = 'tcp',
       String host = 'example.com',
@@ -207,7 +211,7 @@ void main() {
     );
 
     test('returns all when the query is empty', () {
-      final state = TrackerInfosState(trackerInfos: [tracker('1')]);
+      final state = _searched(trackerInfos: [tracker('1')]);
       expect(state.list.length, 1);
     });
 
@@ -234,7 +238,7 @@ void main() {
     });
 
     test('query matches host', () {
-      final state = TrackerInfosState(
+      final state = _searched(
         trackerInfos: [
           tracker('1', metadata: meta(host: 'google.com')),
           tracker('2', metadata: meta(host: 'github.com')),
@@ -246,7 +250,7 @@ void main() {
     });
 
     test('query matches network', () {
-      final state = TrackerInfosState(
+      final state = _searched(
         trackerInfos: [
           tracker('1', metadata: meta(network: 'tcp')),
           tracker('2', metadata: meta(network: 'udp')),
@@ -258,7 +262,7 @@ void main() {
     });
 
     test('query matches destinationIP', () {
-      final state = TrackerInfosState(
+      final state = _searched(
         trackerInfos: [
           tracker('1', metadata: meta(destinationIP: '10.0.0.1')),
           tracker('2', metadata: meta(destinationIP: '192.168.1.1')),
@@ -270,7 +274,7 @@ void main() {
     });
 
     test('query matches chains text', () {
-      final state = TrackerInfosState(
+      final state = _searched(
         trackerInfos: [
           tracker('1', chains: ['proxy-a']),
           tracker('2', chains: ['proxy-b']),
@@ -282,37 +286,57 @@ void main() {
     });
 
     test('query matches the rule and its payload', () {
-      final state = TrackerInfosState(
-        trackerInfos: [
-          tracker('1'),
-          tracker('2', rule: 'DomainSuffix', rulePayload: 'googleapis.com'),
-        ],
+      final trackerInfos = [
+        tracker('1'),
+        tracker('2', rule: 'DomainSuffix', rulePayload: 'googleapis.com'),
+      ];
+      expect(
+        _searched(
+          trackerInfos: trackerInfos,
+          query: 'domainsuffix',
+        ).list.single.id,
+        '2',
       );
-      expect(state.copyWith(query: 'domainsuffix').list.single.id, '2');
-      expect(state.copyWith(query: 'googleapis').list.single.id, '2');
+      expect(
+        _searched(
+          trackerInfos: trackerInfos,
+          query: 'googleapis',
+        ).list.single.id,
+        '2',
+      );
     });
 
     test('query matches the source address and the process path', () {
-      final state = TrackerInfosState(
-        trackerInfos: [
-          tracker('1'),
-          tracker(
-            '2',
-            metadata: const Metadata(
-              sourceIP: '198.18.0.1',
-              sourcePort: '53211',
-              processPath: '/usr/bin/curl',
-            ),
+      final trackerInfos = [
+        tracker('1'),
+        tracker(
+          '2',
+          metadata: const Metadata(
+            sourceIP: '198.18.0.1',
+            sourcePort: '53211',
+            processPath: '/usr/bin/curl',
           ),
-        ],
+        ),
+      ];
+      expect(
+        _searched(
+          trackerInfos: trackerInfos,
+          query: '198.18.0.1',
+        ).list.single.id,
+        '2',
       );
-      expect(state.copyWith(query: '198.18.0.1').list.single.id, '2');
-      expect(state.copyWith(query: '53211').list.single.id, '2');
-      expect(state.copyWith(query: '/usr/bin').list.single.id, '2');
+      expect(
+        _searched(trackerInfos: trackerInfos, query: '53211').list.single.id,
+        '2',
+      );
+      expect(
+        _searched(trackerInfos: trackerInfos, query: '/usr/bin').list.single.id,
+        '2',
+      );
     });
 
     test('every query term has to match', () {
-      final state = TrackerInfosState(
+      final state = _searched(
         trackerInfos: [
           tracker('1', metadata: meta(host: 'github.com')),
           tracker(
@@ -326,4 +350,14 @@ void main() {
       expect(state.list.single.id, '2');
     });
   });
+}
+
+({List<TrackerInfo> list}) _searched({
+  required List<TrackerInfo> trackerInfos,
+  String query = '',
+}) {
+  final matches = trackerInfoQueryMatcher(query);
+  return (
+    list: matches == null ? trackerInfos : trackerInfos.where(matches).toList(),
+  );
 }
