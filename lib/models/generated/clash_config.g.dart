@@ -474,8 +474,9 @@ Map<String, dynamic> _$NtpToJson(_Ntp instance) => <String, dynamic>{
 
 _ProfileTun _$ProfileTunFromJson(Map<String, dynamic> json) => _ProfileTun(
   mtu: (json['mtu'] as num?)?.toInt() ?? defaultTunMtu,
-  congestionController:
-      json['congestion-controller'] as String? ?? defaultCongestionController,
+  congestionController: json['congestion-controller'] == null
+      ? defaultCongestionController
+      : _congestionControllerFromJson(json['congestion-controller'] as String),
   strictRoute: json['strict-route'] as bool? ?? false,
   routeAddress:
       (json['route-address'] as List<dynamic>?)

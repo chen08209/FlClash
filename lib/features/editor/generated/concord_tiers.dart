@@ -312,3 +312,23 @@ const concordKeyTiers = <String, Map<String, ConcordTier>>{
     'prefer-asn': ConcordTier.t2,
   },
 };
+
+const concordMode = ['rule', 'global', 'direct'];
+
+const concordLogLevel = ['debug', 'info', 'warning', 'error', 'silent'];
+
+const concordFindProcessMode = ['always', 'strict', 'off'];
+
+const concordDnsEnhancedMode = ['normal', 'fake-ip', 'redir-host'];
+
+const concordDnsFakeIpFilterMode = ['blacklist', 'whitelist', 'rule'];
+
+const concordDnsCacheAlgorithm = ['lru', 'arc'];
+
+const concordTunStack = ['gvisor', 'mips'];
+
+const concordTunCongestionController = ['cubic', 'reno', 'bbr'];
+
+const concordProxyIpStackMode = ['auto', 'gvisor', 'mips'];
+
+const concordProxyIpStackCongestionController = ['cubic', 'reno', 'bbr'];

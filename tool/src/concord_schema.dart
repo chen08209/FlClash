@@ -12,7 +12,9 @@ class ConcordSchema {
   final Map<String, Map<String, String>> sections;
   final Map<String, Map<String, Object?>> defaults;
 
-  const ConcordSchema(this.sections, this.defaults);
+  final Map<String, Map<String, List<String>>> values;
+
+  const ConcordSchema(this.sections, this.defaults, this.values);
 
   factory ConcordSchema.load([String path = concordSchemaPath]) =>
       ConcordSchema.parse(File(path).readAsStringSync());
@@ -21,7 +23,16 @@ class ConcordSchema {
     final json = jsonDecode(source) as Map<String, Object?>;
     final sections = <String, Map<String, String>>{};
     final defaults = <String, Map<String, Object?>>{};
+    final values = <String, Map<String, List<String>>>{};
+    Map<String, List<String>> lists(Map<String, Object?> source) => {
+      for (final MapEntry(:key, :value) in source.entries)
+        key: [for (final name in value! as List<Object?>) name! as String],
+    };
     for (final MapEntry(:key, :value) in json.entries) {
+      if (key == 'proxy-values') {
+        values['proxy'] = lists(value! as Map<String, Object?>);
+        continue;
+      }
       switch (value) {
         // A bare list, as group-types is, names only what Concord applies.
         case final List<Object?> applied:
@@ -32,12 +43,15 @@ class ConcordSchema {
               for (final name in (tiers[tier] as List<Object?>?) ?? const [])
                 name! as String: tier,
           };
-          if (tiers['defaults'] case final Map<String, Object?> values) {
-            defaults[key] = values;
+          if (tiers['defaults'] case final Map<String, Object?> found) {
+            defaults[key] = found;
+          }
+          if (tiers['values'] case final Map<String, Object?> found) {
+            values[key] = lists(found);
           }
       }
     }
-    return ConcordSchema(sections, defaults);
+    return ConcordSchema(sections, defaults, values);
   }
 
   String? tierOf(String section, String key) => sections[section]?[key];
