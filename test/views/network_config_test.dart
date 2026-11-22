@@ -288,7 +288,8 @@ void main() {
       expect(container.read(patchClashConfigProvider).tun.mtu, 9000);
     });
 
-    testWidgets('a Core without the TUN congestion controls hides them', (
+    testWidgets('only what Concord runs is offered before the Core reports, '
+        'and a Core without the TUN congestion controls hides them', (
       tester,
     ) async {
       Future<void> openCongestion() async {
@@ -300,7 +301,8 @@ void main() {
       }
 
       await openCongestion();
-      expect(find.text('bbr3'), findsOneWidget);
+      expect(find.text('bbr'), findsOneWidget);
+      expect(find.text('bbr3'), findsNothing);
 
       container
           .read(coreCapabilitiesStateProvider.notifier)

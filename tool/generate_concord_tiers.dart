@@ -22,7 +22,25 @@ String renderConcordTiers(ConcordSchema schema) {
     out.writeln('  },');
   }
   out.writeln('};');
+  for (final MapEntry(key: section, value: keys) in schema.values.entries) {
+    for (final MapEntry(:key, :value) in keys.entries) {
+      final names = value.map((name) => "'$name'").join(', ');
+      out
+        ..writeln()
+        ..writeln('const ${concordValuesName(section, key)} = [$names];');
+    }
+  }
   return out.toString();
+}
+
+String concordValuesName(String section, String key) {
+  final words = [
+    'concord',
+    if (section != 'keys') section,
+    ...key.split(RegExp('[-.]')),
+  ];
+  return words.first +
+      words.skip(1).map((w) => w[0].toUpperCase() + w.substring(1)).join();
 }
 
 void main(List<String> args) {

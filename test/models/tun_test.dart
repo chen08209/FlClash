@@ -17,6 +17,26 @@ void main() {
     expect(tun.congestionController, defaultCongestionController);
   });
 
+  test('a saved congestion control the core no longer offers reads as the '
+      'default', () {
+    expect(
+      Tun.fromJson({'congestion-controller': 'bbr3'}).congestionController,
+      defaultCongestionController,
+    );
+    expect(
+      ProfileTun.fromJson({
+        'congestion-controller': 'bbr3',
+      }).congestionController,
+      defaultCongestionController,
+    );
+    expect(
+      ProfileTun.fromJson({
+        'congestion-controller': 'bbr',
+      }).congestionController,
+      'bbr',
+    );
+  });
+
   test('a saved MTU outside what a TUN interface accepts is clamped', () {
     expect(Tun.fromJson({'mtu': 70000}).mtu, maxTunMtu);
     expect(Tun.fromJson({'mtu': 576}).mtu, minTunMtu);

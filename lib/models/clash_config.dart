@@ -45,14 +45,7 @@ const minTunMtu = 1280;
 const maxTunMtu = 65535;
 const defaultCongestionController = 'cubic';
 
-// The TUN congestion controls the app knows, cubic first as the default; the
-// Core's reported list decides which of them are offered.
-const congestionControllers = [
-  defaultCongestionController,
-  'reno',
-  'bbr',
-  'bbr3',
-];
+const congestionControllers = [defaultCongestionController, 'reno', 'bbr'];
 const defaultDnsHijack = ['any:53'];
 const defaultTunUdpTimeout = 300;
 
@@ -1188,7 +1181,7 @@ int _mtuFromJson(int value) =>
     value > 0 ? value.clamp(minTunMtu, maxTunMtu) : defaultTunMtu;
 
 String _congestionControllerFromJson(String value) =>
-    value.isEmpty ? defaultCongestionController : value;
+    congestionControllers.contains(value) ? value : defaultCongestionController;
 
 extension TunExt on Tun {
   List<String> excludedRoutes({required bool bypassPrivateRoute}) => [
@@ -1563,7 +1556,10 @@ abstract class ProfileTun with _$ProfileTun {
   const factory ProfileTun({
     @Default(defaultTunMtu) int mtu,
     @Default(defaultCongestionController)
-    @JsonKey(name: 'congestion-controller')
+    @JsonKey(
+      name: 'congestion-controller',
+      fromJson: _congestionControllerFromJson,
+    )
     String congestionController,
     @Default(false) @JsonKey(name: 'strict-route') bool strictRoute,
     @Default([]) @JsonKey(name: 'route-address') List<String> routeAddress,
