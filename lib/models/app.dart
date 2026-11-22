@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'common.dart';
+import 'connection_log.dart';
 import 'core.dart';
 
 part 'generated/app.freezed.dart';
@@ -25,7 +26,7 @@ abstract class AppState with _$AppState {
     int? runTime,
     @Default([]) List<ExternalProvider> providers,
     String? localIp,
-    required FixedList<TrackerInfo> requests,
+    required ConnectionLog requests,
     required int version,
     required FixedList<Log> logs,
     required FixedList<Traffic> traffics,

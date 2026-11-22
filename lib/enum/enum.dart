@@ -37,6 +37,17 @@ const desktopPlatforms = [
 
 enum GroupName { GLOBAL }
 
+/// Why a dial failed, spelled as the Core sends it. `handshake`: the path to the
+/// target opened but the exchange over it failed.
+enum ConnectionFailureKind {
+  timeout,
+  refused,
+  unreachable,
+  dns,
+  handshake,
+  other,
+}
+
 enum GroupType {
   @JsonValue('select')
   Selector('select'),

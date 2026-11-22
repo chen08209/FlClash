@@ -8,7 +8,8 @@ import (
 )
 
 // mihomo announces a connection only as it opens, and has no hook for its
-// close; the request list learns the traffic that follows from these reports.
+// close; the request list learns the traffic that follows, and the close, from
+// these reports.
 const requestTrafficInterval = time.Second
 
 // A full bulk queue drops a report; a closed request holds its connection only this many retries.
@@ -18,6 +19,7 @@ type RequestTraffic struct {
 	Id       string `json:"id"`
 	Upload   int64  `json:"upload"`
 	Download int64  `json:"download"`
+	Closed   bool   `json:"closed,omitempty"`
 }
 
 type watchedRequest struct {
@@ -69,8 +71,9 @@ func (w *requestTrafficWatch) collect(
 		request.fresh = false
 		info := request.tracker.Info()
 		upload, download := info.UploadTotal.Load(), info.DownloadTotal.Load()
-		if upload != request.upload || download != request.download {
-			changed = append(changed, RequestTraffic{Id: id, Upload: upload, Download: download})
+		closed := request.closedReports > 0
+		if closed || upload != request.upload || download != request.download {
+			changed = append(changed, RequestTraffic{Id: id, Upload: upload, Download: download, Closed: closed})
 		}
 	}
 	queued := len(changed) == 0 || queue(changed)

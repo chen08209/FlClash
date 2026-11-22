@@ -248,6 +248,64 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
   });
 
+  testWidgets('connections still open close once the core is gone', (
+    tester,
+  ) async {
+    final container = await _pumpCoreManager(tester, _coreInterface());
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    container
+        .read(requestsProvider.notifier)
+        .addRequest(
+          TrackerInfo(
+            id: 'a',
+            start: DateTime.utc(2026),
+            metadata: const Metadata(network: 'tcp', host: 'example.com'),
+            chains: const ['Proxy'],
+            rule: 'MATCH',
+            rulePayload: '',
+          ),
+        );
+    await tester.pump();
+    expect(container.read(requestsProvider).activeCount, 1);
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    await tester.pump();
+
+    expect(container.read(requestsProvider).activeCount, 0);
+    expect(container.read(requestsProvider)['a']!.closedAt, isNotNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a connection whose dial failed is recorded closed when the '
+      'Core says', (tester) async {
+    final container = await _pumpCoreManager(tester, _coreInterface());
+
+    coreEventManager.sendEvent(
+      const CoreEvent(
+        type: CoreEventType.request,
+        data: {
+          'id': 'a',
+          'start': '2026-11-21T08:00:00Z',
+          'metadata': {'network': 'tcp', 'host': 'example.com'},
+          'chains': ['Proxy'],
+          'rule': 'Match',
+          'rulePayload': '',
+          'closedAt': '2026-11-21T08:00:00Z',
+          'failure': {'kind': 'timeout', 'message': 'i/o timeout'},
+        },
+      ),
+    );
+    await tester.pump();
+
+    final connection = container.read(requestsProvider)['a']!;
+    expect(connection.closedAt, DateTime.utc(2026, 11, 21, 8));
+    expect(connection.failure?.kind, ConnectionFailureKind.timeout);
+    expect(container.read(requestCountProvider), 1);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('a crash is ignored when the core is not connected', (
     tester,
   ) async {

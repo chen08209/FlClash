@@ -64,7 +64,7 @@ void main() {
 
   void seedRequests(List<TrackerInfo> requests) {
     final notifier = container.read(requestsProvider.notifier);
-    notifier.value = FixedList<TrackerInfo>(500);
+    notifier.value = ConnectionLog(500);
     for (final request in requests) {
       notifier.addRequest(request);
     }

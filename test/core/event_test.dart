@@ -10,6 +10,8 @@ class _RecordingListener with CoreEventListener {
   final List<String> loaded = [];
   final List<String> dialerLoops = [];
   final List<Map<String, RequestTraffic>> requestTraffic = [];
+  final List<Set<String>> requestsClosed = [];
+  final List<TrackerInfo> requests = [];
 
   @override
   void onLoaded(String providerName) {
@@ -25,6 +27,16 @@ class _RecordingListener with CoreEventListener {
   @override
   void onRequestTraffic(Map<String, RequestTraffic> traffic) {
     requestTraffic.add(traffic);
+  }
+
+  @override
+  void onRequest(TrackerInfo connection) {
+    requests.add(connection);
+  }
+
+  @override
+  void onRequestsClosed(Set<String> ids) {
+    requestsClosed.add(ids);
   }
 }
 
@@ -77,22 +89,75 @@ void main() {
     expect(listener.dialerLoops, ['Front']);
   });
 
-  test('the traffic of requests reaches the listeners by id', () async {
+  test(
+    'the traffic and the close of requests reach the listeners by id',
+    () async {
+      final listener = _RecordingListener();
+      coreEventManager.addListener(listener);
+      addTearDown(() => coreEventManager.removeListener(listener));
+
+      coreEventsFromData({
+        'type': 'requestTraffic',
+        'data': [
+          {'id': 'a', 'upload': 460, 'download': 257835, 'closed': false},
+          {'id': 'b', 'upload': 0, 'download': 12, 'closed': true},
+          {'id': 'c', 'upload': 1, 'download': 1},
+        ],
+      }).forEach(coreEventManager.sendEvent);
+      await pumpEventQueue();
+
+      expect(listener.requestTraffic, [
+        {
+          'a': (upload: 460, download: 257835),
+          'b': (upload: 0, download: 12),
+          'c': (upload: 1, download: 1),
+        },
+      ]);
+      expect(listener.requestsClosed, [
+        {'b'},
+      ]);
+    },
+  );
+
+  test('a connection whose dial failed arrives closed when the Core says, '
+      'with why, in one event', () async {
     final listener = _RecordingListener();
     coreEventManager.addListener(listener);
     addTearDown(() => coreEventManager.removeListener(listener));
+    Map<String, Object?> failed(String id, String kind) => {
+      'id': id,
+      'start': '2026-11-21T08:00:00Z',
+      'metadata': {'network': 'tcp', 'host': 'example.com'},
+      'chains': ['HK-01', 'Proxy'],
+      'rule': 'Match',
+      'rulePayload': '',
+      'closedAt': '2026-11-21T08:00:00Z',
+      'failure': {'kind': kind, 'message': 'connect: connection refused'},
+    };
 
-    coreEventsFromData({
-      'type': 'requestTraffic',
-      'data': [
-        {'id': 'a', 'upload': 460, 'download': 257835},
-        {'id': 'b', 'upload': 0, 'download': 12},
-      ],
-    }).forEach(coreEventManager.sendEvent);
+    for (final data in [failed('a', 'refused'), failed('b', 'quota')]) {
+      coreEventsFromData({
+        'type': 'request',
+        'data': data,
+      }).forEach(coreEventManager.sendEvent);
+    }
     await pumpEventQueue();
 
-    expect(listener.requestTraffic, [
-      {'a': (upload: 460, download: 257835), 'b': (upload: 0, download: 12)},
-    ]);
+    expect(
+      listener.requests.map((request) => (request.id, request.failure?.kind)),
+      [
+        ('a', ConnectionFailureKind.refused),
+        ('b', ConnectionFailureKind.other),
+      ],
+    );
+    expect(
+      listener.requests.first.failure!.message,
+      'connect: connection refused',
+    );
+    expect(
+      listener.requests.map((request) => request.closedAt),
+      everyElement(DateTime.utc(2026, 11, 21, 8)),
+    );
+    expect(listener.requestsClosed, isEmpty);
   });
 }

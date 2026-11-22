@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppState {
 
- bool get isInit; PageLabel get pageLabel; List<Package> get packages; int get sortNum; Size get viewSize; double get sideWidth; DelayMap get delayMap; List<Group> get groups; Brightness get brightness; int? get runTime; List<ExternalProvider> get providers; String? get localIp; FixedList<TrackerInfo> get requests; int get version; FixedList<Log> get logs; FixedList<Traffic> get traffics; Traffic get totalTraffic; TunAuthorizationState get authorizedTunEnable; bool get loading; SystemUiOverlayStyle get systemUiOverlayStyle; CoreStatus get coreStatus;
+ bool get isInit; PageLabel get pageLabel; List<Package> get packages; int get sortNum; Size get viewSize; double get sideWidth; DelayMap get delayMap; List<Group> get groups; Brightness get brightness; int? get runTime; List<ExternalProvider> get providers; String? get localIp; ConnectionLog get requests; int get version; FixedList<Log> get logs; FixedList<Traffic> get traffics; Traffic get totalTraffic; TunAuthorizationState get authorizedTunEnable; bool get loading; SystemUiOverlayStyle get systemUiOverlayStyle; CoreStatus get coreStatus;
 /// Create a copy of AppState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -46,7 +46,7 @@ abstract mixin class $AppStateCopyWith<$Res>  {
   factory $AppStateCopyWith(AppState value, $Res Function(AppState) _then) = _$AppStateCopyWithImpl;
 @useResult
 $Res call({
- bool isInit, PageLabel pageLabel, List<Package> packages, int sortNum, Size viewSize, double sideWidth, DelayMap delayMap, List<Group> groups, Brightness brightness, int? runTime, List<ExternalProvider> providers, String? localIp, FixedList<TrackerInfo> requests, int version, FixedList<Log> logs, FixedList<Traffic> traffics, Traffic totalTraffic, TunAuthorizationState authorizedTunEnable, bool loading, SystemUiOverlayStyle systemUiOverlayStyle, CoreStatus coreStatus
+ bool isInit, PageLabel pageLabel, List<Package> packages, int sortNum, Size viewSize, double sideWidth, DelayMap delayMap, List<Group> groups, Brightness brightness, int? runTime, List<ExternalProvider> providers, String? localIp, ConnectionLog requests, int version, FixedList<Log> logs, FixedList<Traffic> traffics, Traffic totalTraffic, TunAuthorizationState authorizedTunEnable, bool loading, SystemUiOverlayStyle systemUiOverlayStyle, CoreStatus coreStatus
 });
 
 
@@ -78,7 +78,7 @@ as Brightness,runTime: freezed == runTime ? _self.runTime : runTime // ignore: c
 as int?,providers: null == providers ? _self.providers : providers // ignore: cast_nullable_to_non_nullable
 as List<ExternalProvider>,localIp: freezed == localIp ? _self.localIp : localIp // ignore: cast_nullable_to_non_nullable
 as String?,requests: null == requests ? _self.requests : requests // ignore: cast_nullable_to_non_nullable
-as FixedList<TrackerInfo>,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as ConnectionLog,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,logs: null == logs ? _self.logs : logs // ignore: cast_nullable_to_non_nullable
 as FixedList<Log>,traffics: null == traffics ? _self.traffics : traffics // ignore: cast_nullable_to_non_nullable
 as FixedList<Traffic>,totalTraffic: null == totalTraffic ? _self.totalTraffic : totalTraffic // ignore: cast_nullable_to_non_nullable
@@ -180,7 +180,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isInit,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  FixedList<TrackerInfo> requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  TunAuthorizationState authorizedTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  CoreStatus coreStatus)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isInit,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  ConnectionLog requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  TunAuthorizationState authorizedTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  CoreStatus coreStatus)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppState() when $default != null:
 return $default(_that.isInit,_that.pageLabel,_that.packages,_that.sortNum,_that.viewSize,_that.sideWidth,_that.delayMap,_that.groups,_that.brightness,_that.runTime,_that.providers,_that.localIp,_that.requests,_that.version,_that.logs,_that.traffics,_that.totalTraffic,_that.authorizedTunEnable,_that.loading,_that.systemUiOverlayStyle,_that.coreStatus);case _:
@@ -201,7 +201,7 @@ return $default(_that.isInit,_that.pageLabel,_that.packages,_that.sortNum,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isInit,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  FixedList<TrackerInfo> requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  TunAuthorizationState authorizedTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  CoreStatus coreStatus)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isInit,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  ConnectionLog requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  TunAuthorizationState authorizedTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  CoreStatus coreStatus)  $default,) {final _that = this;
 switch (_that) {
 case _AppState():
 return $default(_that.isInit,_that.pageLabel,_that.packages,_that.sortNum,_that.viewSize,_that.sideWidth,_that.delayMap,_that.groups,_that.brightness,_that.runTime,_that.providers,_that.localIp,_that.requests,_that.version,_that.logs,_that.traffics,_that.totalTraffic,_that.authorizedTunEnable,_that.loading,_that.systemUiOverlayStyle,_that.coreStatus);case _:
@@ -221,7 +221,7 @@ return $default(_that.isInit,_that.pageLabel,_that.packages,_that.sortNum,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isInit,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  FixedList<TrackerInfo> requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  TunAuthorizationState authorizedTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  CoreStatus coreStatus)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isInit,  PageLabel pageLabel,  List<Package> packages,  int sortNum,  Size viewSize,  double sideWidth,  DelayMap delayMap,  List<Group> groups,  Brightness brightness,  int? runTime,  List<ExternalProvider> providers,  String? localIp,  ConnectionLog requests,  int version,  FixedList<Log> logs,  FixedList<Traffic> traffics,  Traffic totalTraffic,  TunAuthorizationState authorizedTunEnable,  bool loading,  SystemUiOverlayStyle systemUiOverlayStyle,  CoreStatus coreStatus)?  $default,) {final _that = this;
 switch (_that) {
 case _AppState() when $default != null:
 return $default(_that.isInit,_that.pageLabel,_that.packages,_that.sortNum,_that.viewSize,_that.sideWidth,_that.delayMap,_that.groups,_that.brightness,_that.runTime,_that.providers,_that.localIp,_that.requests,_that.version,_that.logs,_that.traffics,_that.totalTraffic,_that.authorizedTunEnable,_that.loading,_that.systemUiOverlayStyle,_that.coreStatus);case _:
@@ -275,7 +275,7 @@ class _AppState implements AppState {
 }
 
 @override final  String? localIp;
-@override final  FixedList<TrackerInfo> requests;
+@override final  ConnectionLog requests;
 @override final  int version;
 @override final  FixedList<Log> logs;
 @override final  FixedList<Traffic> traffics;
@@ -313,7 +313,7 @@ abstract mixin class _$AppStateCopyWith<$Res> implements $AppStateCopyWith<$Res>
   factory _$AppStateCopyWith(_AppState value, $Res Function(_AppState) _then) = __$AppStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool isInit, PageLabel pageLabel, List<Package> packages, int sortNum, Size viewSize, double sideWidth, DelayMap delayMap, List<Group> groups, Brightness brightness, int? runTime, List<ExternalProvider> providers, String? localIp, FixedList<TrackerInfo> requests, int version, FixedList<Log> logs, FixedList<Traffic> traffics, Traffic totalTraffic, TunAuthorizationState authorizedTunEnable, bool loading, SystemUiOverlayStyle systemUiOverlayStyle, CoreStatus coreStatus
+ bool isInit, PageLabel pageLabel, List<Package> packages, int sortNum, Size viewSize, double sideWidth, DelayMap delayMap, List<Group> groups, Brightness brightness, int? runTime, List<ExternalProvider> providers, String? localIp, ConnectionLog requests, int version, FixedList<Log> logs, FixedList<Traffic> traffics, Traffic totalTraffic, TunAuthorizationState authorizedTunEnable, bool loading, SystemUiOverlayStyle systemUiOverlayStyle, CoreStatus coreStatus
 });
 
 
@@ -345,7 +345,7 @@ as Brightness,runTime: freezed == runTime ? _self.runTime : runTime // ignore: c
 as int?,providers: null == providers ? _self._providers : providers // ignore: cast_nullable_to_non_nullable
 as List<ExternalProvider>,localIp: freezed == localIp ? _self.localIp : localIp // ignore: cast_nullable_to_non_nullable
 as String?,requests: null == requests ? _self.requests : requests // ignore: cast_nullable_to_non_nullable
-as FixedList<TrackerInfo>,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as ConnectionLog,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,logs: null == logs ? _self.logs : logs // ignore: cast_nullable_to_non_nullable
 as FixedList<Log>,traffics: null == traffics ? _self.traffics : traffics // ignore: cast_nullable_to_non_nullable
 as FixedList<Traffic>,totalTraffic: null == totalTraffic ? _self.totalTraffic : totalTraffic // ignore: cast_nullable_to_non_nullable

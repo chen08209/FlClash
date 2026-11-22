@@ -400,7 +400,7 @@ abstract class _$Logs extends $Notifier<FixedList<Log>> {
 final requestsProvider = RequestsProvider._();
 
 final class RequestsProvider
-    extends $NotifierProvider<Requests, FixedList<TrackerInfo>> {
+    extends $NotifierProvider<Requests, ConnectionLog> {
   RequestsProvider._()
     : super(
         from: null,
@@ -420,28 +420,27 @@ final class RequestsProvider
   Requests create() => Requests();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(FixedList<TrackerInfo> value) {
+  Override overrideWithValue(ConnectionLog value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<FixedList<TrackerInfo>>(value),
+      providerOverride: $SyncValueProvider<ConnectionLog>(value),
     );
   }
 }
 
-String _$requestsHash() => r'fe172892ec899bd6fd53dcbfebf65cd9e856efa7';
+String _$requestsHash() => r'a26a0a8228834f98b206324ce4af60c6e12a5981';
 
-abstract class _$Requests extends $Notifier<FixedList<TrackerInfo>> {
-  FixedList<TrackerInfo> build();
+abstract class _$Requests extends $Notifier<ConnectionLog> {
+  ConnectionLog build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref =
-        this.ref as $Ref<FixedList<TrackerInfo>, FixedList<TrackerInfo>>;
+    final ref = this.ref as $Ref<ConnectionLog, ConnectionLog>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<FixedList<TrackerInfo>, FixedList<TrackerInfo>>,
-              FixedList<TrackerInfo>,
+              AnyNotifier<ConnectionLog, ConnectionLog>,
+              ConnectionLog,
               Object?,
               Object?
             >;

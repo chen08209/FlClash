@@ -363,6 +363,7 @@ class _LiveFeedState extends ConsumerState<_LiveFeed>
   Future<List<TrackerInfo>?> _readConnections() async {
     final read = ++_reads;
     final rank = rankAfter(_ranking);
+    final requestedAt = DateTime.now();
     try {
       final connectionsReader = widget.connectionsReader;
       final ranked = connectionsReader != null
@@ -371,11 +372,14 @@ class _LiveFeedState extends ConsumerState<_LiveFeed>
           ? await _core.getConnectionsWith(rank)
           : rank(const []);
       // A refresh after closing a connection can overlap a poll.
-      if (read < _shownRead) {
+      if (read < _shownRead || !mounted) {
         return null;
       }
       _shownRead = read;
       _ranking = ranked.ranking;
+      ref
+          .read(requestsProvider.notifier)
+          .sync(ranked.trackerInfos, requestedAt: requestedAt);
       return ranked.trackerInfos;
     } catch (error) {
       commonPrint.log(

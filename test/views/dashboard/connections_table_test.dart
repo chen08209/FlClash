@@ -1,4 +1,3 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -60,7 +59,7 @@ void main() {
     globalState.container = container;
     container.listen(appSettingProvider, (_, _) {});
     final requests = container.read(requestsProvider.notifier);
-    requests.value = FixedList<TrackerInfo>(500);
+    requests.value = ConnectionLog(500);
     requests.addRequest(_request('gamma.test', 10));
     requests.addRequest(_request('alpha.test', 30));
     requests.addRequest(_request('beta.test', 20));

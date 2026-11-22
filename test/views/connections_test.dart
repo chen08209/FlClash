@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/features/features.dart';
@@ -393,6 +392,34 @@ void main() {
     await teardownView(tester);
   });
 
+  testWidgets('a late snapshot closes only the connections opened before it '
+      'was asked for', (tester) async {
+    final pending = Completer<List<TrackerInfo>>();
+    whenConnections<RankedTrackerInfos>(core, () => pending.future);
+    final requests = container.read(requestsProvider.notifier);
+    requests.addRequest(
+      _tracker(
+        id: 'before',
+        start: DateTime.now().subtract(const Duration(seconds: 5)),
+      ),
+    );
+
+    await pumpConnections(tester);
+    requests.addRequest(_tracker(id: 'after', start: DateTime.now()));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 1100)),
+    );
+    pending.complete(const []);
+    await tester.pump();
+    await tester.pump();
+
+    final log = container.read(requestsProvider);
+    expect(log['before']!.isActive, isFalse);
+    expect(log['after']!.isActive, isTrue);
+
+    await teardownView(tester);
+  });
+
   testWidgets('stops polling once the view is disposed', (tester) async {
     whenConnections<RankedTrackerInfos>(
       core,
@@ -411,7 +438,7 @@ void main() {
   testWidgets('one page switches between recent requests and what is open, '
       'polling only for the latter', (tester) async {
     final requests = container.read(requestsProvider.notifier);
-    requests.value = FixedList<TrackerInfo>(500);
+    requests.value = ConnectionLog(500);
     requests.addRequest(_tracker(id: 'old', host: 'finished.test'));
     whenConnections<RankedTrackerInfos>(
       core,

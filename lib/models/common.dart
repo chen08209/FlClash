@@ -114,6 +114,19 @@ abstract class Metadata with _$Metadata {
 }
 
 @freezed
+abstract class ConnectionFailure with _$ConnectionFailure {
+  const factory ConnectionFailure({
+    @JsonKey(unknownEnumValue: ConnectionFailureKind.other)
+    required ConnectionFailureKind kind,
+    @Default('') String message,
+  }) = _ConnectionFailure;
+
+  factory ConnectionFailure.fromJson(Map<String, Object?> json) =>
+      _$ConnectionFailureFromJson(json);
+}
+
+/// A connection whose dial failed carries [failure] and arrives closed.
+@freezed
 abstract class TrackerInfo with _$TrackerInfo {
   const factory TrackerInfo({
     required String id,
@@ -126,6 +139,8 @@ abstract class TrackerInfo with _$TrackerInfo {
     required String rulePayload,
     int? downloadSpeed,
     int? uploadSpeed,
+    DateTime? closedAt,
+    ConnectionFailure? failure,
   }) = _TrackerInfo;
 
   factory TrackerInfo.fromJson(Map<String, Object?> json) =>
@@ -147,6 +162,8 @@ List<TrackerInfo> trackerInfosOf(Object? data) {
 typedef RequestTraffic = ({int upload, int download});
 
 extension TrackerInfoExt on TrackerInfo {
+  bool get isActive => closedAt == null;
+
   String get title {
     final host = metadata.host;
     if (host.isNotEmpty) {

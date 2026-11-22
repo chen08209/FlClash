@@ -914,9 +914,282 @@ as bool,
 
 
 /// @nodoc
+mixin _$ConnectionFailure {
+
+@JsonKey(unknownEnumValue: ConnectionFailureKind.other) ConnectionFailureKind get kind; String get message;
+/// Create a copy of ConnectionFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ConnectionFailureCopyWith<ConnectionFailure> get copyWith => _$ConnectionFailureCopyWithImpl<ConnectionFailure>(this as ConnectionFailure, _$identity);
+
+  /// Serializes this ConnectionFailure to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as ConnectionFailure;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConnectionFailure&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.message, _this.message) || other.message == _this.message));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as ConnectionFailure;
+  return Object.hash(runtimeType,_this.kind,_this.message);
+}
+
+@override
+String toString() {
+  final _this = this as ConnectionFailure;
+  return 'ConnectionFailure(kind: ${_this.kind}, message: ${_this.message})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ConnectionFailureCopyWith<$Res>  {
+  factory $ConnectionFailureCopyWith(ConnectionFailure value, $Res Function(ConnectionFailure) _then) = _$ConnectionFailureCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(unknownEnumValue: ConnectionFailureKind.other) ConnectionFailureKind kind, String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$ConnectionFailureCopyWithImpl<$Res>
+    implements $ConnectionFailureCopyWith<$Res> {
+  _$ConnectionFailureCopyWithImpl(this._self, this._then);
+
+  final ConnectionFailure _self;
+  final $Res Function(ConnectionFailure) _then;
+
+/// Create a copy of ConnectionFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? message = null,}) {
+  return _then(ConnectionFailure(
+kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as ConnectionFailureKind,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ConnectionFailure].
+extension ConnectionFailurePatterns on ConnectionFailure {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ConnectionFailure value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ConnectionFailure() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ConnectionFailure value)  $default,){
+final _that = this;
+switch (_that) {
+case _ConnectionFailure():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ConnectionFailure value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ConnectionFailure() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(unknownEnumValue: ConnectionFailureKind.other)  ConnectionFailureKind kind,  String message)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ConnectionFailure() when $default != null:
+return $default(_that.kind,_that.message);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(unknownEnumValue: ConnectionFailureKind.other)  ConnectionFailureKind kind,  String message)  $default,) {final _that = this;
+switch (_that) {
+case _ConnectionFailure():
+return $default(_that.kind,_that.message);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(unknownEnumValue: ConnectionFailureKind.other)  ConnectionFailureKind kind,  String message)?  $default,) {final _that = this;
+switch (_that) {
+case _ConnectionFailure() when $default != null:
+return $default(_that.kind,_that.message);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _ConnectionFailure implements ConnectionFailure {
+  const _ConnectionFailure({@JsonKey(unknownEnumValue: ConnectionFailureKind.other) required this.kind, this.message = ''});
+  factory _ConnectionFailure.fromJson(Map<String, dynamic> json) => _$ConnectionFailureFromJson(json);
+
+@override@JsonKey(unknownEnumValue: ConnectionFailureKind.other) final  ConnectionFailureKind kind;
+@override@JsonKey() final  String message;
+
+/// Create a copy of ConnectionFailure
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ConnectionFailureCopyWith<_ConnectionFailure> get copyWith => __$ConnectionFailureCopyWithImpl<_ConnectionFailure>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$ConnectionFailureToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConnectionFailure&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.message, message) || other.message == message));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,kind,message);
+}
+
+@override
+String toString() {
+    return 'ConnectionFailure(kind: $kind, message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ConnectionFailureCopyWith<$Res> implements $ConnectionFailureCopyWith<$Res> {
+  factory _$ConnectionFailureCopyWith(_ConnectionFailure value, $Res Function(_ConnectionFailure) _then) = __$ConnectionFailureCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(unknownEnumValue: ConnectionFailureKind.other) ConnectionFailureKind kind, String message
+});
+
+
+
+
+}
+/// @nodoc
+class __$ConnectionFailureCopyWithImpl<$Res>
+    implements _$ConnectionFailureCopyWith<$Res> {
+  __$ConnectionFailureCopyWithImpl(this._self, this._then);
+
+  final _ConnectionFailure _self;
+  final $Res Function(_ConnectionFailure) _then;
+
+/// Create a copy of ConnectionFailure
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? kind = null,Object? message = null,}) {
+  return _then(_ConnectionFailure(
+kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as ConnectionFailureKind,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$TrackerInfo {
 
- String get id; int get upload; int get download; DateTime get start; Metadata get metadata; List<String> get chains; String get rule; String get rulePayload; int? get downloadSpeed; int? get uploadSpeed;
+ String get id; int get upload; int get download; DateTime get start; Metadata get metadata; List<String> get chains; String get rule; String get rulePayload; int? get downloadSpeed; int? get uploadSpeed; DateTime? get closedAt; ConnectionFailure? get failure;
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -930,20 +1203,20 @@ $TrackerInfoCopyWith<TrackerInfo> get copyWith => _$TrackerInfoCopyWithImpl<Trac
 @override
 bool operator ==(Object other) {
   final _this = this as TrackerInfo;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfo&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.upload, _this.upload) || other.upload == _this.upload)&&(identical(other.download, _this.download) || other.download == _this.download)&&(identical(other.start, _this.start) || other.start == _this.start)&&(identical(other.metadata, _this.metadata) || other.metadata == _this.metadata)&&const DeepCollectionEquality().equals(other.chains, _this.chains)&&(identical(other.rule, _this.rule) || other.rule == _this.rule)&&(identical(other.rulePayload, _this.rulePayload) || other.rulePayload == _this.rulePayload)&&(identical(other.downloadSpeed, _this.downloadSpeed) || other.downloadSpeed == _this.downloadSpeed)&&(identical(other.uploadSpeed, _this.uploadSpeed) || other.uploadSpeed == _this.uploadSpeed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfo&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.upload, _this.upload) || other.upload == _this.upload)&&(identical(other.download, _this.download) || other.download == _this.download)&&(identical(other.start, _this.start) || other.start == _this.start)&&(identical(other.metadata, _this.metadata) || other.metadata == _this.metadata)&&const DeepCollectionEquality().equals(other.chains, _this.chains)&&(identical(other.rule, _this.rule) || other.rule == _this.rule)&&(identical(other.rulePayload, _this.rulePayload) || other.rulePayload == _this.rulePayload)&&(identical(other.downloadSpeed, _this.downloadSpeed) || other.downloadSpeed == _this.downloadSpeed)&&(identical(other.uploadSpeed, _this.uploadSpeed) || other.uploadSpeed == _this.uploadSpeed)&&(identical(other.closedAt, _this.closedAt) || other.closedAt == _this.closedAt)&&(identical(other.failure, _this.failure) || other.failure == _this.failure));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as TrackerInfo;
-  return Object.hash(runtimeType,_this.id,_this.upload,_this.download,_this.start,_this.metadata,const DeepCollectionEquality().hash(_this.chains),_this.rule,_this.rulePayload,_this.downloadSpeed,_this.uploadSpeed);
+  return Object.hash(runtimeType,_this.id,_this.upload,_this.download,_this.start,_this.metadata,const DeepCollectionEquality().hash(_this.chains),_this.rule,_this.rulePayload,_this.downloadSpeed,_this.uploadSpeed,_this.closedAt,_this.failure);
 }
 
 @override
 String toString() {
   final _this = this as TrackerInfo;
-  return 'TrackerInfo(id: ${_this.id}, upload: ${_this.upload}, download: ${_this.download}, start: ${_this.start}, metadata: ${_this.metadata}, chains: ${_this.chains}, rule: ${_this.rule}, rulePayload: ${_this.rulePayload}, downloadSpeed: ${_this.downloadSpeed}, uploadSpeed: ${_this.uploadSpeed})';
+  return 'TrackerInfo(id: ${_this.id}, upload: ${_this.upload}, download: ${_this.download}, start: ${_this.start}, metadata: ${_this.metadata}, chains: ${_this.chains}, rule: ${_this.rule}, rulePayload: ${_this.rulePayload}, downloadSpeed: ${_this.downloadSpeed}, uploadSpeed: ${_this.uploadSpeed}, closedAt: ${_this.closedAt}, failure: ${_this.failure})';
 }
 
 
@@ -954,11 +1227,11 @@ abstract mixin class $TrackerInfoCopyWith<$Res>  {
   factory $TrackerInfoCopyWith(TrackerInfo value, $Res Function(TrackerInfo) _then) = _$TrackerInfoCopyWithImpl;
 @useResult
 $Res call({
- String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed
+ String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed, DateTime? closedAt, ConnectionFailure? failure
 });
 
 
-$MetadataCopyWith<$Res> get metadata;
+$MetadataCopyWith<$Res> get metadata;$ConnectionFailureCopyWith<$Res>? get failure;
 
 }
 /// @nodoc
@@ -971,7 +1244,7 @@ class _$TrackerInfoCopyWithImpl<$Res>
 
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,Object? closedAt = freezed,Object? failure = freezed,}) {
   return _then(TrackerInfo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
@@ -983,7 +1256,9 @@ as List<String>,rule: null == rule ? _self.rule : rule // ignore: cast_nullable_
 as String,rulePayload: null == rulePayload ? _self.rulePayload : rulePayload // ignore: cast_nullable_to_non_nullable
 as String,downloadSpeed: freezed == downloadSpeed ? _self.downloadSpeed : downloadSpeed // ignore: cast_nullable_to_non_nullable
 as int?,uploadSpeed: freezed == uploadSpeed ? _self.uploadSpeed : uploadSpeed // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,closedAt: freezed == closedAt ? _self.closedAt : closedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as ConnectionFailure?,
   ));
 }
 /// Create a copy of TrackerInfo
@@ -994,6 +1269,18 @@ $MetadataCopyWith<$Res> get metadata {
   
   return $MetadataCopyWith<$Res>(_self.metadata, (value) {
     return _then(_self.copyWith(metadata: value));
+  });
+}/// Create a copy of TrackerInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ConnectionFailureCopyWith<$Res>? get failure {
+    if (_self.failure == null) {
+    return null;
+  }
+
+  return $ConnectionFailureCopyWith<$Res>(_self.failure!, (value) {
+    return _then(_self.copyWith(failure: value));
   });
 }
 }
@@ -1077,10 +1364,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TrackerInfo() when $default != null:
-return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed);case _:
+return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed,_that.closedAt,_that.failure);case _:
   return orElse();
 
 }
@@ -1098,10 +1385,10 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure)  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfo():
-return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed);case _:
+return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed,_that.closedAt,_that.failure);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1118,10 +1405,10 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure)?  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfo() when $default != null:
-return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed);case _:
+return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed,_that.closedAt,_that.failure);case _:
   return null;
 
 }
@@ -1133,7 +1420,7 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 @JsonSerializable()
 
 class _TrackerInfo implements TrackerInfo {
-  const _TrackerInfo({required this.id, this.upload = 0, this.download = 0, required this.start, required this.metadata, required  List<String> chains, required this.rule, required this.rulePayload, this.downloadSpeed, this.uploadSpeed}): _chains = chains;
+  const _TrackerInfo({required this.id, this.upload = 0, this.download = 0, required this.start, required this.metadata, required  List<String> chains, required this.rule, required this.rulePayload, this.downloadSpeed, this.uploadSpeed, this.closedAt, this.failure}): _chains = chains;
   factory _TrackerInfo.fromJson(Map<String, dynamic> json) => _$TrackerInfoFromJson(json);
 
 @override final  String id;
@@ -1152,6 +1439,8 @@ class _TrackerInfo implements TrackerInfo {
 @override final  String rulePayload;
 @override final  int? downloadSpeed;
 @override final  int? uploadSpeed;
+@override final  DateTime? closedAt;
+@override final  ConnectionFailure? failure;
 
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
@@ -1166,18 +1455,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.download, download) || other.download == download)&&(identical(other.start, start) || other.start == start)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&const DeepCollectionEquality().equals(other.chains, _chains)&&(identical(other.rule, rule) || other.rule == rule)&&(identical(other.rulePayload, rulePayload) || other.rulePayload == rulePayload)&&(identical(other.downloadSpeed, downloadSpeed) || other.downloadSpeed == downloadSpeed)&&(identical(other.uploadSpeed, uploadSpeed) || other.uploadSpeed == uploadSpeed));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.download, download) || other.download == download)&&(identical(other.start, start) || other.start == start)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&const DeepCollectionEquality().equals(other.chains, _chains)&&(identical(other.rule, rule) || other.rule == rule)&&(identical(other.rulePayload, rulePayload) || other.rulePayload == rulePayload)&&(identical(other.downloadSpeed, downloadSpeed) || other.downloadSpeed == downloadSpeed)&&(identical(other.uploadSpeed, uploadSpeed) || other.uploadSpeed == uploadSpeed)&&(identical(other.closedAt, closedAt) || other.closedAt == closedAt)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,upload,download,start,metadata,const DeepCollectionEquality().hash(_chains),rule,rulePayload,downloadSpeed,uploadSpeed);
+    return Object.hash(runtimeType,id,upload,download,start,metadata,const DeepCollectionEquality().hash(_chains),rule,rulePayload,downloadSpeed,uploadSpeed,closedAt,failure);
 }
 
 @override
 String toString() {
-    return 'TrackerInfo(id: $id, upload: $upload, download: $download, start: $start, metadata: $metadata, chains: $chains, rule: $rule, rulePayload: $rulePayload, downloadSpeed: $downloadSpeed, uploadSpeed: $uploadSpeed)';
+    return 'TrackerInfo(id: $id, upload: $upload, download: $download, start: $start, metadata: $metadata, chains: $chains, rule: $rule, rulePayload: $rulePayload, downloadSpeed: $downloadSpeed, uploadSpeed: $uploadSpeed, closedAt: $closedAt, failure: $failure)';
 }
 
 
@@ -1188,11 +1477,11 @@ abstract mixin class _$TrackerInfoCopyWith<$Res> implements $TrackerInfoCopyWith
   factory _$TrackerInfoCopyWith(_TrackerInfo value, $Res Function(_TrackerInfo) _then) = __$TrackerInfoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed
+ String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed, DateTime? closedAt, ConnectionFailure? failure
 });
 
 
-@override $MetadataCopyWith<$Res> get metadata;
+@override $MetadataCopyWith<$Res> get metadata;@override $ConnectionFailureCopyWith<$Res>? get failure;
 
 }
 /// @nodoc
@@ -1205,7 +1494,7 @@ class __$TrackerInfoCopyWithImpl<$Res>
 
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,Object? closedAt = freezed,Object? failure = freezed,}) {
   return _then(_TrackerInfo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
@@ -1217,7 +1506,9 @@ as List<String>,rule: null == rule ? _self.rule : rule // ignore: cast_nullable_
 as String,rulePayload: null == rulePayload ? _self.rulePayload : rulePayload // ignore: cast_nullable_to_non_nullable
 as String,downloadSpeed: freezed == downloadSpeed ? _self.downloadSpeed : downloadSpeed // ignore: cast_nullable_to_non_nullable
 as int?,uploadSpeed: freezed == uploadSpeed ? _self.uploadSpeed : uploadSpeed // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,closedAt: freezed == closedAt ? _self.closedAt : closedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as ConnectionFailure?,
   ));
 }
 
@@ -1229,6 +1520,18 @@ $MetadataCopyWith<$Res> get metadata {
   
   return $MetadataCopyWith<$Res>(_self.metadata, (value) {
     return _then(_self.copyWith(metadata: value));
+  });
+}/// Create a copy of TrackerInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ConnectionFailureCopyWith<$Res>? get failure {
+    if (_self.failure == null) {
+    return null;
+  }
+
+  return $ConnectionFailureCopyWith<$Res>(_self.failure!, (value) {
+    return _then(_self.copyWith(failure: value));
   });
 }
 }

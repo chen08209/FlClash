@@ -261,7 +261,7 @@ void main() {
     });
 
     test('Requests.addRequest reaches listeners', () {
-      container.read(requestsProvider.notifier).value = FixedList(3);
+      container.read(requestsProvider.notifier).value = ConnectionLog(3);
       var notifications = 0;
       final subscription = container.listen(
         requestsProvider.select((state) => state.revision),
@@ -297,7 +297,7 @@ void main() {
         rulePayload: 'example.com',
       );
       final notifier = container.read(requestsProvider.notifier);
-      notifier.value = FixedList(3);
+      notifier.value = ConnectionLog(3);
       notifier.addRequest(request('a'));
       notifier.addRequest(request('b'));
       var notifications = 0;
@@ -323,6 +323,47 @@ void main() {
             .map((request) => (request.id, request.upload, request.download)),
         [('a', 520, 257835), ('b', 460, 0)],
       );
+    });
+
+    test('Requests notifies once per close, sync and closeAll that changes '
+        'the log, and not for one that changes nothing', () {
+      TrackerInfo request(String id, int second) => TrackerInfo(
+        id: id,
+        start: DateTime.utc(2026).add(Duration(seconds: second)),
+        metadata: const Metadata(network: 'tcp', host: 'example.com'),
+        chains: const ['Proxy'],
+        rule: 'DOMAIN',
+        rulePayload: 'example.com',
+      );
+      final notifier = container.read(requestsProvider.notifier);
+      notifier.value = ConnectionLog(3);
+      notifier.addRequest(request('a', 0));
+      notifier.addRequest(request('b', 1));
+      notifier.addRequest(request('c', 2));
+      var notifications = 0;
+      final subscription = container.listen(
+        requestsProvider.select((state) => state.revision),
+        (_, _) => notifications++,
+      );
+      addTearDown(subscription.close);
+      final later = DateTime.utc(2026, 1, 2);
+
+      notifier.close(['a'], at: later);
+      expect(notifications, 1);
+      notifier.close(['a', 'gone'], at: later);
+      expect(notifications, 1);
+
+      notifier.sync([request('c', 2)], requestedAt: later);
+      expect(notifications, 2);
+      expect(container.read(requestsProvider)['b']!.closedAt, later);
+      notifier.sync([request('c', 2)], requestedAt: later);
+      expect(notifications, 2);
+
+      notifier.closeAll(at: later);
+      expect(notifications, 3);
+      notifier.closeAll(at: later);
+      expect(notifications, 3);
+      expect(container.read(requestsProvider).activeCount, 0);
     });
 
     test('Traffics.addTraffic reaches listeners and clear resets', () {

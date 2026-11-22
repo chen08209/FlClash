@@ -81,6 +81,31 @@ const _$DnsModeEnumMap = {
   DnsMode.hosts: 'hosts',
 };
 
+_ConnectionFailure _$ConnectionFailureFromJson(Map<String, dynamic> json) =>
+    _ConnectionFailure(
+      kind: $enumDecode(
+        _$ConnectionFailureKindEnumMap,
+        json['kind'],
+        unknownValue: ConnectionFailureKind.other,
+      ),
+      message: json['message'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$ConnectionFailureToJson(_ConnectionFailure instance) =>
+    <String, dynamic>{
+      'kind': _$ConnectionFailureKindEnumMap[instance.kind]!,
+      'message': instance.message,
+    };
+
+const _$ConnectionFailureKindEnumMap = {
+  ConnectionFailureKind.timeout: 'timeout',
+  ConnectionFailureKind.refused: 'refused',
+  ConnectionFailureKind.unreachable: 'unreachable',
+  ConnectionFailureKind.dns: 'dns',
+  ConnectionFailureKind.handshake: 'handshake',
+  ConnectionFailureKind.other: 'other',
+};
+
 _TrackerInfo _$TrackerInfoFromJson(Map<String, dynamic> json) => _TrackerInfo(
   id: json['id'] as String,
   upload: (json['upload'] as num?)?.toInt() ?? 0,
@@ -92,6 +117,12 @@ _TrackerInfo _$TrackerInfoFromJson(Map<String, dynamic> json) => _TrackerInfo(
   rulePayload: json['rulePayload'] as String,
   downloadSpeed: (json['downloadSpeed'] as num?)?.toInt(),
   uploadSpeed: (json['uploadSpeed'] as num?)?.toInt(),
+  closedAt: json['closedAt'] == null
+      ? null
+      : DateTime.parse(json['closedAt'] as String),
+  failure: json['failure'] == null
+      ? null
+      : ConnectionFailure.fromJson(json['failure'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$TrackerInfoToJson(_TrackerInfo instance) =>
@@ -106,6 +137,8 @@ Map<String, dynamic> _$TrackerInfoToJson(_TrackerInfo instance) =>
       'rulePayload': instance.rulePayload,
       'downloadSpeed': instance.downloadSpeed,
       'uploadSpeed': instance.uploadSpeed,
+      'closedAt': instance.closedAt?.toIso8601String(),
+      'failure': instance.failure,
     };
 
 _Log _$LogFromJson(Map<String, dynamic> json) => _Log(

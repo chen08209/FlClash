@@ -120,9 +120,13 @@ mixin ConnectionsPolling<T extends ConsumerStatefulWidget>
     }
     try {
       if (pollsConnections) {
+        final requestedAt = DateTime.now();
         final (:next, :tcp) = await _core.getConnectionsWith(_newestFirst);
         if (!isCurrent()) return;
         connectionCount.value = next.length;
+        ref
+            .read(requestsProvider.notifier)
+            .sync(next, requestedAt: requestedAt);
         updateWhenRouteSettled(
           () => setState(() {
             connections = next;
