@@ -3522,10 +3522,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get httpCapture => 'Captura HTTP';
 
   @override
-  String get httpCaptureDesc =>
-      'Registra las solicitudes a los hosts indicados en Nombre de host, para verlas en los detalles de la conexión. Los registros solo se guardan en memoria.';
-
-  @override
   String get httpCaptureNoHosts =>
       'No se registra nada hasta que añadas hosts en Nombre de host.';
 
@@ -3533,9 +3529,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get httpCaptureLimit => 'Máximo de registros';
 
   @override
-  String httpCaptureLimitDesc(Object memory, Object body) {
-    return 'Los registros más antiguos se eliminan primero al alcanzar este número u ocupar $memory de memoria. De cada cuerpo se conservan solo los primeros $body.';
-  }
+  String get httpCaptureMemoryOnly => 'Solo se guarda en memoria';
 
   @override
   String get httpRequests => 'Solicitudes HTTP';
@@ -3573,16 +3567,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get httpCaptureOff => 'La captura está desactivada';
-
-  @override
-  String get httpCapturing => 'Capturando';
-
-  @override
-  String get httpCaptureNeedsDecryption =>
-      'Para capturar, primero activa el descifrado HTTPS e instala su certificado.';
-
-  @override
-  String get goToMitmSettings => 'Ir a los ajustes de MITM';
 
   @override
   String get inProgress => 'En curso';

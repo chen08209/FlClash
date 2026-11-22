@@ -3280,18 +3280,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get httpCapture => '抓包';
 
   @override
-  String get httpCaptureDesc => '记录“主机名”中列出的主机的请求，在连接详情中查看。记录只保存在内存中。';
-
-  @override
   String get httpCaptureNoHosts => '在“主机名”中添加主机后才会记录。';
 
   @override
   String get httpCaptureLimit => '最多记录条数';
 
   @override
-  String httpCaptureLimitDesc(Object memory, Object body) {
-    return '达到此条数或占满 $memory 内存后，先丢弃最早的记录。每段内容只保留前 $body。';
-  }
+  String get httpCaptureMemoryOnly => '仅保存在内存中';
 
   @override
   String get httpRequests => 'HTTP 请求';
@@ -3320,15 +3315,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get httpCaptureOff => '抓包未开启';
-
-  @override
-  String get httpCapturing => '抓包中';
-
-  @override
-  String get httpCaptureNeedsDecryption => '抓包要先开启 HTTPS 解密并安装证书。';
-
-  @override
-  String get goToMitmSettings => '前往 MITM 设置';
 
   @override
   String get inProgress => '进行中';

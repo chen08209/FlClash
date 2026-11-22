@@ -206,6 +206,7 @@ class HttpRequestList extends StatelessWidget {
   final ScrollController scrollController;
   final ValueListenable<int?> selected;
   final ValueChanged<MitmExchangeSummary> onSelect;
+  final String? emptyDescription;
 
   const HttpRequestList({
     super.key,
@@ -214,6 +215,7 @@ class HttpRequestList extends StatelessWidget {
     required this.scrollController,
     required this.selected,
     required this.onSelect,
+    this.emptyDescription,
   });
 
   @override
@@ -236,6 +238,7 @@ class HttpRequestList extends StatelessWidget {
           isSearching: feed.isSearching || filters.isFiltering,
           nullStatus: NullStatus(
             label: appLocalizations.nullTip(appLocalizations.httpRequests),
+            description: emptyDescription,
             illustration: NullStatusIllustration.requests,
           ),
           controller: scrollController,

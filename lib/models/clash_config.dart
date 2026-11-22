@@ -2270,12 +2270,6 @@ List<int> mitmCaptureOptions({required bool isAndroid}) =>
 Map<String, Object> _mitmLimits({required bool isAndroid}) =>
     isAndroid ? _androidMitmLimits : _desktopMitmLimits;
 
-int mitmCaptureBytes({required bool isAndroid}) =>
-    _mitmLimits(isAndroid: isAndroid)['capture-bytes']! as int;
-
-int mitmMaxBodySize({required bool isAndroid}) =>
-    _mitmLimits(isAndroid: isAndroid)['max-body-size']! as int;
-
 extension MitmExt on Mitm {
   int captureLimit({required bool isAndroid}) =>
       captureEntries ??

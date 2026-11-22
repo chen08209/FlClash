@@ -14,7 +14,6 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/list_item.dart';
 import 'package:fl_clash/views/config/advanced.dart';
 import 'package:fl_clash/views/config/mitm.dart';
-import 'package:fl_clash/views/connection/http_capture.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -156,8 +155,6 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  const captureView = HttpCaptureView(isAndroid: false);
-
   Future<void> toggleEnable(WidgetTester tester) async {
     await tester.tap(
       find.descendant(
@@ -170,32 +167,6 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
-
-  testWidgets('capture says when no listed host leaves it nothing to record', (
-    tester,
-  ) async {
-    await pumpView(
-      tester,
-      mitm: const Mitm(enable: true, capture: true, hostname: ['-a.example']),
-      view: captureView,
-    );
-    expect(
-      find.text(currentAppLocalizations.httpCaptureNoHosts),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('capture keeps its description once a host is listed', (
-    tester,
-  ) async {
-    await pumpView(
-      tester,
-      mitm: const Mitm(enable: true, capture: true, hostname: ['a.example']),
-      view: captureView,
-    );
-    expect(find.text(currentAppLocalizations.httpCaptureNoHosts), findsNothing);
-    expect(find.text(currentAppLocalizations.httpCaptureDesc), findsOneWidget);
-  });
 
   testWidgets('offers a certificate until one is generated', (tester) async {
     await pumpView(tester);
@@ -341,74 +312,6 @@ void main() {
       },
     );
   }
-
-  Finder captureSwitch() => find.descendant(
-    of: find.widgetWithText(ListItem, currentAppLocalizations.httpCapture),
-    matching: find.byType(Switch),
-  );
-
-  testWidgets('capture waits for decryption to be on and leads to it', (
-    tester,
-  ) async {
-    await pumpView(tester, certificate: _certificate, view: captureView);
-
-    expect(tester.widget<Switch>(captureSwitch()).onChanged, isNull);
-    expect(
-      find.text(currentAppLocalizations.httpCaptureNeedsDecryption),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.text(currentAppLocalizations.goToMitmSettings));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(AdvancedConfigView), findsOneWidget);
-  });
-
-  testWidgets('capture can be turned on once decryption is', (tester) async {
-    await pumpView(
-      tester,
-      certificate: _certificate,
-      mitm: const Mitm(enable: true, hostname: ['a.example']),
-      view: captureView,
-    );
-
-    expect(tester.widget<Switch>(captureSwitch()).onChanged, isNotNull);
-    expect(find.text(currentAppLocalizations.goToMitmSettings), findsNothing);
-    expect(find.text(currentAppLocalizations.httpCaptureDesc), findsOneWidget);
-  });
-
-  testWidgets('capture is saved with the MITM settings', (tester) async {
-    await pumpView(
-      tester,
-      certificate: _certificate,
-      mitm: const Mitm(enable: true),
-      view: captureView,
-    );
-
-    await tester.tap(captureSwitch());
-    await tester.pumpAndSettle();
-
-    expect(saved().capture, isTrue);
-  });
-
-  testWidgets('capture limit shows the platform default until one is picked', (
-    tester,
-  ) async {
-    await pumpView(
-      tester,
-      certificate: _certificate,
-      mitm: const Mitm(enable: true),
-      view: captureView,
-    );
-
-    await tester.tap(find.text('2000'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('5000'));
-    await tester.pumpAndSettle();
-
-    expect(saved().captureEntries, 5000);
-    expect(find.text('5000'), findsOneWidget);
-  });
 
   group('the certificate row', () {
     Finder row() => find.text(_certificate.subject);

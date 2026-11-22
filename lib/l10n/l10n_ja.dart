@@ -3314,19 +3314,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get httpCapture => 'HTTP キャプチャ';
 
   @override
-  String get httpCaptureDesc =>
-      'ホスト名に記載したホストへのリクエストを記録し、接続の詳細で確認できます。記録はメモリ上にのみ保持されます。';
-
-  @override
   String get httpCaptureNoHosts => '「ホスト名」にホストを追加するまで何も記録されません。';
 
   @override
   String get httpCaptureLimit => '最大記録数';
 
   @override
-  String httpCaptureLimitDesc(Object memory, Object body) {
-    return 'この件数に達するか、メモリを $memory 使い切ると、古い記録から削除されます。本文は先頭の $body のみ保持されます。';
-  }
+  String get httpCaptureMemoryOnly => 'メモリにのみ保存';
 
   @override
   String get httpRequests => 'HTTP リクエスト';
@@ -3355,16 +3349,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get httpCaptureOff => 'キャプチャはオフです';
-
-  @override
-  String get httpCapturing => 'キャプチャ中';
-
-  @override
-  String get httpCaptureNeedsDecryption =>
-      'キャプチャするには、先に HTTPS 復号をオンにして証明書をインストールしてください。';
-
-  @override
-  String get goToMitmSettings => 'MITM 設定へ';
 
   @override
   String get inProgress => '進行中';

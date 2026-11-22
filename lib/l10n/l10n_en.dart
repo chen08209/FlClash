@@ -3485,10 +3485,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get httpCapture => 'HTTP capture';
 
   @override
-  String get httpCaptureDesc =>
-      'Records requests to the hosts listed under Hostname, to view in connection details. Records stay in memory only.';
-
-  @override
   String get httpCaptureNoHosts =>
       'Nothing is recorded until hosts are added under Hostname.';
 
@@ -3496,9 +3492,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get httpCaptureLimit => 'Maximum records';
 
   @override
-  String httpCaptureLimitDesc(Object memory, Object body) {
-    return 'The oldest records go first once this many are kept or they fill $memory of memory. Each body keeps its first $body.';
-  }
+  String get httpCaptureMemoryOnly => 'Kept in memory only';
 
   @override
   String get httpRequests => 'HTTP requests';
@@ -3535,16 +3529,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get httpCaptureOff => 'Capture is off';
-
-  @override
-  String get httpCapturing => 'Capturing';
-
-  @override
-  String get httpCaptureNeedsDecryption =>
-      'Capture needs HTTPS decryption on and its certificate installed first.';
-
-  @override
-  String get goToMitmSettings => 'Go to MITM settings';
 
   @override
   String get inProgress => 'In progress';

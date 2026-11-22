@@ -97,6 +97,15 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     _httpFeed.addListener(_offerHttp);
     _follow();
     _filters.addListener(_showWhere);
+    if (_segment == RequestsSegment.http &&
+        !_showsHttp(ref.read(patchClashConfigProvider))) {
+      _segment = RequestsSegment.connections;
+    }
+    ref.listenManual(patchClashConfigProvider.select(_showsHttp), (_, shows) {
+      if (!shows && _segment == RequestsSegment.http) {
+        _setSegment(RequestsSegment.connections);
+      }
+    });
     ref.listenManual(requestsProvider.select((state) => state.revision), (
       _,
       _,
@@ -504,26 +513,43 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     }
   }
 
-  List<PopupMenuItem> _buildMenuItems({required bool hasActive}) {
+  List<PopupMenuItem> _buildMenuItems({
+    required bool hasActive,
+    required bool showsHttp,
+  }) {
     final appLocalizations = context.appLocalizations;
-    return switch (_segment) {
-      RequestsSegment.connections => [
-        PopupMenuItem(
-          glyph: AppGlyphs.block,
-          label: appLocalizations.closeActiveConnections,
-          danger: true,
-          onPressed: hasActive ? _closeActiveConnections : null,
+    final section = showsHttp ? const PopupMenuSection() : null;
+    return [
+      if (showsHttp)
+        ...httpCaptureMenuItems(
+          ref,
+          appLocalizations,
+          mitm: ref.watch(
+            patchClashConfigProvider.select((state) => state.mitm),
+          ),
+          isAndroid: system.isAndroid,
         ),
-      ],
-      RequestsSegment.http => const [],
-      RequestsSegment.dns => [
-        PopupMenuItem(
-          glyph: AppGlyphs.broom,
-          label: appLocalizations.clearDnsCache,
-          onPressed: _clearDnsCache,
-        ),
-      ],
-    };
+      ...switch (_segment) {
+        RequestsSegment.connections => [
+          PopupMenuItem(
+            glyph: AppGlyphs.block,
+            label: appLocalizations.closeActiveConnections,
+            danger: true,
+            section: section,
+            onPressed: hasActive ? _closeActiveConnections : null,
+          ),
+        ],
+        RequestsSegment.http => const <PopupMenuItem>[],
+        RequestsSegment.dns => [
+          PopupMenuItem(
+            glyph: AppGlyphs.broom,
+            label: appLocalizations.clearDnsCache,
+            section: section,
+            onPressed: _clearDnsCache,
+          ),
+        ],
+      },
+    ];
   }
 
   @override
@@ -531,6 +557,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     final hasActive = ref.watch(
       requestsProvider.select((log) => log.activeCount > 0),
     );
+    final showsHttp = ref.watch(patchClashConfigProvider.select(_showsHttp));
     final body = Stack(
       fit: StackFit.passthrough,
       children: [
@@ -552,7 +579,12 @@ class _RequestsViewState extends ConsumerState<RequestsView>
                 (_) => _settleDetail(),
               );
             }
-            return _buildPage(body, split: split, hasActive: hasActive);
+            return _buildPage(
+              body,
+              split: split,
+              hasActive: hasActive,
+              showsHttp: showsHttp,
+            );
           },
         ),
       ),
@@ -626,18 +658,18 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     Widget body, {
     required bool split,
     required bool hasActive,
+    required bool showsHttp,
   }) {
     final mobile = ViewScope.isMobileOf(context);
     final list = mobile
         ? body
         : TrackerSelection(selected: _selected, onSelect: _select, child: body);
-    final header = _buildHeader();
+    final header = _buildHeader(showsHttp: showsHttp);
     return Scaffold(
       title: PageLabel.requests.label,
       searchState: AppBarSearchState(onSearch: _search),
       header: split ? null : header,
-      statusActions: [if (rsFeature) const HttpCaptureEntry()],
-      menuItems: _buildMenuItems(hasActive: hasActive),
+      menuItems: _buildMenuItems(hasActive: hasActive, showsHttp: showsHttp),
       body: split ? _buildSplit(header, list) : list,
     );
   }
@@ -691,7 +723,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader({required bool showsHttp}) {
     return Padding(
       padding: const EdgeInsets.only(top: _headerTop, bottom: 4),
       child: Column(
@@ -708,7 +740,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
                   RequestsSegment.connections,
                   context.appLocalizations.connections,
                 ),
-                if (rsFeature) (RequestsSegment.http, 'HTTP'),
+                if (showsHttp) (RequestsSegment.http, 'HTTP'),
                 (RequestsSegment.dns, 'DNS'),
               ],
               value: _segment,
@@ -732,25 +764,36 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     );
   }
 
-  /// Until capture is on, the list's place holds the switch that turns it on.
   Widget _buildHttp(ScrollController scrollController) {
     return Consumer(
       builder: (context, ref, _) {
+        final appLocalizations = context.appLocalizations;
         final capturing = ref.watch(
           patchClashConfigProvider.select(httpCapturing),
         );
         if (!capturing) {
-          return ListView(
-            padding: context.listInsets.page(bottom: 16 + context.bottomInset),
-            children: const [HttpCaptureSwitch(last: true)],
+          return NullStatus(
+            label: appLocalizations.httpCaptureOff,
+            illustration: NullStatusIllustration.requests,
           );
         }
+        final hasModule = ref.watch(
+          mitmModulesProvider.select(
+            (state) => state.value?.any((module) => module.enabled) == true,
+          ),
+        );
+        final noHost = ref.watch(
+          patchClashConfigProvider.select(
+            (state) => httpCaptureHasNoHost(state, hasModule),
+          ),
+        );
         return HttpRequestList(
           feed: _httpFeed,
           filters: _httpFilters,
           scrollController: scrollController,
           selected: _httpSelected,
           onSelect: _selectHttp,
+          emptyDescription: noHost ? appLocalizations.httpCaptureNoHosts : null,
         );
       },
     );
@@ -783,6 +826,8 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     );
   }
 }
+
+bool _showsHttp(PatchClashConfig state) => rsFeature && state.mitm.enable;
 
 const _listWidth = 392.0;
 const _headerTop = 4.0;

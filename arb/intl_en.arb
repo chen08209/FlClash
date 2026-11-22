@@ -1153,16 +1153,9 @@
   "mitm": "MITM",
   "httpsDecryption": "HTTPS decryption",
   "httpCapture": "HTTP capture",
-  "httpCaptureDesc": "Records requests to the hosts listed under Hostname, to view in connection details. Records stay in memory only.",
   "httpCaptureNoHosts": "Nothing is recorded until hosts are added under Hostname.",
   "httpCaptureLimit": "Maximum records",
-  "httpCaptureLimitDesc": "The oldest records go first once this many are kept or they fill {memory} of memory. Each body keeps its first {body}.",
-  "@httpCaptureLimitDesc": {
-    "placeholders": {
-      "memory": {},
-      "body": {}
-    }
-  },
+  "httpCaptureMemoryOnly": "Kept in memory only",
   "httpRequests": "HTTP requests",
   "httpRequestCount": "{count, plural, =1{1 HTTP request} other{{count} HTTP requests}}",
   "@httpRequestCount": {
@@ -1185,9 +1178,6 @@
   "noHttpRequestsHint": "This connection is decrypted, and the HTTP requests on it will appear here",
   "httpRequestCleared": "This request is no longer kept",
   "httpCaptureOff": "Capture is off",
-  "httpCapturing": "Capturing",
-  "httpCaptureNeedsDecryption": "Capture needs HTTPS decryption on and its certificate installed first.",
-  "goToMitmSettings": "Go to MITM settings",
   "inProgress": "In progress",
   "method": "Method",
   "originalUrl": "Original URL",

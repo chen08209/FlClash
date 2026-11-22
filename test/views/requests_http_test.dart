@@ -8,7 +8,6 @@ import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:fl_clash/views/connection/http_capture.dart';
 import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
@@ -129,6 +128,7 @@ void main() {
     WidgetTester tester, {
     Size size = _paneSize,
     MitmQuery query = _query,
+    bool open = true,
   }) async {
     container.read(viewSizeProvider.notifier).update((_) => size);
     tester.view.physicalSize = size;
@@ -147,11 +147,29 @@ void main() {
       ),
     );
     await tester.pump();
-    if (rsFeature) {
+    if (rsFeature && open) {
       await tester.tap(find.text('HTTP'));
     }
     await tester.pumpAndSettle();
   }
+
+  Future<void> openMenu(WidgetTester tester) async {
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byGlyph(AppGlyphs.more),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  void decrypt({required bool on}) => container
+      .read(patchClashConfigProvider.notifier)
+      .update((state) => state.copyWith(mitm: state.mitm.copyWith(enable: on)));
+
+  Finder noConnections() => find.text(
+    currentAppLocalizations.nullTip(currentAppLocalizations.connections),
+  );
 
   Future<void> teardownView(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox.shrink());
@@ -164,10 +182,14 @@ void main() {
   );
 
   testWidgets('the HTTP segment stands between connections and DNS only '
-      'where requests can be decrypted', (tester) async {
+      'while requests can be decrypted', (tester) async {
     setUpContainer();
-    await pumpHttp(tester);
+    await pumpHttp(tester, open: false);
 
+    expect(find.text('HTTP'), findsNothing);
+
+    capture(on: false);
+    await tester.pumpAndSettle();
     expect(
       find.text('HTTP'),
       [if (rsFeature) findsOneWidget].firstOrNull ?? findsNothing,
@@ -176,72 +198,21 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('a Core that goes takes its requests with it, even where the '
-      'next counts up to where the list had read', (tester) async {
-    setUpContainer(
-      overrides: [
-        coreStatusProvider.overrideWithBuild((_, _) => CoreStatus.connected),
-      ],
-    );
-    capture();
-    var page = MitmQueryPage(
-      capturing: true,
-      version: 4,
-      exchanges: _exchanges.reversed.toList(),
-    );
-    final asked = <int?>[];
-    container.read(viewSizeProvider.notifier).update((_) => _paneSize);
-    tester.view.physicalSize = _paneSize;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: TestApp(
-          child: RequestsView(
-            segment: RequestsSegment.http,
-            connectionsReader: () async => const [],
-            httpQuery: ({before, since, required limit}) async {
-              asked.add(since);
-              return page;
-            },
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('/rewritten'), findsOneWidget);
-
-    container.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
-    await tester.pump();
-    page = MitmQueryPage(
-      capturing: true,
-      version: 6,
-      exchanges: [_summary(1, path: '/other')],
-    );
-    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pumpAndSettle();
-
-    expect(asked.last, isNull);
-    expect(find.text('/other'), findsOneWidget);
-    expect(find.text('/rewritten'), findsNothing);
-
-    await teardownView(tester);
-  });
-
-  testWidgets(
-    'a list that goes with capture while the pointer is on it holds no '
-    'request back once capture is on again',
-    (tester) async {
-      setUpContainer();
+  if (rsFeature) {
+    testWidgets('a Core that goes takes its requests with it, even where the '
+        'next counts up to where the list had read', (tester) async {
+      setUpContainer(
+        overrides: [
+          coreStatusProvider.overrideWithBuild((_, _) => CoreStatus.connected),
+        ],
+      );
       capture();
       var page = MitmQueryPage(
         capturing: true,
-        version: 1,
+        version: 4,
         exchanges: _exchanges.reversed.toList(),
       );
+      final asked = <int?>[];
       container.read(viewSizeProvider.notifier).update((_) => _paneSize);
       tester.view.physicalSize = _paneSize;
       tester.view.devicePixelRatio = 1;
@@ -254,206 +225,257 @@ void main() {
             child: RequestsView(
               segment: RequestsSegment.http,
               connectionsReader: () async => const [],
-              httpQuery: ({before, since, required limit}) async => page,
+              httpQuery: ({before, since, required limit}) async {
+                asked.add(since);
+                return page;
+              },
             ),
           ),
         ),
       );
       await tester.pumpAndSettle();
-      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-      addTearDown(mouse.removePointer);
-      await mouse.addPointer(location: tester.getCenter(find.text('/ok')));
-      await tester.pump();
+      expect(find.text('/rewritten'), findsOneWidget);
 
-      capture(on: false);
-      await tester.pumpAndSettle();
-      await mouse.moveTo(Offset.zero);
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
       await tester.pump();
       page = MitmQueryPage(
         capturing: true,
-        version: 2,
-        exchanges: [
-          _summary(5, path: '/new'),
-          ..._exchanges.reversed,
+        version: 6,
+        exchanges: [_summary(1, path: '/other')],
+      );
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(asked.last, isNull);
+      expect(find.text('/other'), findsOneWidget);
+      expect(find.text('/rewritten'), findsNothing);
+
+      await teardownView(tester);
+    });
+
+    testWidgets(
+      'a list that goes with capture while the pointer is on it holds no '
+      'request back once capture is on again',
+      (tester) async {
+        setUpContainer();
+        capture();
+        var page = MitmQueryPage(
+          capturing: true,
+          version: 1,
+          exchanges: _exchanges.reversed.toList(),
+        );
+        container.read(viewSizeProvider.notifier).update((_) => _paneSize);
+        tester.view.physicalSize = _paneSize;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: TestApp(
+              child: RequestsView(
+                segment: RequestsSegment.http,
+                connectionsReader: () async => const [],
+                httpQuery: ({before, since, required limit}) async => page,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        addTearDown(mouse.removePointer);
+        await mouse.addPointer(location: tester.getCenter(find.text('/ok')));
+        await tester.pump();
+
+        capture(on: false);
+        await tester.pumpAndSettle();
+        await mouse.moveTo(Offset.zero);
+        await tester.pump();
+        page = MitmQueryPage(
+          capturing: true,
+          version: 2,
+          exchanges: [
+            _summary(5, path: '/new'),
+            ..._exchanges.reversed,
+          ],
+        );
+        capture();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pumpAndSettle();
+
+        expect(find.text('/new'), findsOneWidget);
+
+        await teardownView(tester);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+    );
+
+    testWidgets('on a narrow desktop a request opens in a side sheet whose '
+        'tabs fit it', (tester) async {
+      setUpContainer(
+        overrides: [
+          mitmExchangeProvider(1).overrideWith(
+            (ref) async => MitmExchange(
+              id: 1,
+              start: _start,
+              method: 'GET',
+              url: 'https://api.test/ok',
+              status: 200,
+            ),
+          ),
         ],
       );
       capture();
-      await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
-
-      expect(find.text('/new'), findsOneWidget);
-
-      await teardownView(tester);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
-  );
-
-  testWidgets('on a narrow desktop a request opens in a side sheet whose '
-      'tabs fit it', (tester) async {
-    setUpContainer(
-      overrides: [
-        mitmExchangeProvider(1).overrideWith(
-          (ref) async => MitmExchange(
-            id: 1,
-            start: _start,
-            method: 'GET',
-            url: 'https://api.test/ok',
-            status: 200,
-          ),
-        ),
-      ],
-    );
-    capture();
-    const size = Size(800, 1000);
-    container.read(viewSizeProvider.notifier).update((_) => size);
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: TestApp(
-          child: RequestsView(
-            segment: RequestsSegment.http,
-            connectionsReader: () async => const [],
-            httpQuery: _query,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('/ok'));
-    await tester.pumpAndSettle();
-
-    final tabs = find.descendant(
-      of: find.byType(DetailSheet),
-      matching: find.byType(SegmentedControl<int>),
-    );
-    expect(tabs, findsOneWidget);
-    expect(
-      tester
-          .getRect(
-            find.ancestor(of: tabs, matching: find.byType(Scrollable)).first,
-          )
-          .right,
-      lessThanOrEqualTo(tester.getRect(find.byType(DetailSheet)).right),
-    );
-
-    await teardownView(tester);
-  });
-
-  testWidgets('a request selected beside the list moves into a sheet as the '
-      'page narrows and back as it widens', (tester) async {
-    setUpContainer(
-      overrides: [
-        mitmExchangeProvider(1).overrideWith(
-          (ref) async => MitmExchange(
-            id: 1,
-            start: _start,
-            method: 'GET',
-            url: 'https://api.test/ok',
-            status: 200,
-          ),
-        ),
-      ],
-    );
-    capture();
-    Future<void> resize(Size size) async {
+      const size = Size(800, 1000);
       container.read(viewSizeProvider.notifier).update((_) => size);
       tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TestApp(
+            child: RequestsView(
+              segment: RequestsSegment.http,
+              connectionsReader: () async => const [],
+              httpQuery: _query,
+            ),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
-    }
 
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    container.read(viewSizeProvider.notifier).update((_) => _paneSize);
-    tester.view.physicalSize = _paneSize;
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: TestApp(
-          child: RequestsView(
-            segment: RequestsSegment.http,
-            connectionsReader: () async => const [],
-            httpQuery: _query,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('/ok'));
-    await tester.pumpAndSettle();
-    expect(find.byType(MitmExchangeView), findsOneWidget);
-    expect(find.byType(DetailSheet), findsNothing);
+      await tester.tap(find.text('/ok'));
+      await tester.pumpAndSettle();
 
-    await resize(const Size(800, 1000));
-    expect(
-      find.descendant(
+      final tabs = find.descendant(
         of: find.byType(DetailSheet),
-        matching: find.text('https://api.test/ok'),
-      ),
-      findsWidgets,
-    );
+        matching: find.byType(SegmentedControl<int>),
+      );
+      expect(tabs, findsOneWidget);
+      expect(
+        tester
+            .getRect(
+              find.ancestor(of: tabs, matching: find.byType(Scrollable)).first,
+            )
+            .right,
+        lessThanOrEqualTo(tester.getRect(find.byType(DetailSheet)).right),
+      );
 
-    await resize(_paneSize);
-    expect(find.byType(DetailSheet), findsNothing);
-    expect(find.byType(MitmExchangeView), findsOneWidget);
+      await teardownView(tester);
+    });
 
-    await teardownView(tester);
-  });
+    testWidgets('a request selected beside the list moves into a sheet as the '
+        'page narrows and back as it widens', (tester) async {
+      setUpContainer(
+        overrides: [
+          mitmExchangeProvider(1).overrideWith(
+            (ref) async => MitmExchange(
+              id: 1,
+              start: _start,
+              method: 'GET',
+              url: 'https://api.test/ok',
+              status: 200,
+            ),
+          ),
+        ],
+      );
+      capture();
+      Future<void> resize(Size size) async {
+        container.read(viewSizeProvider.notifier).update((_) => size);
+        tester.view.physicalSize = size;
+        await tester.pumpAndSettle();
+      }
 
-  testWidgets('turning capture off takes the request beside the list with '
-      'it', (tester) async {
-    setUpContainer(
-      overrides: [
-        mitmExchangeProvider(1).overrideWith(
-          (ref) async => MitmExchange(
-            id: 1,
-            start: _start,
-            method: 'GET',
-            url: 'https://api.test/ok',
-            status: 200,
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      container.read(viewSizeProvider.notifier).update((_) => _paneSize);
+      tester.view.physicalSize = _paneSize;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TestApp(
+            child: RequestsView(
+              segment: RequestsSegment.http,
+              connectionsReader: () async => const [],
+              httpQuery: _query,
+            ),
           ),
         ),
-      ],
-    );
-    capture();
-    container.read(viewSizeProvider.notifier).update((_) => _paneSize);
-    tester.view.physicalSize = _paneSize;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: TestApp(
-          child: RequestsView(
-            segment: RequestsSegment.http,
-            connectionsReader: () async => const [],
-            httpQuery: _query,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('/ok'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MitmExchangeView), findsOneWidget);
+      expect(find.byType(DetailSheet), findsNothing);
+
+      await resize(const Size(800, 1000));
+      expect(
+        find.descendant(
+          of: find.byType(DetailSheet),
+          matching: find.text('https://api.test/ok'),
+        ),
+        findsWidgets,
+      );
+
+      await resize(_paneSize);
+      expect(find.byType(DetailSheet), findsNothing);
+      expect(find.byType(MitmExchangeView), findsOneWidget);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('turning capture off takes the request beside the list with '
+        'it', (tester) async {
+      setUpContainer(
+        overrides: [
+          mitmExchangeProvider(1).overrideWith(
+            (ref) async => MitmExchange(
+              id: 1,
+              start: _start,
+              method: 'GET',
+              url: 'https://api.test/ok',
+              status: 200,
+            ),
+          ),
+        ],
+      );
+      capture();
+      container.read(viewSizeProvider.notifier).update((_) => _paneSize);
+      tester.view.physicalSize = _paneSize;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TestApp(
+            child: RequestsView(
+              segment: RequestsSegment.http,
+              connectionsReader: () async => const [],
+              httpQuery: _query,
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('/ok'));
-    await tester.pumpAndSettle();
-    expect(find.byType(MitmExchangeView), findsOneWidget);
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('/ok'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MitmExchangeView), findsOneWidget);
 
-    capture(on: false);
-    await tester.pumpAndSettle();
+      capture(on: false);
+      await tester.pumpAndSettle();
 
-    expect(find.byType(HttpCaptureSwitch), findsOneWidget);
-    expect(find.byType(MitmExchangeView), findsNothing);
-    expect(find.text('Select a request'), findsOneWidget);
+      expect(find.text(currentAppLocalizations.httpCaptureOff), findsOneWidget);
+      expect(find.byType(MitmExchangeView), findsNothing);
+      expect(find.text('Select a request'), findsOneWidget);
 
-    await teardownView(tester);
-  });
+      await teardownView(tester);
+    });
 
-  if (rsFeature) {
     testWidgets(
       'every connection\'s requests are listed by path, host and app, '
       'with their status, size and time',
@@ -681,39 +703,150 @@ void main() {
       await teardownView(tester);
     });
 
-    testWidgets('with capture off the list gives way to its switch', (
-      tester,
-    ) async {
+    testWidgets('with capture off the list gives way to an empty state, '
+        'and the menu turns capture on', (tester) async {
       setUpContainer();
       capture(on: false);
       await pumpHttp(tester);
 
-      expect(find.byType(HttpCaptureSwitch), findsOneWidget);
+      expect(find.text(currentAppLocalizations.httpCaptureOff), findsOneWidget);
       expect(find.byType(HttpRequestList), findsNothing);
       expect(
         find.byType(ConditionFilterRow<MitmExchangeSummary, HttpRequestStatus>),
         findsNothing,
       );
 
-      await tester.tap(
-        find.descendant(
-          of: find.byType(HttpCaptureSwitch),
-          matching: find.byType(Switch),
-        ),
-      );
+      await openMenu(tester);
+      await tester.tap(find.text(currentAppLocalizations.turnOn));
       await tester.pumpAndSettle();
 
+      expect(container.read(patchClashConfigProvider).mitm.capture, isTrue);
       expect(find.byType(HttpRequestList), findsOneWidget);
       expect(
         find.byType(ConditionFilterRow<MitmExchangeSummary, HttpRequestStatus>),
         findsOneWidget,
       );
 
-      capture(on: false);
+      await openMenu(tester);
+      await tester.tap(find.text(currentAppLocalizations.turnOff));
       await tester.pumpAndSettle();
+      expect(container.read(patchClashConfigProvider).mitm.capture, isFalse);
       expect(
         find.byType(ConditionFilterRow<MitmExchangeSummary, HttpRequestStatus>),
         findsNothing,
+      );
+
+      await teardownView(tester);
+    });
+
+    testWidgets('the menu keeps how many records capture holds', (
+      tester,
+    ) async {
+      setUpContainer();
+      capture();
+      await pumpHttp(tester, open: false);
+
+      await openMenu(tester);
+      expect(find.text(currentAppLocalizations.httpCapture), findsOneWidget);
+      await tester.tap(find.text(currentAppLocalizations.httpCaptureLimit));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('5000'));
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(patchClashConfigProvider).mitm.captureEntries,
+        5000,
+      );
+
+      await teardownView(tester);
+    });
+
+    testWidgets('without decryption the menu has no capture section', (
+      tester,
+    ) async {
+      setUpContainer();
+      await pumpHttp(tester, open: false);
+
+      await openMenu(tester);
+
+      expect(find.text(currentAppLocalizations.httpCapture), findsNothing);
+      expect(
+        find.text(currentAppLocalizations.closeActiveConnections),
+        findsOneWidget,
+      );
+
+      await teardownView(tester);
+    });
+
+    testWidgets('turning decryption off leaves the HTTP segment for '
+        'connections', (tester) async {
+      setUpContainer();
+      capture();
+      await pumpHttp(tester);
+      expect(find.byType(HttpRequestList), findsOneWidget);
+
+      decrypt(on: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('HTTP'), findsNothing);
+      expect(find.byType(HttpRequestList), findsNothing);
+      expect(noConnections(), findsOneWidget);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('a page opened on HTTP without decryption opens on '
+        'connections', (tester) async {
+      setUpContainer();
+      container.read(viewSizeProvider.notifier).update((_) => _paneSize);
+      tester.view.physicalSize = _paneSize;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TestApp(
+            child: RequestsView(
+              segment: RequestsSegment.http,
+              connectionsReader: () async => const [],
+              httpQuery: _query,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('HTTP'), findsNothing);
+      expect(noConnections(), findsOneWidget);
+
+      await teardownView(tester);
+    });
+
+    testWidgets('with no listed host the empty list says capture needs one', (
+      tester,
+    ) async {
+      setUpContainer();
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update(
+            (state) => state.copyWith(
+              mitm: state.mitm.copyWith(
+                enable: true,
+                capture: true,
+                hostname: const ['-a.example'],
+              ),
+            ),
+          );
+      await pumpHttp(
+        tester,
+        query: ({before, since, required limit}) async =>
+            const MitmQueryPage(capturing: true, version: 1, exchanges: []),
+      );
+
+      expect(
+        find.text(currentAppLocalizations.httpCaptureNoHosts),
+        findsOneWidget,
       );
 
       await teardownView(tester);

@@ -6192,12 +6192,6 @@ abstract class AppLocalizations {
   /// **'HTTP capture'**
   String get httpCapture;
 
-  /// No description provided for @httpCaptureDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Records requests to the hosts listed under Hostname, to view in connection details. Records stay in memory only.'**
-  String get httpCaptureDesc;
-
   /// No description provided for @httpCaptureNoHosts.
   ///
   /// In en, this message translates to:
@@ -6210,11 +6204,11 @@ abstract class AppLocalizations {
   /// **'Maximum records'**
   String get httpCaptureLimit;
 
-  /// No description provided for @httpCaptureLimitDesc.
+  /// No description provided for @httpCaptureMemoryOnly.
   ///
   /// In en, this message translates to:
-  /// **'The oldest records go first once this many are kept or they fill {memory} of memory. Each body keeps its first {body}.'**
-  String httpCaptureLimitDesc(Object memory, Object body);
+  /// **'Kept in memory only'**
+  String get httpCaptureMemoryOnly;
 
   /// No description provided for @httpRequests.
   ///
@@ -6263,24 +6257,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Capture is off'**
   String get httpCaptureOff;
-
-  /// No description provided for @httpCapturing.
-  ///
-  /// In en, this message translates to:
-  /// **'Capturing'**
-  String get httpCapturing;
-
-  /// No description provided for @httpCaptureNeedsDecryption.
-  ///
-  /// In en, this message translates to:
-  /// **'Capture needs HTTPS decryption on and its certificate installed first.'**
-  String get httpCaptureNeedsDecryption;
-
-  /// No description provided for @goToMitmSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Go to MITM settings'**
-  String get goToMitmSettings;
 
   /// No description provided for @inProgress.
   ///

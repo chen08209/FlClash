@@ -11,9 +11,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:fl_clash/views/connection/http_capture.dart';
 import 'package:fl_clash/views/connection/requests.dart';
-import 'package:fl_clash/views/navigation.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -2184,61 +2182,6 @@ void main() {
       await teardownView(tester);
     });
   });
-
-  if (rsFeature) {
-    testWidgets(
-      'the eye button says whether capture records and opens its panel',
-      (tester) async {
-        container
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) => state.copyWith(
-                mitm: state.mitm.copyWith(enable: true, capture: true),
-              ),
-            );
-        await pumpRequests(tester);
-
-        await tester.tap(find.byTooltip(currentAppLocalizations.httpCapturing));
-        await tester.pumpAndSettle();
-
-        expect(find.byType(HttpCaptureView), findsOneWidget);
-        await teardownView(tester);
-      },
-    );
-
-    testWidgets('turning decryption on from capture leaves the tools list '
-        'for the connections in the bottom bar', (tester) async {
-      navigationPort = navigation;
-      addTearDown(() => navigationPort = null);
-      await pumpRequests(tester, size: _listSize);
-      final navigator = tester.state<NavigatorState>(
-        find.byType(Navigator).first,
-      );
-      unawaited(
-        navigator.push(
-          PageRouteBuilder<void>(
-            pageBuilder: (_, _, _) => const RequestsView(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text(currentAppLocalizations.httpCaptureOff), findsNothing);
-      await tester.tap(find.byType(HttpCaptureEntry).last);
-      await tester.pumpAndSettle();
-      container
-          .read(patchClashConfigProvider.notifier)
-          .update(
-            (state) => state.copyWith(mitm: state.mitm.copyWith(enable: true)),
-          );
-      Navigator.of(tester.element(find.byType(HttpCaptureView))).pop();
-      await tester.pumpAndSettle();
-
-      expect(find.byType(RequestsView), findsOneWidget);
-      expect(container.read(currentPageLabelProvider), PageLabel.requests);
-      await teardownView(tester);
-    });
-  }
 }
 
 class _MockCore extends Mock implements CoreHandlerInterface {}

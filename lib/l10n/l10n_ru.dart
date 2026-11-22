@@ -3481,10 +3481,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get httpCapture => 'Захват HTTP';
 
   @override
-  String get httpCaptureDesc =>
-      'Записывает запросы к хостам из списка имён хостов; их можно посмотреть в сведениях о соединении. Записи хранятся только в памяти.';
-
-  @override
   String get httpCaptureNoHosts =>
       'Ничего не записывается, пока в «Имя хоста» не добавлены хосты.';
 
@@ -3492,9 +3488,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get httpCaptureLimit => 'Максимум записей';
 
   @override
-  String httpCaptureLimitDesc(Object memory, Object body) {
-    return 'Когда записей станет столько или они займут $memory памяти, самые старые удаляются первыми. От каждого тела сохраняются первые $body.';
-  }
+  String get httpCaptureMemoryOnly => 'Хранится только в памяти';
 
   @override
   String get httpRequests => 'HTTP-запросы';
@@ -3533,16 +3527,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get httpCaptureOff => 'Захват выключен';
-
-  @override
-  String get httpCapturing => 'Идёт захват';
-
-  @override
-  String get httpCaptureNeedsDecryption =>
-      'Для захвата сначала включите расшифровку HTTPS и установите сертификат.';
-
-  @override
-  String get goToMitmSettings => 'Перейти к настройкам MITM';
 
   @override
   String get inProgress => 'Выполняется';

@@ -3390,19 +3390,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get httpCapture => 'HTTP 캡처';
 
   @override
-  String get httpCaptureDesc =>
-      '호스트 이름에 나열한 호스트의 요청을 기록하며, 연결 세부 정보에서 볼 수 있습니다. 기록은 메모리에만 보관됩니다.';
-
-  @override
   String get httpCaptureNoHosts => '호스트 이름에 호스트를 추가할 때까지 아무것도 기록되지 않습니다.';
 
   @override
   String get httpCaptureLimit => '최대 기록 수';
 
   @override
-  String httpCaptureLimitDesc(Object memory, Object body) {
-    return '이 개수에 도달하거나 메모리 $memory를 채우면 가장 오래된 기록부터 삭제됩니다. 본문은 앞부분 $body만 보관합니다.';
-  }
+  String get httpCaptureMemoryOnly => '메모리에만 보관';
 
   @override
   String get httpRequests => 'HTTP 요청';
@@ -3431,15 +3425,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get httpCaptureOff => '캡처가 꺼져 있습니다';
-
-  @override
-  String get httpCapturing => '캡처 중';
-
-  @override
-  String get httpCaptureNeedsDecryption => '캡처하려면 먼저 HTTPS 복호화를 켜고 인증서를 설치하세요.';
-
-  @override
-  String get goToMitmSettings => 'MITM 설정으로 이동';
 
   @override
   String get inProgress => '진행 중';
