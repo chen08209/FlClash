@@ -82,6 +82,12 @@ class ProbeAnswer<V> {
 /// microtask, so a widget may watch a target from its build.
 mixin RoutedProbe<K, V>
     on AnyNotifier<RoutedProbeState<K, V>, RoutedProbeState<K, V>> {
+  static const _recheckDelays = [
+    Duration(minutes: 1),
+    Duration(minutes: 2),
+    Duration(minutes: 5),
+  ];
+
   final Map<K, int> _watchers = {};
   final Map<K, _Due> _due = {};
   final Map<K, int> _inFlight = {};
@@ -90,7 +96,7 @@ mixin RoutedProbe<K, V>
   final Set<K> _unverified = {};
   final Map<K, _Landing<V>> _landed = {};
   final Map<K, Timer> _cooling = {};
-  final Map<K, ({RouteStamp stamp, int factor})> _failures = {};
+  final Map<K, ({RouteStamp stamp, int step})> _failures = {};
   final Map<K, Timer> _retries = {};
   final Map<K, int> _launchPicks = {};
   bool _scheduled = false;
@@ -150,7 +156,7 @@ mixin RoutedProbe<K, V>
           } else if (!_inFlight.containsKey(target) &&
               !_due.containsKey(target) &&
               !_landed.containsKey(target)) {
-            _armRetry(target, failure.factor);
+            _armRetry(target, failure.step);
           }
         }
       }
@@ -435,23 +441,23 @@ mixin RoutedProbe<K, V>
         previous != null &&
         previous.stamp.routeVersion == stamp.routeVersion &&
         _sameExits(previous.stamp.hits, stamp.hits);
-    // Zero waits for confirmation. Shown failures count in throttle intervals.
-    var factor = 0;
+    // Step zero waits for confirmation. A displayed failure advances to its next check.
+    var step = 0;
     if (timedOut || agrees) {
       entries[target] = entry;
-      factor = agrees ? (previous.factor * 2).clamp(1, 12) : 1;
+      step = agrees ? min(previous.step + 1, _recheckDelays.length) : 1;
     }
-    _failures[target] = (stamp: stamp, factor: factor);
-    _armRetry(target, factor);
+    _failures[target] = (stamp: stamp, step: step);
+    _armRetry(target, step);
   }
 
-  void _armRetry(K target, int factor) {
-    final retry = factor == 0 ? _Retry.confirm : _Retry.recheck;
+  void _armRetry(K target, int step) {
+    final retry = step == 0 ? _Retry.confirm : _Retry.recheck;
     if (retry == _Retry.recheck && !recheckFailures) return;
     if (recheckFailures && !ref.read(appVisibleProvider)) return;
     final delay = retry == _Retry.confirm
         ? confirmDelay
-        : throttleDuration * factor;
+        : _recheckDelays[step - 1];
     _retries[target] = Timer(delay, () => _retry(target, retry));
   }
 

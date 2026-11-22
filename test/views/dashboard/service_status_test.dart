@@ -1180,7 +1180,7 @@ void main() {
     expect(find.text('Check failed'), findsOneWidget);
     expect(asked, [directOutbound, routedOutbound, routedOutbound]);
 
-    await tester.pump(probeThrottleDuration);
+    await tester.pump(const Duration(minutes: 1));
     expect(asked, [
       directOutbound,
       routedOutbound,
@@ -1191,7 +1191,7 @@ void main() {
     recovery.complete([_item('google', ServiceProbeStatus.available)]);
     await tester.pumpAndSettle();
     expect(find.text('Available'), findsOneWidget);
-    await tester.pump(const Duration(minutes: 1));
+    await tester.pump(const Duration(minutes: 6));
     expect(asked, hasLength(4));
   });
 

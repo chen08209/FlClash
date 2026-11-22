@@ -236,10 +236,10 @@ void main() {
     await tester.pump(probeConfirmDelay);
     expect(stateOf(scope).entryOf(target).phase, ProbePhase.failed);
 
-    for (final seconds in [5, 10, 20, 40, 60, 60]) {
+    for (final minutes in [1, 2, 5, 5]) {
       final calls = sweeps.length;
       await tester.pump(
-        Duration(seconds: seconds) - const Duration(milliseconds: 1),
+        Duration(minutes: minutes) - const Duration(milliseconds: 1),
       );
       expect(sweeps, hasLength(calls));
       await tester.pump(const Duration(milliseconds: 1));
@@ -247,13 +247,13 @@ void main() {
       expect(stateOf(scope).entryOf(target).phase, ProbePhase.failed);
     }
     status = 'available';
-    await tester.pump(const Duration(minutes: 1));
+    await tester.pump(const Duration(minutes: 5));
     expect(
       stateOf(scope).valueOf(target)?.status,
       ServiceProbeStatus.available,
     );
     final calls = sweeps.length;
-    await tester.pump(const Duration(minutes: 2));
+    await tester.pump(const Duration(minutes: 6));
     expect(sweeps, hasLength(calls));
     scope.dispose();
   });
@@ -270,7 +270,7 @@ void main() {
         stateOf(scope).valueOf(target)?.status,
         ServiceProbeStatus.timeout,
       );
-      await tester.pump(probeThrottleDuration);
+      await tester.pump(const Duration(minutes: 1));
       expect(sweeps, hasLength(2));
 
       scope.read(routeTrackerProvider.notifier).markResumed();
@@ -279,7 +279,7 @@ void main() {
       await tester.pump(probeThrottleDuration);
       expect(sweeps, hasLength(3));
       notifierOf(scope).unwatch(target);
-      await tester.pump(const Duration(minutes: 2));
+      await tester.pump(const Duration(minutes: 6));
       expect(sweeps, hasLength(3));
 
       notifierOf(scope).watch(target);
@@ -289,7 +289,7 @@ void main() {
             const RouteSnapshot(coreEpoch: 1, routeVersion: 1, running: true),
           );
       await tester.pump();
-      await tester.pump(probeThrottleDuration);
+      await tester.pump(const Duration(minutes: 1));
       expect(sweeps, hasLength(5));
       scope.dispose();
     },
@@ -317,12 +317,11 @@ void main() {
     when(() => core.serviceCheck(any())).thenAnswer((_) => reply.future);
     final scope = container();
     final timers = trackTimers(
-      probeThrottleDuration,
+      const Duration(minutes: 1),
       () => notifierOf(scope).watch(ServiceTarget.youtube),
     );
     await tester.pump();
-    await tester.pump(probeThrottleDuration);
-    expect(timers.single.isActive, isFalse);
+    expect(timers, isEmpty);
     scope.read(appVisibleProvider.notifier).value = false;
     reply.complete([_item('youtube', status: 'timeout')]);
     await tester.pump();
@@ -330,7 +329,7 @@ void main() {
       stateOf(scope).entryOf(ServiceTarget.youtube).phase,
       ProbePhase.failed,
     );
-    expect(timers, hasLength(1));
+    expect(timers, isEmpty);
     scope.dispose();
   });
 
@@ -341,11 +340,11 @@ void main() {
     final scope = container();
     const target = ServiceTarget.youtube;
     final backoffTimers = trackTimers(
-      probeThrottleDuration * 2,
+      const Duration(minutes: 2),
       () => notifierOf(scope).watch(target),
     );
     await tester.pump();
-    await tester.pump(probeThrottleDuration);
+    await tester.pump(const Duration(minutes: 1));
     expect(backoffTimers.single.isActive, isTrue);
 
     final visible = scope.read(appVisibleProvider.notifier);
@@ -356,12 +355,12 @@ void main() {
     visible.value = true;
     await tester.pump();
     expect(sweeps, hasLength(2));
-    await tester.pump(probeThrottleDuration * 2);
+    await tester.pump(const Duration(minutes: 2));
     expect(sweeps, hasLength(3));
     scope.dispose();
   });
 
-  testWidgets('a reset and a later outage each start at one throttle', (
+  testWidgets('a reset and a later outage each start at one minute', (
     tester,
   ) async {
     var status = 'timeout';
@@ -371,14 +370,14 @@ void main() {
     final service = notifierOf(scope);
     service.watch(target);
     await tester.pump();
-    await tester.pump(probeThrottleDuration);
+    await tester.pump(const Duration(minutes: 1));
     expect(sweeps, hasLength(2));
 
     scope.read(routeTrackerProvider.notifier).bumpHostEpoch();
     await tester.pump(probeMoveSettleDuration);
     expect(sweeps, hasLength(3));
     status = 'available';
-    await tester.pump(probeThrottleDuration);
+    await tester.pump(const Duration(minutes: 1));
     expect(
       stateOf(scope).valueOf(target)?.status,
       ServiceProbeStatus.available,
@@ -388,7 +387,7 @@ void main() {
     service.refresh([target]);
     await tester.pump();
     expect(sweeps, hasLength(5));
-    await tester.pump(probeThrottleDuration);
+    await tester.pump(const Duration(minutes: 1));
     expect(sweeps, hasLength(6));
     scope.dispose();
   });
