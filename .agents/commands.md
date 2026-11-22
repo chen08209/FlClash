@@ -287,7 +287,6 @@ dart run tool/changelog.dart release --version 0.8.96
 dart run tool/changelog.dart build --unreleased      # changelog.json only, includes untagged work
 dart run tool/changelog.dart markdown                # CHANGELOG.md from changelog.json after a hand edit
 dart run tool/changelog.dart render release --out release.md
-dart run tool/changelog.dart render telegram --out telegram.md
 ```
 
 Releasing a stable version, in order:
@@ -353,11 +352,23 @@ in `CHANGELOG.md`, and are never regenerated.
 (`git tag --merged`). A branch cut before the newest release cannot derive that version at all, so `verify` names it as
 skipped and moves on instead of reporting drift that does not exist.
 
-Prerelease tags (`v0.8.96-pre.N[+M]`) skip the release commit, and CI renders their notes with `build --unreleased` for
-the Telegram post. They publish no GitHub release, so the update dialog never sees them. `build --unreleased` reads the
+Prerelease tags (`v0.8.96-pre.N[+M]`) skip the release commit, and CI renders their notes with `build --unreleased`.
+They publish a GitHub release marked as a prerelease and never as latest, with the same files as a stable one.
+`build --unreleased` reads the
 version from `pubspec.yaml`, which the upload job has already set from the tag, and refuses to collect anything while
 `v<that version>` is tagged, so a prerelease tag must name the next, untagged `X.Y.Z`. The changelog builder walks
 stable tags only and ignores a `+M` tag.
+
+Once the release is up, `tool/publish.dart` posts its title and page to the Telegram channel, then deletes superseded
+prereleases of the same line: all but the newest two, and after a stable release every prerelease below it. It deletes
+the releases and their files but keeps the tags, since `tool/release.sh` numbers the next prerelease from them. Both
+take `--dry-run`, which prints the message or the releases it would delete:
+
+```bash
+dart tool/publish.dart --dry-run telegram v0.9.5-pre.1
+gh api --paginate 'repos/chen08209/FlClash/releases?per_page=100' | jq -s add > releases.json
+dart tool/publish.dart --dry-run prune v0.9.5-pre.1 --releases releases.json
+```
 
 ### Release File Names
 

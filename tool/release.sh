@@ -152,10 +152,10 @@ echo "version   : $current -> $version$rewritten"
 echo "tag       : $tag"
 if [[ "$mode" != "stable" ]]; then
   echo "changelog : rendered by CI from build --unreleased; nothing committed"
-  echo "publishes : build artifacts + Telegram only, no GitHub release"
+  echo "publishes : GitHub prerelease with artifacts and SHA256SUMS, Telegram link"
 else
   echo "changelog : CHANGELOG.md + changelog.json regenerated and committed"
-  echo "publishes : GitHub release with artifacts, SHA256SUMS, Homebrew cask"
+  echo "publishes : GitHub release with artifacts, SHA256SUMS, Homebrew cask, Telegram link"
 fi
 echo "push      : $([[ $do_push == 1 ]] && echo "yes, to $remote" || echo 'no (printed at the end)')"
 echo

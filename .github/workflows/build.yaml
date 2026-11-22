@@ -514,14 +514,6 @@ jobs:
       contents: write
     needs: [ version, build, dart, plugins, go, android, rust, windows-helper-test ]
     runs-on: ubuntu-latest
-    services:
-      telegram-bot-api:
-        image: aiogram/telegram-bot-api:latest
-        env:
-          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
-          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-        ports:
-          - 8081:8081
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -571,17 +563,6 @@ jobs:
             dart run tool/changelog.dart build --unreleased
           fi
           dart run tool/changelog.dart render release "${target[@]}" --out release.md
-          dart run tool/changelog.dart render telegram "${target[@]}" --out telegram.md
-
-      - name: Push to telegram
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TAG: ${{ github.ref_name }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
-          python release_telegram.py
 
       - name: Patch release.md
         run: |
@@ -593,11 +574,12 @@ jobs:
         run: dart run tool/package.dart check dist
 
       - name: Release
-        if: ${{ env.IS_STABLE == 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/*
           body_path: './release.md'
+          prerelease: ${{ env.IS_STABLE != 'true' }}
+          make_latest: ${{ env.IS_STABLE == 'true' }}
 
       - name: Create Homebrew Cask Source Dir
         if: ${{ env.IS_STABLE == 'true' }}
@@ -652,3 +634,20 @@ jobs:
           target-branch: main
           commit-message: Update from ${{ github.ref_name }}
           target-directory: /tmp/
+
+      # After the packages, so a failed post holds none of them back.
+      - name: Post to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: dart tool/publish.dart telegram "$TAG"
+
+      # Runs last, so a failed cleanup holds back no announcement or package.
+      - name: Delete superseded prereleases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" | jq -s add > releases.json
+          dart tool/publish.dart prune "$TAG" --releases releases.json
