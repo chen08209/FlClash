@@ -9,6 +9,7 @@ import (
 )
 
 type DnsQuery struct {
+	Id        uint64    `json:"id"`
 	Domain    string    `json:"domain"`
 	Type      string    `json:"type"`
 	Initiator string    `json:"initiator"`

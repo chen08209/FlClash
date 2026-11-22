@@ -96,7 +96,8 @@ func found(index int, ok bool) *int {
 
 type requestInfo struct {
 	*statistic.TrackerInfo
-	RuleIndex *int `json:"ruleIndex,omitempty"`
+	RuleIndex  *int     `json:"ruleIndex,omitempty"`
+	DnsQueries []uint64 `json:"dnsQueries,omitempty"`
 }
 
 type connectionSnapshot struct {
@@ -108,7 +109,11 @@ type connectionSnapshot struct {
 
 func newRequestInfo(tracker statistic.Tracker) requestInfo {
 	info := tracker.Info()
-	return requestInfo{TrackerInfo: info, RuleIndex: currentRuleTable.indexOf(info, false)}
+	return requestInfo{
+		TrackerInfo: info,
+		RuleIndex:   currentRuleTable.indexOf(info, false),
+		DnsQueries:  currentDnsTrail.linkedQueries(info.Metadata, info.Start, dialedAddr(info)),
+	}
 }
 
 func newConnectionSnapshot(snapshot *statistic.Snapshot) *connectionSnapshot {

@@ -34,7 +34,9 @@ func init() {
 	}
 	dns.DefaultQueryNotify = func(record dns.QueryRecord) {
 		if hasEventListener() {
-			sendMessage(DnsMessage, newDnsQuery(record))
+			query := newDnsQuery(record)
+			query.Id = currentDnsTrail.note(record)
+			sendMessage(DnsMessage, query)
 		}
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {
