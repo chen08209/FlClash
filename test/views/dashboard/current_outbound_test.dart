@@ -699,12 +699,14 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('is off without a profile', (tester) async {
+    testWidgets('starts without a profile, which runs everything direct', (
+      tester,
+    ) async {
       container = containerWith(profiles: const []);
       await pumpCard(tester, density: DashboardDensity.mobile);
 
       final toggle = tester.widget<PressRegion>(startButton());
-      expect(toggle.onTap, isNull);
+      expect(toggle.onTap, isNotNull);
       expect(tester.takeException(), isNull);
     });
   });

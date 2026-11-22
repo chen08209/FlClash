@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/core/core.dart';
@@ -15,11 +16,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/core_mocks.dart';
 import '../helpers/test_profiles.dart';
 
 void main() {
   group('ProfilesAction', () {
+    test('deleting the last profile keeps running, on no profile', () async {
+      final root = Directory.systemTemp.createTempSync('profiles_action');
+      addTearDown(() => root.deleteSync(recursive: true));
+      await useAppPaths(root);
+      final only = Profile.normal(label: 'Only');
+      final mocks = coreMocks();
+      when(() => mocks.api.clearEffect(only.id)).thenAnswer((_) async {});
+      final setup = _RecordingSetup();
+      final container = ProviderContainer(
+        overrides: [
+          currentProfileIdProvider.overrideWithBuild((_, _) => only.id),
+          profilesProvider.overrideWith(() => TestProfiles([only])),
+          coreHandlerProvider.overrideWithValue(mocks.controller),
+          setupActionProvider.overrideWith(() => setup),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(profilesActionProvider.notifier)
+          .deleteProfile(only.id);
+
+      expect(container.read(currentProfileIdProvider), isNull);
+      expect(setup.running, isEmpty);
+    });
+
     test('keeps edited profile data when remote update fails', () async {
       final original = Profile.normal(label: 'old label', url: 'bad-url');
       final edited = original.copyWith(
@@ -1192,5 +1220,15 @@ class _RaceCommonAction extends CommonAction {
   @override
   void setTrafficFeed(bool wanted) {
     trafficFeeds.add(wanted);
+  }
+}
+
+class _RecordingSetup extends SetupAction {
+  final running = <bool>[];
+
+  @override
+  Future<bool> setRunning(bool running, {bool initialize = false}) async {
+    this.running.add(running);
+    return true;
   }
 }

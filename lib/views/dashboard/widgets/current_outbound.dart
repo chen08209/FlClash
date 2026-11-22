@@ -66,9 +66,6 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard> {
   @override
   Widget build(BuildContext context) {
     final density = DashboardDensityScope.of(context);
-    final hasProfile = ref.watch(
-      profilesProvider.select((state) => state.isNotEmpty),
-    );
     final isStart = ref.watch(isStartProvider);
     final suspended = isStart && ref.watch(suspendProvider);
     final entry = ref.watch(
@@ -185,7 +182,6 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard> {
                 child: Center(
                   child: _StartToggle(
                     size: metrics.buttonSize,
-                    enabled: hasProfile,
                     running: isStart,
                     suspended: suspended,
                   ),
@@ -836,13 +832,11 @@ double _morphTurn(double progress) => progress * 2 * math.pi / 9;
 class _StartToggle extends ConsumerStatefulWidget {
   const _StartToggle({
     required this.size,
-    required this.enabled,
     required this.running,
     required this.suspended,
   });
 
   final double size;
-  final bool enabled;
   final bool running;
   final bool suspended;
 
@@ -868,9 +862,7 @@ class _StartToggleState extends ConsumerState<_StartToggle>
 
   /// The M3 state layer, painted inside the shape: the card's decoration
   /// covers the button, so ink on the card would never show.
-  double get _overlay => !widget.enabled
-      ? 0
-      : _focused
+  double get _overlay => _focused
       ? 0.1
       : _hovered
       ? 0.08
@@ -901,11 +893,8 @@ class _StartToggleState extends ConsumerState<_StartToggle>
     final appLocalizations = context.appLocalizations;
     final glass = LiquidGlassScope.of(context);
     final size = widget.size;
-    final enabled = widget.enabled;
-    final fill = enabled
-        ? colorScheme.primary
-        : DashboardColors.of(context).tone2;
-    final ink = enabled ? colorScheme.onPrimary : colorScheme.onSurfaceVariant;
+    final fill = colorScheme.primary;
+    final ink = colorScheme.onPrimary;
     final tooltip = widget.suspended
         ? appLocalizations.suspended
         : widget.running
@@ -916,15 +905,14 @@ class _StartToggleState extends ConsumerState<_StartToggle>
       message: tooltip,
       child: Semantics(
         button: true,
-        enabled: enabled,
+        enabled: true,
         label: tooltip,
         child: PressRegion(
-          onTap: enabled ? _toggle : null,
+          onTap: _toggle,
           onHover: (value) => setState(() => _hovered = value),
           onPressedChanged: (value) => setState(() => _pressed = value),
           onFocusChange: (value) => setState(() => _focused = value),
           child: ElasticPress(
-            enabled: enabled,
             child: TweenAnimationBuilder<double>(
               tween: Tween(end: _overlay),
               duration: stateDuration,
@@ -940,9 +928,7 @@ class _StartToggleState extends ConsumerState<_StartToggle>
                     painter: _MorphPainter(
                       progress: progress,
                       color: glass ? null : color,
-                      shadow: enabled
-                          ? colorScheme.primary.withValues(alpha: 0.3)
-                          : Colors.transparent,
+                      shadow: colorScheme.primary.withValues(alpha: 0.3),
                       ring: _focused
                           ? focusRingSide(colorScheme, standsOff: true)
                           : null,

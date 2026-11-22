@@ -13,6 +13,7 @@
   "trafficUsage": "トラフィック統計",
   "networkSpeed": "ネットワーク速度",
   "outboundMode": "アウトバウンドモード",
+  "noProfileDirect": "プロファイル未使用、すべて直接接続",
   "serviceStatus": "サービスの状態",
   "serviceRestricted": "アクセス制限",
   "serviceAvailable": "利用可能",
