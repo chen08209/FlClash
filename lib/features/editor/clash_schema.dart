@@ -367,8 +367,10 @@ const _ech = YamlSchema.map({
 });
 
 const _ipStack = YamlSchema.map({
-  'mode': YamlSchema.scalar(['auto', 'gvisor', 'mips']),
-  'congestion-controller': YamlSchema.scalar(['cubic', 'reno', 'bbr', 'bbr3']),
+  'mode': YamlSchema.scalar(concordProxyIpStackMode),
+  'congestion-controller': YamlSchema.scalar(
+    concordProxyIpStackCongestionController,
+  ),
 });
 
 const _sudokuMultiplex = YamlSchema.scalar(['off', 'auto', 'on']);
@@ -1413,16 +1415,16 @@ const _dns = YamlSchema.map({
   'ipv6': _bool,
   'ipv6-timeout': _str,
   'prefer-h3': _bool,
-  'cache-algorithm': YamlSchema.scalar(['lru', 'arc']),
+  'cache-algorithm': YamlSchema.scalar(concordDnsCacheAlgorithm),
   'cache-max-size': _str,
   'use-hosts': _bool,
   'use-system-hosts': _bool,
   'respect-rules': _bool,
-  'enhanced-mode': YamlSchema.scalar(['fake-ip', 'redir-host', 'normal']),
+  'enhanced-mode': YamlSchema.scalar(concordDnsEnhancedMode),
   'fake-ip-range': YamlSchema.scalar(['198.18.0.1/16']),
   'fake-ip-range6': _str,
   'fake-ip-filter': _strList,
-  'fake-ip-filter-mode': YamlSchema.scalar(['blacklist', 'whitelist', 'rule']),
+  'fake-ip-filter-mode': YamlSchema.scalar(concordDnsFakeIpFilterMode),
   'fake-ip-ttl': _str,
   'default-nameserver': _nameserver,
   'nameserver': _nameserver,
@@ -1457,7 +1459,7 @@ const _tun = YamlSchema.map({
 }, concordSection: 'tun');
 
 const _tunFields = {
-  'stack': YamlSchema.scalar(['gvisor', 'mips']),
+  'stack': YamlSchema.scalar(concordTunStack),
   'device': _str,
   'dns-hijack': YamlSchema.list(YamlSchema.scalar(['any:53', 'tcp://any:53'])),
   'auto-route': _bool,
@@ -1503,7 +1505,7 @@ const _tunFields = {
   'include-mac-address': _strList,
   'exclude-mac-address': _strList,
   'icmp-timeout': _str,
-  'congestion-controller': YamlSchema.scalar(['cubic', 'reno', 'bbr', 'bbr3']),
+  'congestion-controller': YamlSchema.scalar(concordTunCongestionController),
   'file-descriptor': _str,
   'recvmsgx': _bool,
   'sendmsgx': _bool,
@@ -1939,18 +1941,12 @@ const clashConfigSchema = YamlSchema.map({
   'lan-disallowed-ips': _strList,
   'authentication': _strList,
   'skip-auth-prefixes': _strList,
-  'mode': YamlSchema.scalar(['rule', 'global', 'direct']),
-  'log-level': YamlSchema.scalar([
-    'info',
-    'warning',
-    'error',
-    'debug',
-    'silent',
-  ]),
+  'mode': YamlSchema.scalar(concordMode),
+  'log-level': YamlSchema.scalar(concordLogLevel),
   'ipv6': _bool,
   'unified-delay': _bool,
   'tcp-concurrent': _bool,
-  'find-process-mode': YamlSchema.scalar(['strict', 'always', 'off']),
+  'find-process-mode': YamlSchema.scalar(concordFindProcessMode),
   'global-ua': _str,
   'keep-alive-interval': _str,
   'keep-alive-idle': _str,
