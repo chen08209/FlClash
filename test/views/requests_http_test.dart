@@ -182,13 +182,17 @@ void main() {
   );
 
   testWidgets('the HTTP segment stands between connections and DNS only '
-      'while requests can be decrypted', (tester) async {
+      'while capture records', (tester) async {
     setUpContainer();
     await pumpHttp(tester, open: false);
 
     expect(find.text('HTTP'), findsNothing);
 
     capture(on: false);
+    await tester.pumpAndSettle();
+    expect(find.text('HTTP'), findsNothing);
+
+    capture();
     await tester.pumpAndSettle();
     expect(
       find.text('HTTP'),
@@ -301,6 +305,8 @@ void main() {
           ],
         );
         capture();
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('HTTP'));
         await tester.pump(const Duration(seconds: 2));
         await tester.pumpAndSettle();
 
@@ -469,9 +475,8 @@ void main() {
       capture(on: false);
       await tester.pumpAndSettle();
 
-      expect(find.text(currentAppLocalizations.httpCaptureOff), findsOneWidget);
       expect(find.byType(MitmExchangeView), findsNothing);
-      expect(find.text('Select a request'), findsOneWidget);
+      expect(noConnections(), findsOneWidget);
 
       await teardownView(tester);
     });
@@ -703,24 +708,21 @@ void main() {
       await teardownView(tester);
     });
 
-    testWidgets('with capture off the list gives way to an empty state, '
-        'and the menu turns capture on', (tester) async {
+    testWidgets('the menu turns capture on, which brings the HTTP segment, '
+        'and off, which leaves it for connections', (tester) async {
       setUpContainer();
       capture(on: false);
-      await pumpHttp(tester);
+      await pumpHttp(tester, open: false);
 
-      expect(find.text(currentAppLocalizations.httpCaptureOff), findsOneWidget);
-      expect(find.byType(HttpRequestList), findsNothing);
-      expect(
-        find.byType(ConditionFilterRow<MitmExchangeSummary, HttpRequestStatus>),
-        findsNothing,
-      );
+      expect(find.text('HTTP'), findsNothing);
 
       await openMenu(tester);
       await tester.tap(find.text(currentAppLocalizations.turnOn));
       await tester.pumpAndSettle();
 
       expect(container.read(patchClashConfigProvider).mitm.capture, isTrue);
+      await tester.tap(find.text('HTTP'));
+      await tester.pumpAndSettle();
       expect(find.byType(HttpRequestList), findsOneWidget);
       expect(
         find.byType(ConditionFilterRow<MitmExchangeSummary, HttpRequestStatus>),
@@ -730,11 +732,11 @@ void main() {
       await openMenu(tester);
       await tester.tap(find.text(currentAppLocalizations.turnOff));
       await tester.pumpAndSettle();
+
       expect(container.read(patchClashConfigProvider).mitm.capture, isFalse);
-      expect(
-        find.byType(ConditionFilterRow<MitmExchangeSummary, HttpRequestStatus>),
-        findsNothing,
-      );
+      expect(find.text('HTTP'), findsNothing);
+      expect(find.byType(HttpRequestList), findsNothing);
+      expect(noConnections(), findsOneWidget);
 
       await teardownView(tester);
     });
@@ -774,6 +776,7 @@ void main() {
         find.text(currentAppLocalizations.closeActiveConnections),
         findsOneWidget,
       );
+      expect(find.byGlyph(AppGlyphs.block), findsNothing);
 
       await teardownView(tester);
     });

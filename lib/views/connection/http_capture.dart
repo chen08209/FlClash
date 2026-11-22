@@ -1,7 +1,6 @@
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,7 +27,6 @@ List<PopupMenuItem> httpCaptureMenuItems(
   final options = mitmCaptureOptions(isAndroid: isAndroid);
   return [
     PopupMenuItem(
-      glyph: AppGlyphs.toggleOn,
       label: appLocalizations.turnOn,
       subtitle: appLocalizations.httpCaptureMemoryOnly,
       checked: mitm.capture,
@@ -36,13 +34,11 @@ List<PopupMenuItem> httpCaptureMenuItems(
       onPressed: () => _update(ref, (state) => state.copyWith(capture: true)),
     ),
     PopupMenuItem(
-      glyph: AppGlyphs.toggle,
       label: appLocalizations.turnOff,
       checked: !mitm.capture,
       onPressed: () => _update(ref, (state) => state.copyWith(capture: false)),
     ),
     PopupMenuItem(
-      glyph: AppGlyphs.dataUsage,
       label: appLocalizations.httpCaptureLimit,
       subtitle: '$limit',
       subItems: [

@@ -8,7 +8,6 @@ import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -515,12 +514,12 @@ class _RequestsViewState extends ConsumerState<RequestsView>
 
   List<PopupMenuItem> _buildMenuItems({
     required bool hasActive,
-    required bool showsHttp,
+    required bool offersCapture,
   }) {
     final appLocalizations = context.appLocalizations;
-    final section = showsHttp ? const PopupMenuSection() : null;
+    final section = offersCapture ? const PopupMenuSection() : null;
     return [
-      if (showsHttp)
+      if (offersCapture)
         ...httpCaptureMenuItems(
           ref,
           appLocalizations,
@@ -532,7 +531,6 @@ class _RequestsViewState extends ConsumerState<RequestsView>
       ...switch (_segment) {
         RequestsSegment.connections => [
           PopupMenuItem(
-            glyph: AppGlyphs.block,
             label: appLocalizations.closeActiveConnections,
             danger: true,
             section: section,
@@ -542,7 +540,6 @@ class _RequestsViewState extends ConsumerState<RequestsView>
         RequestsSegment.http => const <PopupMenuItem>[],
         RequestsSegment.dns => [
           PopupMenuItem(
-            glyph: AppGlyphs.broom,
             label: appLocalizations.clearDnsCache,
             section: section,
             onPressed: _clearDnsCache,
@@ -558,6 +555,9 @@ class _RequestsViewState extends ConsumerState<RequestsView>
       requestsProvider.select((log) => log.activeCount > 0),
     );
     final showsHttp = ref.watch(patchClashConfigProvider.select(_showsHttp));
+    final offersCapture = ref.watch(
+      patchClashConfigProvider.select(_offersCapture),
+    );
     final body = Stack(
       fit: StackFit.passthrough,
       children: [
@@ -584,6 +584,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
               split: split,
               hasActive: hasActive,
               showsHttp: showsHttp,
+              offersCapture: offersCapture,
             );
           },
         ),
@@ -659,6 +660,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     required bool split,
     required bool hasActive,
     required bool showsHttp,
+    required bool offersCapture,
   }) {
     final mobile = ViewScope.isMobileOf(context);
     final list = mobile
@@ -669,7 +671,10 @@ class _RequestsViewState extends ConsumerState<RequestsView>
       title: PageLabel.requests.label,
       searchState: AppBarSearchState(onSearch: _search),
       header: split ? null : header,
-      menuItems: _buildMenuItems(hasActive: hasActive, showsHttp: showsHttp),
+      menuItems: _buildMenuItems(
+        hasActive: hasActive,
+        offersCapture: offersCapture,
+      ),
       body: split ? _buildSplit(header, list) : list,
     );
   }
@@ -751,11 +756,8 @@ class _RequestsViewState extends ConsumerState<RequestsView>
             RequestsSegment.connections => ConditionFilterRow(
               controller: _filters,
             ),
-            RequestsSegment.http => Consumer(
-              builder: (_, ref, _) =>
-                  ref.watch(patchClashConfigProvider.select(httpCapturing))
-                  ? ConditionFilterRow(controller: _httpFilters)
-                  : const SizedBox.shrink(),
+            RequestsSegment.http => ConditionFilterRow(
+              controller: _httpFilters,
             ),
             RequestsSegment.dns => ConditionFilterRow(controller: _dnsFilters),
           },
@@ -768,15 +770,6 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     return Consumer(
       builder: (context, ref, _) {
         final appLocalizations = context.appLocalizations;
-        final capturing = ref.watch(
-          patchClashConfigProvider.select(httpCapturing),
-        );
-        if (!capturing) {
-          return NullStatus(
-            label: appLocalizations.httpCaptureOff,
-            illustration: NullStatusIllustration.requests,
-          );
-        }
         final hasModule = ref.watch(
           mitmModulesProvider.select(
             (state) => state.value?.any((module) => module.enabled) == true,
@@ -827,7 +820,9 @@ class _RequestsViewState extends ConsumerState<RequestsView>
   }
 }
 
-bool _showsHttp(PatchClashConfig state) => rsFeature && state.mitm.enable;
+bool _showsHttp(PatchClashConfig state) => rsFeature && httpCapturing(state);
+
+bool _offersCapture(PatchClashConfig state) => rsFeature && state.mitm.enable;
 
 const _listWidth = 392.0;
 const _headerTop = 4.0;
