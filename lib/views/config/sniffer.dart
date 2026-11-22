@@ -246,7 +246,7 @@ class _SniffView extends ConsumerWidget {
     return BaseScaffold(
       title: overrideKey.label(appLocalizations),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        padding: context.listInsets.page().copyWith(
           top: context.sectionsTopPadding,
           bottom: 16 + context.bottomInset,
         ),

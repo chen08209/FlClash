@@ -95,7 +95,7 @@ class _RulePresetSheetState extends State<RulePresetSheet> {
               tooltip: appLocalizations.confirm,
             ),
       body: PrismListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        padding: context.listInsets.page().copyWith(
           top: context.contentTopPadding,
           bottom: 20 + context.bottomInset,
         ),

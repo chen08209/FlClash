@@ -107,7 +107,7 @@ class HotKeyView extends StatelessWidget {
     return BaseScaffold(
       title: appLocalizations.hotkeyManagement,
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        padding: context.listInsets.page().copyWith(
           top: context.contentTopPadding,
           bottom: 20 + context.bottomInset,
         ),
@@ -173,7 +173,10 @@ class _HotKeyItem extends ConsumerWidget {
     );
     final key = hotKeyAction.key;
     return DecorationListItem(
-      contentPadding: EdgeInsets.only(left: 16, right: key == null ? 16 : 6),
+      contentPadding: EdgeInsetsDirectional.only(
+        start: context.listInsets.leading,
+        end: key == null ? 16 : 6,
+      ),
       leading: GlyphIcon(_glyphOf(action)),
       title: Text(action.label, maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: failure == null

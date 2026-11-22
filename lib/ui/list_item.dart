@@ -84,12 +84,12 @@ class ListItem<T> extends StatelessWidget {
   final Widget? leading;
   final Widget title;
   final Widget? subtitle;
-  final EdgeInsets padding;
+  final EdgeInsetsGeometry? padding;
   final ListRowAlignment alignment;
   final Widget? trailing;
   final _ListItemAction _action;
   final double? horizontalTitleGap;
-  final double minVerticalPadding;
+  final double? minVerticalPadding;
   final double? minTileHeight;
   final void Function()? onTap;
 
@@ -98,12 +98,12 @@ class ListItem<T> extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.leading,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.padding,
     this.trailing,
     this.horizontalTitleGap,
     this.onTap,
     this.minTileHeight,
-    this.minVerticalPadding = listRowVerticalPadding,
+    this.minVerticalPadding,
     this.alignment = ListRowAlignment.center,
   }) : _action = const _DefaultAction();
 
@@ -112,7 +112,7 @@ class ListItem<T> extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.leading,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.padding,
     this.trailing,
     required Widget widget,
     ValueChanged<dynamic>? onChanged,
@@ -120,7 +120,7 @@ class ListItem<T> extends StatelessWidget {
     bool enabled = true,
     this.horizontalTitleGap,
     this.minTileHeight,
-    this.minVerticalPadding = listRowVerticalPadding,
+    this.minVerticalPadding,
     this.alignment = ListRowAlignment.center,
   }) : _action = _OpenAction(
          widget: widget,
@@ -135,7 +135,7 @@ class ListItem<T> extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.leading,
-    this.padding = const EdgeInsets.only(left: 16, right: 8),
+    this.padding,
     required List<T> options,
     required T value,
     required String Function(T value) textBuilder,
@@ -143,7 +143,7 @@ class ListItem<T> extends StatelessWidget {
     Set<T> sectionStarts = const {},
     this.horizontalTitleGap,
     this.minTileHeight,
-    this.minVerticalPadding = listRowVerticalPadding,
+    this.minVerticalPadding,
     this.alignment = ListRowAlignment.center,
   }) : _action = _OptionsAction<T>(
          options: options,
@@ -160,7 +160,7 @@ class ListItem<T> extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.leading,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.padding,
     this.trailing,
     required String dialogTitle,
     required String value,
@@ -172,7 +172,7 @@ class ListItem<T> extends StatelessWidget {
     String? resetValue,
     this.horizontalTitleGap,
     this.minTileHeight,
-    this.minVerticalPadding = listRowVerticalPadding,
+    this.minVerticalPadding,
     this.alignment = ListRowAlignment.center,
   }) : _action = _InputAction(
          title: dialogTitle,
@@ -191,12 +191,12 @@ class ListItem<T> extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.leading,
-    this.padding = const EdgeInsets.only(left: 16, right: 8),
+    this.padding,
     bool value = false,
     ValueChanged<bool?>? onChanged,
     this.horizontalTitleGap,
     this.minTileHeight,
-    this.minVerticalPadding = listRowVerticalPadding,
+    this.minVerticalPadding,
     this.alignment = ListRowAlignment.center,
   }) : _action = _CheckboxAction(value: value, onChanged: onChanged),
        trailing = null,
@@ -207,12 +207,12 @@ class ListItem<T> extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.leading,
-    this.padding = const EdgeInsets.only(left: 16, right: 8),
+    this.padding,
     required bool value,
     ValueChanged<bool>? onChanged,
     this.horizontalTitleGap,
     this.minTileHeight,
-    this.minVerticalPadding = listRowVerticalPadding,
+    this.minVerticalPadding,
     this.alignment = ListRowAlignment.center,
   }) : _action = _ToggleAction(value: value, onChanged: onChanged),
        trailing = null,
@@ -223,28 +223,40 @@ class ListItem<T> extends StatelessWidget {
     required ItemPosition? position,
     void Function()? onTap,
     Widget? trailing,
-    Widget? leading,
+    double trailingInset = 0,
   }) {
+    trailing ??= this.trailing;
+    final insets = context.listInsets;
+    final padding =
+        this.padding ??
+        EdgeInsetsDirectional.only(
+          start: insets.leading,
+          end: trailing == null
+              ? insets.leading
+              : insets.trailing - trailingInset,
+        );
     if (position != null) {
       // OpenContainer reparents the closed tile out of the section's provider.
       return ItemPositionProvider(
         position: position,
         child: DecorationListItem(
-          leading: leading ?? this.leading,
+          leading: leading,
           title: title,
           subtitle: subtitle,
-          trailing: trailing ?? this.trailing,
+          trailing: trailing,
           contentPadding: padding,
           horizontalTitleGap: horizontalTitleGap,
+          minVerticalPadding: minVerticalPadding,
+          alignment: alignment,
           onPressed: onTap,
         ),
       );
     }
     final row = ListRow(
-      leading: leading ?? this.leading,
+      leading: leading,
       title: title,
       subtitle: subtitle,
-      trailing: trailing ?? this.trailing,
+      trailing: trailing,
       padding: padding,
       horizontalTitleGap: horizontalTitleGap,
       minVerticalPadding: minVerticalPadding,
@@ -265,6 +277,9 @@ class ListItem<T> extends StatelessWidget {
   Widget get _pageTrailing =>
       trailing ?? const GlyphIcon(Glyphs.chevronForward);
 
+  // The glyph's stroke ends 6.7 inside its box; iOS's ends 0.7 inside its own.
+  static const _chevronInset = 6.0;
+
   @override
   Widget build(BuildContext context) {
     final position = ItemPositionProvider.of(context)?.position;
@@ -277,6 +292,7 @@ class ListItem<T> extends StatelessWidget {
           return _buildRow(
             context,
             position: position,
+            trailingInset: _chevronInset,
             trailing:
                 trailing ??
                 GlyphIcon(
@@ -290,6 +306,7 @@ class ListItem<T> extends StatelessWidget {
             context,
             position: position,
             trailing: _pageTrailing,
+            trailingInset: _chevronInset,
             onTap: () async {
               final result = await showNestedExtend<dynamic>(
                 context,
@@ -310,6 +327,7 @@ class ListItem<T> extends StatelessWidget {
               context,
               position: position,
               trailing: _pageTrailing,
+              trailingInset: _chevronInset,
               onTap: action,
             );
           },
@@ -327,6 +345,7 @@ class ListItem<T> extends StatelessWidget {
           // As an iOS pop-up row does, a tap anywhere on the row opens the
           // menu out of its value.
           onTap: () => openMenu?.call(),
+          trailingInset: _OptionsValueButton.endInset,
           trailing: PopupAnchor(
             targetBuilder: (open) {
               openMenu = open;
@@ -385,6 +404,7 @@ class ListItem<T> extends StatelessWidget {
               : () {
                   checkboxDelegate.onChanged!(!checkboxDelegate.value);
                 },
+          trailingInset: Checkbox.edgeInset,
           trailing: Checkbox(
             value: checkboxDelegate.value,
             onChanged: checkboxDelegate.onChanged,
@@ -399,6 +419,7 @@ class ListItem<T> extends StatelessWidget {
               : () {
                   toggleAction.onChanged!(!toggleAction.value);
                 },
+          trailingInset: Switch.edgeInset,
           trailing: Switch(
             value: toggleAction.value,
             onChanged: toggleAction.onChanged,
@@ -415,6 +436,10 @@ const _optionsValueMaxWidth = 160.0;
 class _OptionsValueButton extends StatelessWidget {
   const _OptionsValueButton({required this.label, required this.onPressed});
 
+  static const _padding = 8.0;
+
+  static const endInset = _padding + 5.7;
+
   final String label;
   final VoidCallback onPressed;
 
@@ -425,7 +450,7 @@ class _OptionsValueButton extends StatelessWidget {
       style: ButtonStyle.from(
         foregroundColor: context.colorScheme.onSurfaceVariant,
         textStyle: context.listTitleStyle,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: _padding),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

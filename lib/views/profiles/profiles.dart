@@ -19,13 +19,14 @@ import 'edit.dart';
 import 'preview.dart';
 
 const _infoGap = 4.0;
+const _cardVerticalPadding = 10.0;
 
 double get _profileItemHeight {
   final measure = globalState.measure;
   return measure.textHeight(AppTextStyle.headline) +
       _infoGap +
       measure.textHeight(AppTextStyle.footnote) +
-      2 * listRowVerticalPadding;
+      2 * _cardVerticalPadding;
 }
 
 class ProfilesView extends ConsumerStatefulWidget {
@@ -546,8 +547,9 @@ class ProfileItem extends ConsumerWidget {
         },
         child: ListItem(
           key: Key(profile.id.toString()),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           minTileHeight: _profileItemHeight,
-          minVerticalPadding: listRowVerticalPadding,
+          minVerticalPadding: _cardVerticalPadding,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             spacing: 8,
@@ -657,7 +659,9 @@ class _ReorderableProfilesSheetState
       child: ItemPositionProvider(
         position: position,
         child: DecorationListItem(
-          contentPadding: const EdgeInsets.only(left: 16),
+          contentPadding: EdgeInsetsDirectional.only(
+            start: context.listInsets.leading,
+          ),
           trailing: SortHandle(index: index),
           title: Text(profile.realLabel),
         ),

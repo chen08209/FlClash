@@ -326,7 +326,9 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
         child: ItemPositionProvider(
           position: ItemPosition.get(index, providers.length),
           child: DecorationListItem(
-            contentPadding: const EdgeInsets.only(left: 16),
+            contentPadding: EdgeInsetsDirectional.only(
+              start: context.listInsets.leading,
+            ),
             title: ChipTitle(
               title: provider.label,
               chip: provider.behavior.name,
@@ -361,10 +363,12 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
         label: appLocalizations.nullTip(appLocalizations.ruleProviders),
       ),
       child: PrismReorderableListView(
-        padding: const EdgeInsets.all(16).copyWith(
-          top: context.contentTopPadding,
-          bottom: 16 + context.bottomInset,
-        ),
+        padding: context.listInsets
+            .page(top: 16, bottom: 16)
+            .copyWith(
+              top: context.contentTopPadding,
+              bottom: 16 + context.bottomInset,
+            ),
         itemCount: providers.length,
         itemBuilder: (_, index) => _buildItem(providers, index),
         proxyDecorator: (_, index, animation) {

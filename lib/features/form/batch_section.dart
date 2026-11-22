@@ -8,6 +8,7 @@ class BatchSection<T> extends StatelessWidget {
   final TextEditingController controller;
   final ParsedInput<T>? parsed;
   final ValueChanged<String> onChanged;
+  final bool last;
 
   const BatchSection({
     super.key,
@@ -15,6 +16,7 @@ class BatchSection<T> extends StatelessWidget {
     required this.controller,
     required this.parsed,
     required this.onChanged,
+    this.last = false,
   });
 
   @override
@@ -27,6 +29,7 @@ class BatchSection<T> extends StatelessWidget {
               parsed.entries.length,
               parsed.skippedExisting,
             ),
+      last: last,
       items: [
         DecorationListItem(
           title: TextField(

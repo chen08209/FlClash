@@ -198,7 +198,7 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
         child: CustomScrollView(
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+              padding: context.listInsets.page().copyWith(
                 top: context.sectionsTopPadding,
                 bottom: 16 + context.bottomInset,
               ),

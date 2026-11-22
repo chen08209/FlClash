@@ -260,6 +260,7 @@ class _NamedUrlFormState extends State<NamedUrlForm> {
                 controller: _batchController,
                 parsed: _parsed,
                 onChanged: _handleBatchChanged,
+                last: true,
               )
             : _buildFields(appLocalizations, issue?.field),
       ],

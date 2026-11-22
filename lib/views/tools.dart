@@ -106,9 +106,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           controller: _controller,
           itemCount: items.length,
           itemBuilder: (_, index) => items[index],
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
+          padding: context.listInsets.page(
             top: context.sectionsTopPadding,
             bottom: 20 + context.bottomInset,
           ),

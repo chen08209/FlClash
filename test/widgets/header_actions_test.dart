@@ -9,7 +9,7 @@ import 'package:prism_ui/prism_ui.dart';
 
 void _noop() {}
 
-const _width = 520.0;
+const _width = 390.0;
 
 List<Widget> _actions() => const [
   MinIconButtonTheme(
@@ -47,7 +47,9 @@ Future<void> _pumpHeader(WidgetTester tester, Widget header) async {
       child: Builder(
         builder: (context) {
           globalState.measure = Measure.of(context, 1);
-          return Surface(child: header);
+          return Surface(
+            child: Align(alignment: Alignment.topCenter, child: header),
+          );
         },
       ),
     ),
@@ -90,18 +92,18 @@ void main() {
     expect(second.left - first.right, appBarActionSpace);
   });
 
-  testWidgets('a list header stands as tall with actions as without', (
-    tester,
-  ) async {
+  testWidgets('actions keep a list header\'s title where it stands without '
+      'them', (tester) async {
+    Offset titleInHeader() =>
+        tester.getTopLeft(find.text('Rules')) -
+        tester.getTopLeft(find.byType(ListHeader));
     await _pumpHeader(tester, const ListHeader(title: 'Rules'));
-    final bare = tester.getRect(find.text('Rules'));
-    final bareHeader = tester.getSize(find.byType(ListHeader));
+    final bare = titleInHeader();
     await _pumpHeader(tester, const ListHeader(title: 'Rules', actions: _data));
     final withActions = tester.getRect(find.text('Rules'));
     final button = tester.getRect(find.byTooltip('Select all'));
 
-    expect(withActions.topLeft, bare.topLeft);
-    expect(tester.getSize(find.byType(ListHeader)).height, bareHeader.height);
+    expect(titleInHeader(), bare);
     expect(button.height, TonalButtonSize.section.button);
     expect(button.center.dy, closeTo(withActions.center.dy, 1));
     expect(

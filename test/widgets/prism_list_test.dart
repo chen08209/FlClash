@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/list.dart';
 import 'package:prism_ui/prism_list.dart';
 import '../helpers/host_scaffold.dart';
 import '../helpers/test_app.dart';
@@ -164,7 +165,7 @@ void main() {
         home: HostScaffold(
           body: PrismReorderableListView(
             header: const SizedBox(height: 40, child: Text('header')),
-            footer: const SizedBox(height: 40, child: Text('footer')),
+            footer: 'footer',
             itemCount: 3,
             onReorderItem: (from, to) => moves.add((from, to)),
             proxyDecorator: (child, _, _) => child,
@@ -179,7 +180,9 @@ void main() {
     );
 
     expect(tester.getTopLeft(find.text('item 0')).dy, 40);
-    expect(tester.getTopLeft(find.text('footer')).dy, 40 + 3 * 50);
+    final footer = tester.getRect(find.byType(ListFooter));
+    expect(footer.top, 40 + 3 * 50);
+    expect(footer.bottom, tester.getRect(find.text('footer')).bottom);
 
     final drag = await tester.startGesture(
       tester.getCenter(find.text('item 0')),

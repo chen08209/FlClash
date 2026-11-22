@@ -32,6 +32,7 @@ class TestRow extends StatelessWidget {
     this.onTap,
     this.contentPadding = const EdgeInsets.symmetric(horizontal: 16),
     this.minTileHeight = 56,
+    this.minVerticalPadding,
   });
 
   final Widget title;
@@ -41,6 +42,7 @@ class TestRow extends StatelessWidget {
   final VoidCallback? onTap;
   final EdgeInsetsGeometry contentPadding;
   final double minTileHeight;
+  final double? minVerticalPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +55,7 @@ class TestRow extends StatelessWidget {
         trailing: trailing,
         padding: contentPadding,
         minHeight: minTileHeight,
+        minVerticalPadding: minVerticalPadding,
       ),
     );
   }

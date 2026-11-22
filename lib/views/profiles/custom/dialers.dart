@@ -153,7 +153,10 @@ class _ProxyDialerItem extends ConsumerWidget {
     return DecorationListItem(
       invalid: issues.isNotEmpty,
       onPressed: onPressed,
-      contentPadding: const EdgeInsets.only(left: 16, right: 8),
+      contentPadding: EdgeInsetsDirectional.only(
+        start: context.listInsets.leading,
+        end: 8,
+      ),
       title: TooltipText(
         text: Text(proxy.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),

@@ -82,7 +82,7 @@ class _IpQualityDetail extends ConsumerWidget {
     final failed = quality == null && !result.isLoading;
     return ListView(
       shrinkWrap: true,
-      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+      padding: context.listInsets.page().copyWith(
         bottom: 20 + context.bottomInset,
         top: context.contentTopPadding,
       ),

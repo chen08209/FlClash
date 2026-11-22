@@ -98,7 +98,7 @@ class SliverCustomIssuesBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return PinnedHeaderSliver(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, context.sectionsTopPadding, 16, 0),
+        padding: context.listInsets.page(top: context.sectionsTopPadding),
         child: CustomIssuesBanner(issues: issues),
       ),
     );

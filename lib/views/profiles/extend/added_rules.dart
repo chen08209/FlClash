@@ -101,7 +101,7 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
       child: ItemPositionProvider(
         position: ItemPosition.get(index, rules.length),
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
+          margin: context.listInsets.page(),
           child: RuleItem(
             isEditing: selected.isNotEmpty,
             isSelected: selected.contains(rule.id),
@@ -135,7 +135,7 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: context.listInsets.page(),
               child: ListHeader(
                 title: appLocalizations.addedRules,
                 caption: appLocalizations.addedRulesAfterScript,
@@ -184,13 +184,13 @@ class _AddedRulesContentState extends ConsumerState<AddedRulesContent> {
           if (addedRules.isNotEmpty)
             const SliverToBoxAdapter(child: ListSectionGap()),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: context.listInsets.page(),
             sliver: SliverToBoxAdapter(
               child: generateGroup([_GlobalAddedRulesItem(_profileId)]),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: context.listInsets.page(),
             sliver: SliverToBoxAdapter(child: ExitsSection(_profileId)),
           ),
         ],
@@ -538,7 +538,7 @@ class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
                 ),
                 if (_query.isEmpty) ...[
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: context.listInsets.page(),
                     sliver: SliverToBoxAdapter(
                       child: generateGroup([
                         ListItem.open(
@@ -551,7 +551,7 @@ class _EditGlobalAddedRulesState extends ConsumerState<_EditGlobalAddedRules> {
                   const SliverToBoxAdapter(child: ListSectionGap()),
                 ],
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: context.listInsets.page(),
                   sliver: SliverFixedExtentList.builder(
                     itemExtent: ruleItemHeight,
                     itemBuilder: (context, index) {

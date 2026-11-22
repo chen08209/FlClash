@@ -125,7 +125,7 @@ void main() {
         rect: Rect.fromLTRB(
           title.left - row.left,
           row.height - thickness,
-          row.width - 14,
+          row.width - tester.element(rows[0]).listInsets.leading,
           row.height,
         ),
       ),

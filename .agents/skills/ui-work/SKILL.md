@@ -91,7 +91,8 @@ reads as a pill at 24 and as a square at 400, so one radius everywhere is the wr
 | `sm` | 8 | up to 48 | chips, thumbs, swatches, small square tiles |
 | `md` | 16 | up to 64 | interactive chrome: inputs, menus, buttons, popups |
 | `lg` | 20 | 64 to 180 | mid-size cards: dashboard tiles, proxy node cards |
-| `xl` | 24 | full-bleed | anything spanning the whole width: list rows, grouped runs, group headers |
+| `xl` | 24 | full-bleed | other surfaces spanning the whole width: the profiles card, the proxy group card |
+| `listGroup` | 26 | - | the ends of a grouped run, as iOS 27 rounds an inset grouped section; on `AppCorner` only |
 | `xxl` | 28 | over 200 | sheets, full-screen containers |
 | `alert` | 34 | - | alerts, the corner of iOS 27's UIAlertController; on `AppCorner` only, passed to the builders |
 | `full` | 1000 | - | pills and circles: buttons, tracks, indicators, progress, avatars |
@@ -108,9 +109,9 @@ reads as a pill at 24 and as a square at 400, so one radius everywhere is the wr
   item keeping its fill under a `SelectionCheck` or `SelectionBadge`, with no container role on a card or row.
 
 `xl` and `lg` exist because one token cannot serve both size classes. A full-bleed surface is wide and short, so its
-corner must be larger than its height alone suggests or it stops reading as a card; everything full-bleed shares `xl`
-(the profiles card, the outer corners of a grouped run in `DecorationListItem`, the proxy
-group card in `lib/views/proxies/list.dart`) and does not use `fit()`. This is the one deliberate overshoot of the
+corner must be larger than its height alone suggests or it stops reading as a card; full-bleed surfaces share `xl`
+(the profiles card, the proxy group card in `lib/views/proxies/list.dart`) and do not use `fit()`. A grouped run in
+`DecorationListItem` takes the measured `listGroup` instead. This is the one deliberate overshoot of the
 one-third rule; the value stays under half a standard row so nothing clamps and every full-bleed surface renders the
 same radius. `lg` is for mid-size cards that are not full-bleed: a proxy node card in the tab view at
 `ProxyCardType.compact` is only about 64 tall, which caps its radius at 21, so `xl` would break on a setting the user

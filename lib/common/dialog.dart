@@ -298,7 +298,7 @@ class _FailureDetailsSheet extends StatelessWidget {
       title: context.appLocalizations.errorDetails,
       body: SelectionArea(
         child: PrismListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          padding: context.listInsets.page().copyWith(
             top: context.sectionsTopPadding,
             bottom: 20 + context.bottomInset,
           ),
@@ -319,6 +319,7 @@ class _FailureDetailsSheet extends StatelessWidget {
                   ),
               ],
               footer: message,
+              last: index == groups.length - 1,
             );
           },
         ),

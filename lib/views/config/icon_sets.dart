@@ -159,7 +159,9 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
         child: ItemPositionProvider(
           position: ItemPosition.get(index, iconSets.length),
           child: DecorationListItem(
-            contentPadding: const EdgeInsets.only(left: 16),
+            contentPadding: EdgeInsetsDirectional.only(
+              start: context.listInsets.leading,
+            ),
             leading: SizedBox.square(
               dimension: 32,
               child: IconTheme.merge(
@@ -197,10 +199,12 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
         illustration: NullStatusIllustration.icons,
       ),
       child: PrismReorderableListView(
-        padding: const EdgeInsets.all(16).copyWith(
-          top: context.contentTopPadding,
-          bottom: 16 + context.bottomInset,
-        ),
+        padding: context.listInsets
+            .page(top: 16, bottom: 16)
+            .copyWith(
+              top: context.contentTopPadding,
+              bottom: 16 + context.bottomInset,
+            ),
         itemCount: iconSets.length,
         itemBuilder: (_, index) => _buildItem(iconSets, index),
         proxyDecorator: (_, index, animation) {

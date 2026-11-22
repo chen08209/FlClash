@@ -233,14 +233,12 @@ abstract class EditViewState<W extends ConsumerStatefulWidget, T>
             illustration: NullStatusIllustration.data,
           ),
           child: PrismReorderableListView(
-            padding: EdgeInsets.only(
-              bottom: 16 + context.bottomInset,
+            padding: context.listInsets.page(
               top: context.contentTopPadding,
-              left: 16,
-              right: 16,
+              bottom: 16 + context.bottomInset,
             ),
             itemCount: _entries.length,
-            footer: description == null ? null : ListFooter(text: description!),
+            footer: description,
             itemBuilder: (context, index) {
               final entry = _entries[index];
               return _buildEntry(

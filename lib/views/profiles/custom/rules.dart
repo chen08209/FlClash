@@ -536,7 +536,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
       confirmationAction: customSaveAction(context, onPressed: _handleSave),
       body: ListView(
         shrinkWrap: true,
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        padding: context.listInsets.page().copyWith(
           bottom: 20 + context.bottomInset,
           top: context.sectionsTopPadding,
         ),

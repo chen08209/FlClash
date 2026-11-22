@@ -669,7 +669,7 @@ class ServiceStatusSheet extends ConsumerWidget {
             child: SizedBox(height: context.contentTopPadding),
           ),
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + context.bottomInset),
+            padding: context.listInsets.page(bottom: 16 + context.bottomInset),
             sliver: SliverPrismList(
               itemCount: targets.length,
               itemBuilder: (context, index) {
@@ -766,7 +766,7 @@ const _rowBadgeSize = 40.0;
 const _rowStatusShare = 0.5;
 const _rowBadgeInset = 12.0;
 // Concentric with the corners DecorationListItem gives the ends of a run.
-const _rowBadgeRadius = AppCorner.xl - _rowBadgeInset;
+const _rowBadgeRadius = AppCorner.listGroup - _rowBadgeInset;
 
 class _ServiceManageItem extends StatelessWidget {
   const _ServiceManageItem({
@@ -792,14 +792,15 @@ class _ServiceManageItem extends StatelessWidget {
     return ReorderDragStartListener(
       index: index,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: context.listInsets.page(),
         child: ItemPositionProvider(
           position: position,
           child: DecorationListItem(
             minVerticalPadding: _rowBadgeInset,
-            contentPadding: const EdgeInsets.only(
-              left: _rowBadgeInset,
-              right: 16,
+            minHeight: _rowBadgeSize + 2 * _rowBadgeInset,
+            contentPadding: EdgeInsetsDirectional.only(
+              start: _rowBadgeInset,
+              end: context.listInsets.trailing - Switch.edgeInset,
             ),
             onPressed: onChanged == null ? null : () => onChanged(!enabled),
             leading: _ServiceBadge(
@@ -864,7 +865,11 @@ class _ServiceRowState extends ConsumerState<_ServiceRow>
     return LayoutBuilder(
       builder: (context, constraints) => DecorationListItem(
         minVerticalPadding: _rowBadgeInset,
-        contentPadding: const EdgeInsets.only(left: _rowBadgeInset, right: 16),
+        minHeight: _rowBadgeSize + 2 * _rowBadgeInset,
+        contentPadding: EdgeInsetsDirectional.only(
+          start: _rowBadgeInset,
+          end: context.listInsets.trailing,
+        ),
         onPressed: loading ? null : widget.onCheck,
         leading: _ServiceBadge(
           target: target,

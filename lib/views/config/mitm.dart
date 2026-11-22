@@ -469,7 +469,7 @@ class _MitmOptionsViewState extends ConsumerState<MitmOptionsView> {
       body: NullStatusSwitcher(
         isLoading: certificate.isLoading && !certificate.hasValue,
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          padding: context.listInsets.page().copyWith(
             top: context.contentTopPadding,
             bottom: 16 + context.bottomInset,
           ),

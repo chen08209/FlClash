@@ -108,7 +108,7 @@ class DeveloperView extends ConsumerWidget {
     return BaseScaffold(
       title: appLocalizations.developerMode,
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        padding: context.listInsets.page().copyWith(
           top: context.sectionsTopPadding,
           bottom: 16 + context.bottomInset,
         ),

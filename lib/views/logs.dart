@@ -335,7 +335,7 @@ class _LogDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+      padding: context.listInsets.page().copyWith(
         bottom: 20 + context.bottomInset,
         top: context.sectionsTopPadding,
       ),

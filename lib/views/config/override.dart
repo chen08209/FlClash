@@ -580,7 +580,7 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
     final keys = ref.watch(spec.target.select((state) => state.keys));
     final entries = spec.values.where(keys.contains);
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+      padding: context.listInsets.page().copyWith(
         top: context.sectionsTopPadding,
         bottom: 16 + context.bottomInset,
       ),
@@ -615,7 +615,10 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
         ),
         Padding(
           padding: EdgeInsets.only(top: 16.mAp(context)),
-          child: ListFooter(text: spec.target.description(appLocalizations)),
+          child: ListFooter(
+            text: spec.target.description(appLocalizations),
+            last: true,
+          ),
         ),
       ],
     );

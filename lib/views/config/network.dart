@@ -584,7 +584,7 @@ class NetworkListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+      padding: context.listInsets.page().copyWith(
         top: context.sectionsTopPadding,
         bottom: 16 + context.bottomInset,
       ),

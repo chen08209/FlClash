@@ -26,6 +26,7 @@ Widget _list(int rows) {
           TestRow(
             title: Text('row $index'),
             minTileHeight: _rowHeight,
+            minVerticalPadding: 0,
             onTap: () {},
           ),
       ],

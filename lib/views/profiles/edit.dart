@@ -363,7 +363,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
             ),
             body: Builder(
               builder: (context) => ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+                padding: context.listInsets.page().copyWith(
                   top: context.sectionsTopPadding,
                   bottom: context.bottomInset + 16,
                 ),
@@ -580,7 +580,9 @@ class _ProfileFileItem extends StatelessWidget {
               : ContextMenuRegion(
                   menuItems: _menuItems(context),
                   child: DecorationListItem(
-                    contentPadding: const EdgeInsets.only(left: 16),
+                    contentPadding: EdgeInsetsDirectional.only(
+                      start: context.listInsets.leading,
+                    ),
                     title: Text(appLocalizations.profile),
                     subtitle: _buildSubtitle(context, fileInfo),
                     trailing: Row(

@@ -334,6 +334,61 @@ white, 150 ms scroll view delay, no scaling, hover 4%). Measurements:
 - Deliberate deviation: the measured cell behaviour is a systemGray4 replacement, while FlClash uses an onSurface 10%
   state layer ("press = 10% state layer"), plus a 4% hover on desktop pointers.
 
+## Inset grouped list
+
+Measured from `UITableView(style: .insetGrouped)` with `UIListContentConfiguration` cells (`cell`, `subtitleCell`,
+`valueCell`) and `titleForHeader`/`titleForFooter`, on iPhone SE (375), 13 mini (375), 16e (390), 16 Pro and 17 Pro
+(402), iPhone 11 (414), Pro Max (440), iPad mini and iPad Pro 13, and in a table narrowed to a set width inside the
+window. Text positions are label frames; UIKit sets a label `font.lineHeight` tall (body 20.29, subheadline 17.90,
+footnote 15.51), so baselines are compared, not boxes.
+
+- Width rule: the card stands 16 in at 375 and 390 wide and 20 in from 400 up (402, 414, 440, every iPad width,
+  portrait, landscape and split); it never narrows to the readable width. Text, separators and the accessory keep 16
+  inside the card up to 402 wide and 20 from 404 up. A sheet or a narrowed table follows its own width, not the
+  screen's; interior containers on iPad keep 16.
+- Corner: `UIView.cornerConfiguration` is `.fixed(26)` on every device and at every text size, continuous.
+- Rows: one line 53.0 (body baseline 32.54 from the top), two lines 69.33 (title baseline 31.88, subtitle baseline
+  50.33). An icon's center sits 12 past the text inset and the text moves to 40 past it; SF Symbol `wifi` is
+  24.67×17.67 in a 28.67×22 frame. A value (`valueCell`) is body regular on the title's baseline, 8.33 before the
+  chevron.
+- Accessories end at the outer margin: the chevron's visible 7×12 ends 20.67 in from the card's edge at 402, a switch's
+  63×28 track 20 in. The separator is a 1/3 pt hairline at the row's bottom, from the text start to the inner inset
+  before the card's edge.
+- Header: 38 tall above the first card, title baseline 10.46 above the card. Footer: first baseline 20.13 below the
+  card, footnote lines about 15.9 apart; a titled header after a footer has its baseline 69.74 below the footer's first
+  baseline (one line) where it would be 52.21 below a bare card. A section with neither header nor footer starts 35
+  below the card before it; an untitled section after a footer starts 27.87 below the footer's baseline.
+- Dynamic Type: margins and corner stay put, rows grow with their text (XXXL body 23: one line 60, two lines 84, icon
+  text at 63.67; AX-XL: 79 and 122). Header and footer text from `titleForHeader`/`titleForFooter` does not scale.
+- FlClash: `ListInsets` in `prism_ui/lib/metrics.dart` (`context.listInsets`, from `ViewScope` or the view's width)
+  gives the margin and inner inset, under 400 → 16/16, 400 to 402 → 20/16, over 402 → 20/20; pages and sheets pad with
+  `listInsets.page()`. `AppCorner.listGroup = 26` rounds a run's ends. `ListRow` sets one line at `listRowMinHeight` 53
+  and stacks two lines `listTwoLineRowVerticalPadding` 10 in from each edge. A leading glyph keeps its own size in the
+  `listLeadingSlotWidth` 24 slot, centered 12 past the inset with the text 40 past it. `ListItem` ends its chevron,
+  picker, checkbox and switch at `listInsets.trailing` by the glyph's own inset (`_chevronInset`,
+  `_OptionsValueButton.endInset`, `Checkbox.edgeInset`, `Switch.edgeInset`). `ListHeader` stands 35 (`listSectionGap`)
+  above its title and 6 below; `ListFooter` starts 6.5 below the card and hangs into the next section's gap so a titled
+  header after it lands as iOS sets it. Measured at 402×874 with SF Pro: card, one-line row height, text and icon x
+  match exactly; baselines are within 0.38 (one line), 0.12 (header) and 0.28 (footer); the chevron ends at 20.50, the
+  picker at 20.44, the switch track at 19.70, the checkbox at 19.83.
+- Deliberate deviation: an untitled section after a footer starts 7.45 closer than iOS. UIKit sizes a header by the
+  footer before it, which a sliver list cannot compose; FlClash matches the common case, a titled header after a
+  footer.
+- Deliberate deviation: a footer of several lines keeps `footnote`'s 18 line height (about 15.9 in UIKit), the
+  Typography rule every footnote follows, so a three-line footer is 4.1 taller.
+- Deliberate deviation: the switch is the Material 52×32 track; only its end is aligned to iOS's.
+- Deliberate deviation: the separator is the hairline `list_row_separator.dart` snaps to whole device pixels (2 px at
+  3x, at 52.5) rather than iOS's single pixel at 52.0.
+- Deliberate deviation: FlClash scales headers and footers with the text scale.
+- Deliberate deviation: a two-line row is 62, not 69.33: 10 above and below a title and subtitle stacked with no
+  overlap. FlClash has no 29 pt icon plate to fill the height, and its subtitles are mostly a short status, so the
+  iOS row reads loose.
+- Deliberate deviation: desktop uses the same sizes, at the iPad rule (20/20), and no longer tightens rows with
+  `VisualDensity.compact`.
+- Deliberate deviation: a leading icon stays a 24 dp line glyph with no plate. iOS's 29 pt settings icon is a filled
+  rounded square around an 18-20 pt symbol, and a bare glyph grown to that size reads far heavier than the rows'
+  text; only the slot, its center and the text start follow iOS.
+
 ## Navigation push/pop and zoom transitions
 
 Read from the UIKit settings objects `_UIFluidNavigationTransitionsDomain` and `UIKit._UIZoomTransitionSettingsDomain`,

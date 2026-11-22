@@ -119,7 +119,9 @@ class _FilterItem extends StatelessWidget {
     return DecorationListItem(
       isSelected: isSelected,
       onPressed: isEditing ? onSelected : onPressed,
-      contentPadding: const EdgeInsets.only(left: 16),
+      contentPadding: EdgeInsetsDirectional.only(
+        start: context.listInsets.leading,
+      ),
       title: TooltipText(
         text: Text(filter.label, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),

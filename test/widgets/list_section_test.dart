@@ -99,4 +99,39 @@ void main() {
 
     expect(rowRect(tester, 'row').top, 0);
   });
+
+  testWidgets('a grouped list item keeps the padding and alignment it is '
+      'given, as one standing alone does', (tester) async {
+    Widget item(String name) => ListItem(
+      leading: SizedBox(key: ValueKey('$name leading'), width: 24, height: 10),
+      title: Text('$name title'),
+      subtitle: const Text('one\ntwo\nthree'),
+      minVerticalPadding: 30,
+      alignment: ListRowAlignment.top,
+    );
+    await tester.pumpWidget(
+      TestApp(
+        child: HostScaffold(
+          body: Column(
+            children: [
+              item('alone'),
+              generateGroup([item('grouped')]),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    Offset inRow(String name, Finder part) =>
+        tester.getTopLeft(part) -
+        tester.getTopLeft(
+          find.ancestor(of: part, matching: find.byType(ListItem<dynamic>)),
+        );
+    for (final part in ['leading', 'title']) {
+      Finder of(String name) => part == 'leading'
+          ? find.byKey(ValueKey('$name leading'))
+          : find.text('$name title');
+      expect(inRow('grouped', of('grouped')), inRow('alone', of('alone')));
+    }
+  });
 }

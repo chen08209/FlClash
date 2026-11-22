@@ -409,7 +409,7 @@ class GeneralView extends ConsumerWidget {
     return BaseScaffold(
       title: appLocalizations.general,
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        padding: context.listInsets.page().copyWith(
           top: context.sectionsTopPadding,
           bottom: 16 + context.bottomInset,
         ),
@@ -445,6 +445,7 @@ class GeneralView extends ConsumerWidget {
             title: appLocalizations.logsAndDiagnostics,
             items: _logItems(),
             footer: appLocalizations.logcatDesc,
+            last: true,
           ),
         ],
       ),

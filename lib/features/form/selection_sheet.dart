@@ -315,11 +315,11 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
               ),
               for (final (sectionIndex, section) in sections.indexed) ...[
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: context.listInsets.page(),
                   sliver: SliverToBoxAdapter(child: _buildHeader(section)),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: context.listInsets.page(),
                   sliver: SliverPrismList(
                     listController: sectionIndex == location?.section
                         ? _revealController

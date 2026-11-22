@@ -170,10 +170,12 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
         ),
       ],
       body: PrismReorderableListView(
-        padding: const EdgeInsets.all(16).copyWith(
-          top: context.contentTopPadding,
-          bottom: 16 + context.bottomInset,
-        ),
+        padding: context.listInsets
+            .page(top: 16, bottom: 16)
+            .copyWith(
+              top: context.contentTopPadding,
+              bottom: 16 + context.bottomInset,
+            ),
         header: ItemPositionProvider(
           position: ItemPosition.get(0, entries.length + 1),
           child: _UserAgentItem(

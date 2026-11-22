@@ -1066,9 +1066,11 @@ that starts them. A list or map edit page is the exception: its description says
 effect. A section header carries its title, set as iOS 27 sets a grouped list's header in `headline` and the
 footer's `onSurfaceVariant`, and at most a few actions on the group, as `IconButtonData`: `ListHeader` draws them as
 36 dp tonal buttons (`TonalButtonSize.section`), the first two grouped,
-centered on the title. Every header stands as tall as one with a button, 6 dp clear of the group below, so headers
-match whether or not they carry actions. A group with a selection swaps them
-for delete and select all, never a text button. `generateSection` is the only section builder, and a sheet lays its groups inside the 16 dp inset the pages use.
+centered on the title. A header without actions ends its title 6 dp above the group, as iOS does; actions leave the
+title where it stands and grow the header so the buttons keep 6 dp clear of the group. No header gains or loses all its
+actions while shown. A group with a selection swaps them for delete and select all, never a text button.
+`generateSection` is the only section builder. Pages and sheets lay their groups inside `context.listInsets.page()`,
+the width rule of the Inset grouped list section in `.agents/ios-measurements.md`, never a literal margin.
 Every section keeps the same space above it, `ListSectionGap`, title or not, with its title standing in that space, and
 sections are never spaced where they are placed. A page that opens on a section pads its top with `sectionsTopPadding`
 rather than `contentTopPadding`, so that space lands the first title or group where every page, the root tabs

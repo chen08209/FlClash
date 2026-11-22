@@ -26,7 +26,7 @@ class ScriptContent extends ConsumerWidget {
         script.id: script.label,
     };
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: context.listInsets.page(),
       sliver: SliverToBoxAdapter(
         child: generateSection(
           title: appLocalizations.script,
