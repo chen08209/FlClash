@@ -324,8 +324,11 @@ void main() {
       push('second', top: 100);
       await tester.pump();
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 60));
+      await tester.pump(const Duration(milliseconds: 32));
       expect(cardClips(), hasLength(2));
+
+      await tester.pump(const Duration(milliseconds: 28));
+      expect(cardClips(), hasLength(1));
 
       await tester.pumpAndSettle();
       expect(cardClips(), isEmpty);
@@ -339,10 +342,15 @@ void main() {
       push('second', top: 100);
       await tester.pump();
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 60));
+      await tester.pump(const Duration(milliseconds: 32));
       expect(
         cardClipsOf(tester, top: AppCorner.alert, bottom: AppCorner.alert),
         hasLength(2),
+      );
+      await tester.pump(const Duration(milliseconds: 28));
+      expect(
+        cardClipsOf(tester, top: AppCorner.alert, bottom: AppCorner.alert),
+        hasLength(1),
       );
     });
 

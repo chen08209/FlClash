@@ -266,8 +266,11 @@ void main() {
       await tester.tap(find.text('open'));
       await tester.pump();
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 60));
+      await tester.pump(const Duration(milliseconds: 10));
       expect(cardClips(), hasLength(2));
+
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(cardClips(), hasLength(1));
 
       await tester.pumpAndSettle();
       expect(cardClips(), isEmpty);
