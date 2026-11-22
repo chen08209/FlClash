@@ -519,8 +519,9 @@ force or is being asked again. The mechanism has three parts.
   come in bursts: a network switch reports more than once, and a launch applies the config and starts the
   listeners back to back. A new route version keeps every answer on show and sends their hits to `checkRoutes` in
   one call, at once for the first move and, for the moves that follow within `probeSettleDuration`, together when
-  it ends, so groups re-picking moments apart cost one check more; only an answer whose exit moved is
-  dropped and asked again, and one that held takes the checked version. An answer that lands under an older version
+  it ends. A successful probe whose exit held takes the checked version. A moved exit or a failed probe from
+  an earlier version is asked again. The exit alone cannot establish whether a failed probe's front proxy still
+  takes the same route. An answer that lands under an older version
   than the state is held back as checking until its own check returns, so it never shows and then flips. An ask
   that is not the user's or a reset's waits out `probeThrottleDuration` since the target's last probe, so a config
   load whose providers, rule sets and url-test picks land over a few seconds moves an exit at most one probe more.
@@ -534,9 +535,9 @@ force or is being asked again. The mechanism has three parts.
   or closed connection, a failed lookup, a Core that gave no answer — may be the route still settling or a
   connection something else closed (`closeConnections` after a proxy switch closes the routed probes too), so a watched
   target stays checking and is asked once more after `probeConfirmDelay`; it shows as failed when the
-  second attempt agrees, and a failure that spent its whole deadline (`ProbeAnswer.timedOut`) shows at once.
+  second attempt agrees under the same route version, and a failure that spent its whole deadline (`ProbeAnswer.timedOut`) shows at once.
   A failure on show is not asked again while the route holds still, since the same exit would only be asked the
-  same thing: it waits for a reset, a moved exit, a proxy the user switched, `refresh`, or the app resuming
+  same thing: it waits for a reset, a route version change, a proxy the user switched, `refresh`, or the app resuming
   (`markResumed`), which asks the watched ones again on show. A reset or a moved exit makes the next failure one
   to confirm again, and
   a service check that timed out is a failure that still shows its status. `refresh` is the user's own request and

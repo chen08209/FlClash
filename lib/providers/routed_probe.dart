@@ -90,7 +90,7 @@ mixin RoutedProbe<K, V>
   final Set<K> _unverified = {};
   final Map<K, _Landing<V>> _landed = {};
   final Map<K, Timer> _cooling = {};
-  final Map<K, List<RouteHit>> _failures = {};
+  final Map<K, RouteStamp> _failures = {};
   final Map<K, Timer> _retries = {};
   final Map<K, int> _launchPicks = {};
   bool _scheduled = false;
@@ -415,9 +415,12 @@ mixin RoutedProbe<K, V>
       return;
     }
     final previous = _failures[target];
-    final hits = entry.stamp?.hits ?? const <RouteHit>[];
-    _failures[target] = hits;
-    if (timedOut || previous != null && _sameExits(previous, hits)) {
+    final stamp = entry.stamp!;
+    _failures[target] = stamp;
+    if (timedOut ||
+        previous != null &&
+            previous.routeVersion == stamp.routeVersion &&
+            _sameExits(previous.hits, stamp.hits)) {
       entries[target] = entry;
       return;
     }
@@ -600,8 +603,12 @@ mixin RoutedProbe<K, V>
         _invalidate(target, entries);
         continue;
       }
+      // An unchanged exit cannot vouch for a failed dial through its front proxy.
       final held =
           check != null &&
+          (entry.phase != ProbePhase.failed ||
+              stamp.routeVersion ==
+                  max(check.routeVersion, current.routeVersion)) &&
           check.coreEpoch == stamp.coreEpoch &&
           index < check.held.length &&
           check.held[index];

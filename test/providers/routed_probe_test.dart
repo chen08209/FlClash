@@ -475,37 +475,105 @@ void main() {
     container.dispose();
   });
 
-  testWidgets('a failure through an exit the route moved to is confirmed', (
+  for (final nextExit in ['A', 'B']) {
+    testWidgets(
+      'a failure on a new route is confirmed when its exit is $nextExit',
+      (tester) async {
+        ProbeAnswer<String> downVia(String exit, int routeVersion) =>
+            ProbeAnswer(
+              value: 'down',
+              coreEpoch: 1,
+              routeVersion: routeVersion,
+              hits: [RouteHit(host: 'a.example:443', exit: exit)],
+            );
+        final container = build();
+        final probe = container.read(_probeProvider.notifier);
+        probe.watch('a');
+        await tester.pump();
+        probe.answer({'a': downVia('A', 1)});
+        await tester.pump();
+
+        moveRoute(container, 2);
+        await tester.pump(probeConfirmDelay);
+        expect(probe.calls, hasLength(2));
+        probe.answer({'a': downVia(nextExit, 2)});
+        await tester.pump();
+        expect(container.read(_probeProvider).isLoading('a'), isTrue);
+
+        await tester.pump(probeConfirmDelay);
+        expect(probe.calls, hasLength(3));
+        probe.answer({'a': downVia(nextExit, 2)});
+        await tester.pump();
+        expect(
+          container.read(_probeProvider).entryOf('a').phase,
+          ProbePhase.failed,
+        );
+        container.dispose();
+      },
+    );
+  }
+
+  testWidgets(
+    'a failed chain is checked when its front changes behind the same exit',
+    (tester) async {
+      final container = build(route: const RouteState());
+      final probe = container.read(_probeProvider.notifier);
+      const hit = RouteHit(host: 'service.example:443', exit: 'Exit');
+      const failure = ProbeAnswer(
+        value: 'down',
+        coreEpoch: 1,
+        routeVersion: 1,
+        hits: [hit],
+      );
+      probe.watch('a');
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(probe.calls, isEmpty);
+
+      moveRoute(container, 1);
+      await tester.pump();
+      probe.answer({'a': failure});
+      await tester.pump(probeConfirmDelay);
+      probe.answer({'a': failure});
+      await tester.pump();
+      expect(
+        container.read(_probeProvider).entryOf('a').phase,
+        ProbePhase.failed,
+      );
+
+      moveRoute(container, 2);
+      await tester.pump();
+      expect(probe.calls, ['a', 'a', 'a']);
+      probe.answer({'a': _ok(hit.host, routeVersion: 2)});
+      await tester.pump();
+      expect(
+        container.read(_probeProvider).entryOf('a').phase,
+        ProbePhase.fresh,
+      );
+      container.dispose();
+    },
+  );
+
+  testWidgets('a late chain failure cannot be confirmed by an unchanged exit', (
     tester,
   ) async {
-    ProbeAnswer<String> downVia(String exit, int routeVersion) => ProbeAnswer(
-      value: 'down',
-      coreEpoch: 1,
-      routeVersion: routeVersion,
-      hits: [RouteHit(host: 'a.example:443', exit: exit)],
-    );
     final container = build();
     final probe = container.read(_probeProvider.notifier);
+    const hit = RouteHit(host: 'service.example:443', exit: 'Exit');
+    const failure = ProbeAnswer(
+      value: 'down',
+      coreEpoch: 1,
+      routeVersion: 1,
+      hits: [hit],
+    );
     probe.watch('a');
     await tester.pump();
-    probe.answer({'a': downVia('A', 1)});
-    await tester.pump();
-
-    moveRoute(container, 2);
+    probe.answer({'a': failure});
     await tester.pump(probeConfirmDelay);
-    expect(probe.calls, hasLength(2));
-    probe.answer({'a': downVia('B', 2)});
+    moveRoute(container, 2);
+    probe.answer({'a': failure});
     await tester.pump();
     expect(container.read(_probeProvider).isLoading('a'), isTrue);
-
-    await tester.pump(probeConfirmDelay);
-    expect(probe.calls, hasLength(3));
-    probe.answer({'a': downVia('B', 2)});
-    await tester.pump();
-    expect(
-      container.read(_probeProvider).entryOf('a').phase,
-      ProbePhase.failed,
-    );
+    expect(probe.calls, ['a', 'a', 'a']);
     container.dispose();
   });
 
