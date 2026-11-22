@@ -36,6 +36,7 @@ type FailedRequest struct {
 	Chains      []string       `json:"chains"`
 	Rule        string         `json:"rule"`
 	RulePayload string         `json:"rulePayload"`
+	RuleIndex   *int           `json:"ruleIndex,omitempty"`
 	ClosedAt    time.Time      `json:"closedAt"`
 	Failure     RequestFailure `json:"failure"`
 }
@@ -52,6 +53,7 @@ func newFailedRequest(metadata *C.Metadata, rule C.Rule, proxy C.Proxy, err erro
 	if rule != nil {
 		request.Rule = rule.RuleType().String()
 		request.RulePayload = rule.Payload()
+		request.RuleIndex = currentRuleTable.indexOfRule(rule, metadata)
 	}
 	return request
 }

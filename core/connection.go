@@ -22,8 +22,8 @@ func handleResetTraffic() {
 	statistic.DefaultManager.ResetStatistic()
 }
 
-func handleGetConnections() *statistic.Snapshot {
-	return statistic.DefaultManager.Snapshot()
+func handleGetConnections() *connectionSnapshot {
+	return newConnectionSnapshot(statistic.DefaultManager.Snapshot())
 }
 
 func handleGetConnectionCount() int {
