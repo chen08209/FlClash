@@ -364,9 +364,10 @@ footnote 15.51), so baselines are compared, not boxes.
   63×28 track 20 in. The separator is a 1/3 pt hairline at the row's bottom, from the text start to the inner inset
   before the card's edge.
 - Header: 38 tall above the first card, title baseline 10.46 above the card. Footer: first baseline 20.13 below the
-  card, footnote lines about 15.9 apart; a titled header after a footer has its baseline 69.74 below the footer's first
-  baseline (one line) where it would be 52.21 below a bare card. A section with neither header nor footer starts 35
-  below the card before it; an untitled section after a footer starts 27.87 below the footer's baseline.
+  card, footnote lines about 15.9 apart; a titled header after a footer has its baseline 37.74 below the footer's
+  baseline (one line; 69.74 below the first of three lines) where it would be 52.21 below a bare card. A section with
+  neither header nor footer starts 35 below the card before it; an untitled section after a footer starts 27.87 below
+  the footer's baseline.
 - Dynamic Type: margins and corner stay put, rows grow with their text (XXXL body 23: one line 60, two lines 84, icon
   text at 63.67; AX-XL: 79 and 122). Header and footer text from `titleForHeader`/`titleForFooter` does not scale.
 - FlClash: `ListInsets` in `prism_ui/lib/metrics.dart` (`context.listInsets`, from `ViewScope` or the view's width)
@@ -378,8 +379,9 @@ footnote 15.51), so baselines are compared, not boxes.
   `_OptionsValueButton.endInset`, `Checkbox.edgeInset`, `Switch.edgeInset`). `ListHeader` stands 35 (`listSectionGap`)
   above its title and 6 below; `ListFooter` starts 6.5 below the card and hangs into the next section's gap so a titled
   header after it lands as iOS sets it. Measured at 402×874 with SF Pro: card, one-line row height, text and icon x
-  match exactly; baselines are within 0.38 (one line), 0.12 (header) and 0.28 (footer); the chevron ends at 20.50, the
-  picker at 20.44, the switch track at 19.70, the checkbox at 19.83.
+  match exactly; baselines are within 0.38 (one line), 0.12 (header), 0.28 (footer) and 0.10 (a titled header after a
+  one-line footer, 37.84); the chevron ends at 20.50, the picker at 20.44, the switch track at 19.70, the checkbox at
+  19.83.
 - Deliberate deviation: an untitled section after a footer starts 7.45 closer than iOS. UIKit sizes a header by the
   footer before it, which a sliver list cannot compose; FlClash matches the common case, a titled header after a
   footer.
