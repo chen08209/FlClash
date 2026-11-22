@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
@@ -21,7 +22,10 @@ void main() {
 
   setUp(() {
     container = ProviderContainer(
-      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        currentProfileProvider.overrideWithValue(Profile.normal(label: 'p')),
+      ],
     );
     globalState.container = container;
   });
@@ -178,6 +182,34 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(patchClashConfigProvider).mode, Mode.global);
+  });
+
+  testWidgets('without a profile the card and the bar say everything goes '
+      'direct instead of offering modes', (tester) async {
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        currentProfileProvider.overrideWithValue(null),
+      ],
+    );
+    globalState.container = container;
+    for (final widget in const [
+      OutboundModeCard(),
+      DashboardDensityScope(
+        density: DashboardDensity.standard,
+        scale: 1,
+        child: SizedBox(height: 64, child: OutboundModeBar()),
+      ),
+    ]) {
+      await pump(tester, widget, width: 600);
+
+      expect(
+        find.text(currentAppLocalizations.noProfileDirect),
+        findsOneWidget,
+      );
+      expect(find.byType(ConnectedButton), findsNothing);
+    }
   });
 
   testWidgets('large text on a narrow phone still fits', (tester) async {

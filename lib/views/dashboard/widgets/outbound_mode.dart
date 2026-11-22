@@ -16,6 +16,30 @@ Glyph _glyphOf(Mode mode) => switch (mode) {
   Mode.direct => AppGlyphs.target,
 };
 
+bool _hasNoProfile(WidgetRef ref) =>
+    ref.watch(currentProfileProvider.select((profile) => profile == null));
+
+/// With no profile there are no rules or proxies, so every mode goes direct.
+class _NoProfileNote extends StatelessWidget {
+  const _NoProfileNote({required this.style, required this.maxLines});
+
+  final TextStyle style;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Text(
+        context.appLocalizations.noProfileDirect,
+        maxLines: maxLines,
+        overflow: TextOverflow.ellipsis,
+        style: style.copyWith(color: context.colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+}
+
 void _changeMode(WidgetRef ref, Mode mode) {
   if (ref.read(patchClashConfigProvider).mode == mode) return;
   ref.read(setupActionProvider.notifier).changeMode(mode);
@@ -33,6 +57,7 @@ class OutboundModeCard extends ConsumerWidget {
     );
     final tone = DashboardColors.of(context).tone;
     final style = AppTextStyle.footnote.of(context, emphasized: true);
+    final noProfile = _hasNoProfile(ref);
     return DashboardCard(
       semanticLabel: context.appLocalizations.outboundMode,
       child: Column(
@@ -42,43 +67,52 @@ class OutboundModeCard extends ConsumerWidget {
             title: context.appLocalizations.outbound,
           ),
           const SizedBox(height: 12),
-          ConnectedButtonGroup(
-            children: [
-              for (final (index, item) in Mode.values.indexed)
-                Expanded(
-                  child: ConnectedButton(
-                    selected: item == mode,
-                    first: index == 0,
-                    last: index == Mode.values.length - 1,
-                    outer: _outer,
-                    inner: 12,
-                    background: tone,
-                    semanticLabel: item.label,
-                    onTap: () => _changeMode(ref, item),
-                    builder: (foreground) => SizedBox(
-                      height: 52,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        spacing: 2,
-                        children: [
-                          GlyphIcon(
-                            _glyphOf(item),
-                            size: 18,
-                            color: foreground,
-                          ),
-                          Text(
-                            item.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: style.copyWith(color: foreground),
-                          ),
-                        ],
+          if (noProfile)
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 52),
+              child: _NoProfileNote(
+                style: AppTextStyle.body.of(context),
+                maxLines: 2,
+              ),
+            )
+          else
+            ConnectedButtonGroup(
+              children: [
+                for (final (index, item) in Mode.values.indexed)
+                  Expanded(
+                    child: ConnectedButton(
+                      selected: item == mode,
+                      first: index == 0,
+                      last: index == Mode.values.length - 1,
+                      outer: _outer,
+                      inner: 12,
+                      background: tone,
+                      semanticLabel: item.label,
+                      onTap: () => _changeMode(ref, item),
+                      builder: (foreground) => SizedBox(
+                        height: 52,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          spacing: 2,
+                          children: [
+                            GlyphIcon(
+                              _glyphOf(item),
+                              size: 18,
+                              color: foreground,
+                            ),
+                            Text(
+                              item.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: style.copyWith(color: foreground),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );
@@ -101,6 +135,7 @@ class OutboundModeBar extends ConsumerWidget {
     final appLocalizations = context.appLocalizations;
     final outer = dashboardCardRadius(density) - _inset;
     final style = AppTextStyle.subheadline.of(context, emphasized: true);
+    final noProfile = _hasNoProfile(ref);
     return DashboardCard(
       semanticLabel: appLocalizations.outboundMode,
       padding: EdgeInsetsDirectional.fromSTEB(
@@ -128,43 +163,48 @@ class OutboundModeBar extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: ConnectedButtonGroup(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (final (index, item) in Mode.values.indexed)
-                    Expanded(
-                      child: ConnectedButton(
-                        selected: item == mode,
-                        first: index == 0,
-                        last: index == Mode.values.length - 1,
-                        outer: outer,
-                        inner: 10,
-                        background: DashboardColors.of(context).tone,
-                        semanticLabel: item.label,
-                        onTap: () => _changeMode(ref, item),
-                        builder: (foreground) => Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          spacing: 6,
-                          children: [
-                            GlyphIcon(
-                              _glyphOf(item),
-                              size: 18,
-                              color: foreground,
-                            ),
-                            Flexible(
-                              child: Text(
-                                item.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: style.copyWith(color: foreground),
+              child: noProfile
+                  ? _NoProfileNote(
+                      style: AppTextStyle.subheadline.of(context),
+                      maxLines: 1,
+                    )
+                  : ConnectedButtonGroup(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final (index, item) in Mode.values.indexed)
+                          Expanded(
+                            child: ConnectedButton(
+                              selected: item == mode,
+                              first: index == 0,
+                              last: index == Mode.values.length - 1,
+                              outer: outer,
+                              inner: 10,
+                              background: DashboardColors.of(context).tone,
+                              semanticLabel: item.label,
+                              onTap: () => _changeMode(ref, item),
+                              builder: (foreground) => Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                spacing: 6,
+                                children: [
+                                  GlyphIcon(
+                                    _glyphOf(item),
+                                    size: 18,
+                                    color: foreground,
+                                  ),
+                                  Flexible(
+                                    child: Text(
+                                      item.label,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: style.copyWith(color: foreground),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
             ),
           ],
         ),

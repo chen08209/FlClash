@@ -42,14 +42,10 @@ class ProfilesAction extends _$ProfilesAction {
     await clearEffect(id);
     final currentProfileId = ref.read(currentProfileIdProvider);
     if (currentProfileId == id) {
-      final profiles = ref.read(profilesProvider);
-      if (profiles.isNotEmpty) {
-        final updateId = profiles.first.id;
-        ref.read(currentProfileIdProvider.notifier).value = updateId;
-      } else {
-        ref.read(currentProfileIdProvider.notifier).value = null;
-        unawaited(ref.read(setupActionProvider.notifier).setRunning(false));
-      }
+      ref.read(currentProfileIdProvider.notifier).value = ref
+          .read(profilesProvider)
+          .firstOrNull
+          ?.id;
     }
   }
 

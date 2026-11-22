@@ -1,4 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/widgets/outbound_mode.dart';
@@ -19,7 +20,10 @@ void main() {
 
   setUp(() {
     container = ProviderContainer(
-      overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        currentProfileProvider.overrideWithValue(Profile.normal(label: 'p')),
+      ],
     );
     globalState.container = container;
     container.read(viewSizeProvider.notifier).value = const Size(1200, 1000);

@@ -51,6 +51,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get outboundMode => 'Mode sortant';
 
   @override
+  String get noProfileDirect => 'Sans profil, tout le trafic passe en direct';
+
+  @override
   String get serviceStatus => 'État des services';
 
   @override
