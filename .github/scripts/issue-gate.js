@@ -13,7 +13,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const EXEMPT = ['OWNER', 'MEMBER', 'COLLABORATOR'];
 const EMPTY = '_No response_';
 const GATE_SINCE = '2026-11-20';
-const RELEASE = /^v?(\d+)\.(\d+)\.(\d+)$/;
+// The tags .github/workflows/build.yaml publishes: vX.Y.Z, and a prerelease vX.Y.Z-pre.N with a rebuild +M.
+const RELEASE = /^v?(\d+)\.(\d+)\.(\d+)(?:-pre\.(\d+)(?:\+(\d+))?)?$/;
 
 function unquote(text) {
   const trimmed = text.trim();
@@ -113,9 +114,12 @@ function titleProblems(form, title) {
   return [`标题：在 ${prefix} 后面用一句话写清问题 / Title: add a one-line summary after ${prefix}`];
 }
 
+// Ordered as compared: a release ranks above each of its prereleases.
 function releaseOf(value) {
   const match = value.match(RELEASE);
-  return match ? match.slice(1).map(Number) : null;
+  if (!match) return null;
+  const [major, minor, patch, pre, rebuild] = match.slice(1);
+  return [major, minor, patch, pre ?? Infinity, rebuild ?? 0].map(Number);
 }
 
 function olderThan(a, b) {

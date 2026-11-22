@@ -52,6 +52,27 @@ test('a complete issue with a real title has no problems', async () => {
   assert.deepEqual(await problems('bug_report.yml', 'Crash on start'), []);
 });
 
+function withVersion(version) {
+  const of = form('bug_report.yml');
+  const reported = issue('bug_report.yml', '[BUG] The app crashes on start');
+  const heading = of.fields.find((field) => field.id === 'version').heading;
+  return { ...reported, body: reported.body.replace(`### ${heading}\n\nv0.9.4`, `### ${heading}\n\n${version}`) };
+}
+
+test('a prerelease the latest release does not supersede is a version to report from', async () => {
+  for (const version of ['v0.9.5-pre.1', 'v0.9.5-pre.2+1', '0.9.5-pre.3']) {
+    assert.deepEqual(await gate.problemsOf(github, repo, withVersion(version), forms), [], version);
+  }
+});
+
+test('a prerelease of the latest release or older is not', async () => {
+  for (const version of ['v0.9.4-pre.3', 'v0.9.4-pre.3+1', 'v0.9.3-pre.1', 'v0.9.5-rs.1', 'v0.9.5-pre']) {
+    const found = await gate.problemsOf(github, repo, withVersion(version), forms);
+    assert.equal(found.length, 1, version);
+    assert.match(found[0], /^版本/, version);
+  }
+});
+
 test('a title that is only the prefix is a problem, whatever its case or spacing', async () => {
   for (const [name, title] of [
     ['bug_report.yml', '[BUG] '],

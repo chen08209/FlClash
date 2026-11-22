@@ -16,8 +16,8 @@ body:
     attributes:
       label: 版本 / Version
       description: >-
-        工具 → 关于，图标下方的版本号，如 `v0.9.3`；不要写“最新版”。/
-        Tools → About, the version under the icon, such as `v0.9.3`; not "latest".
+        工具 → 关于，图标下方的版本号，如 `v0.9.3` 或 `v0.9.5-pre.1`；不要写“最新版”。/
+        Tools → About, the version under the icon, such as `v0.9.3` or `v0.9.5-pre.1`; not "latest".
       placeholder: v0.9.3
     validations:
       required: true
