@@ -5,8 +5,6 @@ class _KeywordStrip extends StatelessWidget {
 
   final List<ScaffoldKeyword> keywords;
 
-  static const _sectionGap = 20.0;
-
   @override
   Widget build(BuildContext context) {
     final inset = context.listInsets.margin;
@@ -17,31 +15,15 @@ class _KeywordStrip extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           padding: EdgeInsets.symmetric(horizontal: inset),
           itemCount: keywords.length,
-          separatorBuilder: (_, index) => SizedBox(
-            width: keywords[index + 1].startsSection ? _sectionGap : 8,
-          ),
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
           itemBuilder: (_, index) {
             final keyword = keywords[index];
-            final menuItems = keyword.menuItems;
-            Widget chip(VoidCallback? onPressed) => Chip(
-              label: keyword.label,
-              onDeleted: keyword.onDeleted,
-              onPressed: onPressed,
-              selected: keyword.selected,
-              opensMenu: menuItems != null,
-            );
             return ConstrainedBox(
               key: ValueKey(keyword.key),
               constraints: BoxConstraints(
                 maxWidth: math.max(0, width - 2 * inset),
               ),
-              child: menuItems == null
-                  ? chip(keyword.onPressed)
-                  : PopupAnchor(
-                      placement: PopupPlacement.overAnchorStart,
-                      targetBuilder: chip,
-                      popupBuilder: (_) => PopupMenu(items: menuItems()),
-                    ),
+              child: Chip(label: keyword.label, onDeleted: keyword.onDeleted),
             );
           },
         ),
@@ -57,7 +39,8 @@ Widget _presentAction(Widget action, {required bool gap}) =>
     gap ? action : BarItemPresence(child: action);
 
 Widget _barButton(IconButtonData data, {Widget? icon}) => ElasticPress(
-  enabled: !data.isLoading && data.onPressed != null,
+  enabled:
+      !data.isLoading && (data.onPressed != null || data.menuItems != null),
   child: AppBarActionButton(data: data, icon: icon),
 );
 
@@ -116,6 +99,9 @@ class _SelectionButtons {
             label: data.tooltip ?? '',
             checked: data.isSelected,
             onPressed: data.isLoading ? null : data.onPressed,
+            subItems: data.isLoading
+                ? const []
+                : data.menuItems?.call() ?? const [],
           ),
       ...menuItems,
     ],

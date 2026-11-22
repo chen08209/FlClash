@@ -174,39 +174,43 @@ void main() {
     expect(tester.getRect(find.byType(Chip).first).left - view.left, margin);
   });
 
-  testWidgets('a phone filters from a bar button and exports from the menu', (
-    tester,
-  ) async {
-    const phone = Size(390, 844);
-    await pumpLogsView(tester, size: phone, viewSize: phone);
+  for (final (name, size) in [
+    ('a phone', const Size(390, 844)),
+    ('a wide window', const Size(1400, 1000)),
+  ]) {
+    testWidgets('$name filters from a button grouped with search', (
+      tester,
+    ) async {
+      await pumpLogsView(tester, size: size, viewSize: size);
 
-    await tester.tap(find.byTooltip('More'));
-    await tester.pumpAndSettle();
-    expect(find.text('Export logs'), findsOneWidget);
-    expect(find.text('Filter'), findsNothing);
-    await tester.tapAt(Offset.zero);
-    await tester.pumpAndSettle();
+      expect(
+        find.ancestor(
+          of: find.byTooltip('Filter'),
+          matching: find.byType(TonalButtonGroup),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(Chip), findsNothing);
 
-    await tester.tap(find.byTooltip('Filter'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(LogLevel.info.name).last);
-    await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('Export logs'), findsOneWidget);
+      expect(find.text('Filter'), findsNothing);
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
 
-    final filters = tester
-        .widget<Scaffold>(find.byType(Scaffold).first)
-        .keywords!
-        .value;
-    expect(filters.map((keyword) => keyword.label), [LogLevel.info.name]);
-  });
+      await tester.tap(find.byTooltip('Filter'));
+      await tester.pumpAndSettle();
+      expect(find.text('Filter'), findsOneWidget);
+      expect(find.text('Log level'), findsNothing);
+      await tester.tap(find.text(LogLevel.info.name).last);
+      await tester.pumpAndSettle();
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
 
-  testWidgets('a wide window keeps the filters in its strip, not the bar', (
-    tester,
-  ) async {
-    await pumpLogsView(tester, viewSize: const Size(1400, 1000));
-
-    expect(find.byTooltip('Filter'), findsNothing);
-    expect(find.widgetWithText(Chip, LogLevel.info.name), findsOneWidget);
-  });
+      expect(find.widgetWithText(Chip, LogLevel.info.name), findsOneWidget);
+    });
+  }
 
   testWidgets('the menu sets the Core log level', (tester) async {
     await pumpLogsView(tester);

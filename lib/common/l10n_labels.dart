@@ -187,7 +187,7 @@ extension RecordFacetKindL10n on RecordFacetKind {
     return switch (this) {
       RecordFacetKind.network => appLocalizations.protocol,
       RecordFacetKind.rule => appLocalizations.rule,
-      RecordFacetKind.level => appLocalizations.logLevel,
+      RecordFacetKind.level => appLocalizations.filter,
       RecordFacetKind.mitm ||
       RecordFacetKind.app ||
       RecordFacetKind.proxy ||

@@ -22,10 +22,10 @@ const _optionsEquality = MapEquality<RecordFacetKind, List<String>>(
 class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
   final List<RecordFacet<T>> facets;
 
+  final _keywords = ValueNotifier<List<ScaffoldKeyword>>(const []);
+
   // Apart from [value] so a list refresh, which only moves [options] when a
   // value comes or goes, leaves the bar and its chips alone.
-  final _keywords = ValueNotifier<List<ScaffoldKeyword>>(const []);
-  final _pinnedKeywords = ValueNotifier<List<ScaffoldKeyword>>(const []);
   final options = ValueNotifier<RecordFacetOptions>(const {});
 
   RecordFilterController({required this.facets})
@@ -54,54 +54,22 @@ class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
     filters.contains(filter) ? remove(filter) : add(filter);
   }
 
-  /// [pinned] keeps every offered value in the strip as a toggle.
-  ValueListenable<List<ScaffoldKeyword>> keywordsOf({required bool pinned}) =>
-      pinned ? _pinnedKeywords : _keywords;
+  ValueListenable<List<ScaffoldKeyword>> get keywords => _keywords;
 
   void _setFilters(List<RecordFilter> filters) {
     value = RecordFilterState(filters: filters);
     _updateKeywords();
   }
 
-  ScaffoldKeyword _removable(
-    RecordFilter filter, {
-    bool startsSection = false,
-  }) {
-    return ScaffoldKeyword(
-      key: filter,
-      label: facetOf(filter.kind)?.label(filter.value) ?? filter.value,
-      onDeleted: () => remove(filter),
-      startsSection: startsSection,
-    );
-  }
-
   void _updateKeywords() {
-    _keywords.value = [for (final filter in filters) _removable(filter)];
-    final options = this.options.value;
-    final pinned = <ScaffoldKeyword>[];
-    for (final facet in facets) {
-      for (final (index, option) in (options[facet.kind] ?? []).indexed) {
-        final filter = RecordFilter(facet.kind, option);
-        pinned.add(
-          ScaffoldKeyword(
-            key: filter,
-            label: facet.label(option),
-            selected: filters.contains(filter),
-            onPressed: () => toggle(filter),
-            startsSection: index == 0 && pinned.isNotEmpty,
-          ),
-        );
-      }
-    }
-    final unpinned = filters.where(
-      (filter) => !(options[filter.kind]?.contains(filter.value) ?? false),
-    );
-    for (final (index, filter) in unpinned.indexed) {
-      pinned.add(
-        _removable(filter, startsSection: index == 0 && pinned.isNotEmpty),
-      );
-    }
-    _pinnedKeywords.value = pinned;
+    _keywords.value = [
+      for (final filter in filters)
+        ScaffoldKeyword(
+          key: filter,
+          label: facetOf(filter.kind)?.label(filter.value) ?? filter.value,
+          onDeleted: () => remove(filter),
+        ),
+    ];
   }
 
   /// Offers the values [items] take, read before any filter narrows them.
@@ -124,7 +92,6 @@ class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
     }
     if (!_optionsEquality.equals(next, options.value)) {
       options.value = next;
-      _updateKeywords();
     }
   }
 
@@ -151,7 +118,6 @@ class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
   @override
   void dispose() {
     _keywords.dispose();
-    _pinnedKeywords.dispose();
     options.dispose();
     super.dispose();
   }

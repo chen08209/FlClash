@@ -64,19 +64,6 @@ class _LogsViewState extends ConsumerState<LogsView>
     });
   }
 
-  Widget _buildFilterAction(BuildContext context) {
-    return PopupAnchor(
-      targetBuilder: (open) => AppBarActionButton(
-        data: IconButtonData(
-          glyph: AppGlyphs.filter,
-          tooltip: context.appLocalizations.filter,
-          onPressed: open,
-        ),
-      ),
-      popupBuilder: (_) => PopupMenu(items: _filters.optionMenuItems()),
-    );
-  }
-
   List<PopupMenuItem> _buildMenuItems(BuildContext context, LogLevel logLevel) {
     final appLocalizations = context.appLocalizations;
     return [
@@ -155,13 +142,17 @@ class _LogsViewState extends ConsumerState<LogsView>
           listenable: Listenable.merge([_filters, _filters.options]),
           child: body,
           builder: (context, body) {
-            final pinned = !ViewScope.isMobileOf(context);
             return Scaffold(
-              actions: [
-                if (!pinned && _filters.options.value.isNotEmpty)
-                  _buildFilterAction(context),
+              iconActions: [
+                if (_filters.options.value.isNotEmpty)
+                  IconButtonData(
+                    glyph: AppGlyphs.filter,
+                    tooltip: context.appLocalizations.filter,
+                    onPressed: null,
+                    menuItems: _filters.optionMenuItems,
+                  ),
               ],
-              keywords: _filters.keywordsOf(pinned: pinned),
+              keywords: _filters.keywords,
               menuItems: _buildMenuItems(context, logLevel),
               searchState: AppBarSearchState(onSearch: _listController.search),
               title: context.appLocalizations.logs,

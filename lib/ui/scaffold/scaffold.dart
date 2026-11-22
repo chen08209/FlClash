@@ -25,24 +25,12 @@ class ScaffoldKeyword {
   const ScaffoldKeyword({
     required this.key,
     required this.label,
-    this.onDeleted,
-    this.onPressed,
-    this.selected = false,
-    this.startsSection = false,
-    this.menuItems,
+    required this.onDeleted,
   });
 
   final Object key;
   final String label;
-  final VoidCallback? onDeleted;
-
-  /// Opens a menu of these from the chip instead of [onPressed].
-  final List<PopupMenuItem> Function()? menuItems;
-
-  final VoidCallback? onPressed;
-  final bool selected;
-
-  final bool startsSection;
+  final VoidCallback onDeleted;
 }
 
 typedef AppBarSearchStateBuilder =

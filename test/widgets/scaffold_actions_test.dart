@@ -179,6 +179,72 @@ void main() {
     expect(taps, isEmpty);
   });
 
+  Future<List<String>> pumpMenuAction(
+    WidgetTester tester, {
+    required List<String> icons,
+  }) async {
+    final taps = <String>[];
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        child: Scaffold(
+          title: 'Page',
+          searchState: AppBarSearchState(onSearch: (_) {}),
+          iconActions: [
+            for (final label in icons)
+              IconButtonData(
+                glyph: AppGlyphs.add,
+                onPressed: () => taps.add(label),
+                tooltip: label,
+              ),
+            IconButtonData(
+              glyph: AppGlyphs.filter,
+              onPressed: null,
+              tooltip: 'Filter',
+              menuItems: () => [
+                PopupMenuItem(label: 'Info', onPressed: () => taps.add('Info')),
+              ],
+            ),
+          ],
+          menuItems: [PopupMenuItem(label: 'Settings', onPressed: () {})],
+          body: const SizedBox.expand(),
+        ),
+      ),
+    );
+    return taps;
+  }
+
+  testWidgets('a grouped button opens its own menu', (tester) async {
+    final taps = await pumpMenuAction(tester, icons: []);
+
+    expect(_barButtons(tester), ['Search', 'Filter', 'More']);
+    expect(_inGroup('Search'), findsOneWidget);
+    expect(_inGroup('Filter'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Filter'));
+    await tester.pumpAndSettle();
+    expect(find.text('Settings'), findsNothing);
+    await tester.tap(find.text('Info'));
+    await tester.pumpAndSettle();
+    expect(taps, ['Info']);
+  });
+
+  testWidgets('a folded menu button opens its menu from the overflow', (
+    tester,
+  ) async {
+    final taps = await pumpMenuAction(tester, icons: ['Locate']);
+
+    expect(_barButtons(tester), ['Search', 'Locate', 'More']);
+
+    await _openMenu(tester);
+    expect(_menuLabels(tester, ['Filter', 'Settings']), ['Filter', 'Settings']);
+    await tester.tap(find.text('Filter'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Info'));
+    await tester.pumpAndSettle();
+    expect(taps, ['Info']);
+  });
+
   testWidgets('a selection keeps its actions grouped beside the search', (
     tester,
   ) async {
