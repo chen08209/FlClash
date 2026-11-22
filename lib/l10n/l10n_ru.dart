@@ -388,19 +388,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get logLevel => 'Уровень логов';
 
   @override
-  String logCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count записи',
-      many: '$count записей',
-      few: '$count записи',
-      one: '$count запись',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get show => 'Показать';
 
   @override

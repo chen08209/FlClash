@@ -161,7 +161,9 @@ void main() {
     });
   }
 
-  testWidgets('tools counts the logs and opens them', (tester) async {
+  testWidgets('tools opens the logs without rebuilding for each log', (
+    tester,
+  ) async {
     const window = Size(1400, 1000);
     tester.view.physicalSize = window;
     tester.view.devicePixelRatio = 1;
@@ -192,7 +194,18 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('3 logs'), findsOneWidget);
+    var rebuilt = 0;
+    debugOnRebuildDirtyWidget = (element, _) {
+      if (element.findAncestorWidgetOfExactType<ToolsView>() != null) {
+        rebuilt++;
+      }
+    };
+    addTearDown(() => debugOnRebuildDirtyWidget = null);
+    logs.add(const Log(payload: 'log 3', dateTime: '2024-01-01 12:00:03'));
+    await tester.pump();
+    debugOnRebuildDirtyWidget = null;
+    expect(rebuilt, 0);
+
     await tester.tap(find.text('Logs'));
     await tester.pumpAndSettle();
 

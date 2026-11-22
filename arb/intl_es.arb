@@ -119,7 +119,6 @@
   "accessControlSelectedCount": "{count, plural, one{{count} seleccionada} other{{count} seleccionadas}}",
   "port": "Puerto",
   "logLevel": "Nivel de registro",
-  "logCount": "{count, plural, =1{1 registro} other{{count} registros}}",
   "show": "Mostrar",
   "exit": "Salir",
   "systemProxy": "Proxy del sistema",

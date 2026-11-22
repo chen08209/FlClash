@@ -119,7 +119,6 @@
   "accessControlSelectedCount": "{count} 件選択済み",
   "port": "ポート",
   "logLevel": "ログレベル",
-  "logCount": "{count} 件",
   "show": "表示",
   "exit": "終了",
   "systemProxy": "システムプロキシ",

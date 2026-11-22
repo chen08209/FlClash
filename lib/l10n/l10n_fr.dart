@@ -396,17 +396,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get logLevel => 'Niveau de journalisation';
 
   @override
-  String logCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count journaux',
-      one: '1 journal',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get show => 'Afficher';
 
   @override

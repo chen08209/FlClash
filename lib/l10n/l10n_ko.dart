@@ -375,11 +375,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logLevel => '로그 수준';
 
   @override
-  String logCount(int count) {
-    return '$count개';
-  }
-
-  @override
   String get show => '표시';
 
   @override

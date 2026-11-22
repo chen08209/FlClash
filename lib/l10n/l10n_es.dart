@@ -396,17 +396,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get logLevel => 'Nivel de registro';
 
   @override
-  String logCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count registros',
-      one: '1 registro',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get show => 'Mostrar';
 
   @override

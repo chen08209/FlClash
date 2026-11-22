@@ -119,7 +119,6 @@
   "accessControlSelectedCount": "已选 {count}",
   "port": "端口",
   "logLevel": "日志等级",
-  "logCount": "{count} 条",
   "show": "显示",
   "exit": "退出",
   "systemProxy": "系统代理",

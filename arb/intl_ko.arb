@@ -119,7 +119,6 @@
   "accessControlSelectedCount": "{count}개 선택됨",
   "port": "포트",
   "logLevel": "로그 수준",
-  "logCount": "{count}개",
   "show": "표시",
   "exit": "종료",
   "systemProxy": "시스템 프록시",

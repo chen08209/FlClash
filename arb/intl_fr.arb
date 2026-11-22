@@ -119,7 +119,6 @@
   "accessControlSelectedCount": "{count, plural, one{{count} sélectionnée} other{{count} sélectionnées}}",
   "port": "Port",
   "logLevel": "Niveau de journalisation",
-  "logCount": "{count, plural, =1{1 journal} other{{count} journaux}}",
   "show": "Afficher",
   "exit": "Quitter",
   "systemProxy": "Proxy système",
