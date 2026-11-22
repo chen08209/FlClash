@@ -378,6 +378,12 @@ _MitmExchangeSummary _$MitmExchangeSummaryFromJson(Map<String, dynamic> json) =>
       statusClass: json['status-class'] as String? ?? '',
       kind: json['kind'] as String? ?? '',
       rewritten: json['rewritten'] as bool? ?? false,
+      actionKinds:
+          (json['action-kinds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      answer: json['answer'] as String? ?? '',
       connectionId: _connectionIdOf(json['connection-id']),
       app: json['app'] == null
           ? null
@@ -403,6 +409,8 @@ Map<String, dynamic> _$MitmExchangeSummaryToJson(
   'status-class': instance.statusClass,
   'kind': instance.kind,
   'rewritten': instance.rewritten,
+  'action-kinds': instance.actionKinds,
+  'answer': instance.answer,
   'connection-id': instance.connectionId,
   'app': instance.app,
 };
@@ -479,6 +487,7 @@ _MitmAction _$MitmActionFromJson(Map<String, dynamic> json) => _MitmAction(
   kind: json['kind'] as String,
   phase: json['phase'] as String? ?? '',
   detail: json['detail'] as String? ?? '',
+  module: json['module'] as String? ?? '',
 );
 
 Map<String, dynamic> _$MitmActionToJson(_MitmAction instance) =>
@@ -486,6 +495,22 @@ Map<String, dynamic> _$MitmActionToJson(_MitmAction instance) =>
       'kind': instance.kind,
       'phase': instance.phase,
       'detail': instance.detail,
+      'module': instance.module,
+    };
+
+_MitmRoute _$MitmRouteFromJson(Map<String, dynamic> json) => _MitmRoute(
+  rule: json['rule'] as String? ?? '',
+  rulePayload: json['rule-payload'] as String? ?? '',
+  chains:
+      (json['chains'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
+);
+
+Map<String, dynamic> _$MitmRouteToJson(_MitmRoute instance) =>
+    <String, dynamic>{
+      'rule': instance.rule,
+      'rule-payload': instance.rulePayload,
+      'chains': instance.chains,
     };
 
 _MitmExchange _$MitmExchangeFromJson(
@@ -501,6 +526,7 @@ _MitmExchange _$MitmExchangeFromJson(
   originalUrl: json['original-url'] as String? ?? '',
   proto: json['proto'] as String? ?? '',
   status: (json['status'] as num?)?.toInt() ?? 0,
+  reason: json['reason'] as String? ?? '',
   requestSize: (json['request-size'] as num?)?.toInt() ?? 0,
   responseSize: (json['response-size'] as num?)?.toInt() ?? 0,
   error: json['error'] as String? ?? '',
@@ -522,6 +548,9 @@ _MitmExchange _$MitmExchangeFromJson(
           ?.map((e) => MitmAction.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  route: json['route'] == null
+      ? null
+      : MitmRoute.fromJson(json['route'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$MitmExchangeToJson(_MitmExchange instance) =>
@@ -536,6 +565,7 @@ Map<String, dynamic> _$MitmExchangeToJson(_MitmExchange instance) =>
       'original-url': instance.originalUrl,
       'proto': instance.proto,
       'status': instance.status,
+      'reason': instance.reason,
       'request-size': instance.requestSize,
       'response-size': instance.responseSize,
       'error': instance.error,
@@ -543,6 +573,7 @@ Map<String, dynamic> _$MitmExchangeToJson(_MitmExchange instance) =>
       'request-header': instance.requestHeader,
       'response-header': instance.responseHeader,
       'actions': instance.actions,
+      'route': instance.route,
     };
 
 _MitmBody _$MitmBodyFromJson(Map<String, dynamic> json) => _MitmBody(

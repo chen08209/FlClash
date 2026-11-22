@@ -228,6 +228,10 @@ abstract class MitmExchangeSummary with _$MitmExchangeSummary {
     @Default('') @JsonKey(name: 'status-class') String statusClass,
     @Default('') String kind,
     @Default(false) bool rewritten,
+    @Default([]) @JsonKey(name: 'action-kinds') List<String> actionKinds,
+
+    /// `reject`, `redirect`, `map-local`, `script`, or empty for the server.
+    @Default('') String answer,
     @JsonKey(name: 'connection-id', fromJson: _connectionIdOf)
     String? connectionId,
     MitmApp? app,
@@ -291,10 +295,23 @@ abstract class MitmAction with _$MitmAction {
     required String kind,
     @Default('') String phase,
     @Default('') String detail,
+    @Default('') String module,
   }) = _MitmAction;
 
   factory MitmAction.fromJson(Map<String, Object?> json) =>
       _$MitmActionFromJson(json);
+}
+
+@freezed
+abstract class MitmRoute with _$MitmRoute {
+  const factory MitmRoute({
+    @Default('') String rule,
+    @Default('') @JsonKey(name: 'rule-payload') String rulePayload,
+    @Default([]) List<String> chains,
+  }) = _MitmRoute;
+
+  factory MitmRoute.fromJson(Map<String, Object?> json) =>
+      _$MitmRouteFromJson(json);
 }
 
 @freezed
@@ -310,6 +327,7 @@ abstract class MitmExchange with _$MitmExchange {
     @Default('') @JsonKey(name: 'original-url') String originalUrl,
     @Default('') String proto,
     @Default(0) int status,
+    @Default('') String reason,
     @Default(0) @JsonKey(name: 'request-size') int requestSize,
     @Default(0) @JsonKey(name: 'response-size') int responseSize,
     @Default('') String error,
@@ -321,6 +339,7 @@ abstract class MitmExchange with _$MitmExchange {
     @JsonKey(name: 'response-header')
     Map<String, List<String>> responseHeader,
     @Default([]) List<MitmAction> actions,
+    MitmRoute? route,
   }) = _MitmExchange;
 
   factory MitmExchange.fromJson(Map<String, Object?> json) =>
