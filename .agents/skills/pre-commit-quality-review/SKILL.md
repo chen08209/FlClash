@@ -1,14 +1,14 @@
 ---
 name: pre-commit-quality-review
-description: Use when the user asks to commit, amend, or squash code, or requests a pre-commit structural quality review.
+description: Use when about to create, amend, or squash a commit, or asked for a pre-commit structural quality review.
 ---
 
 # Pre-commit Quality Review
 
 Check that iterative edits converged into a clear, cohesive, maintainable implementation before they become a commit,
 so later code review is not spent on basic structure. `AGENTS.md` and `.agents/rules.md` apply throughout. This skill
-grants no authority: commit, push, and history rewrites stay under the user's existing authorization, and silence is
-not consent.
+grants no authority: commit, push, and history rewrites need authorization that already exists, from the user or from
+the task a coordinator assigned, and silence is not consent.
 
 ## Triage
 
@@ -63,7 +63,7 @@ Business logic, UI behavior, performance, security, platform compatibility, and 
 scope. Report an incidentally found serious defect separately through the normal defect workflow, without hiding it or
 widening this review.
 
-## Findings and the User's Decision
+## Findings and the Authorizer's Decision
 
 A finding qualifies only when all three hold:
 
@@ -78,13 +78,14 @@ improvements into a suggestion list.
 
 With qualifying findings, finish the read-only review and independent checks first, merge findings that share a cause,
 and give for each: file, symbol, and location with how this change introduced it; the concrete maintenance cost; the
-smallest proposal with its scope and any behavioral impact. Then **pause before creating the commit and ask whether to
-optimize first; do not edit or commit until the user answers.** Attribute the pause to this skill by file path so the
-user recognizes their configured workflow, for example: "The structural issues above support consolidating the
-duplicate state-update paths. Should I make that change before committing?"
+smallest proposal with its scope and any behavioral impact. Then **pause before creating the commit and ask whoever
+authorized it, the user or the coordinator that assigned the task, whether to optimize first; do not edit or commit
+until they answer.** Attribute the pause to this skill by file path so they recognize the configured workflow, for
+example: "The structural issues above support consolidating the duplicate state-update paths. Should I make that change
+before committing?"
 
-Existing explicit authorization for these findings is enough to act without asking again. The user may accept all,
-some, or none. Keep accepted findings and tradeoffs in the task context only, and do not re-ask because files were
+Existing explicit authorization for these findings is enough to act without asking again. They may accept all, some,
+or none. Keep accepted findings and tradeoffs in the task context only, and do not re-ask because files were
 restaged, a hash changed, or unrelated edits landed; reassess only when relevant code changes invalidate the tradeoff.
 
 ## Resolve and Finish
@@ -95,11 +96,10 @@ adjustments, without another search for improvements. Raise a new finding only w
 and exceeds the existing authorization.
 
 Before committing, recheck status and the actual staged diff so the pending snapshot matches what was reviewed, and
-review only the delta of later edits. Run the checks `AGENTS.md` requires for the change: `flutter pub get`,
-`flutter analyze --no-fatal-infos`, and the covering `flutter test` suites listed in `.agents/commands.md`. Reuse
-results that are still valid, rerun those a later edit invalidated, and never present results from an earlier snapshot
-as verification of the staged one. The `comment-density` and `commit-msg` hooks in `.agents/rules.md` still gate the
-commit.
+review only the delta of later edits. Run the checks `AGENTS.md` requires for the change, scoped by Test Scope in
+`.agents/rules.md`. Reuse results that are still valid, rerun those a later edit invalidated, and never present
+results from an earlier snapshot as verification of the staged one. The `comment-density` and `commit-msg` hooks in
+`.agents/rules.md` still gate the commit.
 
 Report the reviewed scope, completed improvements or accepted tradeoffs, check results, and any verification limits.
 Claim the commit is done only after it exists.

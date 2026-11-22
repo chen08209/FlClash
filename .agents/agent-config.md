@@ -36,8 +36,8 @@ match a task against the skill `name` and `description`, then load the full inst
   managers, build hooks, system proxy, tray, VPN/TUN, and the Windows and Linux Helper.
 - `ui-performance`: dropped frames, slow pages and transitions, UI-thread and raster load, isolate decisions, and the
   probes that measure them.
-- `pre-commit-quality-review`: lightweight triage before commits, with scoped structural review and user decisions on
-  concrete regressions.
+- `pre-commit-quality-review`: lightweight triage before every commit, with scoped structural review and decisions on
+  concrete regressions by whoever authorized the commit.
 
 ## Skill Authoring Rules
 
