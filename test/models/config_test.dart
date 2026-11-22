@@ -430,6 +430,25 @@ void main() {
       expect(props.appendSystemDns, false);
     });
 
+    test(
+      'the default bypass covers 172.16.0.0/12 and no public 172 address',
+      () {
+        bool bypassed(String host) => defaultBypassDomain.any(
+          (pattern) => RegExp(
+            '^${RegExp.escape(pattern).replaceAll(r'\*', '.*')}\$',
+          ).hasMatch(host),
+        );
+
+        for (var octet = 0; octet < 256; octet++) {
+          expect(
+            bypassed('172.$octet.1.1'),
+            octet >= 16 && octet < 32,
+            reason: '172.$octet.1.1',
+          );
+        }
+      },
+    );
+
     test('round-trip with custom values', () {
       const props = NetworkProps(
         systemProxy: false,

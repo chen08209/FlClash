@@ -1254,8 +1254,8 @@ abstract class Dns with _$Dns {
     String fakeIpRange,
     @Default('') @JsonKey(name: 'fake-ip-range6') String fakeIpRange6,
     @Default([
-      'dns.msftnsci.com',
-      'www.msftnsci.com',
+      'dns.msftncsi.com',
+      'www.msftncsi.com',
       'www.msftconnecttest.com',
     ])
     @JsonKey(name: 'fake-ip-filter')

@@ -306,6 +306,97 @@ void main() {
         expect(await upgrade(4), isTrue);
       });
 
+      test('replaces the former default hosts it finds, once', () async {
+        Future<Config> upgrade(int from) async {
+          final configMap = _createConfigMap()
+            ..['networkProps'] = {
+              'bypassDomain': ['localhost', '172.19.*', '172.2*', '172.30.*'],
+            }
+            ..['patchClashConfig'] = {
+              'dns': {
+                'fake-ip-filter': [
+                  'dns.msftnsci.com',
+                  'www.msftnsci.com',
+                  'www.msftconnecttest.com',
+                  '+.lan',
+                ],
+              },
+            };
+          final store = _FakeMigrationStore(
+            configMap: configMap,
+            version: Migration.currentVersion,
+            upgradeVersion: from,
+          );
+          return Migration(store: store).run();
+        }
+
+        final fixed = await upgrade(4);
+        expect(fixed.networkProps.bypassDomain, [
+          'localhost',
+          '172.19.*',
+          for (var i = 0; i < 10; i++) '172.2$i.*',
+          '172.30.*',
+        ]);
+        expect(fixed.patchClashConfig.dns.fakeIpFilter, [
+          'dns.msftncsi.com',
+          'www.msftncsi.com',
+          'www.msftconnecttest.com',
+          '+.lan',
+        ]);
+        final kept = await upgrade(5);
+        expect(kept.networkProps.bypassDomain, contains('172.2*'));
+        expect(
+          kept.patchClashConfig.dns.fakeIpFilter,
+          contains('dns.msftnsci.com'),
+        );
+      });
+
+      test('replaces each list\'s own former defaults only, keeping the rest '
+          'of it as it was', () async {
+        final configMap = _createConfigMap()
+          ..['networkProps'] = {
+            'bypassDomain': [
+              'dns.msftnsci.com',
+              'localhost',
+              '172.2*',
+              '172.25.*',
+              'localhost',
+            ],
+          }
+          ..['patchClashConfig'] = {
+            'dns': {
+              'fake-ip-filter': [
+                '172.2*',
+                'www.msftnsci.com',
+                '+.lan',
+                '+.lan',
+              ],
+            },
+          };
+        final store = _FakeMigrationStore(
+          configMap: configMap,
+          version: Migration.currentVersion,
+          upgradeVersion: 4,
+        );
+
+        final config = await Migration(store: store).run();
+
+        expect(config.networkProps.bypassDomain, [
+          'dns.msftnsci.com',
+          'localhost',
+          for (var i = 0; i < 10; i++)
+            if (i != 5) '172.2$i.*',
+          '172.25.*',
+          'localhost',
+        ]);
+        expect(config.patchClashConfig.dns.fakeIpFilter, [
+          '172.2*',
+          'www.msftncsi.com',
+          '+.lan',
+          '+.lan',
+        ]);
+      });
+
       test('a new install only records it', () async {
         final store = _FakeMigrationStore(
           configMap: null,
