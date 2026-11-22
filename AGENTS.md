@@ -53,9 +53,10 @@ Read these only when the task touches their area:
   Frame Budget in [rules.md](.agents/rules.md).
 - Follow `lint_options.yaml`: single quotes, trailing commas, `child:` last, no `print()`, const/final, declared return
   types.
-- Before reporting done, run `flutter pub get`, `flutter analyze --no-fatal-infos`, and the covering `flutter test`
-  suites. Say which check was skipped when a toolchain the build hook needs (Go, and on Linux and Windows `cargo`) is
-  missing.
+- Before reporting done, run `flutter pub get`, `flutter analyze --no-fatal-infos`, and the tests the change reaches;
+  the full suite only after a shared-base change or in a branch's last review round. See Test Scope in
+  [rules.md](.agents/rules.md). Say which check was skipped when a toolchain the build hook needs (Go, and on Linux
+  and Windows `cargo`) is missing.
 
 ## Repo Skills
 
