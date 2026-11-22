@@ -173,11 +173,12 @@ if ((bumped)); then
 fi
 
 echo "--- release notes for $tag ---"
-if dart run tool/changelog.dart build --unreleased >/dev/null 2>&1; then
+if build_error="$(dart run tool/changelog.dart build --unreleased 2>&1 >/dev/null)"; then
   dart run tool/changelog.dart render release 2>/dev/null |
     sed -n '/changelog:begin/,/changelog:end/p' | sed '1d;$d'
 else
-  echo "(preview unavailable: 'build --unreleased' found nothing to collect)"
+  echo "(preview unavailable: 'build --unreleased' failed)"
+  printf '%s\n' "$build_error" | sed 's/^/  /'
 fi
 git checkout -- changelog.json 2>/dev/null || true
 echo "--- end of notes ---"
