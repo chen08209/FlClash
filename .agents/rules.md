@@ -483,6 +483,10 @@ the singleton calls `CoreController.resetInstance()` in `tearDown`. It also only
 when nothing has read it yet: that is a top-level `final`, bound to whichever instance existed at the first read, which
 in a shared isolate is another file's.
 
+MITM sources, tests and fixtures name only reserved hosts (`a.test`, `example.com`) and neutral samples written for the
+test, never a published third-party module or a real app's ad or tracking endpoint; `test/lint/mitm_fixtures_test.dart`
+enforces it, and a real host the product itself needs goes in `test/lint/mitm_fixture_hosts.txt` with its reason.
+
 ### Shared Test Isolate
 
 `tool/test.dart` imports many test files into one entrypoint, so process-wide state outlives the file that set it, and

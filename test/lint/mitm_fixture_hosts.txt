@@ -1,0 +1,7 @@
+# Real hosts the MITM sources and fixtures may name: "<path> <host> # why".
+# A host passes with its subdomains, in that path only.
+lib/common/mitm_module.dart link.stash.ws # Stash install links come from this host.
+lib/common/mitm_module.dart apple.com # Surge's built-in SYSTEM rule set, which modules name.
+lib/common/mitm_module.dart apple.cn # Surge's built-in SYSTEM rule set, which modules name.
+lib/common/mitm_module.dart push-apple.com.akadns.net # Surge's built-in SYSTEM rule set, which modules name.
+test/common/mitm_module_test.dart link.stash.ws # Stash install links come from this host.
