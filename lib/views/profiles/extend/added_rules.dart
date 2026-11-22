@@ -460,7 +460,16 @@ class _GlobalAddedRulesItem extends ConsumerWidget {
     final enabled = rules.where((rule) => !disabled.contains(rule.id)).length;
     return ListItem.open(
       title: Text(context.appLocalizations.controlGlobalAddedRules),
-      trailing: rules.isEmpty ? null : Text('$enabled/${rules.length}'),
+      trailing: rules.isEmpty
+          ? null
+          : Row(
+              spacing: 2,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('$enabled/${rules.length}'),
+                const GlyphIcon(AppGlyphs.chevronForward),
+              ],
+            ),
       widget: _EditGlobalAddedRules(profileId),
     );
   }

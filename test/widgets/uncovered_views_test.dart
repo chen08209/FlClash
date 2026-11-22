@@ -714,6 +714,30 @@ void main() {
       expect(exit.right, global.right);
     });
 
+    testWidgets('the global added rules row ends its count in a chevron at '
+        'the margin, as an open row does', (tester) async {
+      final global = currentAppLocalizations.controlGlobalAddedRules;
+      await pumpExits(
+        tester,
+        profile: Profile.normal(),
+        global: [exitRule(1, 'Media')],
+      );
+
+      final row = tester.getRect(exitRow(global));
+      final chevron = tester.getRect(
+        find.descendant(
+          of: exitRow(global),
+          matching: find.byGlyph(AppGlyphs.chevronForward),
+        ),
+      );
+      final insets = tester.element(exitRow(global)).listInsets;
+      expect(
+        chevron.right,
+        row.right - insets.trailing + ListItem.chevronInset,
+      );
+      expect(tester.getRect(find.text('1/1')).right, lessThan(chevron.left));
+    });
+
     testWidgets('the global added rules row sits under the header as a first '
         'row does, and a section gap apart from the profile own rules', (
       tester,
