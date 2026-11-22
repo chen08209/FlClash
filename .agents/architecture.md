@@ -536,11 +536,14 @@ force or is being asked again. The mechanism has three parts.
   connection something else closed (`closeConnections` after a proxy switch closes the routed probes too), so a watched
   target stays checking and is asked once more after `probeConfirmDelay`; it shows as failed when the
   second attempt agrees under the same route version, and a failure that spent its whole deadline (`ProbeAnswer.timedOut`) shows at once.
-  A failure on show is not asked again while the route holds still, since the same exit would only be asked the
-  same thing: it waits for a reset, a route version change, a proxy the user switched, `refresh`, or the app resuming
-  (`markResumed`), which asks the watched ones again on show. A reset or a moved exit makes the next failure one
-  to confirm again, and
-  a service check that timed out is a failure that still shows its status. `refresh` is the user's own request and
+  A watched service can recover on the same route. While its failure is displayed, the next check runs one
+  `probeThrottleDuration` (5 seconds) after the result. Continued failures double the interval to 10, 20, 40 and
+  then 60 seconds. The cap limits traffic to one check a minute per persistently failing service. The previous
+  status stays visible during these checks. Hiding or locking the app cancels service retry timers, and a result
+  arriving while hidden starts none. Showing the app rearms watched failures. On resume, `markResumed` can ask
+  sooner, once the normal throttle since the last check expires. Success, route invalidation and releasing the
+  last watcher clear the backoff. Outbound IP failures keep their existing event-driven retries. A reset or moved
+  exit makes the next early failure one to confirm again. `refresh` is the user's own request and
   runs for unwatched targets too: the service sheet reads the cache and never watches its rows, because one service
   check is one to four full HTTPS fetches where a delay test is a single empty request.
 

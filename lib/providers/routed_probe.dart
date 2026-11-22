@@ -90,7 +90,7 @@ mixin RoutedProbe<K, V>
   final Set<K> _unverified = {};
   final Map<K, _Landing<V>> _landed = {};
   final Map<K, Timer> _cooling = {};
-  final Map<K, RouteStamp> _failures = {};
+  final Map<K, ({RouteStamp stamp, int factor})> _failures = {};
   final Map<K, Timer> _retries = {};
   final Map<K, int> _launchPicks = {};
   bool _scheduled = false;
@@ -107,6 +107,9 @@ mixin RoutedProbe<K, V>
 
   @protected
   bool isFailure(V value) => false;
+
+  @protected
+  bool get recheckFailures => false;
 
   @protected
   Duration get settleDuration => probeSettleDuration;
@@ -139,6 +142,18 @@ mixin RoutedProbe<K, V>
     _route = ref.read(routeTrackerProvider);
     ref.listen(routeTrackerProvider, _onRoute);
     ref.listen(appVisibleProvider, (_, visible) {
+      if (recheckFailures) {
+        for (final MapEntry(key: target, value: failure) in _failures.entries) {
+          if (!visible) {
+            _retries.remove(target)?.cancel();
+            if (_due[target]?.retry != null) _due.remove(target);
+          } else if (!_inFlight.containsKey(target) &&
+              !_due.containsKey(target) &&
+              !_landed.containsKey(target)) {
+            _armRetry(target, failure.factor);
+          }
+        }
+      }
       if (!visible) {
         return;
       }
@@ -228,7 +243,7 @@ mixin RoutedProbe<K, V>
       forced: forced || (previous?.forced ?? false),
       supersede: previous?.supersede ?? false,
       settle: false,
-      retry: false,
+      retry: null,
     );
     _schedule();
   }
@@ -259,7 +274,7 @@ mixin RoutedProbe<K, V>
       final throttled =
           !due.forced &&
           !due.supersede &&
-          !due.retry &&
+          due.retry != _Retry.confirm &&
           _cooling.containsKey(target) &&
           _launchPicks[target] == route.picks;
       if ((due.settle && _settle != null) || throttled) {
@@ -271,8 +286,8 @@ mixin RoutedProbe<K, V>
       _unverified.remove(target);
       _retries.remove(target)?.cancel();
       _launchPicks[target] = route.picks;
-      if (!due.retry) {
-        cooled.add(target);
+      if (due.retry != _Retry.confirm) cooled.add(target);
+      if (due.retry == null) {
         entries[target] = ProbeEntry(
           phase: ProbePhase.probing,
           value: due.keepValue ? entries[target]?.value : null,
@@ -416,18 +431,31 @@ mixin RoutedProbe<K, V>
     }
     final previous = _failures[target];
     final stamp = entry.stamp!;
-    _failures[target] = stamp;
-    if (timedOut ||
+    final agrees =
         previous != null &&
-            previous.routeVersion == stamp.routeVersion &&
-            _sameExits(previous.hits, stamp.hits)) {
+        previous.stamp.routeVersion == stamp.routeVersion &&
+        _sameExits(previous.stamp.hits, stamp.hits);
+    // Zero waits for confirmation. Shown failures count in throttle intervals.
+    var factor = 0;
+    if (timedOut || agrees) {
       entries[target] = entry;
-      return;
+      factor = agrees ? (previous.factor * 2).clamp(1, 12) : 1;
     }
-    _retries[target] = Timer(confirmDelay, () => _retry(target));
+    _failures[target] = (stamp: stamp, factor: factor);
+    _armRetry(target, factor);
   }
 
-  void _retry(K target) {
+  void _armRetry(K target, int factor) {
+    final retry = factor == 0 ? _Retry.confirm : _Retry.recheck;
+    if (retry == _Retry.recheck && !recheckFailures) return;
+    if (recheckFailures && !ref.read(appVisibleProvider)) return;
+    final delay = retry == _Retry.confirm
+        ? confirmDelay
+        : throttleDuration * factor;
+    _retries[target] = Timer(delay, () => _retry(target, retry));
+  }
+
+  void _retry(K target, _Retry retry) {
     _retries.remove(target);
     if (!ref.mounted ||
         !_watchers.containsKey(target) ||
@@ -440,7 +468,7 @@ mixin RoutedProbe<K, V>
       forced: false,
       supersede: false,
       settle: false,
-      retry: true,
+      retry: retry,
     );
     _schedule();
   }
@@ -494,7 +522,7 @@ mixin RoutedProbe<K, V>
             forced: false,
             supersede: true,
             settle: false,
-            retry: false,
+            retry: null,
           );
         }
       }
@@ -520,7 +548,7 @@ mixin RoutedProbe<K, V>
           forced: false,
           supersede: false,
           settle: false,
-          retry: false,
+          retry: null,
         );
       } else if (stamp.routeVersion != next.routeVersion) {
         _unverified.add(target);
@@ -665,7 +693,7 @@ mixin RoutedProbe<K, V>
         forced: false,
         supersede: true,
         settle: true,
-        retry: false,
+        retry: null,
       );
       _settleWithin(moveSettleDuration);
     } else {
@@ -683,7 +711,7 @@ mixin RoutedProbe<K, V>
         forced: false,
         supersede: false,
         settle: false,
-        retry: false,
+        retry: null,
       );
     } else {
       entries.remove(target);
@@ -718,13 +746,15 @@ bool _sameExits(List<RouteHit> previous, List<RouteHit> hits) {
   return hits.every((hit) => (exits[hit.host] ?? hit.exit) == hit.exit);
 }
 
-/// [retry] asks a failure again behind what is on show, past the throttle.
+/// Both keep the displayed verdict. Only confirmation can skip the throttle.
+enum _Retry { confirm, recheck }
+
 typedef _Due = ({
   bool keepValue,
   bool forced,
   bool supersede,
   bool settle,
-  bool retry,
+  _Retry? retry,
 });
 
 typedef _Landing<V> = ({ProbeEntry<V> entry, bool timedOut});

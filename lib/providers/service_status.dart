@@ -18,6 +18,9 @@ class ServiceStatus extends _$ServiceStatus
   RoutedProbeState<ServiceTarget, ServiceCheck> build() => buildProbe();
 
   @override
+  bool get recheckFailures => true;
+
+  @override
   bool isFailure(ServiceCheck value) =>
       value.status == ServiceProbeStatus.timeout ||
       value.status == ServiceProbeStatus.failed;
