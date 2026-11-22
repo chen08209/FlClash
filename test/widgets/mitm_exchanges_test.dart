@@ -38,6 +38,7 @@ final _exchange = MitmExchange(
   originalUrl: 'https://a.test/old?x=1',
   proto: 'HTTP/2.0',
   status: 200,
+  reason: 'OK',
   responseSize: 2048,
   connection: 'connection-1',
   requestHeader: const {
@@ -47,6 +48,11 @@ final _exchange = MitmExchange(
     'X-Upstream': ['yes'],
   },
   actions: const [
+    MitmAction(
+      kind: 'header-rewrite',
+      phase: 'request',
+      detail: 'header-del X-Forwarded-For',
+    ),
     MitmAction(kind: 'url-rewrite', detail: 'header'),
     MitmAction(kind: 'script', phase: 'response', detail: 'sign'),
   ],
@@ -372,7 +378,9 @@ void main() {
           capturing: true,
           since: _start.subtract(const Duration(minutes: 1)),
           exchanges: [
-            _summary(_exchange),
+            _summary(_exchange).copyWith(
+              actionKinds: ['header-rewrite', 'url-rewrite', 'script'],
+            ),
             MitmExchangeSummary(
               id: 8,
               start: _start,
@@ -404,7 +412,10 @@ void main() {
         listRowExtent(titleHeight: 22, subtitleHeight: 20),
       );
       expect(
-        find.text('GET · 200 · ${2048.traffic.show} · 35 ms'),
+        find.text(
+          'GET · 200 · ${2048.traffic.show} · 35 ms · '
+          '${appLocalizations.headerRewrite} +2',
+        ),
         findsOneWidget,
       );
       expect(find.text('/upload'), findsOneWidget);
@@ -420,7 +431,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(DetailHeader),
-          matching: find.text('200 · 35 ms · ${2048.traffic.show}'),
+          matching: find.text('200 OK · 35 ms · ${2048.traffic.show}'),
         ),
         findsOneWidget,
       );
@@ -439,6 +450,13 @@ void main() {
       );
       expect(find.text('header'), findsOneWidget);
       expect(find.text('${appLocalizations.response} · sign'), findsOneWidget);
+      expect(
+        find.text(
+          '${appLocalizations.request} · '
+          '${appLocalizations.delete} X-Forwarded-For',
+        ),
+        findsOneWidget,
+      );
 
       await _openTab(tester, appLocalizations.request);
       expect(find.text('Host'), findsOneWidget);
@@ -667,6 +685,13 @@ void main() {
 
       expect(
         find.descendant(of: detail, matching: find.text('{\n  "ok": 1\n}')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: detail,
+          matching: find.text('${2048.traffic.show} · JSON'),
+        ),
         findsOneWidget,
       );
       expect(

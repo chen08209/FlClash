@@ -280,6 +280,7 @@ class HttpRequestRow extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final secondary = colorScheme.onSurfaceVariant;
     final status = exchange.status;
+    final mark = exchangeMark(appLocalizations, exchange);
     final (statusText, statusColor) = switch (exchange) {
       _ when status > 0 => (
         '$status',
@@ -316,8 +317,7 @@ class HttpRequestRow extends StatelessWidget {
                   .copyWith(color: secondary),
             ),
           ),
-          if (exchange.rewritten)
-            MetaChip(label: appLocalizations.httpRewritten),
+          if (mark != null) Flexible(child: MetaChip(label: mark)),
         ],
       ),
       trailing: Column(

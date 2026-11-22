@@ -7458,6 +7458,42 @@ abstract class AppLocalizations {
   /// **'Rewritten'**
   String get httpRewritten;
 
+  /// No description provided for @httpAnswerReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get httpAnswerReject;
+
+  /// No description provided for @httpAnswerRedirect.
+  ///
+  /// In en, this message translates to:
+  /// **'Redirected'**
+  String get httpAnswerRedirect;
+
+  /// No description provided for @httpAnswerScript.
+  ///
+  /// In en, this message translates to:
+  /// **'Script response'**
+  String get httpAnswerScript;
+
+  /// No description provided for @httpBodyText.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get httpBodyText;
+
+  /// No description provided for @httpBodyImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get httpBodyImage;
+
+  /// No description provided for @regexReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Regex replace'**
+  String get regexReplace;
+
   /// No description provided for @owningConnection.
   ///
   /// In en, this message translates to:

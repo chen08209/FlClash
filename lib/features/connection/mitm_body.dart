@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/mitm_body.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
@@ -19,6 +20,10 @@ const _codeBlockVerticalPadding = 12.0;
 class MitmBodySection extends StatelessWidget {
   final String title;
   final MitmBodyContent content;
+
+  /// The body's size as it went over the wire, before any decoding.
+  final int size;
+  final String contentType;
   final bool atTop;
   final bool last;
 
@@ -26,6 +31,8 @@ class MitmBodySection extends StatelessWidget {
     super.key,
     required this.title,
     required this.content,
+    required this.size,
+    this.contentType = '',
     this.atTop = false,
     this.last = false,
   });
@@ -53,6 +60,23 @@ class MitmBodySection extends StatelessWidget {
     return lines.isEmpty ? null : lines.join('\n');
   }
 
+  String _typeLabel(AppLocalizations appLocalizations) {
+    if (content.format == MitmBodyFormat.protobuf) {
+      return 'Protobuf';
+    }
+    return switch (content.kind) {
+      MitmBodyKind.image => appLocalizations.httpBodyImage,
+      MitmBodyKind.binary => appLocalizations.binaryData,
+      MitmBodyKind.text => switch (content.language) {
+        Language.json => 'JSON',
+        Language.javaScript => 'JavaScript',
+        Language.xml when contentType.toLowerCase().contains('html') => 'HTML',
+        Language.xml => 'XML',
+        _ => appLocalizations.httpBodyText,
+      },
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
@@ -64,7 +88,7 @@ class MitmBodySection extends StatelessWidget {
       );
     }
     const chevron = GlyphIcon(AppGlyphs.chevronForward);
-    final size = Row(
+    final keptSize = Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 4,
       children: [
@@ -76,65 +100,71 @@ class MitmBodySection extends StatelessWidget {
       ],
     );
     final hex = _MitmHexView(title: title, content: content);
-    return generateSection(
-      title: title,
-      atTop: atTop,
-      footer: _footer(appLocalizations),
-      last: last,
-      items: switch (content.kind) {
-        MitmBodyKind.text => [
+    final footer = _footer(appLocalizations);
+    final items = switch (content.kind) {
+      MitmBodyKind.text => [
+        DecorationListItem(
+          onPressed: () => _open(context),
+          minVerticalPadding: _codeBlockVerticalPadding,
+          title: Text(
+            content.preview,
+            style: AppTextStyle.footnote.of(context).toJetBrainsMono,
+          ),
+        ),
+        if (content.isCut)
           DecorationListItem(
             onPressed: () => _open(context),
-            minVerticalPadding: _codeBlockVerticalPadding,
-            title: Text(
-              content.preview,
-              style: AppTextStyle.footnote.of(context).toJetBrainsMono,
-            ),
+            contentPadding: ListItem.chevronPaddingOf(context),
+            title: Text(appLocalizations.viewAll),
+            trailing: chevron,
           ),
-          if (content.isCut)
-            DecorationListItem(
-              onPressed: () => _open(context),
-              contentPadding: ListItem.chevronPaddingOf(context),
-              title: Text(appLocalizations.viewAll),
-              trailing: chevron,
-            ),
-          ListItem.open(
-            title: Text(appLocalizations.hex),
-            trailing: size,
-            widget: hex,
-          ),
-        ],
-        MitmBodyKind.image => [
-          DecorationListItem(
-            title: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: _imageMaxHeight),
-                child: Image.memory(
-                  content.bytes,
-                  cacheHeight:
-                      (_imageMaxHeight * MediaQuery.devicePixelRatioOf(context))
-                          .round(),
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, _, _) =>
-                      Text(appLocalizations.binaryData),
-                ),
+        ListItem.open(
+          title: Text(appLocalizations.hex),
+          trailing: keptSize,
+          widget: hex,
+        ),
+      ],
+      MitmBodyKind.image => [
+        DecorationListItem(
+          title: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: _imageMaxHeight),
+              child: Image.memory(
+                content.bytes,
+                cacheHeight:
+                    (_imageMaxHeight * MediaQuery.devicePixelRatioOf(context))
+                        .round(),
+                fit: BoxFit.contain,
+                errorBuilder: (context, _, _) =>
+                    Text(appLocalizations.binaryData),
               ),
             ),
           ),
-          ListItem.open(
-            title: Text(appLocalizations.hex),
-            trailing: size,
-            widget: hex,
-          ),
-        ],
-        MitmBodyKind.binary => [
-          ListItem.open(
-            title: Text(appLocalizations.binaryData),
-            trailing: size,
-            widget: hex,
-          ),
-        ],
-      },
+        ),
+        ListItem.open(
+          title: Text(appLocalizations.hex),
+          trailing: keptSize,
+          widget: hex,
+        ),
+      ],
+      MitmBodyKind.binary => [
+        ListItem.open(
+          title: Text(appLocalizations.binaryData),
+          trailing: keptSize,
+          widget: hex,
+        ),
+      ],
+    };
+    return Column(
+      children: [
+        ListHeader(
+          title: title,
+          caption: '${size.traffic.show} · ${_typeLabel(appLocalizations)}',
+          atTop: atTop,
+        ),
+        generateGroup(items),
+        if (footer != null) ListFooter(text: footer, last: last),
+      ],
     );
   }
 }

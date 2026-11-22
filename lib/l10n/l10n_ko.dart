@@ -4133,6 +4133,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get httpRewritten => '재작성됨';
 
   @override
+  String get httpAnswerReject => '거부됨';
+
+  @override
+  String get httpAnswerRedirect => '리디렉션';
+
+  @override
+  String get httpAnswerScript => '스크립트 응답';
+
+  @override
+  String get httpBodyText => '텍스트';
+
+  @override
+  String get httpBodyImage => '이미지';
+
+  @override
+  String get regexReplace => '정규식 치환';
+
+  @override
   String get owningConnection => '소속 연결';
 
   @override

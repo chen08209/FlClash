@@ -4299,6 +4299,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get httpRewritten => 'Reescritas';
 
   @override
+  String get httpAnswerReject => 'Rechazada';
+
+  @override
+  String get httpAnswerRedirect => 'Redirigida';
+
+  @override
+  String get httpAnswerScript => 'Respuesta de script';
+
+  @override
+  String get httpBodyText => 'Texto';
+
+  @override
+  String get httpBodyImage => 'Imagen';
+
+  @override
+  String get regexReplace => 'Reemplazo por regex';
+
+  @override
   String get owningConnection => 'Conexión';
 
   @override

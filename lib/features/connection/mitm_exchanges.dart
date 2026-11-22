@@ -133,6 +133,7 @@ class _MitmExchangeItem extends ConsumerWidget {
               finished: [
                 exchange.responseSize.traffic.show,
                 httpMillisText(exchange.duration),
+                ?exchangeMark(context.appLocalizations, exchange),
               ],
             ),
           ]),

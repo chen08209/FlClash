@@ -160,7 +160,9 @@ class _MitmExchangeDetail extends StatelessWidget {
               DetailRow(
                 title: appLocalizations.status,
                 value: Text(
-                  status != 0 ? '$status' : appLocalizations.inProgress,
+                  status != 0
+                      ? httpStatusText(status, exchange.reason)
+                      : appLocalizations.inProgress,
                   style: TextStyle(
                     color: httpStatusColor(context.colorScheme, status),
                   ),
@@ -201,11 +203,11 @@ class _MitmExchangeDetail extends StatelessWidget {
             items: [
               for (final action in exchange.actions)
                 DetailRow.stacked(
-                  title: _actionLabel(appLocalizations, action),
+                  title: mitmActionLabel(appLocalizations, action.kind),
                   value: [
                     if (action.phase.isNotEmpty)
                       _phaseLabel(appLocalizations, action.phase),
-                    action.detail,
+                    mitmActionDetail(appLocalizations, action),
                   ].where((part) => part.isNotEmpty).join(' · '),
                 ),
             ],
@@ -321,6 +323,8 @@ class _MitmSideView extends ConsumerWidget {
             MitmBodySection(
               title: bodyTitle,
               content: content,
+              size: size,
+              contentType: mitmHeaderValue(header, 'Content-Type'),
               atTop: names.isEmpty,
               last: true,
             ),
@@ -360,6 +364,7 @@ class _MitmExchangeHeader extends StatelessWidget {
           outcomeParts(
             context,
             status: exchange.status,
+            reason: exchange.reason,
             error: exchange.error,
             pending: exchange.pending,
             finished: [
@@ -371,17 +376,6 @@ class _MitmExchangeHeader extends StatelessWidget {
       ),
     );
   }
-}
-
-String _actionLabel(AppLocalizations appLocalizations, MitmAction action) {
-  return switch (action.kind) {
-    'url-rewrite' => appLocalizations.urlRewrite,
-    'header-rewrite' => appLocalizations.headerRewrite,
-    'body-rewrite' => appLocalizations.bodyRewrite,
-    'map-local' => appLocalizations.mapLocal,
-    'script' => appLocalizations.script,
-    _ => action.kind,
-  };
 }
 
 String _phaseLabel(AppLocalizations appLocalizations, String phase) {

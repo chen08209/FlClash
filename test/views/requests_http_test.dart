@@ -37,6 +37,7 @@ MitmExchangeSummary _summary(
   String statusClass = '2xx',
   bool pending = false,
   bool rewritten = false,
+  List<String> actionKinds = const [],
   String process = 'curl',
 }) => MitmExchangeSummary(
   id: id,
@@ -49,6 +50,7 @@ MitmExchangeSummary _summary(
   statusClass: statusClass,
   pending: pending,
   rewritten: rewritten,
+  actionKinds: actionKinds,
   responseSize: 2048,
   duration: 35,
   connectionId: 'c1',
@@ -63,6 +65,7 @@ final _exchanges = [
     method: 'POST',
     path: '/rewritten',
     rewritten: true,
+    actionKinds: const ['header-rewrite', 'script'],
     process: 'Slack',
   ),
   _summary(4, path: '/broken', status: 0, statusClass: 'failed'),
@@ -479,7 +482,10 @@ void main() {
         expect(
           find.descendant(
             of: find.widgetWithText(HttpRequestRow, '/rewritten'),
-            matching: find.byType(MetaChip),
+            matching: find.widgetWithText(
+              MetaChip,
+              '${currentAppLocalizations.headerRewrite} +1',
+            ),
           ),
           findsOneWidget,
         );

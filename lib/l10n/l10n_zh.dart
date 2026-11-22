@@ -4009,6 +4009,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get httpRewritten => '已改写';
 
   @override
+  String get httpAnswerReject => '拒绝';
+
+  @override
+  String get httpAnswerRedirect => '重定向';
+
+  @override
+  String get httpAnswerScript => '脚本响应';
+
+  @override
+  String get httpBodyText => '文本';
+
+  @override
+  String get httpBodyImage => '图片';
+
+  @override
+  String get regexReplace => '正则替换';
+
+  @override
   String get owningConnection => '所属连接';
 
   @override

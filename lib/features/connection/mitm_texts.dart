@@ -1,4 +1,6 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 
@@ -17,6 +19,9 @@ String exchangePathOf(String url) {
   final path = uri.path.isEmpty ? '/' : uri.path;
   return uri.hasQuery ? '$path?${uri.query}' : path;
 }
+
+String httpStatusText(int status, String reason) =>
+    reason.isEmpty ? '$status' : '$status $reason';
 
 Color? httpStatusColor(ColorScheme colorScheme, int status) => switch (status) {
   >= 400 => colorScheme.error,
@@ -44,10 +49,12 @@ List<(String, Color?)> outcomeParts(
   required String error,
   required bool pending,
   required List<String> finished,
+  String reason = '',
 }) {
   final colorScheme = context.colorScheme;
   return [
-    if (status != 0) ('$status', httpStatusColor(colorScheme, status)),
+    if (status != 0)
+      (httpStatusText(status, reason), httpStatusColor(colorScheme, status)),
     if (error.isNotEmpty)
       (error, colorScheme.error)
     else if (pending)
@@ -55,4 +62,58 @@ List<(String, Color?)> outcomeParts(
     else
       for (final part in finished) (part, null),
   ];
+}
+
+String mitmActionLabel(AppLocalizations appLocalizations, String kind) =>
+    switch (kind) {
+      'url-rewrite' => appLocalizations.urlRewrite,
+      'header-rewrite' => appLocalizations.headerRewrite,
+      'body-rewrite' => appLocalizations.bodyRewrite,
+      'request-body-mock' => appLocalizations.requestBodyMock,
+      'map-local' => appLocalizations.mapLocal,
+      'script' => appLocalizations.script,
+      _ => kind,
+    };
+
+String? exchangeMark(
+  AppLocalizations appLocalizations,
+  MitmExchangeSummary exchange,
+) {
+  final (answer, answerKind) = switch (exchange.answer) {
+    '' => (null, null),
+    'reject' => (appLocalizations.httpAnswerReject, 'url-rewrite'),
+    'redirect' => (appLocalizations.httpAnswerRedirect, 'url-rewrite'),
+    'map-local' => (appLocalizations.mapLocal, 'map-local'),
+    'script' => (appLocalizations.httpAnswerScript, 'script'),
+    final other => (other, null),
+  };
+  final kinds = exchange.actionKinds;
+  final label =
+      answer ??
+      (kinds.isEmpty ? null : mitmActionLabel(appLocalizations, kinds.first));
+  if (label == null) {
+    return null;
+  }
+  final others = answer == null
+      ? kinds.length - 1
+      : kinds.where((kind) => kind != answerKind).length;
+  return others > 0 ? '$label +$others' : label;
+}
+
+/// A header rewrite's detail leads with its line's keyword, put in words here.
+String mitmActionDetail(AppLocalizations appLocalizations, MitmAction action) {
+  final detail = action.detail;
+  final space = detail.indexOf(' ');
+  if (action.kind != 'header-rewrite' || space < 0) {
+    return detail;
+  }
+  final verb = switch (detail.substring(0, space)) {
+    'header-add' => appLocalizations.add,
+    'header-del' => appLocalizations.delete,
+    'header-replace' => appLocalizations.replace,
+    'header-replace-regex' ||
+    'header-text-replace' => appLocalizations.regexReplace,
+    _ => null,
+  };
+  return verb == null ? detail : '$verb ${detail.substring(space + 1)}';
 }

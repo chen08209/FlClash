@@ -4253,6 +4253,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get httpRewritten => 'Изменённые';
 
   @override
+  String get httpAnswerReject => 'Отклонён';
+
+  @override
+  String get httpAnswerRedirect => 'Перенаправлен';
+
+  @override
+  String get httpAnswerScript => 'Ответ скрипта';
+
+  @override
+  String get httpBodyText => 'Текст';
+
+  @override
+  String get httpBodyImage => 'Изображение';
+
+  @override
+  String get regexReplace => 'Замена по регулярному выражению';
+
+  @override
   String get owningConnection => 'Соединение';
 
   @override

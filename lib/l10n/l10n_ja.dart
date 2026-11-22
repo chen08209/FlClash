@@ -4059,6 +4059,24 @@ class AppLocalizationsJa extends AppLocalizations {
   String get httpRewritten => '書き換え済み';
 
   @override
+  String get httpAnswerReject => '拒否';
+
+  @override
+  String get httpAnswerRedirect => 'リダイレクト';
+
+  @override
+  String get httpAnswerScript => 'スクリプト応答';
+
+  @override
+  String get httpBodyText => 'テキスト';
+
+  @override
+  String get httpBodyImage => '画像';
+
+  @override
+  String get regexReplace => '正規表現で置換';
+
+  @override
   String get owningConnection => '所属する接続';
 
   @override
