@@ -365,6 +365,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get logLevel => '日志等级';
 
   @override
+  String logCount(int count) {
+    return '$count 条';
+  }
+
+  @override
   String get show => '显示';
 
   @override

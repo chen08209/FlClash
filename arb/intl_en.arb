@@ -116,6 +116,14 @@
   "accessControlSelectedCount": "{count, plural, other{{count} selected}}",
   "port": "Port",
   "logLevel": "Log level",
+  "logCount": "{count, plural, =1{1 log} other{{count} logs}}",
+  "@logCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "show": "Show",
   "exit": "Exit",
   "systemProxy": "System proxy",

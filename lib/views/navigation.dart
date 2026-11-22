@@ -56,9 +56,7 @@ class Navigation implements NavigationPort {
         glyph: AppGlyphs.logs,
         label: PageLabel.logs,
         builder: (_) => const LogsView(),
-        modes: openLogs
-            ? [NavigationItemMode.desktop, NavigationItemMode.more]
-            : [],
+        modes: openLogs ? [NavigationItemMode.more] : [],
       ),
       NavigationItem(
         glyph: AppGlyphs.tools,

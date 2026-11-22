@@ -43,9 +43,18 @@ void main() {
         PageLabel.proxies,
         PageLabel.requests,
         PageLabel.profiles,
-        PageLabel.logs,
         PageLabel.tools,
       ]);
+    }
+  });
+
+  test('logs open from the tools list alone', () {
+    for (final mode in NavigationItemMode.values) {
+      expect(
+        labelsFor(mode).contains(PageLabel.logs),
+        mode == NavigationItemMode.more,
+        reason: '$mode',
+      );
     }
   });
 

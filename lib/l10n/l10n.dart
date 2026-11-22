@@ -810,6 +810,12 @@ abstract class AppLocalizations {
   /// **'Log level'**
   String get logLevel;
 
+  /// No description provided for @logCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 log} other{{count} logs}}'**
+  String logCount(int count);
+
   /// No description provided for @show.
   ///
   /// In en, this message translates to:

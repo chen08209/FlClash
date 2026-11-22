@@ -116,6 +116,7 @@
   "accessControlSelectedCount": "Выбрано: {count}",
   "port": "Порт",
   "logLevel": "Уровень логов",
+  "logCount": "{count, plural, one{{count} запись} few{{count} записи} many{{count} записей} other{{count} записи}}",
   "show": "Показать",
   "exit": "Выход",
   "systemProxy": "Системный прокси",

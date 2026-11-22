@@ -79,9 +79,7 @@ void main() {
     expect(seedLogs().map((log) => log.dateTime), contains(label.data));
 
     final scrollableRect = tester.getRect(find.byType(Scrollable).first);
-    // The list runs under the bar, so the scrollbar track starts at the
-    // bar's foot. The minimum thumb length is 48, so at the newest end the
-    // thumb center rests 24 dp below the track's top edge.
+    // A 48 dp minimum thumb at the newest end centers 24 below the bar's foot.
     final trackTop = tester.getRect(find.byType(AppBar)).bottom;
     expect(tester.getCenter(find.byKey(hintKey)).dy, closeTo(trackTop + 24, 6));
 

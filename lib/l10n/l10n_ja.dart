@@ -367,6 +367,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get logLevel => 'ログレベル';
 
   @override
+  String logCount(int count) {
+    return '$count 件';
+  }
+
+  @override
   String get show => '表示';
 
   @override

@@ -44,6 +44,9 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     return ListItem.open(
       leading: GlyphIcon(navigationItem.glyph),
       title: Text(navigationItem.label.label),
+      trailing: navigationItem.label == PageLabel.logs
+          ? const _LogCount()
+          : null,
       widget: navigationItem.builder(context),
       forceFull: navigationItem.modes.contains(NavigationItemMode.moreFull),
     );
@@ -111,6 +114,28 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LogCount extends ConsumerWidget {
+  const _LogCount();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(logsProvider.select((logs) => logs.length));
+    return Row(
+      spacing: 2,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          context.appLocalizations.logCount(count),
+          style: context.listTitleStyle.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const GlyphIcon(AppGlyphs.chevronForward),
+      ],
     );
   }
 }
