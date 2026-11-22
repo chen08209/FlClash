@@ -14,7 +14,7 @@ Verify) and `make help`; this skill decides which of them a change runs and wher
 |---|---|---|
 | `lib/`, `test/`, `arb/`, `assets/` | Which Tests below, `flutter analyze --no-fatal-infos` | host |
 | an `rsFeature` check or code behind one | the `rsFeature` pass below, `make strip-check` | host |
-| `plugins/prism_ui`, `plugins/code_forge`, `plugins/dynamic_color`, Dart in `plugins/rust_api` | `make plugins-check`; `flutter test` in `plugins/prism_ui`, which that script does not test; the root `test/plugins/` files for the plugin | host |
+| `plugins/prism_ui`, `plugins/code_forge`, `plugins/dynamic_color`, Dart in `plugins/rust_api` | `make plugins-check`; the root `test/plugins/` files for the plugin | host |
 | `plugins/setup` | `dart analyze` and `dart test` in `plugins/setup/setup_hooks` | host |
 | `plugins/rust_api/rust` | `make rust-check`; the root tests that load the library, such as `test/plugins/code_forge/` and `test/core/desktop/ipc_native_test.dart` | host; Linux for `cfg(target_os = "linux")` |
 | `services/helper` | `make rust-check` | host; Windows for `--features windows-service` |

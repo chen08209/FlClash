@@ -541,10 +541,8 @@ only once every build and every check job passes.
 
 `bash tool/check_plugins.sh` is that plugin gate, and CI runs the same script.
 It discovers every `plugins/*/pubspec.yaml`, analyzes each package, and runs
-`flutter test` wherever `test/*_test.dart` exists. Adding a plugin package needs
-no workflow edit. The match is not recursive, so `plugins/prism_ui`, whose tests
-all sit in subdirectories of `test/`, is analyzed but not tested there; run
-`flutter test` from `plugins/prism_ui` for its tests.
+`flutter test` wherever a `*_test.dart` sits anywhere under its `test/`. Adding a
+plugin package needs no workflow edit.
 
 ### CI Caches
 

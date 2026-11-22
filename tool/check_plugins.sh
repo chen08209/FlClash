@@ -11,6 +11,10 @@ endgroup() {
   if [[ -n "${GITHUB_ACTIONS:-}" ]]; then echo "::endgroup::"; fi
 }
 
+has_tests() {
+  [[ -d "$1/test" && -n "$(find "$1/test" -name '*_test.dart' -print -quit)" ]]
+}
+
 shopt -s nullglob
 manifests=(plugins/*/pubspec.yaml)
 shopt -u nullglob
@@ -30,14 +34,14 @@ for manifest in "${manifests[@]}"; do
     cd "$package"
     flutter pub get
     flutter analyze --no-fatal-infos
-    if compgen -G 'test/*_test.dart' > /dev/null; then
+    if has_tests .; then
       flutter test --reporter expanded
     else
       echo "no tests in $package"
     fi
   )
   analyzed=$((analyzed + 1))
-  if compgen -G "$package/test/*_test.dart" > /dev/null; then
+  if has_tests "$package"; then
     tested=$((tested + 1))
   fi
   endgroup
