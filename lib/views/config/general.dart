@@ -16,23 +16,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 part 'general/overrides.dart';
 part 'general/port_form.dart';
 
-class LogLevelItem extends ConsumerWidget {
-  const LogLevelItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    return ConfigOptionsItem<LogLevel>(
-      title: (l) => l.logLevel,
-      options: LogLevel.values,
-      textBuilder: (logLevel) => logLevel.name,
-      selector: patchClashConfigProvider.select((state) => state.logLevel),
-      onChanged: (ref, value) => ref
-          .read(patchClashConfigProvider.notifier)
-          .update((state) => state.copyWith(logLevel: value)),
-    );
-  }
-}
-
 class UaItem extends ConsumerWidget {
   const UaItem({super.key});
 
@@ -395,7 +378,6 @@ class GeneralView extends ConsumerWidget {
 
   List<Widget> _logItems() {
     return [
-      const LogLevelItem(),
       _appSettingToggle(
         title: (l) => l.logcat,
         select: (state) => state.openLogs,

@@ -2,7 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -132,28 +131,20 @@ class RecordFilterController<T> extends ValueNotifier<RecordFilterState> {
   List<T> apply(List<T> items) =>
       isFiltering ? items.whereFilters(facets, filters).toList() : items;
 
-  List<PopupMenuItem> menuItems(BuildContext context, {required bool pinned}) {
-    final appLocalizations = context.appLocalizations;
+  List<PopupMenuItem> optionMenuItems() {
     final options = this.options.value;
     return [
-      if (!pinned && options.isNotEmpty)
-        PopupMenuItem(
-          glyph: AppGlyphs.filter,
-          label: appLocalizations.filter,
-          subItems: [
-            for (final facet in facets)
-              for (final (index, option) in (options[facet.kind] ?? []).indexed)
-                PopupMenuItem(
-                  label: facet.label(option),
-                  checked: filters.contains(RecordFilter(facet.kind, option)),
-                  keepsOpen: true,
-                  section: index == 0
-                      ? PopupMenuSection(title: facet.kind.title)
-                      : null,
-                  onPressed: () => toggle(RecordFilter(facet.kind, option)),
-                ),
-          ],
-        ),
+      for (final facet in facets)
+        for (final (index, option) in (options[facet.kind] ?? []).indexed)
+          PopupMenuItem(
+            label: facet.label(option),
+            checked: filters.contains(RecordFilter(facet.kind, option)),
+            keepsOpen: true,
+            section: index == 0
+                ? PopupMenuSection(title: facet.kind.title)
+                : null,
+            onPressed: () => toggle(RecordFilter(facet.kind, option)),
+          ),
     ];
   }
 

@@ -64,12 +64,41 @@ class _LogsViewState extends ConsumerState<LogsView>
     });
   }
 
-  List<IconButtonData> _buildActions() {
+  Widget _buildFilterAction(BuildContext context) {
+    return PopupAnchor(
+      targetBuilder: (open) => AppBarActionButton(
+        data: IconButtonData(
+          glyph: AppGlyphs.filter,
+          tooltip: context.appLocalizations.filter,
+          onPressed: open,
+        ),
+      ),
+      popupBuilder: (_) => PopupMenu(items: _filters.optionMenuItems()),
+    );
+  }
+
+  List<PopupMenuItem> _buildMenuItems(BuildContext context, LogLevel logLevel) {
+    final appLocalizations = context.appLocalizations;
     return [
-      IconButtonData(
+      PopupMenuItem(
         glyph: AppGlyphs.export,
-        tooltip: context.appLocalizations.exportLogs,
+        label: appLocalizations.exportLogs,
         onPressed: _handleExport,
+      ),
+      PopupMenuItem(
+        glyph: AppGlyphs.sliders,
+        label: appLocalizations.logLevel,
+        subtitle: logLevel.name,
+        subItems: [
+          for (final option in LogLevel.values)
+            PopupMenuItem(
+              label: option.name,
+              checked: option == logLevel,
+              onPressed: () => ref
+                  .read(patchClashConfigProvider.notifier)
+                  .update((state) => state.copyWith(logLevel: option)),
+            ),
+        ],
       ),
     ];
   }
@@ -116,18 +145,29 @@ class _LogsViewState extends ConsumerState<LogsView>
       onFilter: _filters.add,
       child: _buildBody(context),
     );
-    return ListenableBuilder(
-      listenable: Listenable.merge([_filters, _filters.options]),
+    return Consumer(
       child: body,
-      builder: (context, body) {
-        final pinned = !ViewScope.isMobileOf(context);
-        return Scaffold(
-          iconActions: _buildActions(),
-          keywords: _filters.keywordsOf(pinned: pinned),
-          menuItems: _filters.menuItems(context, pinned: pinned),
-          searchState: AppBarSearchState(onSearch: _listController.search),
-          title: context.appLocalizations.logs,
-          body: body!,
+      builder: (context, ref, body) {
+        final logLevel = ref.watch(
+          patchClashConfigProvider.select((state) => state.logLevel),
+        );
+        return ListenableBuilder(
+          listenable: Listenable.merge([_filters, _filters.options]),
+          child: body,
+          builder: (context, body) {
+            final pinned = !ViewScope.isMobileOf(context);
+            return Scaffold(
+              actions: [
+                if (!pinned && _filters.options.value.isNotEmpty)
+                  _buildFilterAction(context),
+              ],
+              keywords: _filters.keywordsOf(pinned: pinned),
+              menuItems: _buildMenuItems(context, logLevel),
+              searchState: AppBarSearchState(onSearch: _listController.search),
+              title: context.appLocalizations.logs,
+              body: body!,
+            );
+          },
         );
       },
     );

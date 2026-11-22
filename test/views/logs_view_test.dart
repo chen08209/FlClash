@@ -174,6 +174,54 @@ void main() {
     expect(tester.getRect(find.byType(Chip).first).left - view.left, margin);
   });
 
+  testWidgets('a phone filters from a bar button and exports from the menu', (
+    tester,
+  ) async {
+    const phone = Size(390, 844);
+    await pumpLogsView(tester, size: phone, viewSize: phone);
+
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    expect(find.text('Export logs'), findsOneWidget);
+    expect(find.text('Filter'), findsNothing);
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Filter'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(LogLevel.info.name).last);
+    await tester.pumpAndSettle();
+
+    final filters = tester
+        .widget<Scaffold>(find.byType(Scaffold).first)
+        .keywords!
+        .value;
+    expect(filters.map((keyword) => keyword.label), [LogLevel.info.name]);
+  });
+
+  testWidgets('a wide window keeps the filters in its strip, not the bar', (
+    tester,
+  ) async {
+    await pumpLogsView(tester, viewSize: const Size(1400, 1000));
+
+    expect(find.byTooltip('Filter'), findsNothing);
+    expect(find.widgetWithText(Chip, LogLevel.info.name), findsOneWidget);
+  });
+
+  testWidgets('the menu sets the Core log level', (tester) async {
+    await pumpLogsView(tester);
+
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    expect(find.text(LogLevel.error.name), findsOneWidget);
+    await tester.tap(find.text('Log level'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(LogLevel.debug.name).last);
+    await tester.pumpAndSettle();
+
+    expect(container.read(patchClashConfigProvider).logLevel, LogLevel.debug);
+  });
+
   testWidgets('tapping the level reports it for filtering', (tester) async {
     RecordFilter? clicked;
     await tester.pumpWidget(
