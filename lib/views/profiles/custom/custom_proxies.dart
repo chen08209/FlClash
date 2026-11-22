@@ -571,7 +571,10 @@ class _NodeItem extends ConsumerWidget {
     return DecorationListItem(
       invalid: issues.isNotEmpty,
       isSelected: isSelected,
-      contentPadding: const EdgeInsets.only(left: 16, right: 8),
+      contentPadding: EdgeInsetsDirectional.only(
+        start: context.listInsets.leading,
+        end: context.listInsets.trailing - Checkbox.edgeInset,
+      ),
       onPressed: isEditing ? onSelected : onPressed,
       title: EmojiText(
         proxy.name.isEmpty ? '-' : proxy.name,

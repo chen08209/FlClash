@@ -18,15 +18,12 @@ import 'add.dart';
 import 'edit.dart';
 import 'preview.dart';
 
-const _infoGap = 4.0;
-const _cardVerticalPadding = 10.0;
-
 double get _profileItemHeight {
   final measure = globalState.measure;
-  return measure.textHeight(AppTextStyle.headline) +
-      _infoGap +
-      measure.textHeight(AppTextStyle.footnote) +
-      2 * _cardVerticalPadding;
+  return listRowExtent(
+    titleHeight: measure.textHeight(AppTextStyle.headline),
+    subtitleHeight: measure.textHeight(AppTextStyle.footnote),
+  );
 }
 
 class ProfilesView extends ConsumerStatefulWidget {
@@ -164,8 +161,6 @@ class _ProfilesGrid extends ConsumerStatefulWidget {
 }
 
 class _ProfilesGridState extends ConsumerState<_ProfilesGrid> {
-  static const _horizontalPadding = 16.0;
-
   ScrollController? _controller;
   var _revealed = false;
 
@@ -186,6 +181,8 @@ class _ProfilesGridState extends ConsumerState<_ProfilesGrid> {
     _controller?.dispose();
     super.dispose();
   }
+
+  double get _horizontalPadding => context.listInsets.margin;
 
   EdgeInsets get _padding => EdgeInsets.only(
     left: _horizontalPadding,
@@ -547,9 +544,7 @@ class ProfileItem extends ConsumerWidget {
         },
         child: ListItem(
           key: Key(profile.id.toString()),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
           minTileHeight: _profileItemHeight,
-          minVerticalPadding: _cardVerticalPadding,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             spacing: 8,
@@ -561,47 +556,19 @@ class ProfileItem extends ConsumerWidget {
               if (isSelected) const SelectionBadge(size: 24),
             ],
           ),
-          title: _ProfileCardTitle(
-            profile: profile,
+          title: ChipTitle(
+            title: profile.realLabel,
             expire: subscriptionInfo?.expireDate,
-            subtitle: _subtitle(context),
+            style: AppTextStyle.headline.of(context),
+          ),
+          subtitle: Text(
+            _subtitle(context),
+            style: AppTextStyle.footnote.of(context).toLighter,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ProfileCardTitle extends StatelessWidget {
-  const _ProfileCardTitle({
-    required this.profile,
-    required this.expire,
-    required this.subtitle,
-  });
-
-  final Profile profile;
-  final DateTime? expire;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ChipTitle(
-          title: profile.realLabel,
-          expire: expire,
-          style: AppTextStyle.headline.of(context),
-        ),
-        const SizedBox(height: _infoGap),
-        Text(
-          subtitle,
-          style: AppTextStyle.footnote.of(context).toLighter,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
     );
   }
 }
@@ -690,7 +657,7 @@ class _ReorderableProfilesSheetState
         tooltip: context.appLocalizations.save,
       ),
       body: PrismReorderableListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        padding: context.listInsets.page(
           top: context.contentTopPadding,
           bottom: 32 + context.bottomInset,
         ),

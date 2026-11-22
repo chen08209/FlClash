@@ -494,9 +494,6 @@ class _MemorySection extends StatelessWidget {
 class _MemoryOverview extends StatelessWidget {
   const _MemoryOverview({required this.snapshot});
 
-  /// The optical edge of the xl-radius cards, not their geometric one.
-  static const _inset = 5.0;
-
   final MemorySnapshot snapshot;
 
   @override
@@ -505,7 +502,9 @@ class _MemoryOverview extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final total = snapshot.total.traffic;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_inset, 8, _inset, 0),
+      padding: EdgeInsets.symmetric(
+        horizontal: context.listInsets.leading,
+      ).copyWith(top: infoSectionContentGap),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

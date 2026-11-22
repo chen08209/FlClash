@@ -339,6 +339,9 @@ class _MitmModuleRow extends ConsumerWidget {
           child: DecorationListItem(
             contentPadding: EdgeInsetsDirectional.only(
               start: context.listInsets.leading,
+              end: isUpdating
+                  ? context.listInsets.trailing
+                  : context.listInsets.trailing - Switch.edgeInset,
             ),
             title: Text(
               module.name,
@@ -351,18 +354,12 @@ class _MitmModuleRow extends ConsumerWidget {
                   : appLocalizations.local,
               style: context.listCaptionStyle,
             ),
-            trailing: Padding(
-              padding: const EdgeInsetsDirectional.only(end: 8),
-              child: isUpdating
-                  ? const Padding(
-                      padding: EdgeInsetsDirectional.only(end: 8),
-                      child: ActivityIndicator(size: 24),
-                    )
-                  : Switch(
-                      value: module.enabled,
-                      onChanged: (value) => _setEnabled(ref, module, value),
-                    ),
-            ),
+            trailing: isUpdating
+                ? const ActivityIndicator(size: 24)
+                : Switch(
+                    value: module.enabled,
+                    onChanged: (value) => _setEnabled(ref, module, value),
+                  ),
             onPressed: () =>
                 BaseNavigator.push(context, MitmModuleView(id: module.id)),
           ),

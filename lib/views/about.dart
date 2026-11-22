@@ -158,7 +158,7 @@ class _AboutHero extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final appLocalizations = context.appLocalizations;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      padding: context.listInsets.page(top: infoSectionSpacing),
       child: Column(
         children: [
           _DeveloperModeDetector(

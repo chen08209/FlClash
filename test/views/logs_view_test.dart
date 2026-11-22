@@ -151,6 +151,29 @@ void main() {
     expect(item.bottom - body.bottom, 12);
   });
 
+  testWidgets('the logs and their filters stand at the list margin', (
+    tester,
+  ) async {
+    await pumpLogsView(tester, viewSize: const Size(1400, 1000));
+    await tester.tap(find.text(LogLevel.info.name).first);
+    await tester.pumpAndSettle();
+
+    final margin = tester.element(find.byType(LogsView)).listInsets.margin;
+    expect(margin, isNot(16));
+    final view = tester.getRect(find.byType(LogsView));
+    final card = tester.getRect(
+      find
+          .descendant(
+            of: find.byType(RecordListItem).first,
+            matching: find.byType(PressSurface),
+          )
+          .first,
+    );
+    expect(card.left - view.left, margin);
+    expect(view.right - card.right, margin);
+    expect(tester.getRect(find.byType(Chip).first).left - view.left, margin);
+  });
+
   testWidgets('tapping the level reports it for filtering', (tester) async {
     RecordFilter? clicked;
     await tester.pumpWidget(

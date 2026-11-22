@@ -556,7 +556,7 @@ class ScaffoldState extends State<Scaffold>
       children: [
         strip,
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: context.listInsets.margin),
           child: DefaultTextStyle.merge(
             style: AppTextStyle.caption1
                 .of(context)

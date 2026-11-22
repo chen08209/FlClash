@@ -1076,6 +1076,11 @@ sections are never spaced where they are placed. A page that opens on a section 
 rather than `contentTopPadding`, so that space lands the first title or group where every page, the root tabs
 included, starts its content; an `ErrorBanner`, which can open such a page, keeps the same space above it.
 `generateGroup` gives the rows alone, for a group under a header its caller lays out, such as an `InfoHeader`.
+Such self-drawn sections stand `infoSectionSpacing` apart with their content `infoSectionContentGap` below the header,
+never `listSectionGap`. A row's own padding starts at `listInsets.leading` and ends a trailing glyph at
+`listInsets.trailing` less what its widget leaves beside the glyph (`Checkbox.edgeInset`, `Switch.edgeInset`,
+`IconButton.edgeInsetOf`, `MinIconButtonTheme.edgeInsetOf`, `ListItem.chevronInset`). A grid or card whose height is a
+row's takes it from `listRowExtent`, the rule `ListRow` lays out by.
 
 A row that opens a page, `ListItem.open`, ends in `AppGlyphs.chevronForward` unless it passes its own
 `trailing`, as iOS settings rows do. A row that opens a dialog in place, `ListItem.input`, has no chevron. A setting

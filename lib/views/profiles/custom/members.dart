@@ -570,7 +570,9 @@ class _MemberRow extends ConsumerWidget {
     );
     return DecorationListItem(
       invalid: !isValid,
-      contentPadding: const EdgeInsets.only(left: 16),
+      contentPadding: EdgeInsetsDirectional.only(
+        start: context.listInsets.leading,
+      ),
       leading: EntryButton.remove(onPressed: onRemove),
       title: TooltipText(
         text: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),

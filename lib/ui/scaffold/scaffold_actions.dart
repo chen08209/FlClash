@@ -5,17 +5,17 @@ class _KeywordStrip extends StatelessWidget {
 
   final List<ScaffoldKeyword> keywords;
 
-  static const _inset = 16.0;
   static const _sectionGap = 20.0;
 
   @override
   Widget build(BuildContext context) {
+    final inset = context.listInsets.margin;
     return SizedBox(
       height: TonalButtonSize.section.button,
       child: WidthBuilder(
         builder: (_, width) => ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: _inset),
+          padding: EdgeInsets.symmetric(horizontal: inset),
           itemCount: keywords.length,
           separatorBuilder: (_, index) => SizedBox(
             width: keywords[index + 1].startsSection ? _sectionGap : 8,
@@ -33,7 +33,7 @@ class _KeywordStrip extends StatelessWidget {
             return ConstrainedBox(
               key: ValueKey(keyword.key),
               constraints: BoxConstraints(
-                maxWidth: math.max(0, width - 2 * _inset),
+                maxWidth: math.max(0, width - 2 * inset),
               ),
               child: menuItems == null
                   ? chip(keyword.onPressed)

@@ -155,7 +155,7 @@ class _LogsViewState extends ConsumerState<LogsView>
 
   Widget _buildList(BuildContext context, LogsState state, List<Log> logs) {
     final selectable = !ViewScope.isMobileOf(context);
-    final padding = EdgeInsets.only(
+    final padding = context.listInsets.page(
       top: context.contentTopPadding,
       bottom: 16 + context.bottomInset,
     );

@@ -278,7 +278,8 @@ class ListItem<T> extends StatelessWidget {
       trailing ?? const GlyphIcon(Glyphs.chevronForward);
 
   // The glyph's stroke ends 6.7 inside its box; iOS's ends 0.7 inside its own.
-  static const _chevronInset = 6.0;
+  /// What the chevron glyph leaves beside its stroke.
+  static const chevronInset = 6.0;
 
   @override
   Widget build(BuildContext context) {
@@ -292,7 +293,7 @@ class ListItem<T> extends StatelessWidget {
           return _buildRow(
             context,
             position: position,
-            trailingInset: _chevronInset,
+            trailingInset: chevronInset,
             trailing:
                 trailing ??
                 GlyphIcon(
@@ -306,7 +307,7 @@ class ListItem<T> extends StatelessWidget {
             context,
             position: position,
             trailing: _pageTrailing,
-            trailingInset: _chevronInset,
+            trailingInset: chevronInset,
             onTap: () async {
               final result = await showNestedExtend<dynamic>(
                 context,
@@ -327,7 +328,7 @@ class ListItem<T> extends StatelessWidget {
               context,
               position: position,
               trailing: _pageTrailing,
-              trailingInset: _chevronInset,
+              trailingInset: chevronInset,
               onTap: action,
             );
           },

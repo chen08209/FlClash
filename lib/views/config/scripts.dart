@@ -383,7 +383,7 @@ class _ScriptTrailing extends ConsumerWidget {
     final isUpdating = ref.watch(isUpdatingProvider(script.updatingKey));
     // Inset here, not in the row, so the sort handle that replaces it sits flush.
     return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 16),
+      padding: EdgeInsetsDirectional.only(end: context.listInsets.trailing),
       child: AnimatedSwitcher(
         duration: context.motionDuration(commonDuration),
         layoutBuilder: (current, previous) => Stack(

@@ -28,25 +28,25 @@ class ThemeView extends StatelessWidget {
         ),
         children: [
           const ThemeLivePreview(),
-          const SizedBox(height: 16),
+          const SizedBox(height: infoSectionSpacing),
           const _ThemeModeItem(),
-          const SizedBox(height: 16),
+          const SizedBox(height: infoSectionSpacing),
           const _PureBlackItem(),
-          const SizedBox(height: 16),
+          const SizedBox(height: infoSectionSpacing),
           const _PrimaryColorItem(),
-          const SizedBox(height: 16),
+          const SizedBox(height: infoSectionSpacing),
           const _NavigationBarItem(),
-          const SizedBox(height: 16),
+          const SizedBox(height: infoSectionSpacing),
           const _TabAnimationItem(),
-          const SizedBox(height: 16),
+          const SizedBox(height: infoSectionSpacing),
           const _LiquidGlassItem(),
-          const SizedBox(height: 16),
+          const SizedBox(height: infoSectionSpacing),
           if (system.isMacOS || system.isWindows) ...const [
             _SidebarBlurItem(),
-            SizedBox(height: 16),
+            SizedBox(height: infoSectionSpacing),
           ],
           const _FontFamilyItem(),
-          const SizedBox(height: 16),
+          const SizedBox(height: infoSectionSpacing),
           const _TextScaleFactorItem(),
         ],
       ),
@@ -258,7 +258,7 @@ class _PrimaryColorItem extends ConsumerWidget {
           ],
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: context.listInsets.page(top: infoSectionContentGap),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 8,
@@ -763,7 +763,7 @@ class _SidebarBlurItem extends StatelessWidget {
           info: Info(label: appLocalizations.sidebar, glyph: AppGlyphs.blur),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: context.listInsets.page(top: infoSectionContentGap),
           child: generateGroup([
             ConfigToggleItem(
               title: (l) => l.backgroundBlur,
@@ -792,7 +792,12 @@ class _FontFamilyItem extends ConsumerWidget {
       themeSettingProvider.select((state) => state.fontFamily),
     );
     final preview = Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+      padding: EdgeInsetsDirectional.fromSTEB(
+        context.listInsets.leading,
+        listRowVerticalPadding,
+        context.listInsets.trailing - ListItem.chevronInset,
+        listRowVerticalPadding,
+      ),
       child: Row(
         spacing: 12,
         children: [
@@ -817,7 +822,6 @@ class _FontFamilyItem extends ConsumerWidget {
           ),
           GlyphIcon(
             AppGlyphs.chevronForward,
-            size: 20,
             color: colorScheme.onSurfaceVariant,
           ),
         ],
@@ -839,7 +843,7 @@ class _FontFamilyItem extends ConsumerWidget {
           info: Info(label: appLocalizations.fontFamily, glyph: AppGlyphs.font),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: context.listInsets.page(top: infoSectionContentGap),
           child: context.isMobileView
               ? OpenContainer<void>(
                   closedShape: AppShape.lg,
@@ -909,7 +913,7 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
           ],
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: context.listInsets.page(top: infoSectionContentGap),
           child: Column(
             spacing: 8,
             children: [
@@ -923,7 +927,9 @@ class _TextScaleFactorItemState extends ConsumerState<_TextScaleFactorItem> {
                     _update((state) => state.copyWith(enable: value)),
               ),
               Container(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: EdgeInsets.all(
+                  context.listInsets.leading,
+                ).copyWith(bottom: infoSectionContentGap),
                 decoration: ShapeDecoration(
                   color: level.colorOf(colorScheme),
                   shape: AppShape.lg,
@@ -1109,9 +1115,9 @@ class _CustomColorSheetState extends State<_CustomColorSheet> {
       ),
       body: ListView(
         padding: EdgeInsets.fromLTRB(
-          max(16, gestureInsets.left),
+          max(context.listInsets.margin, gestureInsets.left),
           context.contentTopPadding,
-          max(16, gestureInsets.right),
+          max(context.listInsets.margin, gestureInsets.right),
           20 + context.bottomInset,
         ),
         children: [
@@ -1122,7 +1128,7 @@ class _CustomColorSheetState extends State<_CustomColorSheet> {
               onChanged: (color) => _controller.value = color,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: infoSectionSpacing),
           Palette(controller: _controller),
         ],
       ),
@@ -1165,7 +1171,7 @@ class _CustomColorPreview extends ConsumerWidget {
       ),
     );
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(context.listInsets.leading),
       decoration: ShapeDecoration(
         color: level.colorOf(context.colorScheme),
         shape: AppShape.xl,

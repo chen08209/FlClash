@@ -220,10 +220,11 @@ class _UserAgentItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecorationListItem(
       isSelected: isSelected,
-      horizontalTitleGap: 8,
-      contentPadding: EdgeInsets.only(
-        left: 14,
-        right: SortableItem.maybeOf(context) == null ? 16 : 0,
+      contentPadding: EdgeInsetsDirectional.only(
+        start: context.listInsets.leading,
+        end: SortableItem.maybeOf(context) == null
+            ? context.listInsets.trailing
+            : 0,
       ),
       leading: SizedBox.square(
         dimension: 24,

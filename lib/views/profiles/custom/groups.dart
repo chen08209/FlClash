@@ -416,6 +416,7 @@ class _ProxyGroupItem extends ConsumerWidget {
       onPressed: isEditing ? onSelected : onPressed,
       contentPadding: EdgeInsetsDirectional.only(
         start: context.listInsets.leading,
+        end: context.listInsets.trailing - Checkbox.edgeInset,
       ),
       leading: SizedBox.square(
         dimension: 32,

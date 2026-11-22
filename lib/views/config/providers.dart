@@ -460,7 +460,7 @@ class _RuleSetUpdateTimeState extends ConsumerState<_RuleSetUpdateTime> {
     });
     // Inset here, not in the row, so the sort handle that replaces it sits flush.
     return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 16),
+      padding: EdgeInsetsDirectional.only(end: context.listInsets.trailing),
       child: FutureBuilder<FileInfo?>(
         future: _fileInfo,
         builder: (context, snapshot) => LastUpdateTimeText(
