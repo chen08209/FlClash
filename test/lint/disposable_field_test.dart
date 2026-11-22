@@ -26,6 +26,9 @@ const _allowed = {
   // state from the platform channel for the whole run.
   'lib/plugins/app.dart#floatingKeyboard',
   'lib/plugins/app.dart#_networkChanges',
+  // `Window` is the process-wide desktop window singleton; the notifier tracks
+  // whether it is shown for the whole run.
+  'lib/common/window.dart#_shown',
 };
 
 final _declaration = RegExp(

@@ -62,6 +62,15 @@ void main() {
     );
   });
 
+  testWidgets('shown follows the last show or hide', (tester) async {
+    await Window().show();
+    expect(Window().shown.value, isTrue);
+
+    await Window().hide();
+    expect(Window().shown.value, isFalse);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   // Runs before any probe succeeds: the singleton caches a supported effect.
   test('an unsupported probe is retried the next time blur is on', () async {
     const tint = Color(0xFF112233);

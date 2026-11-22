@@ -1945,6 +1945,11 @@ nothing is shown natively).
   deminiaturize brings it back, since the occlusion notification may never come. Windows: the runner forwards the
   top-level window's `WM_SHOWWINDOW` and `WM_SIZE` to the engine for the view, which it counts as hidden only once
   sized to zero; the module consumes a minimize's `WM_SIZE` so the view keeps its size.
+- Focus: while `Window.shown` is false, `HiddenWindowFocusGuard` excludes focus from the whole app. A focus request
+  makes the framework ask the engine to focus its view, and on Windows the engine's `SetFocus` activates the hidden
+  window and takes the foreground from the app in front, which drops an exclusive full-screen game out of full screen.
+  The guard gives back the focus it took once the window shows: the framework's own restore on resume can arrive
+  before the frame that lifts the exclusion and would be refused.
 - Each platform keeps one style record (title bar style everywhere, rounded corners on Windows, effect, tint and
   brightness on Windows and macOS) and reapplies it whole from a single `apply` routine, so DWM margins on Windows and
   `isOpaque`/effect views on macOS have one writer. Add a visual setting to that record, never a second code path.
