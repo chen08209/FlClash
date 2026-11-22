@@ -185,5 +185,20 @@ void main() {
         failure,
       ]);
     });
+
+    test('catches an installer left from an earlier run that neither list '
+        'names', () async {
+      await _writeRelease(temp.path);
+      const stale = 'FlClash-0.9.5-android-arm64.apk';
+      writeManifest(temp.path, [
+        for (final entry in readManifest(temp.path))
+          if (entry.name != stale) entry,
+      ]);
+
+      expect(File(p.join(temp.path, stale)).existsSync(), isTrue);
+      expect(releaseContractFailures(Directory.current.path, temp.path), [
+        'in-app updater finds no sha256 for $stale in the manifest',
+      ]);
+    });
   });
 }
