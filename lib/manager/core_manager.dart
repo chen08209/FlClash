@@ -266,8 +266,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         _onDialerLoop(name);
       case final ScriptNotificationEvent notice:
         _onScriptNotification(notice);
-      case FatalEvent(:final message):
-        _onCrash(message);
       case EventsResynced():
         unawaited(_onResynced());
         unawaited(_resyncState());
