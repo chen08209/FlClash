@@ -246,7 +246,9 @@ class _TrackerInfoGroupedListState
       controller: widget.controller,
       padding: widget.padding,
       estimatedItemExtent: table?.rowHeight ?? recordListEstimatedExtent,
-      leadingOf: showsIcons ? (group) => _leadingOf(group.key) : null,
+      leadingOf: showsIcons
+          ? (group) => _leadingOf(appIconIdOf(group.items.first.metadata))
+          : null,
       trailingOf: (group) => _buildSpeed(context, group.items),
       itemBuilder: (_, trackerInfo, index) {
         final striped = index.isOdd;

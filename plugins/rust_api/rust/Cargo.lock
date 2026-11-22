@@ -1489,6 +1489,7 @@ dependencies = [
  "dispatch2",
  "encoding_rs",
  "flutter_rust_bridge",
+ "gdk-pixbuf-sys",
  "gdk-sys",
  "gio-sys",
  "glib-sys",

@@ -60,6 +60,7 @@ objc2-service-management = { version = "0.3", default-features = false, features
 [target.'cfg(target_os = "linux")'.dependencies]
 ksni = { version = "0.3", default-features = false, features = ["tokio"] }
 gdk-sys = "0.18"
+gdk-pixbuf-sys = "0.18"
 gio-sys = "0.18"
 glib-sys = "0.18"
 gobject-sys = "0.18"

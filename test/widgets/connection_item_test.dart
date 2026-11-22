@@ -7,6 +7,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/plugins/app_icon.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -21,6 +22,7 @@ TrackerInfo _tracker({
   String rule = 'DOMAIN-SUFFIX',
   String rulePayload = '',
   String process = '',
+  String processPath = '',
   int uid = 0,
   String sourceIP = '',
   String sourcePort = '',
@@ -35,6 +37,7 @@ TrackerInfo _tracker({
     metadata: Metadata(
       network: 'tcp',
       process: process,
+      processPath: processPath,
       uid: uid,
       sourceIP: sourceIP,
       sourcePort: sourcePort,
@@ -161,7 +164,7 @@ void main() {
   Future<void> pumpItem(WidgetTester tester, TrackerInfo trackerInfo) async {
     await tester.pumpWidget(
       TestApp(
-        wrapInProviderScope: true,
+        overrides: [packageIconSourceProvider.overrideWithValue(null)],
         homeBuilder: (child) => HostScaffold(body: child),
         child: TrackerInfoItem(
           key: ValueKey(trackerInfo),
@@ -537,6 +540,57 @@ void main() {
       );
 
       expect(find.byType(Image), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a desktop row and its app group show the icon of the '
+        'executable, not of the process name', (tester) async {
+      const helper =
+          '/Applications/Google Chrome.app/Contents/Frameworks/Helpers/'
+          'Google Chrome Helper.app/Contents/MacOS/Google Chrome Helper';
+      final rendered = <String>[];
+      final source = DesktopAppIconSource(
+        cacheDir: Future.value(icons.path),
+        render: (path, _, _) async {
+          rendered.add(path);
+          return '${icons.path}/${path.isEmpty ? 'default' : 'com.own'}.png';
+        },
+      );
+      final tracker = _tracker(
+        process: 'Google Chrome Helper',
+        processPath: helper,
+      );
+      await tester.pumpWidget(
+        TestApp(
+          overrides: [packageIconSourceProvider.overrideWithValue(source)],
+          homeBuilder: (child) => HostScaffold(body: child),
+          child: Column(
+            children: [
+              TrackerInfoItem(trackerInfo: tracker, detailTitle: 'detail'),
+              Expanded(
+                child: TrackerInfoGroupedList(
+                  groups: [
+                    RecordGroup('Google Chrome Helper', [tracker]),
+                  ],
+                  grouping: RecordGrouping.app,
+                  detailTitle: 'detail',
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.runAsync(() => source.getOwnPackageIcon(helper));
+      await tester.pump();
+      await tester.pump();
+
+      expect(rendered, unorderedEquals([helper, '']));
+      final shown = tester
+          .widgetList<Image>(find.byType(Image))
+          .map((image) => (image.image as FileImage).file.path);
+      expect(shown, isNotEmpty);
+      expect(shown, everyElement(endsWith('com.own.png')));
 
       await tester.pumpWidget(const SizedBox.shrink());
     });

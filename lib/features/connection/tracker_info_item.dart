@@ -498,7 +498,7 @@ class TrackerAppWell extends StatelessWidget {
     final well = process.isEmpty
         ? _buildWell(context, null)
         : OwnPackageIcon(
-            packageName: process,
+            packageName: appIconIdOf(trackerInfo.metadata),
             size: size * 2 / 3,
             builder: _buildWell,
           );

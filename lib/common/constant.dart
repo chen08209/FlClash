@@ -106,6 +106,7 @@ const coreConnectionWaitDuration = Duration(seconds: 10);
 const maxConcurrentDelayTests = 32;
 const maxConcurrentImports = 4;
 const maxConcurrentIconLoads = 8;
+const appIconExtent = 24.0;
 
 const renderThrottleDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);

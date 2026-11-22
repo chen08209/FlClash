@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:fl_clash/common/cache.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
@@ -11,6 +10,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+
+export 'package:fl_clash/plugins/app_icon.dart' show appIconIdOf;
 
 const _maxCachedIconBytes = 16 << 20;
 
@@ -378,26 +379,29 @@ class _ImageCacheWidgetState extends State<ImageCacheWidget> {
   }
 }
 
-class PackageIcon extends StatefulWidget {
+class PackageIcon extends ConsumerStatefulWidget {
   final String packageName;
   final double size;
 
   const PackageIcon({super.key, required this.packageName, required this.size});
 
   @override
-  State<PackageIcon> createState() => _PackageIconState();
+  ConsumerState<PackageIcon> createState() => _PackageIconState();
 }
 
-class _PackageIconState extends State<PackageIcon>
+class _PackageIconState extends ConsumerState<PackageIcon>
     with _PackageIconLoader<PackageIcon> {
   @override
   String packageNameOf(PackageIcon widget) => widget.packageName;
 
   @override
-  (ImageProvider?, Future<ImageProvider?>?) lookUp(String packageName) => (
-    app?.getCachedPackageIcon(packageName),
-    app?.getPackageIcon(packageName),
-  );
+  (ImageProvider?, Future<ImageProvider?>?) lookUp(String packageName) {
+    final source = ref.read(packageIconSourceProvider);
+    return (
+      source?.getCachedPackageIcon(packageName),
+      source?.getPackageIcon(packageName),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -456,7 +460,8 @@ mixin _PackageIconLoader<T extends StatefulWidget> on State<T> {
 Widget packageIconImage(ImageProvider icon, double size) =>
     Image(image: icon, gaplessPlayback: true, width: size, height: size);
 
-/// Null only where the app is known to have no icon; else holds the icon room.
+/// Shows the icon of [packageName], an id from `appIconIdOf`. Null only where
+/// the app is unknown or known to have no icon; else holds the icon room.
 class OwnPackageIcon extends ConsumerStatefulWidget {
   final String packageName;
   final double size;
@@ -483,7 +488,9 @@ class _OwnPackageIconState extends ConsumerState<OwnPackageIcon>
 
   @override
   (ImageProvider?, Future<ImageProvider?>?) lookUp(String packageName) {
-    final source = ref.read(packageIconSourceProvider);
+    final source = packageName.isEmpty
+        ? null
+        : ref.read(packageIconSourceProvider);
     final cached = source?.getCachedOwnPackageIcon(packageName);
     final load = cached == null ? source?.getOwnPackageIcon(packageName) : null;
     _holdsRoom = load != null;

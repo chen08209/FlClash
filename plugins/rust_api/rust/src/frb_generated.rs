@@ -41,7 +41,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1212020668;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 279494019;
 
 // Section: executor
 
@@ -1119,6 +1119,45 @@ fn wire__crate__api__editor__RopeUpload_push_impl(
                     let output_ok = Ok::<_, ()>({
                         crate::api::editor::RopeUpload::push(&mut *api_that_guard, api_chunk);
                     })?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__app_icon__app_icon_file_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "app_icon_file",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_process_path = <String>::sse_decode(&mut deserializer);
+            let api_size = <u32>::sse_decode(&mut deserializer);
+            let api_cache_dir = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::app_icon::app_icon_file(
+                        api_process_path,
+                        api_size,
+                        api_cache_dir,
+                    )?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -3856,127 +3895,128 @@ fn pde_ffi_dispatcher_primary_impl(
         }
         21 => wire__crate__api__editor__RopeUpload_finish_impl(port, ptr, rust_vec_len, data_len),
         23 => wire__crate__api__editor__RopeUpload_push_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__wifi__check_wifi_ssid_permission_impl(
+        24 => wire__crate__api__app_icon__app_icon_file_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__wifi__check_wifi_ssid_permission_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        25 => wire__crate__api__wifi__current_wifi_ssid_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__script__evaluate_script_impl(port, ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__editor__folds_compute_all_impl(port, ptr, rust_vec_len, data_len),
-        31 => wire__crate__api__hotkey__hot_key_events_impl(port, ptr, rust_vec_len, data_len),
-        32 => wire__crate__api__init__init_app_impl(port, ptr, rust_vec_len, data_len),
-        33 => {
+        26 => wire__crate__api__wifi__current_wifi_ssid_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__script__evaluate_script_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__editor__folds_compute_all_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__crate__api__hotkey__hot_key_events_impl(port, ptr, rust_vec_len, data_len),
+        33 => wire__crate__api__init__init_app_impl(port, ptr, rust_vec_len, data_len),
+        34 => {
             wire__crate__api__launch__is_autostart_enabled_impl(port, ptr, rust_vec_len, data_len)
         }
-        34 => wire__crate__api__link__link_stream_impl(port, ptr, rust_vec_len, data_len),
-        35 => wire__crate__api__network__network_changes_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__crate__api__device__os_major_version_impl(port, ptr, rust_vec_len, data_len),
-        39 => wire__crate__api__launch__register_url_scheme_impl(port, ptr, rust_vec_len, data_len),
-        40 => wire__crate__api__wifi__request_wifi_ssid_permission_impl(
+        35 => wire__crate__api__link__link_stream_impl(port, ptr, rust_vec_len, data_len),
+        36 => wire__crate__api__network__network_changes_impl(port, ptr, rust_vec_len, data_len),
+        38 => wire__crate__api__device__os_major_version_impl(port, ptr, rust_vec_len, data_len),
+        40 => wire__crate__api__launch__register_url_scheme_impl(port, ptr, rust_vec_len, data_len),
+        41 => wire__crate__api__wifi__request_wifi_ssid_permission_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        41 => wire__crate__api__launch__set_autostart_impl(port, ptr, rust_vec_len, data_len),
-        45 => wire__crate__api__proxy__start_system_proxy_impl(port, ptr, rust_vec_len, data_len),
-        46 => wire__crate__api__proxy__stop_system_proxy_impl(port, ptr, rust_vec_len, data_len),
-        47 => wire__crate__api__fonts__system_font_families_impl(port, ptr, rust_vec_len, data_len),
-        48 => wire__crate__api__charset__transcode_charset_impl(port, ptr, rust_vec_len, data_len),
-        49 => wire__crate__api__tray__tray_signals_impl(port, ptr, rust_vec_len, data_len),
-        50 => wire__crate__api__window__window_close_impl(port, ptr, rust_vec_len, data_len),
-        51 => wire__crate__api__window__window_ensure_initialized_impl(
+        42 => wire__crate__api__launch__set_autostart_impl(port, ptr, rust_vec_len, data_len),
+        46 => wire__crate__api__proxy__start_system_proxy_impl(port, ptr, rust_vec_len, data_len),
+        47 => wire__crate__api__proxy__stop_system_proxy_impl(port, ptr, rust_vec_len, data_len),
+        48 => wire__crate__api__fonts__system_font_families_impl(port, ptr, rust_vec_len, data_len),
+        49 => wire__crate__api__charset__transcode_charset_impl(port, ptr, rust_vec_len, data_len),
+        50 => wire__crate__api__tray__tray_signals_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__crate__api__window__window_close_impl(port, ptr, rust_vec_len, data_len),
+        52 => wire__crate__api__window__window_ensure_initialized_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        52 => wire__crate__api__window__window_focus_impl(port, ptr, rust_vec_len, data_len),
-        53 => wire__crate__api__window__window_get_bounds_impl(port, ptr, rust_vec_len, data_len),
-        54 => wire__crate__api__window__window_get_cursor_position_impl(
+        53 => wire__crate__api__window__window_focus_impl(port, ptr, rust_vec_len, data_len),
+        54 => wire__crate__api__window__window_get_bounds_impl(port, ptr, rust_vec_len, data_len),
+        55 => wire__crate__api__window__window_get_cursor_position_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        55 => wire__crate__api__window__window_get_displays_impl(port, ptr, rust_vec_len, data_len),
-        56 => wire__crate__api__window__window_hide_impl(port, ptr, rust_vec_len, data_len),
-        57 => wire__crate__api__window__window_is_always_on_top_impl(
+        56 => wire__crate__api__window__window_get_displays_impl(port, ptr, rust_vec_len, data_len),
+        57 => wire__crate__api__window__window_hide_impl(port, ptr, rust_vec_len, data_len),
+        58 => wire__crate__api__window__window_is_always_on_top_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        58 => wire__crate__api__window__window_is_effect_supported_impl(
+        59 => wire__crate__api__window__window_is_effect_supported_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        59 => {
+        60 => {
             wire__crate__api__window__window_is_full_screen_impl(port, ptr, rust_vec_len, data_len)
         }
-        60 => wire__crate__api__window__window_is_maximized_impl(port, ptr, rust_vec_len, data_len),
-        61 => wire__crate__api__window__window_is_minimized_impl(port, ptr, rust_vec_len, data_len),
-        62 => wire__crate__api__window__window_is_position_supported_impl(
+        61 => wire__crate__api__window__window_is_maximized_impl(port, ptr, rust_vec_len, data_len),
+        62 => wire__crate__api__window__window_is_minimized_impl(port, ptr, rust_vec_len, data_len),
+        63 => wire__crate__api__window__window_is_position_supported_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        63 => wire__crate__api__window__window_is_visible_impl(port, ptr, rust_vec_len, data_len),
-        64 => wire__crate__api__window__window_maximize_impl(port, ptr, rust_vec_len, data_len),
-        65 => wire__crate__api__window__window_minimize_impl(port, ptr, rust_vec_len, data_len),
-        66 => wire__crate__api__window__window_set_always_on_top_impl(
+        64 => wire__crate__api__window__window_is_visible_impl(port, ptr, rust_vec_len, data_len),
+        65 => wire__crate__api__window__window_maximize_impl(port, ptr, rust_vec_len, data_len),
+        66 => wire__crate__api__window__window_minimize_impl(port, ptr, rust_vec_len, data_len),
+        67 => wire__crate__api__window__window_set_always_on_top_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        67 => wire__crate__api__window__window_set_bounds_impl(port, ptr, rust_vec_len, data_len),
-        68 => wire__crate__api__window__window_set_effect_impl(port, ptr, rust_vec_len, data_len),
-        69 => {
+        68 => wire__crate__api__window__window_set_bounds_impl(port, ptr, rust_vec_len, data_len),
+        69 => wire__crate__api__window__window_set_effect_impl(port, ptr, rust_vec_len, data_len),
+        70 => {
             wire__crate__api__window__window_set_full_screen_impl(port, ptr, rust_vec_len, data_len)
         }
-        70 => wire__crate__api__window__window_set_minimum_size_impl(
+        71 => wire__crate__api__window__window_set_minimum_size_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        71 => wire__crate__api__window__window_set_prevent_close_impl(
+        72 => wire__crate__api__window__window_set_prevent_close_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        72 => wire__crate__api__window__window_set_rounded_corners_impl(
+        73 => wire__crate__api__window__window_set_rounded_corners_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        73 => wire__crate__api__window__window_set_skip_taskbar_impl(
+        74 => wire__crate__api__window__window_set_skip_taskbar_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        74 => wire__crate__api__window__window_set_title_bar_style_impl(
+        75 => wire__crate__api__window__window_set_title_bar_style_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        75 => wire__crate__api__window__window_show_impl(port, ptr, rust_vec_len, data_len),
-        76 => wire__crate__api__window__window_signals_impl(port, ptr, rust_vec_len, data_len),
-        77 => {
+        76 => wire__crate__api__window__window_show_impl(port, ptr, rust_vec_len, data_len),
+        77 => wire__crate__api__window__window_signals_impl(port, ptr, rust_vec_len, data_len),
+        78 => {
             wire__crate__api__window__window_start_dragging_impl(port, ptr, rust_vec_len, data_len)
         }
-        78 => wire__crate__api__window__window_unmaximize_impl(port, ptr, rust_vec_len, data_len),
-        79 => wire__crate__api__editor__words_extract_impl(port, ptr, rust_vec_len, data_len),
+        79 => wire__crate__api__window__window_unmaximize_impl(port, ptr, rust_vec_len, data_len),
+        80 => wire__crate__api__editor__words_extract_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -4008,16 +4048,16 @@ fn pde_ffi_dispatcher_sync_impl(
         18 => wire__crate__api__editor__RopeBridge_slice_impl(ptr, rust_vec_len, data_len),
         19 => wire__crate__api__editor__RopeBridge_snapshot_impl(ptr, rust_vec_len, data_len),
         22 => wire__crate__api__editor__RopeUpload_new_impl(ptr, rust_vec_len, data_len),
-        28 => {
+        29 => {
             wire__crate__api__editor__folds_find_matching_bracket_impl(ptr, rust_vec_len, data_len)
         }
-        29 => wire__crate__api__editor__guides_compute_viewport_impl(ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__tray__hide_tray_impl(ptr, rust_vec_len, data_len),
-        36 => wire__crate__api__tray__open_tray_menu_impl(ptr, rust_vec_len, data_len),
-        38 => wire__crate__api__launch__read_local_machine_dword_impl(ptr, rust_vec_len, data_len),
-        42 => wire__crate__api__hotkey__set_hot_keys_impl(ptr, rust_vec_len, data_len),
-        43 => wire__crate__api__tray__set_tray_title_impl(ptr, rust_vec_len, data_len),
-        44 => wire__crate__api__tray__show_tray_impl(ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__editor__guides_compute_viewport_impl(ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__tray__hide_tray_impl(ptr, rust_vec_len, data_len),
+        37 => wire__crate__api__tray__open_tray_menu_impl(ptr, rust_vec_len, data_len),
+        39 => wire__crate__api__launch__read_local_machine_dword_impl(ptr, rust_vec_len, data_len),
+        43 => wire__crate__api__hotkey__set_hot_keys_impl(ptr, rust_vec_len, data_len),
+        44 => wire__crate__api__tray__set_tray_title_impl(ptr, rust_vec_len, data_len),
+        45 => wire__crate__api__tray__show_tray_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

@@ -2,6 +2,7 @@ library;
 
 import 'src/rust/frb_generated.dart';
 
+export 'src/rust/api/app_icon.dart';
 export 'src/rust/api/charset.dart';
 export 'src/rust/api/device.dart';
 export 'src/rust/api/fonts.dart';

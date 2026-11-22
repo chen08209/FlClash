@@ -1,4 +1,5 @@
 pub mod api;
+mod app_icon;
 mod device;
 mod editor;
 mod fonts;

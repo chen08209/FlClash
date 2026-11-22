@@ -1,3 +1,4 @@
+pub mod app_icon;
 pub mod charset;
 pub mod device;
 pub mod editor;
