@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/release_asset.dart';
+import 'package:fl_clash/common/release_version.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/state.dart';
@@ -106,13 +107,82 @@ class Request {
   }
 
   /// Null when this build is current; throws when GitHub cannot be asked.
-  Future<Map<String, dynamic>?> checkForUpdate() async {
-    final release = await latestRelease();
-    final remoteVersion = release['tag_name'] as String;
-    final version = globalState.packageInfo.version;
-    final hasUpdate =
-        compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
-    return hasUpdate ? release : null;
+  Future<Map<String, dynamic>?> checkForUpdate(UpdateChannel channel) async {
+    final release = await newestRelease(channel);
+    final remote = ReleaseVersion.tryParse(release['tag_name'] as String);
+    final installed = installedReleaseVersion(globalState.packageInfo.version);
+    return remote != null && remote > installed ? release : null;
+  }
+
+  Future<Map<String, dynamic>> newestRelease(UpdateChannel channel) {
+    return switch (channel) {
+      UpdateChannel.stable => latestRelease(),
+      UpdateChannel.pre => newestOfAllReleases(),
+    };
+  }
+
+  /// `releases/latest` never names a prerelease, so this reads the list. The
+  /// feed answers without the hourly API quota but carries no release body,
+  /// and holds only GitHub's ten newest entries, so each can be probed.
+  Future<Map<String, dynamic>> newestOfAllReleases() async {
+    try {
+      final response = await dio.get<List<dynamic>>(
+        'https://api.github.com/repos/$repository/releases',
+        queryParameters: {'per_page': 30},
+        options: Options(responseType: ResponseType.json),
+      );
+      final releases = {
+        for (final release in response.data!)
+          if (release case {'draft': false, 'tag_name': final String tag})
+            tag: release as Map<String, dynamic>,
+      };
+      for (final tag in _candidates(releases.keys)) {
+        if (releases[tag] case {
+          'assets': final List<dynamic> assets,
+        } when _namesChecksums(assets, tag)) {
+          return releases[tag]!;
+        }
+      }
+      throw FormatException('No ${appReleaseLine.name} release in the list');
+    } on DioException catch (error) {
+      commonPrint.log(
+        'release list API failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+    }
+    final response = await dio.get<String>(
+      'https://github.com/$repository/releases.atom',
+      options: Options(responseType: ResponseType.plain),
+    );
+    for (final tag in _candidates(releaseTagsOfFeed(response.data ?? ''))) {
+      if (await _hasChecksums(tag)) return {'tag_name': tag};
+    }
+    throw FormatException('No ${appReleaseLine.name} release in the feed');
+  }
+
+  Iterable<String> _candidates(Iterable<String> tags) =>
+      releaseTagsNewestFirst(tags, appReleaseLine).where(namesReleaseFiles);
+
+  bool _namesChecksums(List<dynamic> assets, String tag) {
+    final name = updateChecksumsName(tag);
+    return assets.any((asset) => asset is Map && asset['name'] == name);
+  }
+
+  /// The feed lists bare tags too, such as one whose release is still building.
+  Future<bool> _hasChecksums(String tag) async {
+    try {
+      await dio.headUri<void>(
+        releaseAssetUri(tag, updateChecksumsName(tag)),
+        options: Options(
+          followRedirects: false,
+          validateStatus: (status) => status != null && status < 400,
+        ),
+      );
+      return true;
+    } on DioException catch (error) {
+      if (error.response?.statusCode == HttpStatus.notFound) return false;
+      rethrow;
+    }
   }
 
   /// The release page redirect still answers once the hourly API quota is spent.
@@ -210,6 +280,19 @@ Future<T> _releaseFile<T>(String name, Future<T> Function() fetch) async {
 }
 
 final request = Request();
+
+final _feedLink = RegExp(r'<link\b[^>]*\bhref="([^"]+)"');
+
+@visibleForTesting
+Iterable<String> releaseTagsOfFeed(String feed) sync* {
+  for (final match in _feedLink.allMatches(feed)) {
+    final segments = Uri.tryParse(match[1]!)?.pathSegments ?? const [];
+    final tagIndex = segments.indexOf('tag') + 1;
+    if (tagIndex > 0 && tagIndex < segments.length) {
+      yield segments[tagIndex];
+    }
+  }
+}
 
 /// Some subscription servers send a gzip or zlib body without saying so in
 /// Content-Encoding, which is the only signal dart:io decompresses on.

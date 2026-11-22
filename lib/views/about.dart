@@ -28,8 +28,9 @@ class AboutView extends ConsumerWidget {
   Future<void> _checkUpdate(BuildContext context, WidgetRef ref) async {
     if (ref.read(loadingProvider(LoadingTag.checkUpdate))) return;
     final commonAction = ref.read(commonActionProvider.notifier);
+    final channel = ref.read(appSettingProvider).updateChannel;
     final result = await globalState.loadingRun(
-      () async => (release: await request.checkForUpdate()),
+      () async => (release: await request.checkForUpdate(channel)),
       title: context.appLocalizations.checkUpdate,
       tag: LoadingTag.checkUpdate,
     );
@@ -190,7 +191,7 @@ class _AboutHero extends StatelessWidget {
             alignment: WrapAlignment.center,
             children: [
               _Pill(
-                label: 'v${globalState.packageInfo.version}',
+                label: installedVersionLabel(globalState.packageInfo.version),
                 color: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
               ),

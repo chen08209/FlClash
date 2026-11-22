@@ -107,34 +107,6 @@ void main() {
     });
   });
 
-  group('compareVersions', () {
-    test('equal versions', () {
-      expect(compareVersions('1.0.0', '1.0.0'), 0);
-    });
-
-    test('major version difference', () {
-      expect(compareVersions('2.0.0', '1.0.0'), greaterThan(0));
-      expect(compareVersions('1.0.0', '2.0.0'), lessThan(0));
-    });
-
-    test('minor version difference', () {
-      expect(compareVersions('1.2.0', '1.1.0'), greaterThan(0));
-    });
-
-    test('patch version difference', () {
-      expect(compareVersions('1.0.2', '1.0.1'), greaterThan(0));
-    });
-
-    test('handles build number', () {
-      expect(compareVersions('1.0.0+1', '1.0.0+2'), lessThan(0));
-      expect(compareVersions('1.0.0+2', '1.0.0+1'), greaterThan(0));
-    });
-
-    test('handles missing minor/patch', () {
-      expect(compareVersions('1', '1.0.0'), 0);
-    });
-  });
-
   group('getViewMode', () {
     test('mobile for small width', () {
       expect(getViewMode(400).name, 'mobile');

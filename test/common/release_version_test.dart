@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/app_update.dart';
 import 'package:fl_clash/common/release_asset.dart';
 import 'package:fl_clash/common/release_version.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,6 +95,45 @@ void main() {
     test('keeps to its own line', () {
       expect(releaseTagsNewestFirst(tags, ReleaseLine.rs), ['v1.2.1-rs.3']);
       expect(releaseTagsNewestFirst(['v1.2.0-rs.1'], ReleaseLine.dev), isEmpty);
+    });
+  });
+
+  group('installedReleaseVersion', () {
+    test('prefers the tag the build was made from', () {
+      expect(
+        installedReleaseVersion('1.2.0', builtTag: 'v1.2.0-pre.3+1').toString(),
+        'v1.2.0-pre.3+1',
+      );
+    });
+
+    test('falls back to the version name of an untagged build', () {
+      expect(
+        installedReleaseVersion('1.2.0', builtTag: '').toString(),
+        'v1.2.0',
+      );
+    });
+
+    test('a prerelease install is offered its release and a rebuild', () {
+      final installed = installedReleaseVersion(
+        '1.2.0',
+        builtTag: 'v1.2.0-pre.3',
+      );
+      expect(_v('v1.2.0'), greaterThan(installed));
+      expect(_v('v1.2.0-pre.3+1'), greaterThan(installed));
+      expect(_v('v1.2.0-pre.2'), lessThan(installed));
+    });
+  });
+
+  group('installedVersionLabel', () {
+    test('names a prerelease by the tag it was built from', () {
+      expect(
+        installedVersionLabel('1.2.0', builtTag: 'v1.2.0-pre.3+1'),
+        'v1.2.0-pre.3+1',
+      );
+    });
+
+    test('names an untagged build by its version name', () {
+      expect(installedVersionLabel('1.2.0', builtTag: ''), 'v1.2.0');
     });
   });
 }

@@ -111,6 +111,11 @@ String updateAssetName(String tag, SelfUpdateAsset asset) {
   );
 }
 
+/// False for a tag such as `nightly`, `v1.2.0-beta-1` or a stable rebuild
+/// `v1.2.0+1`, which no release file can be named after.
+bool namesReleaseFiles(String tag) =>
+    _version.hasMatch(releaseVersionOfTag(tag));
+
 String updateChecksumsName(String tag) {
   return releaseChecksumsName(releaseVersionOfTag(tag));
 }

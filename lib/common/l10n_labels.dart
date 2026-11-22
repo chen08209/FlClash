@@ -20,6 +20,16 @@ extension PageLabelL10n on PageLabel {
   }
 }
 
+extension UpdateChannelL10n on UpdateChannel {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      UpdateChannel.stable => appLocalizations.updateChannelStable,
+      UpdateChannel.pre => appLocalizations.updateChannelPre,
+    };
+  }
+}
+
 extension DnsQueryInitiatorL10n on DnsQueryInitiator {
   String get label {
     final appLocalizations = currentAppLocalizations;

@@ -191,6 +191,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get autoCheckUpdate => 'Автопроверка обновлений';
 
   @override
+  String get updateChannel => 'Канал обновлений';
+
+  @override
+  String get updateChannelStable => 'Стабильный';
+
+  @override
+  String get updateChannelPre => 'Предварительный';
+
+  @override
   String get checkCertificate => 'Проверять TLS-сертификаты';
 
   @override

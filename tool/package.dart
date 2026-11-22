@@ -152,17 +152,23 @@ List<String> flutterBuildArguments(
   ];
 }
 
+/// The app compares a prerelease by its tag, since its version name is only
+/// `X.Y.Z`; see installedReleaseVersion in lib/common/app_update.dart.
+Map<String, String> buildDefines({required String env, String? tag}) {
+  return {'APP_ENV': env, 'RELEASE_TAG': ?tag};
+}
+
 List<Step> planBuild(
   PackageContext context, {
   required String env,
+  String? tag,
   required List<ReleaseArch> androidArches,
   required bool verbose,
 }) {
+  final defines = buildDefines(env: env, tag: tag);
   final steps = <Step>[
-    Task('write env.json with APP_ENV=$env', () async {
-      File(
-        context.path('env.json'),
-      ).writeAsStringSync(jsonEncode({'APP_ENV': env}));
+    Task('write env.json with ${jsonEncode(defines)}', () async {
+      File(context.path('env.json')).writeAsStringSync(jsonEncode(defines));
     }),
     Task('install the packaging tools ${context.os.name} is missing', () {
       return ensurePackagingTools(context.os, context.arch);
@@ -285,6 +291,7 @@ Future<int> _package(ArgResults results) async {
     ...planBuild(
       context,
       env: env,
+      tag: resolved.tag,
       androidArches: androidArches,
       verbose: verbose,
     ),

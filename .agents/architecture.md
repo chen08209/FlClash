@@ -1670,7 +1670,8 @@ that asks the OS for a permission, a global shortcut or a registration, must con
 
 ## Build System
 
-`tool/package.dart` is the release build orchestrator (see Packaging below): it writes `env.json` (`APP_ENV`), runs
+`tool/package.dart` is the release build orchestrator (see Packaging below): it writes `env.json` (`APP_ENV`, and
+`RELEASE_TAG` for a tagged build), runs
 `flutter build`, and leaves the Core artifacts to the build hook.
 
 The desktop Go core and the Rust helper are built by a Dart build hook; Android's Core is built by Gradle (see Android

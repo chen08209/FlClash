@@ -191,6 +191,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get autoCheckUpdate => 'Buscar actualizaciones automáticamente';
 
   @override
+  String get updateChannel => 'Canal de actualización';
+
+  @override
+  String get updateChannelStable => 'Estable';
+
+  @override
+  String get updateChannelPre => 'Versión preliminar';
+
+  @override
   String get checkCertificate => 'Verificar certificados TLS';
 
   @override

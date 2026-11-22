@@ -189,6 +189,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoCheckUpdate => 'Auto check for updates';
 
   @override
+  String get updateChannel => 'Update channel';
+
+  @override
+  String get updateChannelStable => 'Stable';
+
+  @override
+  String get updateChannelPre => 'Prerelease';
+
+  @override
   String get checkCertificate => 'Verify TLS certificates';
 
   @override

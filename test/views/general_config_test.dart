@@ -46,6 +46,29 @@ void main() {
 
   PatchClashConfig config() => container.read(patchClashConfigProvider);
 
+  testWidgets('switches the update channel from the row under the check', (
+    tester,
+  ) async {
+    await pumpGeneralView(tester);
+    final l = currentAppLocalizations;
+    final check = tester.getTopLeft(find.text(l.autoCheckUpdate));
+    final channel = tester.getTopLeft(find.text(l.updateChannel));
+
+    expect(channel.dy, greaterThan(check.dy));
+    expect(
+      container.read(appSettingProvider).updateChannel,
+      UpdateChannel.stable,
+    );
+
+    await tester.tap(find.text(l.updateChannel));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l.updateChannelPre));
+    await tester.pumpAndSettle();
+
+    expect(container.read(appSettingProvider).updateChannel, UpdateChannel.pre);
+    expect(find.text(l.updateChannelPre), findsOneWidget);
+  });
+
   testWidgets('lists no override until one is added', (tester) async {
     await pumpGeneralView(tester);
     final l = currentAppLocalizations;

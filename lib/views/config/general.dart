@@ -365,6 +365,15 @@ class GeneralView extends ConsumerWidget {
         select: (state) => state.autoCheckUpdate,
         update: (state, value) => state.copyWith(autoCheckUpdate: value),
       ),
+      ConfigOptionsItem<UpdateChannel>(
+        title: (l) => l.updateChannel,
+        options: UpdateChannel.values,
+        textBuilder: (channel) => channel.label,
+        selector: appSettingProvider.select((state) => state.updateChannel),
+        onChanged: (ref, value) => ref
+            .read(appSettingProvider.notifier)
+            .update((state) => state.copyWith(updateChannel: value)),
+      ),
     ];
   }
 

@@ -468,6 +468,24 @@ abstract class AppLocalizations {
   /// **'Auto check for updates'**
   String get autoCheckUpdate;
 
+  /// No description provided for @updateChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Update channel'**
+  String get updateChannel;
+
+  /// No description provided for @updateChannelStable.
+  ///
+  /// In en, this message translates to:
+  /// **'Stable'**
+  String get updateChannelStable;
+
+  /// No description provided for @updateChannelPre.
+  ///
+  /// In en, this message translates to:
+  /// **'Prerelease'**
+  String get updateChannelPre;
+
   /// No description provided for @checkCertificate.
   ///
   /// In en, this message translates to:

@@ -306,7 +306,8 @@ The tag decides the version, not a commit. A release tag is `vX.Y.Z`, `vX.Y.Z-pr
 rebuilds prerelease N after a fix; the `version` job rejects any other `v*` tag. It writes `X.Y.Z` from the tag into
 `pubspec.yaml` for the build and upload jobs, with a build number of the tag run's UTC `YYYYMMDDHH`, raised above the
 committed one when that is not already larger, because Android refuses an update with a lower versionCode. The app's
-version name stays `X.Y.Z` for a prerelease too: `compareVersions` reads only numbers. The build number in
+version name stays `X.Y.Z` for a prerelease too, so the packager hands the build its tag as `RELEASE_TAG`, and the
+update check compares that tag, not the version name. The build number in
 `pubspec.yaml` stays fixed; a local build that must install over a CI one passes its own
 `--build-number`.
 
@@ -353,8 +354,8 @@ in `CHANGELOG.md`, and are never regenerated.
 skipped and moves on instead of reporting drift that does not exist.
 
 Prerelease tags (`v0.8.96-pre.N[+M]`) skip the release commit, and CI renders their notes with `build --unreleased`.
-They publish a GitHub release marked as a prerelease and never as latest, with the same files as a stable one.
-`build --unreleased` reads the
+They publish a GitHub release marked as a prerelease and never as latest, with the same files as a stable one, and the
+update check offers them only on the prerelease update channel. `build --unreleased` reads the
 version from `pubspec.yaml`, which the upload job has already set from the tag, and refuses to collect anything while
 `v<that version>` is tagged, so a prerelease tag must name the next, untagged `X.Y.Z`. The changelog builder walks
 stable tags only and ignores a `+M` tag.
@@ -369,6 +370,12 @@ dart tool/publish.dart --dry-run telegram v0.9.5-pre.1
 gh api --paginate 'repos/chen08209/FlClash/releases?per_page=100' | jq -s add > releases.json
 dart tool/publish.dart --dry-run prune v0.9.5-pre.1 --releases releases.json
 ```
+
+The update channel in the general settings picks what the update check offers. Stable asks for `releases/latest`.
+Prerelease reads the release list and takes the highest version among stable and prerelease releases of the app's line,
+counting only releases whose checksum file is uploaded. Once the API's unauthenticated hourly quota is spent, it falls
+back to `releases.atom`, which is not counted but carries no notes and lists bare tags too, so a tag counts there only
+after a HEAD request finds its checksum file.
 
 ### Release File Names
 

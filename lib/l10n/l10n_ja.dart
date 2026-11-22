@@ -189,6 +189,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get autoCheckUpdate => '更新の自動チェック';
 
   @override
+  String get updateChannel => 'アップデートチャンネル';
+
+  @override
+  String get updateChannelStable => '安定版';
+
+  @override
+  String get updateChannelPre => 'プレリリース版';
+
+  @override
   String get checkCertificate => 'TLS証明書を検証';
 
   @override

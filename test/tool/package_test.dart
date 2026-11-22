@@ -94,6 +94,14 @@ void main() {
     });
   });
 
+  test('hands the build its tag only when it has one', () {
+    expect(package.buildDefines(env: 'pre', tag: 'v0.9.4-pre.2+1'), {
+      'APP_ENV': 'pre',
+      'RELEASE_TAG': 'v0.9.4-pre.2+1',
+    });
+    expect(package.buildDefines(env: 'pre'), {'APP_ENV': 'pre'});
+  });
+
   test('refuses to package while a native build hook is skipped', () {
     const pubspec = '''
 hooks:

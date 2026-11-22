@@ -189,6 +189,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get autoCheckUpdate => '업데이트 자동 확인';
 
   @override
+  String get updateChannel => '업데이트 채널';
+
+  @override
+  String get updateChannelStable => '정식 버전';
+
+  @override
+  String get updateChannelPre => '프리릴리스';
+
+  @override
   String get checkCertificate => 'TLS 인증서 검증';
 
   @override
