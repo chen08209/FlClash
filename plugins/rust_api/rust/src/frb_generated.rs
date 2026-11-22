@@ -1892,8 +1892,8 @@ fn wire__crate__api__tray__show_tray_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_content = <crate::api::tray::TrayContent>::sse_decode(&mut deserializer);
             deserializer.end();
-            transform_result_sse::<_, ()>((move || {
-                let output_ok = Ok::<_, ()>(crate::api::tray::show_tray(api_content))?;
+            transform_result_sse::<_, String>((move || {
+                let output_ok = crate::api::tray::show_tray(api_content)?;
                 std::result::Result::Ok(output_ok)
             })())
         },

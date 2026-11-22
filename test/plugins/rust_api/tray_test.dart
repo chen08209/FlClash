@@ -166,13 +166,22 @@ void main() {
     }
 
     test('a rejected show stays invisible and is retried', () async {
-      host.showResult = false;
-      await Tray.instance.show(_spec());
+      host.showFailure = 'called off the main thread';
+      await expectLater(
+        Tray.instance.show(_spec()),
+        throwsA(
+          isA<TrayException>().having(
+            (error) => error.reason,
+            'reason',
+            'called off the main thread',
+          ),
+        ),
+      );
 
       expect(host.shown, hasLength(1));
       expect(Tray.instance.isVisible, isFalse);
 
-      host.showResult = true;
+      host.showFailure = null;
       await Tray.instance.show(_spec());
 
       expect(host.shown, hasLength(2));
@@ -184,9 +193,16 @@ void main() {
       await Tray.instance.show(_spec());
       expect(host.shown, hasLength(1));
 
-      host.showResult = false;
-      await Tray.instance.show(_spec(menu: const [TrayMenuAction(label: 'a')]));
-      await Tray.instance.show(_spec(menu: const [TrayMenuAction(label: 'a')]));
+      host.showFailure = 'rejected';
+      final changed = _spec(menu: const [TrayMenuAction(label: 'a')]);
+      await expectLater(
+        Tray.instance.show(changed),
+        throwsA(isA<TrayException>()),
+      );
+      await expectLater(
+        Tray.instance.show(changed),
+        throwsA(isA<TrayException>()),
+      );
       expect(host.shown, hasLength(3));
     });
   });
@@ -216,11 +232,16 @@ void main() {
         ),
       );
 
-      host.showResult = false;
-      await Tray.instance.show(
-        _spec(
-          menu: [TrayMenuAction(label: 'new', onSelected: () => newSelected++)],
+      host.showFailure = 'rejected';
+      await expectLater(
+        Tray.instance.show(
+          _spec(
+            menu: [
+              TrayMenuAction(label: 'new', onSelected: () => newSelected++),
+            ],
+          ),
         ),
+        throwsA(isA<TrayException>()),
       );
       await select(1024);
 

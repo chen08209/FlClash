@@ -12,10 +12,20 @@ import 'tray_event.dart';
 import 'tray_menu.dart';
 import 'tray_spec.dart';
 
+final class TrayException implements Exception {
+  const TrayException(this.reason);
+
+  final String reason;
+
+  @override
+  String toString() => 'TrayException: $reason';
+}
+
 abstract interface class TrayHost {
   Stream<TraySignal> signals();
 
-  bool show(TrayContent content);
+  /// Throws [TrayException] when the status item could not be shown.
+  void show(TrayContent content);
 
   bool setTitle(String title);
 
@@ -31,7 +41,13 @@ final class _RustTrayHost implements TrayHost {
   Stream<TraySignal> signals() => traySignals();
 
   @override
-  bool show(TrayContent content) => showTray(content: content);
+  void show(TrayContent content) {
+    try {
+      showTray(content: content);
+    } on String catch (reason) {
+      throw TrayException(reason);
+    }
+  }
 
   @override
   bool setTitle(String title) => setTrayTitle(title: title);
@@ -123,18 +139,19 @@ final class Tray {
     }
     _listen();
     final image = await _resolveImage(spec.icon);
-    final isApplied = _host.show(
-      TrayContent(
-        id: _stableId,
-        image: image,
-        toolTip: spec.toolTip,
-        title: _title,
-        menu: encoded.menu,
-      ),
-    );
-    if (!isApplied) {
+    try {
+      _host.show(
+        TrayContent(
+          id: _stableId,
+          image: image,
+          toolTip: spec.toolTip,
+          title: _title,
+          menu: encoded.menu,
+        ),
+      );
+    } on Object {
       _signature = null;
-      return;
+      rethrow;
     }
     _itemsById = encoded.itemsById;
     _signature = encoded.signature;

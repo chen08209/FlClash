@@ -5,6 +5,7 @@ import 'package:fl_clash/manager/locale_manager.dart';
 import 'package:fl_clash/manager/tray_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,6 +32,18 @@ class _FailingSystemAction extends SystemAction {
   @override
   Future<void> updateTray() async {
     throw StateError('tray boom');
+  }
+}
+
+class _ShowingSystemAction extends SystemAction {
+  @override
+  Future<void> updateTray() {
+    return Tray.instance.show(
+      const TraySpec(
+        icon: TrayIcon.asset('assets/images/tray/unix/status_1.png'),
+        toolTip: 'FlClash',
+      ),
+    );
   }
 }
 
@@ -179,6 +192,30 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a tray the platform refuses is logged with its reason', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    final wasAttached = globalState.isAttach;
+    globalState.isAttach = true;
+    addTearDown(() => globalState.isAttach = wasAttached);
+    trayHost.showFailure = 'called off the main thread';
+    // setUp's queue sits in the real zone, which never runs in a fake-async body.
+    Tray.instance.resetForTesting(trayHost);
+    await pumpTrayManager(tester, systemAction: _ShowingSystemAction.new);
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mixedPort: state.mixedPort + 1));
+    await tester.pumpAndSettle();
+    debugDefaultTargetPlatformOverride = null;
+
+    expect(
+      container.read(logsProvider).list.map((log) => log.payload),
+      contains(contains('called off the main thread')),
+    );
   });
 
   testWidgets('a change made during a failing update still reaches the tray', (

@@ -22,27 +22,29 @@ struct Tray {
 
 // Every entry point is a synchronous bridge call, which Flutter runs on the
 // platform thread; one that is not is refused rather than sent across.
-pub fn show(content: TrayContent) -> bool {
-    let Some(mtm) = MainThreadMarker::new() else {
-        return false;
-    };
-    let Some(image) = status::image(&content.image) else {
-        return false;
-    };
+pub fn show(content: TrayContent) -> Result<(), String> {
+    let mtm = MainThreadMarker::new().ok_or("called off the main thread")?;
+    let image = status::image(&content.image).ok_or_else(|| {
+        format!(
+            "none of the {} icon images decoded",
+            content.image.pngs.len()
+        )
+    })?;
     TRAY.with(|cell| {
-        let Ok(mut slot) = cell.try_borrow_mut() else {
-            return false;
-        };
-        if slot.is_none() {
-            *slot = StatusItem::new(mtm).map(|status| Tray { status, menu: None });
-        }
-        let Some(tray) = slot.as_mut() else {
-            return false;
+        let mut slot = cell
+            .try_borrow_mut()
+            .map_err(|_| "the status item is in use by another call")?;
+        let tray = match slot.as_mut() {
+            Some(tray) => tray,
+            None => slot.insert(Tray {
+                status: StatusItem::new(mtm)?,
+                menu: None,
+            }),
         };
         tray.status.set_image(&image, content.image.placement);
         tray.status.set_title(&content.title);
         tray.menu = Some(TrayMenu::new(mtm, &content.menu, true));
-        true
+        Ok(())
     })
 }
 
@@ -111,5 +113,29 @@ fn close_menu() {
     });
     if let Some(item) = item {
         item.setMenu(None);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::api::tray::{TrayIconPlacement, TrayImage};
+
+    #[test]
+    fn a_show_off_the_main_thread_says_so() {
+        let content = TrayContent {
+            id: String::new(),
+            image: TrayImage {
+                path: String::new(),
+                pngs: Vec::new(),
+                template: true,
+                size: 18,
+                placement: TrayIconPlacement::Leading,
+            },
+            tool_tip: String::new(),
+            title: String::new(),
+            menu: Vec::new(),
+        };
+        assert_eq!(show(content), Err("called off the main thread".into()));
     }
 }

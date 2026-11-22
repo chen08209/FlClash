@@ -20,11 +20,14 @@ enum Command {
 
 static COMMANDS: OnceLock<Option<UnboundedSender<Command>>> = OnceLock::new();
 
-pub fn show(content: TrayContent) -> bool {
+pub fn show(content: TrayContent) -> Result<(), String> {
     if !Path::new(&content.image.path).is_file() {
-        return false;
+        return Err(format!("no icon file at {}", content.image.path));
     }
-    commands().is_some_and(|commands| commands.send(Command::Show(content)).is_ok())
+    let commands = commands().ok_or("the tray thread did not start")?;
+    commands
+        .send(Command::Show(content))
+        .map_err(|_| "the tray thread has stopped".into())
 }
 
 pub fn set_title(_title: String) -> bool {
@@ -223,6 +226,27 @@ mod tests {
             checked: false,
             items: Vec::new(),
         }
+    }
+
+    #[test]
+    fn a_missing_icon_file_is_named_in_the_error() {
+        let content = TrayContent {
+            id: String::new(),
+            image: crate::api::tray::TrayImage {
+                path: "/nonexistent/status_1.png".into(),
+                pngs: Vec::new(),
+                template: false,
+                size: 16,
+                placement: crate::api::tray::TrayIconPlacement::Leading,
+            },
+            tool_tip: String::new(),
+            title: String::new(),
+            menu: Vec::new(),
+        };
+        assert_eq!(
+            show(content),
+            Err("no icon file at /nonexistent/status_1.png".into())
+        );
     }
 
     #[test]

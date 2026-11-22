@@ -11,7 +11,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 Stream<TraySignal> traySignals() =>
     RustLib.instance.api.crateApiTrayTraySignals();
 
-bool showTray({required TrayContent content}) =>
+void showTray({required TrayContent content}) =>
     RustLib.instance.api.crateApiTrayShowTray(content: content);
 
 bool setTrayTitle({required String title}) =>

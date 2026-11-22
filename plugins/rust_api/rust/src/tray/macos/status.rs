@@ -46,12 +46,12 @@ pub(super) struct StatusItem {
 }
 
 impl StatusItem {
-    pub fn new(mtm: MainThreadMarker) -> Option<Self> {
+    pub fn new(mtm: MainThreadMarker) -> Result<Self, String> {
         let bar = NSStatusBar::systemStatusBar();
         let item = bar.statusItemWithLength(NSVariableStatusItemLength);
         let Some(button) = item.button(mtm) else {
             bar.removeStatusItem(&item);
-            return None;
+            return Err("the status item came without a button".into());
         };
         let content = ContentView::new(mtm);
         button.addSubview(&content);
@@ -73,7 +73,7 @@ impl StatusItem {
                 .heightAnchor()
                 .constraintEqualToConstant(bar.thickness()),
         ]);
-        Some(Self { item, content })
+        Ok(Self { item, content })
     }
 
     pub fn item(&self) -> &Retained<NSStatusItem> {

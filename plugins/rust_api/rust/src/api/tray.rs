@@ -65,7 +65,7 @@ pub fn tray_signals(sink: StreamSink<TraySignal, SseCodec>) {
 }
 
 #[frb(sync)]
-pub fn show_tray(content: TrayContent) -> bool {
+pub fn show_tray(content: TrayContent) -> Result<(), String> {
     tray::show(content)
 }
 

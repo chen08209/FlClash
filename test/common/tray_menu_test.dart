@@ -8,6 +8,7 @@ import 'package:fl_clash/common/tray.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
@@ -156,6 +157,24 @@ void main() {
       expect(_labels(showCall()), contains(currentAppLocalizations.exit));
     },
   );
+
+  test('SystemAction.updateTray logs a tray the platform refuses, with its '
+      'reason, rather than throwing', () async {
+    globalState.container = container;
+    trayPort = tray;
+    addTearDown(() => trayPort = null);
+    final wasAttached = globalState.isAttach;
+    globalState.isAttach = true;
+    addTearDown(() => globalState.isAttach = wasAttached);
+    host.showFailure = 'no status notifier watcher';
+
+    await container.read(systemActionProvider.notifier).updateTray();
+
+    expect(
+      container.read(logsProvider).list.map((log) => log.payload),
+      contains(contains('no status notifier watcher')),
+    );
+  });
 
   test('builds the stopped menu without the running-only toggles', () async {
     await update(_trayState());

@@ -76,13 +76,10 @@ static WINDOW: OnceLock<Option<usize>> = OnceLock::new();
 static TASKBAR_CREATED: OnceLock<u32> = OnceLock::new();
 static FLUSH_MENUS: OnceLock<Option<unsafe extern "system" fn()>> = OnceLock::new();
 
-pub fn show(content: TrayContent) -> bool {
-    let Some(window) = window() else {
-        return false;
-    };
-    let Some(icon) = load_icon(&content.image.path) else {
-        return false;
-    };
+pub fn show(content: TrayContent) -> Result<(), String> {
+    let window = window().ok_or("the tray window was not created")?;
+    let icon = load_icon(&content.image.path)
+        .ok_or_else(|| format!("no icon loaded from {}", content.image.path))?;
     let mut state = lock();
     state.icon = Some(icon);
     state.tool_tip = content.tool_tip;
@@ -95,7 +92,7 @@ pub fn show(content: TrayContent) -> bool {
     } else {
         unsafe { PostMessageW(window, WM_RETRY, 0, 0) };
     }
-    true
+    Ok(())
 }
 
 pub fn set_title(_title: String) -> bool {

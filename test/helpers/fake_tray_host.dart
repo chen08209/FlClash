@@ -7,7 +7,7 @@ class FakeTrayHost implements TrayHost {
   final List<String> titles = [];
   int hideCount = 0;
   int openMenuCount = 0;
-  bool showResult = true;
+  String? showFailure;
 
   final StreamController<TraySignal> _signals =
       StreamController<TraySignal>.broadcast(sync: true);
@@ -31,9 +31,11 @@ class FakeTrayHost implements TrayHost {
   Stream<TraySignal> signals() => _signals.stream;
 
   @override
-  bool show(TrayContent content) {
+  void show(TrayContent content) {
     shown.add(content);
-    return showResult;
+    if (showFailure case final reason?) {
+      throw TrayException(reason);
+    }
   }
 
   @override

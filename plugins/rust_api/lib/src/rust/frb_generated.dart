@@ -248,7 +248,7 @@ abstract class RustLibApi extends BaseApi {
 
   bool crateApiTraySetTrayTitle({required String title});
 
-  bool crateApiTrayShowTray({required TrayContent content});
+  void crateApiTrayShowTray({required TrayContent content});
 
   Future<bool> crateApiProxyStartSystemProxy({
     required int port,
@@ -1741,7 +1741,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "set_tray_title", argNames: ["title"]);
 
   @override
-  bool crateApiTrayShowTray({required TrayContent content}) {
+  void crateApiTrayShowTray({required TrayContent content}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
@@ -1750,8 +1750,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 44)!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_bool,
-          decodeErrorData: null,
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiTrayShowTrayConstMeta,
         argValues: [content],
