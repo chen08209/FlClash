@@ -25,7 +25,6 @@ extension on SnifferOverrideKey {
   };
 
   ConfigLabel? get description => switch (this) {
-    SnifferOverrideKey.forceDnsMapping => (l) => l.forceDnsMappingDesc,
     SnifferOverrideKey.forceDomain => (l) => l.forceDomainDesc,
     _ => null,
   };

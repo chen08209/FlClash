@@ -1065,7 +1065,7 @@ abstract class AppLocalizations {
   /// No description provided for @externalControllerDesc.
   ///
   /// In en, this message translates to:
-  /// **'The external controller lets you control the core on port 9090.'**
+  /// **'The external controller listens on port 9090.'**
   String get externalControllerDesc;
 
   /// No description provided for @externalControllerSecret.
@@ -2025,7 +2025,7 @@ abstract class AppLocalizations {
   /// No description provided for @writeToSystemDesc.
   ///
   /// In en, this message translates to:
-  /// **'Write to system also sets the system clock; Android ignores it.'**
+  /// **'Write to system has no effect on Android.'**
   String get writeToSystemDesc;
 
   /// No description provided for @sniffer.
@@ -2045,12 +2045,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Force DNS mapping'**
   String get forceDnsMapping;
-
-  /// No description provided for @forceDnsMappingDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Force DNS mapping also sniffs connections whose domain came from a DNS mapping.'**
-  String get forceDnsMappingDesc;
 
   /// No description provided for @parsePureIp.
   ///
@@ -2115,7 +2109,7 @@ abstract class AppLocalizations {
   /// No description provided for @dnsOverrideDesc.
   ///
   /// In en, this message translates to:
-  /// **'Entries added here replace the DNS of every URL and file profile; anything not added keeps the profile\'s own setting. Custom profiles set their DNS in their content.'**
+  /// **'Added entries replace the DNS of URL and file profiles.'**
   String get dnsOverrideDesc;
 
   /// No description provided for @settingEntries.
@@ -2175,7 +2169,7 @@ abstract class AppLocalizations {
   /// No description provided for @respectRulesDesc.
   ///
   /// In en, this message translates to:
-  /// **'Respect rules routes DNS connections by the rules and needs a Proxy Server Nameserver.'**
+  /// **'Respect rules needs a Proxy Server Nameserver.'**
   String get respectRulesDesc;
 
   /// No description provided for @dnsMode.
@@ -5421,7 +5415,7 @@ abstract class AppLocalizations {
   /// No description provided for @strictRouteDesc.
   ///
   /// In en, this message translates to:
-  /// **'Strict route keeps traffic such as DNS from bypassing TUN, and with IPv6 off it blocks this device\'s IPv6 connections.'**
+  /// **'With IPv6 off, strict route also blocks this device’s IPv6 connections.'**
   String get strictRouteDesc;
 
   /// No description provided for @initFailed.
@@ -5475,7 +5469,7 @@ abstract class AppLocalizations {
   /// No description provided for @disableIcmpForwardingDesc.
   ///
   /// In en, this message translates to:
-  /// **'With ICMP forwarding disabled, TUN answers ping itself, so ping no longer shows the real latency.'**
+  /// **'With ICMP forwarding disabled, ping no longer shows the real latency.'**
   String get disableIcmpForwardingDesc;
 
   /// No description provided for @excludeInterface.
@@ -5493,7 +5487,7 @@ abstract class AppLocalizations {
   /// No description provided for @includeInterfaceDesc.
   ///
   /// In en, this message translates to:
-  /// **'Only traffic arriving on included interfaces goes through TUN, and excluded interfaces no longer apply.'**
+  /// **'Once set, excluded interfaces no longer apply.'**
   String get includeInterfaceDesc;
 
   /// No description provided for @includeUid.
@@ -5541,19 +5535,19 @@ abstract class AppLocalizations {
   /// No description provided for @tunOverrideDesc.
   ///
   /// In en, this message translates to:
-  /// **'Entries added here replace the TUN settings of every profile; anything not added keeps the profile\'s own setting. Entries a custom profile adds itself take precedence.'**
+  /// **'Added entries override every profile; a custom profile’s own entries win.'**
   String get tunOverrideDesc;
 
   /// No description provided for @generalOverrideDesc.
   ///
   /// In en, this message translates to:
-  /// **'Entries added here replace the setting of every profile; anything not added keeps the profile\'s own setting, or the core default when the profile has none.'**
+  /// **'Added entries replace every profile’s own setting.'**
   String get generalOverrideDesc;
 
   /// No description provided for @profileTunSettingsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Applies to this profile only and takes precedence over the TUN override entries in the network settings.'**
+  /// **'For this profile only; wins over the TUN overrides in network settings.'**
   String get profileTunSettingsDesc;
 
   /// No description provided for @settingsCount.
@@ -6207,7 +6201,7 @@ abstract class AppLocalizations {
   /// No description provided for @httpCaptureNoHosts.
   ///
   /// In en, this message translates to:
-  /// **'No host is listed, so nothing is recorded. Add hosts under Hostname on the MITM page, or from the details of a connection.'**
+  /// **'Nothing is recorded until hosts are added under Hostname.'**
   String get httpCaptureNoHosts;
 
   /// No description provided for @httpCaptureLimit.
@@ -6567,7 +6561,7 @@ abstract class AppLocalizations {
   /// No description provided for @mitmAndroidRootDesc.
   ///
   /// In en, this message translates to:
-  /// **'Without root, only apps that trust user certificates, mostly browsers, can be decrypted. With root, every app can.'**
+  /// **'Without root, only apps that trust user certificates are decrypted.'**
   String get mitmAndroidRootDesc;
 
   /// No description provided for @mitmCertificateLinuxTip.
@@ -6831,13 +6825,13 @@ abstract class AppLocalizations {
   /// No description provided for @mitmModuleRulesDesc.
   ///
   /// In en, this message translates to:
-  /// **'Routing rules go in front of the profile’s own.'**
+  /// **'Matched before the profile’s rules.'**
   String get mitmModuleRulesDesc;
 
   /// No description provided for @mitmRequestRulesDesc.
   ///
   /// In en, this message translates to:
-  /// **'The module’s URL-REGEX and USER-AGENT rules became URL rewrites, judged request by request: on every plain HTTP request, and on HTTPS only for hosts in the MITM hostname list.'**
+  /// **'URL-REGEX and USER-AGENT rules run as URL rewrites, on HTTPS only for listed hosts.'**
   String get mitmRequestRulesDesc;
 
   /// No description provided for @mitmModuleSystemTip.
@@ -6867,7 +6861,7 @@ abstract class AppLocalizations {
   /// No description provided for @mitmNetworkRisk.
   ///
   /// In en, this message translates to:
-  /// **'When the config is generated, it changes the network settings below, ahead of what you set for the same ones in FlClash. Turning the module off or deleting it undoes this.'**
+  /// **'While on, it overrides these network settings.'**
   String get mitmNetworkRisk;
 
   /// No description provided for @mitmSkipVerifyRisk.
@@ -6885,7 +6879,7 @@ abstract class AppLocalizations {
   /// No description provided for @mitmClientSourceTunTip.
   ///
   /// In en, this message translates to:
-  /// **'With TUN on, this device\'s apps come from the TUN\'s address; a list that leaves it out leaves their traffic undecrypted.'**
+  /// **'With TUN on, include its address to decrypt this device’s apps.'**
   String get mitmClientSourceTunTip;
 
   /// No description provided for @mitmNetworkChanges.

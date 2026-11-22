@@ -493,7 +493,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get externalController => '外部控制器';
 
   @override
-  String get externalControllerDesc => '外部控制器开启后，可通过 9090 端口控制内核。';
+  String get externalControllerDesc => '外部控制器监听 9090 端口。';
 
   @override
   String get externalControllerSecret => '外部控制器密钥';
@@ -990,7 +990,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get writeToSystem => '写入系统';
 
   @override
-  String get writeToSystemDesc => '写入系统会同时设置系统时钟，Android 上不生效。';
+  String get writeToSystemDesc => '写入系统在 Android 上不生效。';
 
   @override
   String get sniffer => '域名嗅探';
@@ -1000,9 +1000,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get forceDnsMapping => '强制DNS映射';
-
-  @override
-  String get forceDnsMappingDesc => '强制 DNS 映射对通过 DNS 映射得到域名的连接也进行嗅探。';
 
   @override
   String get parsePureIp => '解析纯IP';
@@ -1035,8 +1032,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addOverrideEntry => '添加覆写项';
 
   @override
-  String get dnsOverrideDesc =>
-      '添加的项会覆写所有 URL 和文件配置的 DNS，未添加的项沿用配置自身的设置。自定义配置的 DNS 在其内容中设置。';
+  String get dnsOverrideDesc => '添加的项覆写 URL 和文件配置的 DNS。';
 
   @override
   String get settingEntries => '设置项';
@@ -1066,8 +1062,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get respectRules => '遵守规则';
 
   @override
-  String get respectRulesDesc =>
-      '遵守规则使 DNS 连接遵守规则，需配置 Proxy Server Nameserver。';
+  String get respectRulesDesc => '遵守规则需配置 Proxy Server Nameserver。';
 
   @override
   String get dnsMode => 'DNS模式';
@@ -2851,7 +2846,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get routingMark => '路由标记';
 
   @override
-  String get strictRouteDesc => '严格路由防止 DNS 等流量绕过虚拟网卡，关闭 IPv6 时会阻断本机的 IPv6 连接。';
+  String get strictRouteDesc => '关闭 IPv6 时，严格路由会阻断本机的 IPv6 连接。';
 
   @override
   String get initFailed => '启动失败';
@@ -2881,8 +2876,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get disableIcmpForwarding => '禁用ICMP转发';
 
   @override
-  String get disableIcmpForwardingDesc =>
-      '禁用 ICMP 转发后由虚拟网卡直接应答 ping，ping 将不再显示真实延迟。';
+  String get disableIcmpForwardingDesc => '禁用 ICMP 转发后，ping 不再显示真实延迟。';
 
   @override
   String get excludeInterface => '排除网卡';
@@ -2891,7 +2885,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get includeInterface => '包含网卡';
 
   @override
-  String get includeInterfaceDesc => '只有从包含网卡进入的流量经过虚拟网卡，设置后排除网卡不再生效。';
+  String get includeInterfaceDesc => '设置后排除网卡不再生效。';
 
   @override
   String get includeUid => '包含用户 ID';
@@ -2915,15 +2909,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dnsHijackDesc => '未添加时劫持所有发往 53 端口的 DNS 请求（any:53）。';
 
   @override
-  String get tunOverrideDesc =>
-      '添加的项会覆写所有配置的虚拟网卡设置，未添加的项沿用配置自身的设置。自定义配置自己添加的项优先。';
+  String get tunOverrideDesc => '添加的项覆写所有配置的设置，自定义配置自己的项优先。';
 
   @override
-  String get generalOverrideDesc =>
-      '添加的项会覆写所有配置的对应设置，未添加的项沿用配置自身的设置，配置未设置时使用内核默认值。';
+  String get generalOverrideDesc => '添加的项覆写所有配置的对应设置。';
 
   @override
-  String get profileTunSettingsDesc => '仅作用于当前配置，并优先于网络设置中的虚拟网卡覆写项。';
+  String get profileTunSettingsDesc => '仅作用于当前配置，优先于网络设置中的覆写项。';
 
   @override
   String settingsCount(num count) {
@@ -3291,8 +3283,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get httpCaptureDesc => '记录“主机名”中列出的主机的请求，在连接详情中查看。记录只保存在内存中。';
 
   @override
-  String get httpCaptureNoHosts =>
-      '未列出任何主机，不会记录内容。请在 MITM 页的“主机名”中添加，或在连接详情中加入。';
+  String get httpCaptureNoHosts => '在“主机名”中添加主机后才会记录。';
 
   @override
   String get httpCaptureLimit => '最多记录条数';
@@ -3484,8 +3475,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mitmCertificateAndroidReadyTip => '只有信任用户证书的应用（多为浏览器）会被解密。';
 
   @override
-  String get mitmAndroidRootDesc =>
-      '未 root 时只能解密信任用户证书的应用，多为浏览器；root 后可解密所有应用。';
+  String get mitmAndroidRootDesc => '未 root 时只解密信任用户证书的应用。';
 
   @override
   String get mitmCertificateLinuxTip => 'Flatpak 版浏览器需要手动导入导出的证书。';
@@ -3644,11 +3634,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mitmIgnoredLines => '忽略的行';
 
   @override
-  String get mitmModuleRulesDesc => '分流规则排在配置自身的规则之前。';
+  String get mitmModuleRulesDesc => '先于配置自身的规则匹配。';
 
   @override
   String get mitmRequestRulesDesc =>
-      '模块里的 URL-REGEX 和 USER-AGENT 规则已改成 URL 重写，逐个请求判断：明文 HTTP 请求都会判断，HTTPS 只在 MITM 主机名里的连接上判断。';
+      'URL-REGEX 和 USER-AGENT 规则改作 URL 重写，HTTPS 只对主机名中的主机生效。';
 
   @override
   String mitmModuleSystemTip(Object system) {
@@ -3669,8 +3659,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mitmModuleRiskTitle => '启用此模块？';
 
   @override
-  String get mitmNetworkRisk =>
-      '生成配置时，它会修改下列网络设置，并优先于你在 FlClash 中对同一项的设置。关闭或删除模块后即恢复。';
+  String get mitmNetworkRisk => '启用时会覆盖下列网络设置。';
 
   @override
   String mitmSkipVerifyRisk(Object hosts) {
@@ -3683,8 +3672,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get mitmClientSourceTunTip =>
-      '开启 TUN 时，本机应用的来源是 TUN 地址；列表不包含它时，本机应用的流量不会被解密。';
+  String get mitmClientSourceTunTip => '开启 TUN 时，需包含 TUN 地址才能解密本机应用。';
 
   @override
   String get mitmNetworkChanges => '网络设置';

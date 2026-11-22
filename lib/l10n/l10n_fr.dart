@@ -522,7 +522,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get externalControllerDesc =>
-      'Le contrôleur externe permet de piloter le cœur via le port 9090.';
+      'Le contrôleur externe écoute sur le port 9090.';
 
   @override
   String get externalControllerSecret => 'Secret du contrôleur externe';
@@ -1037,7 +1037,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get writeToSystemDesc =>
-      'Écrire dans le système règle aussi l’horloge système ; Android l’ignore.';
+      'Écrire dans le système n’a aucun effet sur Android.';
 
   @override
   String get sniffer => 'Sniffer';
@@ -1047,10 +1047,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get forceDnsMapping => 'Forcer le mappage DNS';
-
-  @override
-  String get forceDnsMappingDesc =>
-      'Forcer le mappage DNS analyse aussi les connexions dont le domaine provient d’un mappage DNS.';
 
   @override
   String get parsePureIp => 'Analyser les IP seules';
@@ -1085,7 +1081,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dnsOverrideDesc =>
-      'Les entrées ajoutées ici remplacent le DNS de tous les profils URL et fichier ; tout ce qui n’est pas ajouté garde le réglage du profil. Les profils personnalisés définissent leur DNS dans leur contenu.';
+      'Les entrées ajoutées remplacent le DNS des profils URL et fichier.';
 
   @override
   String get settingEntries => 'réglages';
@@ -1118,7 +1114,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get respectRulesDesc =>
-      'Respecter les règles fait passer les connexions DNS selon les règles et nécessite un Proxy Server Nameserver.';
+      'Respecter les règles nécessite un Proxy Server Nameserver.';
 
   @override
   String get dnsMode => 'Mode DNS';
@@ -3039,7 +3035,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get strictRouteDesc =>
-      'La route stricte empêche le trafic tel que le DNS de contourner TUN et, avec IPv6 désactivé, bloque les connexions IPv6 de cet appareil.';
+      'Avec IPv6 désactivé, la route stricte bloque aussi les connexions IPv6 de cet appareil.';
 
   @override
   String get initFailed => 'Échec du démarrage';
@@ -3071,7 +3067,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get disableIcmpForwardingDesc =>
-      'Avec le transfert ICMP désactivé, TUN répond lui-même au ping, qui n’indique donc plus la latence réelle.';
+      'Avec le transfert ICMP désactivé, le ping n’indique plus la latence réelle.';
 
   @override
   String get excludeInterface => 'Interfaces exclues';
@@ -3081,7 +3077,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get includeInterfaceDesc =>
-      'Seul le trafic arrivant sur les interfaces incluses passe par TUN, et les interfaces exclues ne s’appliquent plus.';
+      'Une fois défini, les interfaces exclues ne s’appliquent plus.';
 
   @override
   String get includeUid => 'ID utilisateur inclus';
@@ -3108,15 +3104,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tunOverrideDesc =>
-      'Les entrées ajoutées ici remplacent les réglages TUN de tous les profils ; tout ce qui n’est pas ajouté garde le réglage du profil. Les entrées qu’un profil personnalisé ajoute lui-même priment.';
+      'Les entrées ajoutées remplacent celles de tous les profils ; celles d’un profil personnalisé priment.';
 
   @override
   String get generalOverrideDesc =>
-      'Les entrées ajoutées ici remplacent le réglage correspondant de tous les profils ; tout ce qui n’est pas ajouté garde le réglage du profil, ou la valeur par défaut du cœur si le profil n’en a pas.';
+      'Les entrées ajoutées remplacent le réglage de chaque profil.';
 
   @override
   String get profileTunSettingsDesc =>
-      'S’applique uniquement à ce profil et prime sur les entrées de remplacement TUN des réglages réseau.';
+      'Pour ce profil seulement ; prime sur les remplacements TUN des réglages réseau.';
 
   @override
   String settingsCount(num count) {
@@ -3532,7 +3528,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get httpCaptureNoHosts =>
-      'Aucun hôte n’est listé, rien n’est donc enregistré. Ajoutez des hôtes dans Nom d’hôte sur la page MITM, ou depuis les détails d’une connexion.';
+      'Rien n’est enregistré tant qu’aucun hôte n’est ajouté dans Nom d’hôte.';
 
   @override
   String get httpCaptureLimit => 'Nombre maximal d’enregistrements';
@@ -3740,7 +3736,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mitmAndroidRootDesc =>
-      'Sans root, seules les applications qui font confiance aux certificats utilisateur, surtout les navigateurs, peuvent être déchiffrées. Avec root, toutes les applications le peuvent.';
+      'Sans root, seules les applications qui font confiance aux certificats utilisateur sont déchiffrées.';
 
   @override
   String get mitmCertificateLinuxTip =>
@@ -3906,12 +3902,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mitmIgnoredLines => 'Lignes ignorées';
 
   @override
-  String get mitmModuleRulesDesc =>
-      'Les règles de routage passent avant celles du profil.';
+  String get mitmModuleRulesDesc => 'Évaluées avant les règles du profil.';
 
   @override
   String get mitmRequestRulesDesc =>
-      'Les règles URL-REGEX et USER-AGENT du module deviennent des réécritures d’URL évaluées à chaque requête : sur toute requête HTTP en clair et, en HTTPS, seulement pour les hôtes de la liste MITM.';
+      'Les règles URL-REGEX et USER-AGENT agissent comme des réécritures d’URL, en HTTPS seulement pour les hôtes listés.';
 
   @override
   String mitmModuleSystemTip(Object system) {
@@ -3933,7 +3928,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mitmNetworkRisk =>
-      'À la génération de la configuration, il modifie les réglages réseau ci-dessous, en passant avant ce que vous avez défini pour les mêmes dans FlClash. Désactiver ou supprimer le module annule ces changements.';
+      'Tant qu’il est activé, il remplace ces réglages réseau.';
 
   @override
   String mitmSkipVerifyRisk(Object hosts) {
@@ -3947,7 +3942,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mitmClientSourceTunTip =>
-      'Avec TUN activé, les apps de cet appareil arrivent depuis l’adresse de TUN ; si la liste ne la contient pas, leur trafic n’est pas déchiffré.';
+      'Avec TUN activé, incluez son adresse pour déchiffrer les apps de cet appareil.';
 
   @override
   String get mitmNetworkChanges => 'Réglages réseau';

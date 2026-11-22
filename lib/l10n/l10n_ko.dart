@@ -497,7 +497,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get externalController => '외부 컨트롤러';
 
   @override
-  String get externalControllerDesc => '외부 컨트롤러를 사용하면 9090 포트로 코어를 제어할 수 있습니다.';
+  String get externalControllerDesc => '외부 컨트롤러는 9090 포트에서 수신합니다.';
 
   @override
   String get externalControllerSecret => '외부 컨트롤러 시크릿';
@@ -994,7 +994,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get writeToSystem => '시스템에 기록';
 
   @override
-  String get writeToSystemDesc => '시스템에 기록하면 시스템 시계도 설정합니다. Android에서는 무시됩니다.';
+  String get writeToSystemDesc => '시스템에 기록은 Android에서 적용되지 않습니다.';
 
   @override
   String get sniffer => '스니퍼';
@@ -1004,9 +1004,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get forceDnsMapping => 'DNS 매핑 강제';
-
-  @override
-  String get forceDnsMappingDesc => 'DNS 매핑 강제는 DNS 매핑에서 도메인을 얻은 연결도 스니핑합니다.';
 
   @override
   String get parsePureIp => '순수 IP 분석';
@@ -1039,8 +1036,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get addOverrideEntry => '덮어쓰기 항목 추가';
 
   @override
-  String get dnsOverrideDesc =>
-      '여기에 추가한 항목은 모든 URL 및 파일 프로필의 DNS를 대체합니다. 추가하지 않은 항목은 프로필 자체 설정을 유지합니다. 사용자 지정 프로필은 내용에서 DNS를 설정합니다.';
+  String get dnsOverrideDesc => '추가한 항목은 URL 및 파일 프로필의 DNS를 대체합니다.';
 
   @override
   String get settingEntries => '설정';
@@ -1070,8 +1066,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get respectRules => '규칙 준수';
 
   @override
-  String get respectRulesDesc =>
-      '규칙 준수는 DNS 연결을 규칙에 따라 라우팅하며 Proxy Server Nameserver가 필요합니다.';
+  String get respectRulesDesc => '규칙 준수에는 Proxy Server Nameserver가 필요합니다.';
 
   @override
   String get dnsMode => 'DNS 모드';
@@ -2925,8 +2920,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get routingMark => '라우팅 마크';
 
   @override
-  String get strictRouteDesc =>
-      '엄격한 라우팅은 DNS 등의 트래픽이 TUN을 우회하지 못하게 하며, IPv6가 꺼져 있으면 이 기기의 IPv6 연결을 차단합니다.';
+  String get strictRouteDesc => 'IPv6가 꺼져 있으면 엄격한 라우팅이 이 기기의 IPv6 연결도 차단합니다.';
 
   @override
   String get initFailed => '시작 실패';
@@ -2958,7 +2952,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get disableIcmpForwardingDesc =>
-      'ICMP 전달을 끄면 TUN이 ping에 직접 응답하므로 ping에 실제 지연 시간이 표시되지 않습니다.';
+      'ICMP 전달을 끄면 ping에 실제 지연 시간이 표시되지 않습니다.';
 
   @override
   String get excludeInterface => '제외할 인터페이스';
@@ -2967,8 +2961,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get includeInterface => '포함할 인터페이스';
 
   @override
-  String get includeInterfaceDesc =>
-      '포함할 인터페이스로 들어오는 트래픽만 TUN을 거치며, 제외할 인터페이스는 더 이상 적용되지 않습니다.';
+  String get includeInterfaceDesc => '설정하면 제외할 인터페이스는 더 이상 적용되지 않습니다.';
 
   @override
   String get includeUid => '포함할 사용자 ID';
@@ -2994,15 +2987,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tunOverrideDesc =>
-      '여기에 추가한 항목은 모든 프로필의 TUN 설정을 대체합니다. 추가하지 않은 항목은 프로필 자체 설정을 유지합니다. 사용자 지정 프로필이 직접 추가한 항목이 우선합니다.';
+      '추가한 항목은 모든 프로필을 덮어쓰며, 사용자 지정 프로필 자체 항목이 우선합니다.';
 
   @override
-  String get generalOverrideDesc =>
-      '여기에 추가한 항목은 모든 프로필의 해당 설정을 대체합니다. 추가하지 않은 항목은 프로필 자체 설정을 유지하며, 프로필에 없으면 코어 기본값을 사용합니다.';
+  String get generalOverrideDesc => '추가한 항목은 모든 프로필의 해당 설정을 대체합니다.';
 
   @override
   String get profileTunSettingsDesc =>
-      '이 프로필에만 적용되며 네트워크 설정의 TUN 덮어쓰기 항목보다 우선합니다.';
+      '이 프로필에만 적용되며 네트워크 설정의 TUN 덮어쓰기보다 우선합니다.';
 
   @override
   String settingsCount(num count) {
@@ -3402,8 +3394,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '호스트 이름에 나열한 호스트의 요청을 기록하며, 연결 세부 정보에서 볼 수 있습니다. 기록은 메모리에만 보관됩니다.';
 
   @override
-  String get httpCaptureNoHosts =>
-      '나열된 호스트가 없어 아무것도 기록되지 않습니다. MITM 페이지의 호스트 이름이나 연결 세부 정보에서 추가하세요.';
+  String get httpCaptureNoHosts => '호스트 이름에 호스트를 추가할 때까지 아무것도 기록되지 않습니다.';
 
   @override
   String get httpCaptureLimit => '최대 기록 수';
@@ -3599,8 +3590,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '사용자 인증서를 신뢰하는 앱(주로 브라우저)만 복호화됩니다.';
 
   @override
-  String get mitmAndroidRootDesc =>
-      '루팅하지 않으면 사용자 인증서를 신뢰하는 앱(주로 브라우저)만 복호화할 수 있습니다. 루팅하면 모든 앱을 복호화할 수 있습니다.';
+  String get mitmAndroidRootDesc => '루팅하지 않으면 사용자 인증서를 신뢰하는 앱만 복호화됩니다.';
 
   @override
   String get mitmCertificateLinuxTip => 'Flatpak 브라우저에는 내보낸 인증서를 직접 가져와야 합니다.';
@@ -3761,11 +3751,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mitmIgnoredLines => '무시된 줄';
 
   @override
-  String get mitmModuleRulesDesc => '라우팅 규칙은 프로필 자체 규칙보다 앞에 적용됩니다.';
+  String get mitmModuleRulesDesc => '프로필 자체 규칙보다 먼저 적용됩니다.';
 
   @override
   String get mitmRequestRulesDesc =>
-      '이 모듈의 URL-REGEX 및 USER-AGENT 규칙은 URL 재작성으로 바뀌어 요청마다 판단됩니다. 평문 HTTP는 모든 요청이, HTTPS는 MITM 호스트 이름 목록에 있는 연결만 대상입니다.';
+      'URL-REGEX 및 USER-AGENT 규칙은 URL 재작성으로 동작하며, HTTPS는 목록의 호스트에만 적용됩니다.';
 
   @override
   String mitmModuleSystemTip(Object system) {
@@ -3786,8 +3776,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mitmModuleRiskTitle => '이 모듈을 켤까요?';
 
   @override
-  String get mitmNetworkRisk =>
-      '구성을 생성할 때 아래 네트워크 설정을 변경하며, FlClash에서 같은 항목에 한 설정보다 우선합니다. 모듈을 끄거나 삭제하면 원래대로 돌아갑니다.';
+  String get mitmNetworkRisk => '켜져 있는 동안 아래 네트워크 설정을 덮어씁니다.';
 
   @override
   String mitmSkipVerifyRisk(Object hosts) {
@@ -3801,7 +3790,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get mitmClientSourceTunTip =>
-      'TUN이 켜져 있으면 이 기기의 앱은 TUN 주소에서 연결합니다. 목록에 그 주소가 없으면 앱의 트래픽은 복호화되지 않습니다.';
+      'TUN이 켜져 있으면 이 기기의 앱을 복호화하려면 TUN 주소를 포함하세요.';
 
   @override
   String get mitmNetworkChanges => '네트워크 설정';

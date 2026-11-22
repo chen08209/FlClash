@@ -514,7 +514,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get externalControllerDesc =>
-      'The external controller lets you control the core on port 9090.';
+      'The external controller listens on port 9090.';
 
   @override
   String get externalControllerSecret => 'External controller secret';
@@ -1023,8 +1023,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get writeToSystem => 'Write to system';
 
   @override
-  String get writeToSystemDesc =>
-      'Write to system also sets the system clock; Android ignores it.';
+  String get writeToSystemDesc => 'Write to system has no effect on Android.';
 
   @override
   String get sniffer => 'Sniffer';
@@ -1034,10 +1033,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get forceDnsMapping => 'Force DNS mapping';
-
-  @override
-  String get forceDnsMappingDesc =>
-      'Force DNS mapping also sniffs connections whose domain came from a DNS mapping.';
 
   @override
   String get parsePureIp => 'Parse pure IP';
@@ -1072,7 +1067,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dnsOverrideDesc =>
-      'Entries added here replace the DNS of every URL and file profile; anything not added keeps the profile\'s own setting. Custom profiles set their DNS in their content.';
+      'Added entries replace the DNS of URL and file profiles.';
 
   @override
   String get settingEntries => 'settings';
@@ -1104,7 +1099,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get respectRulesDesc =>
-      'Respect rules routes DNS connections by the rules and needs a Proxy Server Nameserver.';
+      'Respect rules needs a Proxy Server Nameserver.';
 
   @override
   String get dnsMode => 'DNS mode';
@@ -3003,7 +2998,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get strictRouteDesc =>
-      'Strict route keeps traffic such as DNS from bypassing TUN, and with IPv6 off it blocks this device\'s IPv6 connections.';
+      'With IPv6 off, strict route also blocks this device’s IPv6 connections.';
 
   @override
   String get initFailed => 'Startup failed';
@@ -3035,7 +3030,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disableIcmpForwardingDesc =>
-      'With ICMP forwarding disabled, TUN answers ping itself, so ping no longer shows the real latency.';
+      'With ICMP forwarding disabled, ping no longer shows the real latency.';
 
   @override
   String get excludeInterface => 'Excluded interfaces';
@@ -3045,7 +3040,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get includeInterfaceDesc =>
-      'Only traffic arriving on included interfaces goes through TUN, and excluded interfaces no longer apply.';
+      'Once set, excluded interfaces no longer apply.';
 
   @override
   String get includeUid => 'Included user IDs';
@@ -3072,15 +3067,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tunOverrideDesc =>
-      'Entries added here replace the TUN settings of every profile; anything not added keeps the profile\'s own setting. Entries a custom profile adds itself take precedence.';
+      'Added entries override every profile; a custom profile’s own entries win.';
 
   @override
   String get generalOverrideDesc =>
-      'Entries added here replace the setting of every profile; anything not added keeps the profile\'s own setting, or the core default when the profile has none.';
+      'Added entries replace every profile’s own setting.';
 
   @override
   String get profileTunSettingsDesc =>
-      'Applies to this profile only and takes precedence over the TUN override entries in the network settings.';
+      'For this profile only; wins over the TUN overrides in network settings.';
 
   @override
   String settingsCount(num count) {
@@ -3495,7 +3490,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get httpCaptureNoHosts =>
-      'No host is listed, so nothing is recorded. Add hosts under Hostname on the MITM page, or from the details of a connection.';
+      'Nothing is recorded until hosts are added under Hostname.';
 
   @override
   String get httpCaptureLimit => 'Maximum records';
@@ -3702,7 +3697,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mitmAndroidRootDesc =>
-      'Without root, only apps that trust user certificates, mostly browsers, can be decrypted. With root, every app can.';
+      'Without root, only apps that trust user certificates are decrypted.';
 
   @override
   String get mitmCertificateLinuxTip =>
@@ -3866,12 +3861,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mitmIgnoredLines => 'Ignored lines';
 
   @override
-  String get mitmModuleRulesDesc =>
-      'Routing rules go in front of the profile’s own.';
+  String get mitmModuleRulesDesc => 'Matched before the profile’s rules.';
 
   @override
   String get mitmRequestRulesDesc =>
-      'The module’s URL-REGEX and USER-AGENT rules became URL rewrites, judged request by request: on every plain HTTP request, and on HTTPS only for hosts in the MITM hostname list.';
+      'URL-REGEX and USER-AGENT rules run as URL rewrites, on HTTPS only for listed hosts.';
 
   @override
   String mitmModuleSystemTip(Object system) {
@@ -3893,7 +3887,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mitmNetworkRisk =>
-      'When the config is generated, it changes the network settings below, ahead of what you set for the same ones in FlClash. Turning the module off or deleting it undoes this.';
+      'While on, it overrides these network settings.';
 
   @override
   String mitmSkipVerifyRisk(Object hosts) {
@@ -3907,7 +3901,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mitmClientSourceTunTip =>
-      'With TUN on, this device\'s apps come from the TUN\'s address; a list that leaves it out leaves their traffic undecrypted.';
+      'With TUN on, include its address to decrypt this device’s apps.';
 
   @override
   String get mitmNetworkChanges => 'Network settings';
