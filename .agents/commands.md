@@ -197,9 +197,9 @@ isolate, so a test can see state a file before it left behind; the script runs e
 its own, lets that run decide, and names the files that only failed together. See the Shared Test Isolate section of
 `rules.md` before fixing one.
 
-`plugins/setup/setup_hooks/` is a pure Dart package and is tested with `dart test` from its own directory, which is
-also what CI runs; `tool/check_plugins.sh` does not descend into it. It must stay out of `flutter test`, because a test
-run of `plugins/setup` would execute the build hook itself.
+`plugins/setup/setup_hooks/` is a pure Dart package, checked with `dart analyze` and `dart test` from its own
+directory, which is also what CI runs; `tool/check_plugins.sh` does not descend into it. It must stay out of
+`flutter test`, because a test run of `plugins/setup` would execute the build hook itself.
 
 `.github/scripts/issue-gate.js` is tested with `node --test .github/scripts/`, against the forms in
 `.github/ISSUE_TEMPLATE/`; no workflow runs it, so run it after changing the script or a form.
@@ -236,14 +236,25 @@ What those suites own:
 
 ## Native Component Verification
 
-The CI Go-wrapper checks can be reproduced without CGO. They cover the Android files too, except the cgo one in
-`timezone/`, which only the gomobile build compiles:
+The CI Go-wrapper checks can be reproduced without CGO (`make core-check core-test`). They cover the Android files
+too, except the cgo one in `timezone/`, which only the gomobile build compiles:
 
 ```bash
 cd core
-CGO_ENABLED=0 go test .
+gofmt -l ./*.go ./cmd ./mobile ./platform ./timezone ./tun   # prints nothing when formatted
+CGO_ENABLED=0 go test -count=1 .
 CGO_ENABLED=0 go vet . ./cmd/...
-GOOS=android GOARCH=arm64 CGO_ENABLED=0 go vet -tags=with_gvisor . ./mobile ./tun ./platform
+CGO_ENABLED=0 GOOS=linux go vet ./platform
+GOOS=android GOARCH=arm64 CGO_ENABLED=0 go vet "-tags=$(sed -n 's/^tags: *//p' ../build_config.yaml)" \
+  . ./mobile ./tun ./platform
+```
+
+`plugins/rust_api/rust` is checked the same way as the Helper below; `make rust-check` runs both crates' format
+checks and tests as CI does. Tests under `cfg(target_os = "linux")` compile and run only on Linux:
+
+```bash
+cargo fmt --manifest-path plugins/rust_api/rust/Cargo.toml -- --check
+cargo test --manifest-path plugins/rust_api/rust/Cargo.toml
 ```
 
 The Windows Helper's loopback/session protocol tests are host-independent by default. Windows CI additionally enables its
@@ -265,6 +276,21 @@ export JAVA_HOME="$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home"
 ./gradlew :core:compileDebugKotlin -Ptarget-platform=android-arm64   # builds the gomobile AAR for one ABI
 ./gradlew :service:compileDebugKotlin
 ./gradlew :app:compileDebugKotlin
+```
+
+Run the JVM unit tests of `:common`, `:service` and `:app` as the CI `android` job does. No test loads the Core or
+the Flutter build, but `:core` compiles against the gomobile AAR, so Go and the NDK are needed and one ABI is built.
+`android/gradlew` and `android/local.properties` are ignored by git; CI copies the wrapper from Flutter's cache and
+writes the SDK paths, and a checkout without them needs the same:
+
+```bash
+cd android
+flutter_root="$(flutter --version --machine | jq -r .flutterRoot)"
+test -f gradlew || { cp -R "$flutter_root/bin/cache/artifacts/gradle_wrapper/." . && chmod +x gradlew; }
+test -f local.properties ||
+  printf 'flutter.sdk=%s\nsdk.dir=%s\n' "$flutter_root" "${ANDROID_HOME:?the Android SDK}" > local.properties
+./gradlew :common:testDebugUnitTest :service:testDebugUnitTest :app:testDebugUnitTest \
+  -Ptarget-platform=android-arm64 -x :app:compileFlutterBuildDebug -x :app:copyFlutterAssetsDebug
 ```
 
 Always-on VPN entry, system VPN revoke, actual permission UI, and rapid device start/stop still require Android device or
@@ -489,6 +515,7 @@ bash tool/hooks/test.sh
 flutter pub get
 dart format --output=none --set-exit-if-changed lib test tool plugins
 flutter analyze --no-fatal-infos
+bash tool/strip_check.sh              # make strip-check
 dart run tool/changelog.dart verify   # main and tags only
 dart run tool/test.dart -- --reporter expanded --coverage
 dart run tool/check_coverage.dart coverage/lcov.info 75
@@ -515,7 +542,9 @@ only once every build and every check job passes.
 `bash tool/check_plugins.sh` is that plugin gate, and CI runs the same script.
 It discovers every `plugins/*/pubspec.yaml`, analyzes each package, and runs
 `flutter test` wherever `test/*_test.dart` exists. Adding a plugin package needs
-no workflow edit.
+no workflow edit. The match is not recursive, so `plugins/prism_ui`, whose tests
+all sit in subdirectories of `test/`, is analyzed but not tested there; run
+`flutter test` from `plugins/prism_ui` for its tests.
 
 ### CI Caches
 

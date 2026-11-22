@@ -96,8 +96,8 @@ adjustments, without another search for improvements. Raise a new finding only w
 and exceeds the existing authorization.
 
 Before committing, recheck status and the actual staged diff so the pending snapshot matches what was reviewed, and
-review only the delta of later edits. Run the checks `AGENTS.md` requires for the change, scoped by Test Scope in
-`.agents/rules.md`. Reuse results that are still valid, rerun those a later edit invalidated, and never present
+review only the delta of later edits. Run the checks `AGENTS.md` requires for the change, scoped by the
+`test-scope` skill. Reuse results that are still valid, rerun those a later edit invalidated, and never present
 results from an earlier snapshot as verification of the staged one. The `comment-density` and `commit-msg` hooks in
 `.agents/rules.md` still gate the commit.
 

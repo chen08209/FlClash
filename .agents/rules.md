@@ -452,28 +452,6 @@ as it needs anywhere else, so this part is about where work runs, not how much o
 - An editor document stays in the Rust rope. Open a file for `EditorPage` with `openEditorFile` rather than reading it
   into a string, and read an edited one through `EditorContent`; a profile can be tens of megabytes.
 
-## Test Scope
-
-Size every test run to the change, and keep the full suite for the two cases below.
-
-- While editing, run only the tests of the files you changed: the mirrored path (`lib/a/b.dart` →
-  `test/a/b_test.dart`), test files named for the same feature, and tests that import a changed file directly.
-- Before sending a change for review, run the test directories it touches with `dart run tool/test.dart <dir>...`,
-  adding `test/lint` whenever `lib/` changed, since those tests scan all of `lib/`. Name the directories and the test
-  count from the run's last line in the report.
-- Run the full suite (`dart run tool/test.dart`) only when the change touches a shared base, or in a branch's last
-  review round; no other round runs it. The shared bases are `pubspec.yaml` and `pubspec.lock`, the build hook in
-  `plugins/setup`, models and anything `build_runner` regenerates, `lib/common/` and the barrel files
-  (`lib/models/models.dart`, `lib/widgets/widgets.dart` and the like), `plugins/prism_ui`, `analysis_options.yaml` and
-  `lint_options.yaml`, and `test/helpers/` or `tool/test.dart`. Over half the test files import a barrel, so no import
-  graph narrows such a change.
-- Keep the last round's full run: on the private `origin` the CI checks run only when started by hand, so nothing else
-  runs the suite before a merge.
-- Run a test that only runs on another platform, such as a `cfg(target_os = "linux")` Rust test in
-  `plugins/rust_api/rust` or a test that needs a display, on a machine of that platform, not on the host.
-- A host test never starts the real app or Core and never changes the host's network, proxy or system settings; see
-  Running the App Locally and the `@visibleForTesting` seams under Shared Test Isolate.
-
 ## Testing Rules
 
 The `core/` directory is excluded from automated coverage accounting. Do not add coverage instrumentation or coverage

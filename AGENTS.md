@@ -54,11 +54,12 @@ Read these only when the task touches their area:
 - Follow `lint_options.yaml`: single quotes, trailing commas, `child:` last, no `print()`, const/final, declared return
   types.
 - Before reporting done, run `flutter pub get`, `flutter analyze --no-fatal-infos`, and the tests the change reaches;
-  the full suite only after a shared-base change or in a branch's last review round. See Test Scope in
-  [rules.md](.agents/rules.md). Say which check was skipped when a toolchain the build hook needs (Go, and on Linux
-  and Windows `cargo`) is missing.
+  the full suite only after a shared-base change or in a branch's last review round. See the
+  [test-scope](.agents/skills/test-scope/SKILL.md) skill. Say which check was skipped when a toolchain the build hook
+  needs (Go, and on Linux and Windows `cargo`) is missing.
 
 ## Repo Skills
 
 Use the skills in `.agents/skills/` when a task matches their descriptions; `.claude/skills/` symlinks expose them to
-Claude Code. They cover localization, UI work, UI performance, core/platform changes, and pre-commit structural review.
+Claude Code. They cover localization, UI work, UI performance, core/platform changes, test scope, and pre-commit
+structural review.
