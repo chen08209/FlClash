@@ -251,6 +251,15 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         ref
             .read(geoResourceActionProvider.notifier)
             .handleCoreUpdate(name, phase, error);
+      case ResourceUpdateEvent(
+        kind: ResourceKind.mitmModule,
+        :final name,
+        phase: ResourcePhase.updated,
+      ):
+        ref.invalidate(mitmModuleStatusProvider);
+        if (int.tryParse(name) case final id?) {
+          ref.invalidate(mitmModuleContentProvider(id));
+        }
       case ResourceUpdateEvent(kind: ResourceKind.mitmModule):
         ref.invalidate(mitmModuleStatusProvider);
       case ResourceUpdateEvent(

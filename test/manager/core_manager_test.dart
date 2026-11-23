@@ -11,6 +11,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/ui.dart';
@@ -1267,6 +1268,56 @@ void main() {
 
     expect(container.read(isUpdatingProvider(key)), isFalse);
     expect(find.text('background failure'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a module is read again once the Core stores its files', (
+    tester,
+  ) async {
+    final harness = _harness();
+    var reads = 0;
+    final container = await _pumpConnected(
+      tester,
+      harness,
+      overrides: [
+        mitmModuleContentProvider(7).overrideWith((ref) async {
+          reads++;
+          return null;
+        }),
+      ],
+    );
+    final subscription = container.listen(
+      mitmModuleContentProvider(7),
+      (_, _) {},
+    );
+    addTearDown(subscription.close);
+    await tester.pump();
+    expect(reads, 1);
+
+    for (final phase in [ResourcePhase.updating, ResourcePhase.unchanged]) {
+      harness.feeds.events.add([
+        ResourceUpdateEvent(
+          kind: ResourceKind.mitmModule,
+          name: '7',
+          phase: phase,
+        ),
+      ]);
+      await tester.pump();
+      await tester.pump();
+    }
+    expect(reads, 1);
+
+    harness.feeds.events.add(const [
+      ResourceUpdateEvent(
+        kind: ResourceKind.mitmModule,
+        name: '7',
+        phase: ResourcePhase.updated,
+      ),
+    ]);
+    await tester.pump();
+    await tester.pump();
+    expect(reads, 2);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
