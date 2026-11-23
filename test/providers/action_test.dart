@@ -886,6 +886,39 @@ void main() {
       },
     );
 
+    test('a restart whose apply needs TUN authorization asks before it '
+        'restarts the Core, so it never waits on itself', () async {
+      late _HandoffSetupAction setupAction;
+      final container = ProviderContainer(
+        overrides: [
+          coreActionProvider.overrideWith(_TestCoreAction.new),
+          setupActionProvider.overrideWith(() {
+            setupAction = _HandoffSetupAction([AuthorizeCode.success]);
+            return setupAction;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith.tun(enable: true));
+      container.read(setupActionProvider);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+
+      final applied = await coreAction.restartCore().timeout(
+        const Duration(seconds: 5),
+      );
+
+      expect(applied, isTrue);
+      expect(setupAction.authorizationRequestCount, 1);
+      expect(coreAction.lifecycleRestartCount, 1);
+      expect(
+        container.read(authorizedTunEnableProvider),
+        TunAuthorizationState.authorized,
+      );
+    });
+
     test('reopens authorization and propagates a failed restart', () async {
       late _AuthorizationSetupAction setupAction;
       final container = ProviderContainer(
@@ -1091,6 +1124,24 @@ class _AuthorizationSetupAction extends SetupAction {
       return pending.future;
     }
     return authorizationResults[index];
+  }
+}
+
+/// Hands off to a Core restart as `_setupConfig` does once TUN was just
+/// granted.
+class _HandoffSetupAction extends _AuthorizationSetupAction {
+  _HandoffSetupAction(super.authorizationResults);
+
+  @override
+  Future<bool> applyProfile({
+    bool silence = false,
+    bool force = false,
+    Future<void> Function()? preloadInvoke,
+  }) async {
+    if (!await requestAdmin(ref.read(patchClashConfigProvider).tun.enable)) {
+      return ref.read(coreActionProvider.notifier).restartCore();
+    }
+    return true;
   }
 }
 

@@ -120,8 +120,11 @@ class CoreAction extends _$CoreAction {
   }
 
   Future<bool> _runRestartWorker() async {
+    final setup = ref.read(setupActionProvider.notifier);
+    var authorizedNow = false;
     try {
       ref.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
+      authorizedNow = await setup._authorizeTunBeforeRestart();
       final result = await restartLifecycle();
       if (!await _applyLifecycleResult(result, statusFirst: true)) {
         return false;
@@ -144,6 +147,9 @@ class CoreAction extends _$CoreAction {
       }
       return applied;
     } catch (error) {
+      if (authorizedNow) {
+        setup._forgetTunAuthorization();
+      }
       _markStopped(error);
       rethrow;
     } finally {

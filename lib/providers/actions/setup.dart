@@ -512,10 +512,21 @@ class SetupAction extends _$SetupAction {
     try {
       return await ref.read(coreActionProvider.notifier).restartCore();
     } catch (_) {
-      ref.read(authorizedTunEnableProvider.notifier).value =
-          TunAuthorizationState.none;
+      _forgetTunAuthorization();
       rethrow;
     }
+  }
+
+  /// A restart asks first, as [_setupConfig] would before handing off to it:
+  /// the apply inside the restart must not hand off to the restart it runs in.
+  /// Returns whether it was granted now.
+  Future<bool> _authorizeTunBeforeRestart() async {
+    return !await requestAdmin(ref.read(patchClashConfigProvider).tun.enable);
+  }
+
+  void _forgetTunAuthorization() {
+    ref.read(authorizedTunEnableProvider.notifier).value =
+        TunAuthorizationState.none;
   }
 
   /// With a base, [BuiltProfile.yaml] is only the overlay the Core applies.
