@@ -87,7 +87,7 @@ class TrackerPathSection extends ConsumerWidget {
                         '$delay ms',
                         style: TextStyle(
                           color: context.colorScheme.delayColor(delay),
-                        ),
+                        ).toTabular,
                       ),
               ),
             ),

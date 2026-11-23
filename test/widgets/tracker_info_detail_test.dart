@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/connection/tracker_info_detail.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -71,5 +72,53 @@ void main() {
 
     expect(built, 0);
     expect(find.text('1.1.1.1:443'), findsWidgets);
+  });
+
+  testWidgets('a node on the path sets its delay in figures of one width', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        groupsProvider.overrideWithBuild(
+          (_, _) => const [
+            Group(
+              type: GroupType.URLTest,
+              name: 'Auto',
+              testUrl: 'https://group.test',
+              all: [Proxy(name: 'Tokyo 01', type: 'Trojan')],
+            ),
+          ],
+        ),
+        delayProvider(
+          proxyName: 'Tokyo 01',
+          testUrl: 'https://group.test',
+        ).overrideWithValue(38),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: TestApp(
+          child: TrackerPathSection(
+            trackerInfo: TrackerInfo(
+              id: 1,
+              start: DateTime.utc(2026),
+              metadata: const Metadata(network: 'tcp', host: 'example.com'),
+              chains: const ['Tokyo 01', 'Auto'],
+              rule: 'Match',
+              rulePayload: '',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.widget<Text>(find.text('38 ms')).style?.fontFeatures,
+      contains(const FontFeature.tabularFigures()),
+    );
   });
 }
