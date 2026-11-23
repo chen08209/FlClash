@@ -192,6 +192,18 @@ double _cloverTurn(WidgetTester tester) => tester
     )
     .rotation;
 
+double _rootGlow(WidgetTester tester) {
+  final paint = tester.widget<CustomPaint>(
+    find
+        .ancestor(
+          of: find.byType(DashboardCard),
+          matching: find.byType(CustomPaint),
+        )
+        .first,
+  );
+  return (paint.painter! as dynamic).opacity as double;
+}
+
 DashboardChip _chip(WidgetTester tester, String label) =>
     tester.widget<DashboardChip>(
       find.ancestor(of: find.text(label), matching: find.byType(DashboardChip)),
@@ -200,33 +212,58 @@ DashboardChip _chip(WidgetTester tester, String label) =>
 void main() {
   setUpAll(() => registerFallbackValue(const OutboundIpParams(timeout: 0)));
 
-  group('root access', () {
-    testWidgets('fades in a border and names it only to a screen reader', (
+  group('su access glow', () {
+    Widget glow({required bool granted}) => TestApp(
+      locale: const Locale('en'),
+      child: Center(
+        child: SizedBox(
+          width: 320,
+          height: 120,
+          child: SuAccessGlow(
+            granted: granted,
+            shape: AppShape.all(AppCorner.lg),
+            child: const SizedBox.expand(),
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('fades in and names it only to a screen reader', (
       tester,
     ) async {
       final semantics = tester.ensureSemantics();
-      await tester.pumpWidget(_app((_, _) async => _residential, root: true));
-      await tester.pump();
+      await tester.pumpWidget(glow(granted: false));
+      await tester.pumpWidget(glow(granted: true));
       await tester.pump(const Duration(milliseconds: 150));
 
-      final midway = tester.widget<DashboardCard>(find.byType(DashboardCard));
-      expect(midway.side.color.a, inExclusiveRange(0, 1));
+      expect(_rootGlow(tester), inExclusiveRange(0, 1));
 
       await tester.pump(commonDuration);
 
-      final card = tester.widget<DashboardCard>(find.byType(DashboardCard));
-      expect(card.side.color.a, closeTo(1, 0.01));
+      expect(_rootGlow(tester), 1);
       expect(find.text('Root'), findsNothing);
       expect(find.bySemanticsLabel(RegExp('Status Root')), findsOneWidget);
       semantics.dispose();
     });
 
-    testWidgets('leaves the card plain without it', (tester) async {
-      await tester.pumpWidget(_app((_, _) async => _residential));
+    testWidgets('stays plain without su', (tester) async {
+      await tester.pumpWidget(glow(granted: false));
       await tester.pump(commonDuration);
 
-      final card = tester.widget<DashboardCard>(find.byType(DashboardCard));
-      expect(card.side, BorderSide.none);
+      expect(_rootGlow(tester), 0);
+    });
+
+    testWidgets('is off on the status card even with su granted', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(_app((_, _) async => _residential, root: true));
+      await tester.pump(commonDuration);
+
+      expect(suAccessGlowShown, isFalse);
+      expect(find.byType(SuAccessGlow), findsNothing);
+      expect(find.bySemanticsLabel(RegExp('Status Root')), findsNothing);
+      semantics.dispose();
     });
   });
 

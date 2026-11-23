@@ -1101,6 +1101,16 @@ void main() {
     });
   });
 
+  group('VpnProps', () {
+    test('a save from a build with root mode still loads its VPN settings', () {
+      final config = Config.fromJson({
+        'vpnProps': {'rootTun': true, 'dnsHijacking': true, 'ipv6': true},
+      });
+
+      expect(config.vpnProps, const VpnProps(dnsHijacking: true, ipv6: true));
+    });
+  });
+
   group('Config composite serialization', () {
     test('DAVProps obfuscates and restores its password', () {
       const props = DAVProps(

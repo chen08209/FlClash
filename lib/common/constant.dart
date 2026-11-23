@@ -21,6 +21,10 @@ const packageDisplayName = rsSideBySide ? 'FlClash RS' : appName;
 const sideBySideName = rsSideBySide ? 'FlClash rs' : appName;
 const _appSlug = rsSideBySide ? 'flclash-rs' : 'flclash';
 
+/// The status card's glow while su is granted stays off until the card shows
+/// something that needs root again.
+const suAccessGlowShown = false;
+
 /// Kept on every line: subscription servers match it in the User-Agent and
 /// the Helper accepts a Core socket only under a directory of this name.
 const productName = 'FlClash';

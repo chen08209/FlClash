@@ -115,8 +115,9 @@ Color marks the one item that differs, never the structure around it.
   (30/90). The containers cap their chroma at 16, near `errorContainer`: green otherwise keeps about 60 at tone 90 and
   fills a chip with a vivid slab. Content on a `success` or `warning` fill takes `onSuccess`/`onWarning` (100/20),
   never the container color, which shares the fill's hue and only just clears 4.5:1. A delay under 600 ms is success, above it warning, a failure error: `ColorScheme.delayColor`.
-- **Root access** on the dashboard's status card: a 1.5 dp `primary` border over its content, with no chip.
-  Its fill stays at its level, and a screen reader gets the state from the card's label.
+- **Root access** on the dashboard's status card: a soft ring of hues around the card while su is granted
+  (`SuAccessGlow`), with no chip; its fill stays at its level, and a screen reader gets the state from the card's
+  label. `suAccessGlowShown` keeps it off for now, so the card stays plain.
 - **Destructive** action in an alert: `ColorScheme.destructive`, iOS 27's systemRed in both modes, not `error`. A
   menu's `danger` item still takes `error`.
 - **Data series** on one chart: the first is primary, the second primary at 45% over the card
