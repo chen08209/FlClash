@@ -4,6 +4,8 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/widgets.dart';
 
+const _valueGap = 24.0;
+
 class RecordTextStyles {
   final TextStyle title;
   final TextStyle primary;
@@ -218,8 +220,6 @@ class DetailRow extends StatelessWidget {
     );
   }
 }
-
-const _valueGap = 24.0;
 
 /// A row one level up from its run, marked at its start.
 class RecordSelectedRow extends StatelessWidget {
