@@ -95,6 +95,35 @@ void main() {
     );
   }
 
+  testWidgets('live connections open on the active ones and recent requests '
+      'on all of them', (tester) async {
+    await pumpCard(tester);
+
+    for (final (label, status) in [
+      ('Live connections', ConnectionStatus.active),
+      ('Recent requests', ConnectionStatus.all),
+    ]) {
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ConnectionStatsCard),
+          matching: find.text(label),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final control = tester.widget<SegmentedControl<ConnectionStatus>>(
+        find.byType(SegmentedControl<ConnectionStatus>),
+      );
+      expect(control.value, status);
+
+      await tester.tap(find.byGlyph(AppGlyphs.close));
+      await tester.pumpAndSettle();
+    }
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
   testWidgets('a wide window opens the DNS list beside the card', (
     tester,
   ) async {

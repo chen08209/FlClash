@@ -62,7 +62,10 @@ void openDashboardFeed(BuildContext context, DashboardFeed feed) {
     context,
     builder: (_, controller) => NestedPagedSheet(
       builder: (_) => switch (feed) {
-        DashboardFeed.connections ||
+        DashboardFeed.connections => RequestsView(
+          scrollController: controller,
+          status: ConnectionStatus.active,
+        ),
         DashboardFeed.requests => RequestsView(scrollController: controller),
         DashboardFeed.dns => RequestsView(
           scrollController: controller,

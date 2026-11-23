@@ -25,6 +25,7 @@ export 'requests_detail_pane.dart' show RequestsSegment;
 class RequestsView extends ConsumerStatefulWidget {
   final ScrollController? scrollController;
   final RequestsSegment segment;
+  final ConnectionStatus status;
   final Future<List<TrackerInfo>> Function()? connectionsReader;
   final MitmQuery? httpQuery;
 
@@ -32,6 +33,7 @@ class RequestsView extends ConsumerStatefulWidget {
     super.key,
     this.scrollController,
     this.segment = RequestsSegment.connections,
+    this.status = ConnectionStatus.all,
     @visibleForTesting this.connectionsReader,
     @visibleForTesting this.httpQuery,
   });
@@ -95,7 +97,9 @@ class _RequestsViewState extends ConsumerState<RequestsView>
     _dnsFeed.addListener(_offerDns);
     _httpFeed.addListener(_offerHttp);
     _follow();
-    _filters.addListener(_showWhere);
+    _filters
+      ..status = widget.status
+      ..addListener(_showWhere);
     if (_segment == RequestsSegment.http &&
         !_showsHttp(ref.read(patchClashConfigProvider))) {
       _segment = RequestsSegment.connections;
