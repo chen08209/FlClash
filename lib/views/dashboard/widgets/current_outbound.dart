@@ -14,6 +14,7 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:prism_ui/shapes/shapes.dart';
@@ -70,7 +71,6 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard> {
     );
     final isStart = ref.watch(isStartProvider);
     final suspended = isStart && ref.watch(suspendProvider);
-    final rootAccess = ref.watch(rootAccessProvider).value ?? false;
     final entry = ref.watch(
       outboundIpProbeProvider.select((state) => state.entryOf(routedOutbound)),
     );
@@ -93,127 +93,260 @@ class _CurrentOutboundCardState extends ConsumerState<CurrentOutboundCard> {
         : isStart
         ? (appLocalizations.running, DashboardChipTone.ok)
         : (appLocalizations.notRunning, DashboardChipTone.idle);
-    return TweenAnimationBuilder<double>(
-      tween: Tween(end: rootAccess ? 1 : 0),
-      duration: context.motionDuration(commonDuration),
-      builder: (context, root, child) => DashboardCard(
-        padding: EdgeInsets.zero,
-        semanticLabel: rootAccess
-            ? '${appLocalizations.status} ${appLocalizations.root}'
-            : appLocalizations.status,
-        side: root == 0
-            ? BorderSide.none
-            : BorderSide(
-                color: context.colorScheme.primary.withValues(alpha: root),
-                width: 1.5,
-              ),
-        child: child!,
-      ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: ClipPath(
-              clipper: ShapeBorderClipper(
-                shape: AppShape.all(dashboardCardRadius(density)),
-                textDirection: Directionality.of(context),
-              ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  PositionedDirectional(
-                    end: metrics.decorationEnd,
-                    top: metrics.decorationTop,
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween(end: isStart ? 1 : 0),
-                      duration: context.motionDuration(_morphDuration),
-                      curve: Curves.easeOutBack,
-                      builder: (_, progress, _) => Transform.rotate(
-                        angle: _decorationTurn * progress,
-                        child: Transform.scale(
-                          scale: 1 + _decorationGrowth * progress,
-                          child: ShapeBadge(
-                            shape: MaterialShapes.cookie12Sided,
-                            color: Color.lerp(
-                              colors.tone,
-                              Color.alphaBlend(
-                                colorScheme.primary.withValues(alpha: 0.1),
-                                colors.card,
-                              ),
-                              progress.clamp(0, 1),
-                            )!,
-                            size: metrics.decorationSize,
-                          ),
+    final content = Stack(
+      children: [
+        Positioned.fill(
+          child: ClipPath(
+            clipper: ShapeBorderClipper(
+              shape: AppShape.all(dashboardCardRadius(density)),
+              textDirection: Directionality.of(context),
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                PositionedDirectional(
+                  end: metrics.decorationEnd,
+                  top: metrics.decorationTop,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(end: isStart ? 1 : 0),
+                    duration: context.motionDuration(_morphDuration),
+                    curve: Curves.easeOutBack,
+                    builder: (_, progress, _) => Transform.rotate(
+                      angle: _decorationTurn * progress,
+                      child: Transform.scale(
+                        scale: 1 + _decorationGrowth * progress,
+                        child: ShapeBadge(
+                          shape: MaterialShapes.cookie12Sided,
+                          color: Color.lerp(
+                            colors.tone,
+                            Color.alphaBlend(
+                              colorScheme.primary.withValues(alpha: 0.1),
+                              colors.card,
+                            ),
+                            progress.clamp(0, 1),
+                          )!,
+                          size: metrics.decorationSize,
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: metrics.padding,
-            child: Row(
-              spacing: metrics.gap,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      DashboardCardHeader(
-                        glyph: AppGlyphs.status,
-                        title: appLocalizations.status,
-                        leading: [
-                          DashboardChip(
-                            label: chipLabel,
-                            tone: chipTone,
-                            dot: isStart,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: metrics.ipTop),
-                      _ExitRow(
-                        info: ipInfo,
-                        failed: failed,
-                        loading: loading,
-                        checking: phase == ProbePhase.probing || qualityLoading,
-                        onRefresh: () => _refresh(ipInfo?.ip),
-                        quality: quality,
-                        active: isStart,
-                        metrics: metrics,
-                        large: !density.isDesktop,
-                      ),
-                      if (density.isDesktop)
-                        const Spacer()
-                      else
-                        const SizedBox(height: 16),
-                      _Cells(
-                        quality: quality,
-                        loading: loading,
-                        active: isStart && !suspended,
-                        gap: metrics.cellGap,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  width: metrics.buttonSlot,
-                  child: Center(
-                    child: _StartToggle(
-                      size: metrics.buttonSize,
-                      enabled: hasProfile,
-                      running: isStart,
-                      suspended: suspended,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+        Padding(
+          padding: metrics.padding,
+          child: Row(
+            spacing: metrics.gap,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DashboardCardHeader(
+                      glyph: AppGlyphs.status,
+                      title: appLocalizations.status,
+                      leading: [
+                        DashboardChip(
+                          label: chipLabel,
+                          tone: chipTone,
+                          dot: isStart,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: metrics.ipTop),
+                    _ExitRow(
+                      info: ipInfo,
+                      failed: failed,
+                      loading: loading,
+                      checking: phase == ProbePhase.probing || qualityLoading,
+                      onRefresh: () => _refresh(ipInfo?.ip),
+                      quality: quality,
+                      active: isStart,
+                      metrics: metrics,
+                      large: !density.isDesktop,
+                    ),
+                    if (density.isDesktop)
+                      const Spacer()
+                    else
+                      const SizedBox(height: 16),
+                    _Cells(
+                      quality: quality,
+                      loading: loading,
+                      active: isStart && !suspended,
+                      gap: metrics.cellGap,
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: metrics.buttonSlot,
+                child: Center(
+                  child: _StartToggle(
+                    size: metrics.buttonSize,
+                    enabled: hasProfile,
+                    running: isStart,
+                    suspended: suspended,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    if (!suAccessGlowShown) {
+      return DashboardCard(
+        padding: EdgeInsets.zero,
+        semanticLabel: appLocalizations.status,
+        child: content,
+      );
+    }
+    return SuAccessGlow(
+      granted: ref.watch(rootAccessProvider).value ?? false,
+      shape: AppShape.all(dashboardCardRadius(density)),
+      child: content,
     );
   }
+}
+
+/// The status card with a glow while su is granted, which [suAccessGlowShown]
+/// keeps off for now.
+@visibleForTesting
+class SuAccessGlow extends StatelessWidget {
+  const SuAccessGlow({
+    super.key,
+    required this.granted,
+    required this.shape,
+    required this.child,
+  });
+
+  final bool granted;
+  final ShapeBorder shape;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    final colorScheme = context.colorScheme;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: granted ? 1 : 0),
+      duration: context.motionDuration(commonDuration),
+      builder: (context, root, child) {
+        final glow = _RootGlowPainter(
+          shape: shape,
+          textDirection: Directionality.of(context),
+          colors: _rootGlowColors(colorScheme.primary),
+          opacity: root,
+          dark: colorScheme.brightness == Brightness.dark,
+        );
+        return CustomPaint(
+          painter: glow,
+          foregroundPainter: glow.rim,
+          child: DashboardCard(
+            padding: EdgeInsets.zero,
+            semanticLabel: granted
+                ? '${appLocalizations.status} ${appLocalizations.root}'
+                : appLocalizations.status,
+            child: child!,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+const _rootGlowHues = [0.0, 70.0, 150.0, 220.0, 290.0];
+const _rootGlowWidth = 8.0;
+const _rootGlowSigma = 6.0;
+
+List<Color> _rootGlowColors(Color primary) {
+  final base = HSVColor.fromColor(primary);
+  final saturation = math.max(base.saturation, 0.6);
+  final colors = [
+    for (final hue in _rootGlowHues)
+      base
+          .withHue((base.hue + hue) % 360)
+          .withSaturation(saturation)
+          .withValue(0.95)
+          .toColor(),
+  ];
+  return [...colors, colors.first];
+}
+
+/// A soft ring of hues around the card while su is granted, with a
+/// hairline of the same hues on its edge. The glow is cut out of the card's
+/// shape so a translucent card is not tinted from behind.
+class _RootGlowPainter extends CustomPainter {
+  const _RootGlowPainter({
+    required this.shape,
+    required this.textDirection,
+    required this.colors,
+    required this.opacity,
+    required this.dark,
+    this.edge = false,
+  });
+
+  final ShapeBorder shape;
+  final TextDirection textDirection;
+  final List<Color> colors;
+  final double opacity;
+  final bool dark;
+  final bool edge;
+
+  _RootGlowPainter get rim => _RootGlowPainter(
+    shape: shape,
+    textDirection: textDirection,
+    colors: colors,
+    opacity: opacity,
+    dark: dark,
+    edge: true,
+  );
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (opacity == 0) {
+      return;
+    }
+    final rect = Offset.zero & size;
+    final path = shape.getOuterPath(rect, textDirection: textDirection);
+    final strength = edge ? (dark ? 0.4 : 0.45) : (dark ? 0.35 : 0.3);
+    final paint = Paint()
+      ..shader = SweepGradient(
+        colors: colors,
+        transform: const GradientRotation(-math.pi / 2),
+      ).createShader(rect)
+      ..color = Color.fromRGBO(0, 0, 0, opacity * strength)
+      ..style = PaintingStyle.stroke;
+    canvas.save();
+    if (edge) {
+      canvas.clipPath(path);
+      paint.strokeWidth = 2;
+    } else {
+      canvas.clipPath(
+        Path()
+          ..fillType = PathFillType.evenOdd
+          ..addRect(rect.inflate(_rootGlowWidth + _rootGlowSigma * 3))
+          ..addPath(path, Offset.zero),
+      );
+      paint
+        ..strokeWidth = _rootGlowWidth
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, _rootGlowSigma);
+    }
+    canvas
+      ..drawPath(path, paint)
+      ..restore();
+  }
+
+  @override
+  bool shouldRepaint(_RootGlowPainter oldDelegate) =>
+      oldDelegate.opacity != opacity ||
+      oldDelegate.dark != dark ||
+      oldDelegate.shape != shape ||
+      oldDelegate.textDirection != textDirection ||
+      !listEquals(oldDelegate.colors, colors);
 }
 
 class _OutboundMetrics {
