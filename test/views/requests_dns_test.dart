@@ -272,12 +272,13 @@ void main() {
     ]);
 
     await pumpDnsQueries(tester);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(SegmentedControl<DnsStatus>),
-        matching: find.text('Cache 1'),
-      ),
+    final cached = find.descendant(
+      of: find.byType(SegmentedControl<DnsStatus>),
+      matching: find.text('Cache 1'),
     );
+    await tester.ensureVisible(cached);
+    await tester.pumpAndSettle();
+    await tester.tap(cached);
     await tester.pumpAndSettle();
 
     expect(find.text('alpha.test'), findsOneWidget);

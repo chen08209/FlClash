@@ -2079,6 +2079,8 @@ void main() {
     expect(statusSegment('Failed 1'), findsOneWidget);
     expect(shownStatus(tester), ConnectionStatus.all);
 
+    await tester.ensureVisible(statusSegment('Failed 1'));
+    await tester.pumpAndSettle();
     await tester.tap(statusSegment('Failed 1'));
     await tester.pumpAndSettle();
     expect(shownStatus(tester), ConnectionStatus.failed);

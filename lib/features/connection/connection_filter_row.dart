@@ -37,7 +37,7 @@ class ConditionFilterRow<T extends Object, S extends Enum>
                     child: ListenableBuilder(
                       listenable: controller.counted,
                       builder: (_, _) => SegmentedControl<S>(
-                        size: TonalButtonSize.compact,
+                        size: TonalButtonSize.section,
                         segments: [
                           for (final status in controller.statuses)
                             (
@@ -53,7 +53,7 @@ class ConditionFilterRow<T extends Object, S extends Enum>
                   ),
                 ),
                 TonalButtonTheme(
-                  size: TonalButtonSize.compact,
+                  size: TonalButtonSize.section,
                   child: AppBarActionButton(
                     data: IconButtonData(
                       glyph: AppGlyphs.add,

@@ -540,6 +540,8 @@ void main() {
       expect(find.byType(HttpRequestRow), findsNWidgets(2));
       expect(find.text('/ok'), findsNothing);
 
+      await tester.ensureVisible(statusSegment('Rewritten 1'));
+      await tester.pumpAndSettle();
       await tester.tap(statusSegment('Rewritten 1'));
       await tester.pumpAndSettle();
       expect(find.byType(HttpRequestRow), findsOneWidget);
