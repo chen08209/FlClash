@@ -421,8 +421,7 @@ void main() {
         .update(
           (state) => state.copyWith(mitm: state.mitm.copyWith(enable: true)),
         );
-    final joinsBar =
-        rsFeature && container.read(patchClashConfigProvider).mitm.enable;
+    final joinsBar = container.read(patchClashConfigProvider).mitm.enable;
     expect(bar().contains(PageLabel.requests), joinsBar);
     expect(tools().contains(PageLabel.requests), !joinsBar);
   });
@@ -1000,22 +999,20 @@ void main() {
     expect(container.read(updateParamsProvider).authentication, isEmpty);
   });
 
-  if (rsFeature) {
-    test('capture reaches the Core in its options, never by a re-apply', () {
-      container.listen(setupPatchProvider, (_, _) {});
-      container.listen(updateParamsProvider, (_, _) {});
-      final setup = container.read(setupPatchProvider);
+  test('capture reaches the Core in its options, never by a re-apply', () {
+    container.listen(setupPatchProvider, (_, _) {});
+    container.listen(updateParamsProvider, (_, _) {});
+    final setup = container.read(setupPatchProvider);
 
-      container
-          .read(patchClashConfigProvider.notifier)
-          .update(
-            (state) => state.copyWith(mitm: state.mitm.copyWith(capture: true)),
-          );
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(mitm: state.mitm.copyWith(capture: true)),
+        );
 
-      expect(container.read(setupPatchProvider), setup);
-      expect(container.read(updateParamsProvider).options.mitmCapture, isTrue);
-    });
-  }
+    expect(container.read(setupPatchProvider), setup);
+    expect(container.read(updateParamsProvider).options.mitmCapture, isTrue);
+  });
 
   test('the setup patch changes only with what a re-apply carries', () {
     container.listen(setupPatchProvider, (_, _) {});

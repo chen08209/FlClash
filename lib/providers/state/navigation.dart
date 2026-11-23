@@ -10,9 +10,9 @@ NavigationItemsState navigationItemsState(Ref ref) {
     currentGroupsStateProvider.select((state) => state.value.isNotEmpty),
   );
   final isInit = ref.watch(initProvider);
-  final decrypting =
-      rsFeature &&
-      ref.watch(patchClashConfigProvider.select((state) => state.mitm.enable));
+  final decrypting = ref.watch(
+    patchClashConfigProvider.select((state) => state.mitm.enable),
+  );
   return NavigationItemsState(
     value:
         navigationPort?.getItems(

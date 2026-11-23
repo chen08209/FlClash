@@ -60,7 +60,7 @@ List<PopupMenuItem> trackerDetailMenuItems(
       appLocalizations.copySummary,
       trackerSummaryText(appLocalizations, trackerInfo),
     ),
-    if (rsFeature && mitmChange != null)
+    if (mitmChange != null)
       PopupMenuItem(
         glyph: AppGlyphs.lock,
         label: mitmChange.title,

@@ -171,27 +171,25 @@ void main() {
   setUpAll(() => registerFallbackValue(const OutboundIpParams(timeout: 0)));
 
   group('root access', () {
-    if (rsFeature) {
-      testWidgets('fades in a border and names it only to a screen reader', (
-        tester,
-      ) async {
-        final semantics = tester.ensureSemantics();
-        await tester.pumpWidget(_app((_, _) async => _residential, root: true));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 150));
+    testWidgets('fades in a border and names it only to a screen reader', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(_app((_, _) async => _residential, root: true));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
 
-        final midway = tester.widget<DashboardCard>(find.byType(DashboardCard));
-        expect(midway.side.color.a, inExclusiveRange(0, 1));
+      final midway = tester.widget<DashboardCard>(find.byType(DashboardCard));
+      expect(midway.side.color.a, inExclusiveRange(0, 1));
 
-        await tester.pump(commonDuration);
+      await tester.pump(commonDuration);
 
-        final card = tester.widget<DashboardCard>(find.byType(DashboardCard));
-        expect(card.side.color.a, closeTo(1, 0.01));
-        expect(find.text('Root'), findsNothing);
-        expect(find.bySemanticsLabel(RegExp('Status Root')), findsOneWidget);
-        semantics.dispose();
-      });
-    }
+      final card = tester.widget<DashboardCard>(find.byType(DashboardCard));
+      expect(card.side.color.a, closeTo(1, 0.01));
+      expect(find.text('Root'), findsNothing);
+      expect(find.bySemanticsLabel(RegExp('Status Root')), findsOneWidget);
+      semantics.dispose();
+    });
 
     testWidgets('leaves the card plain without it', (tester) async {
       await tester.pumpWidget(_app((_, _) async => _residential));

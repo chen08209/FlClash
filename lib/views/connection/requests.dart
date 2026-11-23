@@ -820,9 +820,9 @@ class _RequestsViewState extends ConsumerState<RequestsView>
   }
 }
 
-bool _showsHttp(PatchClashConfig state) => rsFeature && httpCapturing(state);
+bool _showsHttp(PatchClashConfig state) => httpCapturing(state);
 
-bool _offersCapture(PatchClashConfig state) => rsFeature && state.mitm.enable;
+bool _offersCapture(PatchClashConfig state) => state.mitm.enable;
 
 const _listWidth = 392.0;
 const _headerTop = 4.0;

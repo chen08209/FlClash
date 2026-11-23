@@ -199,19 +199,19 @@ List<TimelineEvent> trackerTimelineEvents(
       at: at(timing?.dialEnd ?? timing?.connected),
       mark: failure != null ? RailMark.error : RailMark.step,
     ),
-    if (rsFeature && metadata.mitm)
+    if (metadata.mitm)
       TimelineEvent(
         kind: appLocalizations.decryption,
         title: appLocalizations.connectionsDecrypted,
         at: at(timing?.decrypted),
       ),
-    if (rsFeature && metadata.mitmRefused)
+    if (metadata.mitmRefused)
       TimelineEvent(
         kind: appLocalizations.decryption,
         title: appLocalizations.mitmCertificateRefused,
         mark: RailMark.error,
       ),
-    if (rsFeature && first != null && latest != null)
+    if (first != null && latest != null)
       TimelineEvent(
         kind: 'HTTP',
         title: appLocalizations.httpRequestCount(exchanges.length),
@@ -280,7 +280,7 @@ class TrackerTimeline extends ConsumerWidget {
           )
         : null;
     var exchanges = const <MitmExchangeSummary>[];
-    if (rsFeature && onOpenRequests != null) {
+    if (onOpenRequests != null) {
       exchanges =
           ref.watch(mitmExchangesProvider(trackerInfo.id)).value?.exchanges ??
           const [];
