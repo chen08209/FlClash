@@ -141,17 +141,17 @@ class _Harness {
     await tester.tap(find.text(currentAppLocalizations.proxyType));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text(action.name),
+      find.text(action.value),
       300,
       scrollable: _selectionList,
     );
     // That leaves the row at the viewport's top, under the floating bar.
     await Scrollable.ensureVisible(
-      tester.element(find.text(action.name).last),
+      tester.element(find.text(action.value).last),
       alignment: 0.5,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(action.name).last);
+    await tester.tap(find.text(action.value).last);
     await tester.pumpAndSettle();
   }
 }
@@ -189,14 +189,14 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.proxyType));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text(RuleAction.MATCH.name),
+      find.text(RuleAction.MATCH.value),
       300,
       scrollable: _selectionList,
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(RuleAction.NOT.name), findsOne);
-    expect(find.text(RuleAction.SUB_RULE.name), findsNothing);
+    expect(find.text(RuleAction.NOT.value), findsOne);
+    expect(find.text(RuleAction.SUB_RULE.value), findsNothing);
   });
 
   testWidgets('a SUB-RULE kept from before cannot be saved as one', (
@@ -248,12 +248,12 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.proxyType));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text(RuleAction.MATCH.name),
+      find.text(RuleAction.MATCH.value),
       300,
       scrollable: _selectionList,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(RuleAction.MATCH.name).last);
+    await tester.tap(find.text(RuleAction.MATCH.value).last);
     await tester.pumpAndSettle();
 
     expect(find.text(currentAppLocalizations.content), findsNothing);
@@ -278,12 +278,12 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.proxyType));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text(RuleAction.NOT.name),
+      find.text(RuleAction.NOT.value),
       300,
       scrollable: _selectionList,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(RuleAction.NOT.name).last);
+    await tester.tap(find.text(RuleAction.NOT.value).last);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text(currentAppLocalizations.proxyType));
@@ -292,7 +292,7 @@ void main() {
     final sheet = find.byType(SelectionSheet<RuleAction>);
     final item = find.descendant(
       of: sheet,
-      matching: find.text(RuleAction.NOT.name),
+      matching: find.text(RuleAction.NOT.value),
     );
     expect(item, findsOne);
     final viewport = tester.getRect(

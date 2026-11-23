@@ -227,7 +227,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
               subtitleBuilder: (context, item) => item.getDesc(context),
             ),
           ],
-          labelBuilder: (item) => item.name,
+          labelBuilder: (item) => item.value,
           selectedOf: (ref) =>
               ref.watch(ruleProvider.select((state) => state.ruleAction)),
           onSelected: (item) => Navigator.of(context).pop(item),
@@ -255,7 +255,7 @@ class _AddOrEditRuleViewState extends ConsumerState<_AddOrEditRuleView> {
           Flexible(
             child: TooltipText(
               text: Text(
-                action.name,
+                action.value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: context.listTitleStyle.copyWith(
