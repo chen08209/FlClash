@@ -99,6 +99,26 @@ Future<ProviderContainer> _pumpHome(
   return container;
 }
 
+Future<void> _pumpDock(WidgetTester tester, List<String> labels) {
+  return tester.pumpWidget(
+    TestApp(
+      child: HostScaffold(
+        body: Align(
+          alignment: Alignment.bottomCenter,
+          child: NavigationDock(
+            destinations: [
+              for (final label in labels)
+                NavigationDockDestination(glyph: AppGlyphs.tools, label: label),
+            ],
+            selectedIndex: 0,
+            onSelected: (_) {},
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 // A press only paints, so its swell shows in the paint transform.
 Rect _painted(WidgetTester tester, RenderObject box, Rect resting) {
   Matrix4? transform;
@@ -502,26 +522,9 @@ void main() {
     addTearDown(tester.view.reset);
 
     Future<Rect> pumpBar(int count) async {
-      await tester.pumpWidget(
-        TestApp(
-          child: HostScaffold(
-            body: Align(
-              alignment: Alignment.bottomCenter,
-              child: NavigationDock(
-                destinations: [
-                  for (var index = 0; index < count; index++)
-                    NavigationDockDestination(
-                      glyph: AppGlyphs.tools,
-                      label: '$index',
-                    ),
-                ],
-                selectedIndex: 0,
-                onSelected: (_) {},
-              ),
-            ),
-          ),
-        ),
-      );
+      await _pumpDock(tester, [
+        for (var index = 0; index < count; index++) '$index',
+      ]);
       return tester.getRect(find.byType(FloatingNavigationBar));
     }
 
@@ -533,6 +536,44 @@ void main() {
     expect(five.right, size.width - 21);
   });
 
+  testWidgets('five destinations rest as wide as iOS 27 rests them, and '
+      'overlap further once they crowd', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    Future<double> lensWidthAt(double width) async {
+      tester.view.physicalSize = Size(width, 800);
+      await _pumpDock(tester, ['0', '1', '2', '3', '4']);
+      return tester.getRect(_lens).width;
+    }
+
+    // UIKit's tab bar rests its lens 77, 85.4 and 84 dp wide at these widths.
+    expect(await lensWidthAt(402), closeTo(76.8, 0.01));
+    expect(await lensWidthAt(397), closeTo(85.4, 0.01));
+    expect(await lensWidthAt(390), closeTo(84, 0.01));
+  });
+
+  testWidgets('a destination stands its glyph and label where iOS 27 does', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(402, 874);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await _pumpDock(tester, ['Home', 'Apps', 'Logs', 'Tools', 'More']);
+
+    final bar = find.byType(FloatingNavigationBar);
+    final top = tester.getRect(bar).top;
+    final glyph = tester.getRect(
+      find.descendant(of: bar, matching: find.byType(GlyphIcon)).first,
+    );
+    final label = tester.getRect(
+      find.descendant(of: bar, matching: find.text('Home')),
+    );
+    expect(glyph.center.dy - top, 24);
+    expect(label.top - top, 39);
+    expect(label.height, 12);
+  });
+
   testWidgets('a long label shrinks to fit, then ellipsizes behind a tooltip', (
     tester,
   ) async {
@@ -541,26 +582,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     Future<List<Text>> pumpLabels(String label) async {
-      await tester.pumpWidget(
-        TestApp(
-          child: HostScaffold(
-            body: Align(
-              alignment: Alignment.bottomCenter,
-              child: NavigationDock(
-                destinations: [
-                  for (final text in ['Home', 'Apps', 'Logs', label])
-                    NavigationDockDestination(
-                      glyph: AppGlyphs.tools,
-                      label: text,
-                    ),
-                ],
-                selectedIndex: 0,
-                onSelected: (_) {},
-              ),
-            ),
-          ),
-        ),
-      );
+      await _pumpDock(tester, ['Home', 'Apps', 'Logs', label]);
       return tester
           .widgetList<Text>(
             find.descendant(

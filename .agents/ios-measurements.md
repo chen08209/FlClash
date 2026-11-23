@@ -152,6 +152,26 @@ tuning.
   (0, 8), times 3 in dark. A resting tab bar on a white page has almost no shadow (1-3/255); FlClash's `dockShadows` is
   5-7%. That is a difference in the resting state and is kept.
 
+## Tab bar layout
+
+- Measured on iPhone 16e, 17 and 17 Pro Max (390, 402, 440 pt) with a UITabBarController, and on a standalone
+  UITabBar swept from 300 to 480 pt wide, dumping view frames. The bar is 62 high and 21 from the screen's sides and
+  bottom at every width, the 34 pt home indicator inset included; its items stand 4 in from its ends and are 54 high.
+  Two or three items take 86 each and center the bar (188 and 274 wide); four and five fill the width.
+- An item centers its symbol (18 pt Medium, large scale) 24 below the bar's top and sets its 10 pt title, Medium and
+  Semibold when selected, in a 12 high frame 39 below the top. A title never shrinks: a long one widens its item at
+  its neighbours' expense and truncates at the tail.
+- The resting lens is the selected item's frame. With short titles, such as Chinese ones, the items are equal and each
+  is 8.25 wider than the pitch between them, 77 on a 68.75 pitch at 402. Where that pitch falls below 68, on a bar
+  under 356 wide for five items, neighbours overlap by 20 instead: 84 on 64 at 390. English titles share the width out
+  by title (96, 83, 87, 83 and 83 for Dashboard, Proxies, Requests, Profiles and Tools at 402), and four items keep
+  the lens at least 94 wide.
+- FlClash: `navigation_dock.dart` follows the bar, the item's symbol and title, and the pitch rule (`_minPitch`,
+  `_crowdedOverhang`). Deliberate deviations: items stay equal, since the lens springs across a uniform pitch, and a
+  title that does not fit shrinks to 9 dp and then ellipsizes behind a tooltip; four items stop at 360 wide and take no
+  94 floor; the selected title keeps Medium, its color alone marking it; and the bottom margin is at least the system
+  bar's inset, since on Android that can be a three-button bar.
+
 ## Top bar button inset
 
 - Measured on iOS 27 at 375, 390, 402, 420 and 440 pt (UINavigationController over an insetGrouped table, dumped view
