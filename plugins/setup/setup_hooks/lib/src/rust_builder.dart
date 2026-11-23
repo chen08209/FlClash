@@ -19,15 +19,20 @@ class RustBuilder {
     required this.cache,
     required this.notice,
     this.harnessInputs = const [],
-  });
+    this.cargo = runCommandStream,
+    Map<String, String>? environment,
+  }) : _environment = environment ?? Platform.environment;
 
   final String rootDir;
   final BuildConfig config;
   final BuildCache cache;
   final BuildNotice notice;
   final List<String> harnessInputs;
+  final StreamedCommand cargo;
+  final Map<String, String> _environment;
 
   String get _helperPath => p.join(rootDir, config.helperDir);
+  String get _targetDir => cargoTargetDir(_helperPath, _environment);
   String get _outputPath => p.join(rootDir, config.outputDir);
 
   Future<BuildExecution> build(Target target, String coreSha256) async {
@@ -50,8 +55,7 @@ class RustBuilder {
     };
 
     final srcPath = p.join(
-      _helperPath,
-      'target',
+      _targetDir,
       triple,
       'release',
       'helper${target.executableExtension}',
@@ -74,7 +78,7 @@ class RustBuilder {
       build: () async {
         _log.info('Building Rust helper: $target');
 
-        await runCommandStream(
+        await cargo(
           'cargo',
           args,
           workingDirectory: _helperPath,

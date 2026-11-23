@@ -74,6 +74,25 @@ ProcessResult runCommand(
   return result;
 }
 
+/// Where Cargo writes when run in [workingDirectory] under [environment].
+String cargoTargetDir(
+  String workingDirectory,
+  Map<String, String> environment,
+) {
+  final dir = environment['CARGO_TARGET_DIR'];
+  return p.normalize(
+    p.join(workingDirectory, dir == null || dir.isEmpty ? 'target' : dir),
+  );
+}
+
+typedef StreamedCommand =
+    Future<void> Function(
+      String executable,
+      List<String> arguments, {
+      String? workingDirectory,
+      Map<String, String>? environment,
+    });
+
 Future<void> runCommandStream(
   String executable,
   List<String> arguments, {
