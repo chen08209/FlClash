@@ -389,10 +389,7 @@ class _LogDetailView extends StatelessWidget {
           items: [
             DecorationListItem(
               minVerticalPadding: 14,
-              title: SelectableText(
-                log.payload,
-                style: AppTextStyle.subheadline.of(context),
-              ),
+              title: SelectableText(log.payload),
             ),
           ],
         ),
