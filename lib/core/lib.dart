@@ -18,8 +18,10 @@ class CoreLib extends CoreHandlerInterface {
 
   Completer<bool> _connectedCompleter = Completer<bool>();
   Future<CoreLifecycleResult>? _closeOperation;
+  Future<void> _lastOperation = Future<void>.value();
   int _lifecycleRevision = 0;
   int _methodCallId = 0;
+  bool _wantsSession = false;
   bool _closed = false;
 
   CoreLib._internal() : _service = service;
@@ -37,39 +39,79 @@ class CoreLib extends CoreHandlerInterface {
     return _instance!;
   }
 
-  @override
-  Future<CoreLifecycleResult> start() async {
-    if (_closed) {
-      throw StateError('Core lifecycle is closed');
-    }
+  /// Runs one transition at a time, so a stop or close waits for a start in
+  /// flight to give back what it had already opened.
+  Future<CoreLifecycleResult> _enqueue(
+    Future<CoreLifecycleResult> Function(int revision) transition,
+  ) {
     final revision = ++_lifecycleRevision;
+    final result = _lastOperation.then((_) => transition(revision));
+    _lastOperation = result.then<void>((_) {}, onError: (Object _) {});
+    return result;
+  }
+
+  @override
+  Future<CoreLifecycleResult> start() {
+    if (_closed) {
+      return Future.error(StateError('Core lifecycle is closed'));
+    }
+    _wantsSession = true;
+    return _enqueue(_start);
+  }
+
+  Future<CoreLifecycleResult> _start(int revision) async {
     if (_connectedCompleter.isCompleted) {
       return CoreLifecycleResult(
         revision: revision,
         outcome: CoreLifecycleOutcome.coalesced,
       );
     }
+    if (!_wantsSession) {
+      return _superseded(revision);
+    }
     final initializationError = await _service?.init() ?? '';
     if (initializationError.isNotEmpty) {
       throw StateError(initializationError);
     }
     await globalState.container.read(vpnOptionsProvider.future);
-    _connectedCompleter.complete(true);
-    final syncError =
-        await _service?.syncState(
-          globalState.container.read(sharedStateProvider),
-        ) ??
-        '';
-    if (syncError.isNotEmpty) {
-      _connectedCompleter = Completer<bool>();
+    if (!_wantsSession) {
       await _service?.shutdown();
+      return _superseded(revision);
+    }
+    _connectedCompleter.complete(true);
+    final String syncError;
+    try {
+      syncError =
+          await _service?.syncState(
+            globalState.container.read(sharedStateProvider),
+          ) ??
+          '';
+    } catch (_) {
+      await _disconnect();
+      rethrow;
+    }
+    if (syncError.isNotEmpty) {
+      await _disconnect();
       throw StateError(syncError);
+    }
+    if (!_wantsSession) {
+      return _superseded(revision);
     }
     return CoreLifecycleResult(
       revision: revision,
       outcome: CoreLifecycleOutcome.applied,
     );
   }
+
+  Future<void> _disconnect() async {
+    _connectedCompleter = Completer<bool>();
+    await _service?.shutdown();
+  }
+
+  CoreLifecycleResult _superseded(int revision) => CoreLifecycleResult(
+    revision: revision,
+    outcome: CoreLifecycleOutcome.superseded,
+  );
 
   @override
   Future<CoreLifecycleResult> restart() async {
@@ -78,13 +120,15 @@ class CoreLib extends CoreHandlerInterface {
   }
 
   @override
-  Future<CoreLifecycleResult> stop() => _stop();
-
-  Future<CoreLifecycleResult> _stop({bool allowClosed = false}) async {
-    if (_closed && !allowClosed) {
-      throw StateError('Core lifecycle is closed');
+  Future<CoreLifecycleResult> stop() {
+    if (_closed) {
+      return Future.error(StateError('Core lifecycle is closed'));
     }
-    final revision = ++_lifecycleRevision;
+    _wantsSession = false;
+    return _enqueue(_stop);
+  }
+
+  Future<CoreLifecycleResult> _stop(int revision) async {
     if (!_connectedCompleter.isCompleted) {
       return CoreLifecycleResult(
         revision: revision,
@@ -109,7 +153,8 @@ class CoreLib extends CoreHandlerInterface {
 
   Future<CoreLifecycleResult> _close() async {
     _closed = true;
-    return _stop(allowClosed: true);
+    _wantsSession = false;
+    return _enqueue(_stop);
   }
 
   // The service opens and closes the Core's listeners itself and reports a run

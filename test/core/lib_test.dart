@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/lib.dart';
@@ -7,6 +9,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +23,7 @@ class _FakeService implements Service {
 
   String initError = '';
   String syncError = '';
+  Exception? syncException;
   bool shutdownResult = true;
   bool startResult = true;
   bool stopResult = true;
@@ -27,15 +31,21 @@ class _FakeService implements Service {
 
   final invokedCalls = <CoreMethodCall>[];
 
+  Completer<void>? initGate;
+
   @override
   Future<String> init() async {
     calls.add('init');
+    await initGate?.future;
     return initError;
   }
 
   @override
   Future<String> syncState(SharedState state) async {
     calls.add('syncState');
+    if (syncException case final exception?) {
+      throw exception;
+    }
     return syncError;
   }
 
@@ -155,6 +165,57 @@ void main() {
       final retry = await lib.start();
 
       expect(retry.outcome, CoreLifecycleOutcome.applied);
+      expect(service.calls, ['init', 'syncState']);
+    });
+
+    test('a sync the channel fails disconnects as a sync error does', () async {
+      service.syncException = PlatformException(code: 'sync');
+
+      await expectLater(lib.start(), throwsA(isA<PlatformException>()));
+      expect(service.calls, ['init', 'syncState', 'shutdown']);
+
+      service.syncException = null;
+      service.calls.clear();
+      final retry = await lib.start();
+
+      expect(retry.outcome, CoreLifecycleOutcome.applied);
+      expect(service.calls, ['init', 'syncState']);
+    });
+  });
+
+  group('a start still opening', () {
+    setUp(() => service.initGate = Completer<void>());
+
+    test('gives way to a close and leaves no session open', () async {
+      final start = lib.start();
+      await Future<void>.delayed(Duration.zero);
+      final close = lib.close();
+      service.initGate!.complete();
+
+      expect((await start).outcome, CoreLifecycleOutcome.superseded);
+      expect((await close).outcome, CoreLifecycleOutcome.coalesced);
+      expect(service.calls, ['init', 'shutdown']);
+    });
+
+    test('gives way to a stop and leaves no session open', () async {
+      final start = lib.start();
+      await Future<void>.delayed(Duration.zero);
+      final stop = lib.stop();
+      service.initGate!.complete();
+
+      expect((await start).outcome, CoreLifecycleOutcome.superseded);
+      expect((await stop).outcome, CoreLifecycleOutcome.coalesced);
+      expect(service.calls, ['init', 'shutdown']);
+    });
+
+    test('takes a second start as the same one', () async {
+      final first = lib.start();
+      await Future<void>.delayed(Duration.zero);
+      final second = lib.start();
+      service.initGate!.complete();
+
+      expect((await first).outcome, CoreLifecycleOutcome.applied);
+      expect((await second).outcome, CoreLifecycleOutcome.coalesced);
       expect(service.calls, ['init', 'syncState']);
     });
   });
