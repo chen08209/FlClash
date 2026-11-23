@@ -1052,7 +1052,6 @@ sealed class CoreEventDto {
         value: json['value'] as int,
       ),
     ),
-    'fatal' => FatalEvent(json['message'] as String),
     _ => const UnknownCoreEvent(),
   };
 }
@@ -1235,12 +1234,6 @@ final class DelayEvent extends CoreEventDto {
   final DelayResult result;
 
   const DelayEvent(this.result);
-}
-
-final class FatalEvent extends CoreEventDto {
-  final String message;
-
-  const FatalEvent(this.message);
 }
 
 final class UnknownCoreEvent extends CoreEventDto {

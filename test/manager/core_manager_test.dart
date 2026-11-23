@@ -261,7 +261,6 @@ void main() {
     harness.feeds.crashes
       ..add('boom')
       ..add('boom');
-    harness.feeds.events.add(const [FatalEvent('boom')]);
     await tester.pump();
 
     expect(container.read(coreStatusProvider), CoreStatus.disconnected);
@@ -272,32 +271,24 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
   });
 
-  for (final (name, report) in <(String, void Function(_Feeds))>[
-    ('the backend crash stream', (feeds) => feeds.crashes.add('boom')),
-    ('a fatal event', (feeds) => feeds.events.add(const [FatalEvent('boom')])),
-  ]) {
-    testWidgets('$name while the app is visible surfaces the message', (
-      tester,
-    ) async {
-      final harness = _harness();
-      final container = await _pumpCoreManager(
-        tester,
-        harness.mocks.controller,
-      );
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
-      await tester.pump();
+  testWidgets('a crash while the app is visible surfaces the message', (
+    tester,
+  ) async {
+    final harness = _harness();
+    final container = await _pumpCoreManager(tester, harness.mocks.controller);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    await tester.pump();
 
-      report(harness.feeds);
-      await tester.pump();
-      await tester.pump();
+    harness.feeds.crashes.add('boom');
+    await tester.pump();
+    await tester.pump();
 
-      expect(container.read(coreStatusProvider), CoreStatus.disconnected);
-      expect(find.text('boom'), findsOneWidget);
+    expect(container.read(coreStatusProvider), CoreStatus.disconnected);
+    expect(find.text('boom'), findsOneWidget);
 
-      await tester.pumpWidget(const SizedBox.shrink());
-    });
-  }
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets('a crash ends the run here without telling the Core to stop', (
     tester,
@@ -1280,6 +1271,43 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('a geo update whose end the events lost stops showing as '
+      'updating', (tester) async {
+    final harness = _harness();
+    final container = await _pumpConnected(
+      tester,
+      harness,
+      overrides: [
+        proxiesActionProvider.overrideWith(_RecordingProxiesAction.new),
+      ],
+    );
+    final key = GeoResource.MMDB.updatingKey;
+    final subscription = container.listen<bool>(
+      isUpdatingProvider(key),
+      (_, _) {},
+    );
+    addTearDown(subscription.close);
+    when(() => harness.mocks.api.providers()).thenAnswer((_) async => const []);
+
+    harness.feeds.events.add(const [
+      ResourceUpdateEvent(
+        kind: ResourceKind.geo,
+        name: 'MMDB',
+        phase: ResourcePhase.updating,
+      ),
+    ]);
+    await tester.pump();
+    expect(container.read(isUpdatingProvider(key)), isTrue);
+
+    harness.feeds.events.add(const [EventsResynced()]);
+    await tester.pump();
+    await tester.pump();
+
+    expect(container.read(isUpdatingProvider(key)), isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('non-geo Core errors retain global notifications', (
     tester,
   ) async {
@@ -1420,42 +1448,5 @@ void main() {
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );
-  });
-
-  testWidgets('a geo update whose end the events lost stops showing as '
-      'updating', (tester) async {
-    final harness = _harness();
-    final container = await _pumpConnected(
-      tester,
-      harness,
-      overrides: [
-        proxiesActionProvider.overrideWith(_RecordingProxiesAction.new),
-      ],
-    );
-    final key = GeoResource.MMDB.updatingKey;
-    final subscription = container.listen<bool>(
-      isUpdatingProvider(key),
-      (_, _) {},
-    );
-    addTearDown(subscription.close);
-    when(() => harness.mocks.api.providers()).thenAnswer((_) async => const []);
-
-    harness.feeds.events.add(const [
-      ResourceUpdateEvent(
-        kind: ResourceKind.geo,
-        name: 'MMDB',
-        phase: ResourcePhase.updating,
-      ),
-    ]);
-    await tester.pump();
-    expect(container.read(isUpdatingProvider(key)), isTrue);
-
-    harness.feeds.events.add(const [EventsResynced()]);
-    await tester.pump();
-    await tester.pump();
-
-    expect(container.read(isUpdatingProvider(key)), isFalse);
-
-    await tester.pumpWidget(const SizedBox.shrink());
   });
 }
