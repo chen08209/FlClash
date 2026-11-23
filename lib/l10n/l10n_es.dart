@@ -541,9 +541,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get startupAndBackground => 'Inicio y segundo plano';
 
   @override
-  String get requestsAndUpdates => 'Solicitudes y actualizaciones';
-
-  @override
   String get logsAndDiagnostics => 'Registros y diagnóstico';
 
   @override

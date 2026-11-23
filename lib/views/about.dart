@@ -5,7 +5,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:fl_clash/ui/ui.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -86,6 +86,31 @@ class AboutView extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 8),
+          generateSection(
+            title: appLocalizations.update,
+            items: [
+              ConfigToggleItem(
+                title: (l) => l.autoCheckUpdate,
+                selector: appSettingProvider.select(
+                  (state) => state.autoCheckUpdate,
+                ),
+                onChanged: (ref, value) => ref
+                    .read(appSettingProvider.notifier)
+                    .update((state) => state.copyWith(autoCheckUpdate: value)),
+              ),
+              ConfigOptionsItem<UpdateChannel>(
+                title: (l) => l.updateChannel,
+                options: UpdateChannel.values,
+                textBuilder: (channel) => channel.label,
+                selector: appSettingProvider.select(
+                  (state) => state.updateChannel,
+                ),
+                onChanged: (ref, value) => ref
+                    .read(appSettingProvider.notifier)
+                    .update((state) => state.copyWith(updateChannel: value)),
+              ),
+            ],
+          ),
           generateSection(
             title: appLocalizations.more,
             items: [

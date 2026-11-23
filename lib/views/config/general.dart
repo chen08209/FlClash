@@ -343,20 +343,6 @@ class GeneralView extends ConsumerWidget {
         select: (state) => state.checkCertificate,
         update: (state, value) => state.copyWith(checkCertificate: value),
       ),
-      _appSettingToggle(
-        title: (l) => l.autoCheckUpdate,
-        select: (state) => state.autoCheckUpdate,
-        update: (state, value) => state.copyWith(autoCheckUpdate: value),
-      ),
-      ConfigOptionsItem<UpdateChannel>(
-        title: (l) => l.updateChannel,
-        options: UpdateChannel.values,
-        textBuilder: (channel) => channel.label,
-        selector: appSettingProvider.select((state) => state.updateChannel),
-        onChanged: (ref, value) => ref
-            .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(updateChannel: value)),
-      ),
     ];
   }
 
@@ -411,7 +397,7 @@ class GeneralView extends ConsumerWidget {
             footer: appLocalizations.autoRunDesc,
           ),
           generateSection(
-            title: appLocalizations.requestsAndUpdates,
+            title: appLocalizations.requests,
             items: _requestItems(),
             footer: appLocalizations.checkCertificateDesc,
           ),

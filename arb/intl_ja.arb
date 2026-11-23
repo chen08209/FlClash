@@ -164,7 +164,6 @@
   "app": "アプリ",
   "general": "一般",
   "startupAndBackground": "起動とバックグラウンド",
-  "requestsAndUpdates": "リクエストと更新",
   "logsAndDiagnostics": "ログと診断",
   "userAgent": "User-Agent",
   "unifiedDelay": "統一遅延",

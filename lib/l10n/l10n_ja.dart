@@ -515,9 +515,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get startupAndBackground => '起動とバックグラウンド';
 
   @override
-  String get requestsAndUpdates => 'リクエストと更新';
-
-  @override
   String get logsAndDiagnostics => 'ログと診断';
 
   @override

@@ -532,9 +532,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startupAndBackground => 'Startup and background';
 
   @override
-  String get requestsAndUpdates => 'Requests and updates';
-
-  @override
   String get logsAndDiagnostics => 'Logs and diagnostics';
 
   @override

@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+
 import 'package:prism_ui/prism_ui.dart';
 
 void main() {
@@ -46,27 +47,18 @@ void main() {
 
   PatchClashConfig config() => container.read(patchClashConfigProvider);
 
-  testWidgets('switches the update channel from the row under the check', (
+  testWidgets('keeps the update settings off the requests group', (
     tester,
   ) async {
     await pumpGeneralView(tester);
     final l = currentAppLocalizations;
-    final check = tester.getTopLeft(find.text(l.autoCheckUpdate));
-    final channel = tester.getTopLeft(find.text(l.updateChannel));
 
-    expect(channel.dy, greaterThan(check.dy));
-    expect(
-      container.read(appSettingProvider).updateChannel,
-      UpdateChannel.stable,
-    );
-
-    await tester.tap(find.text(l.updateChannel));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l.updateChannelPre));
-    await tester.pumpAndSettle();
-
-    expect(container.read(appSettingProvider).updateChannel, UpdateChannel.pre);
-    expect(find.text(l.updateChannelPre), findsOneWidget);
+    expect(find.widgetWithText(ListHeader, l.requests), findsOneWidget);
+    expect(find.text(l.userAgent), findsOneWidget);
+    expect(find.text(l.checkCertificate), findsOneWidget);
+    expect(find.text(l.checkCertificateDesc), findsOneWidget);
+    expect(find.text(l.autoCheckUpdate), findsNothing);
+    expect(find.text(l.updateChannel), findsNothing);
   });
 
   testWidgets('lists no override until one is added', (tester) async {

@@ -274,6 +274,59 @@ void main() {
     expect(tester.takeException(), null);
   });
 
+  testWidgets('about view sets updates between the hero and more', (
+    tester,
+  ) async {
+    final container = _containerFor(tester, size: const Size(1400, 2000));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: AboutView()),
+      ),
+    );
+    await tester.pump();
+    final l10n = currentAppLocalizations;
+    final hero = find.byWidgetPredicate(
+      (widget) => widget.runtimeType.toString() == '_AboutHero',
+    );
+    final update = tester.getRect(find.widgetWithText(ListHeader, l10n.update));
+    expect(update.top, greaterThan(tester.getRect(hero).bottom));
+    expect(
+      update.bottom,
+      lessThan(tester.getRect(find.text(l10n.autoCheckUpdate)).top),
+    );
+    expect(
+      tester.getRect(find.text(l10n.autoCheckUpdate)).top,
+      lessThan(tester.getRect(find.text(l10n.updateChannel)).top),
+    );
+    expect(
+      tester.getRect(find.text(l10n.updateChannel)).bottom,
+      lessThan(tester.getRect(find.widgetWithText(ListHeader, l10n.more)).top),
+    );
+
+    expect(container.read(appSettingProvider).autoCheckUpdate, isTrue);
+    await tester.tap(
+      find.descendant(
+        of: find.widgetWithText(ListItem, l10n.autoCheckUpdate),
+        matching: find.byType(Switch),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(container.read(appSettingProvider).autoCheckUpdate, isFalse);
+
+    expect(
+      container.read(appSettingProvider).updateChannel,
+      UpdateChannel.stable,
+    );
+    await tester.tap(find.text(l10n.updateChannel));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.updateChannelPre));
+    await tester.pumpAndSettle();
+    expect(container.read(appSettingProvider).updateChannel, UpdateChannel.pre);
+    expect(find.text(l10n.updateChannelPre), findsOneWidget);
+    expect(tester.takeException(), null);
+  });
+
   testWidgets('about view shows progress while checking for updates', (
     tester,
   ) async {

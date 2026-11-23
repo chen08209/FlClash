@@ -515,9 +515,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get startupAndBackground => '시작 및 백그라운드';
 
   @override
-  String get requestsAndUpdates => '요청 및 업데이트';
-
-  @override
   String get logsAndDiagnostics => '로그 및 진단';
 
   @override

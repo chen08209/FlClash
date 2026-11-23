@@ -1098,12 +1098,6 @@ abstract class AppLocalizations {
   /// **'Startup and background'**
   String get startupAndBackground;
 
-  /// No description provided for @requestsAndUpdates.
-  ///
-  /// In en, this message translates to:
-  /// **'Requests and updates'**
-  String get requestsAndUpdates;
-
   /// No description provided for @logsAndDiagnostics.
   ///
   /// In en, this message translates to:
