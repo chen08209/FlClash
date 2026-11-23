@@ -513,6 +513,10 @@ Construct the Android lib handler with `CoreLib.scoped(fakeService)`. The `servi
 and is therefore null on every test host, so a `CoreLib()` built from it silently takes the null-service fallback on every
 path. `CoreLib.scoped` binds an explicit `Service` instead; reset the singleton with `CoreLib.resetInstance()` in `tearDown`.
 
+`RustLib.initMock` replaces the Rust bridge for the whole isolate, so follow it with `addTearDown(RustLib.dispose)`. A
+mock left behind makes the next `initEditorNative` throw that the bridge is initialized twice, and hands every later
+`EditorView` the mock's null `RopeBridge`.
+
 Three globals in `lib/common` reach real host state and carry a `@visibleForTesting` seam to stand in front of it:
 `AutoLaunch.entry`, `listNetworkInterfaces` and `LinkManager.uriLinkStream`. Replace the entry in particular — every
 `setEnabled`/`isEnabled` reaches the actual autostart entry (the macOS login item, a `.desktop` file or a registry

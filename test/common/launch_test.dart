@@ -85,6 +85,7 @@ void main() {
   test('the system entry registers by id under a display name', () async {
     final api = _RustApi();
     RustLib.initMock(api: api);
+    addTearDown(RustLib.dispose);
     final executable = Platform.resolvedExecutable;
     when(
       () => api.crateApiLaunchIsAutostartEnabled(
