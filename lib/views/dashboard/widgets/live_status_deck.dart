@@ -1353,7 +1353,7 @@ class _ReadyHero extends StatelessWidget {
           glyphColor: colorScheme.onSuccess,
           chips: [
             _HeroChip(
-              globalState.packageInfo.version,
+              installedVersionName(globalState.packageInfo.version),
               color: colorScheme.onSurfaceVariant,
             ),
             GlyphIcon(

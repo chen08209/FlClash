@@ -15,6 +15,9 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' show join;
 
 class Request {
+  static const _releasesPerPage = 100;
+  static const _releasePages = 5;
+
   late final Dio dio;
   late final Dio _clashDio;
 
@@ -126,21 +129,27 @@ class Request {
   /// and holds only GitHub's ten newest entries, so each can be probed.
   Future<Map<String, dynamic>> newestOfAllReleases() async {
     try {
-      final response = await dio.get<List<dynamic>>(
-        'https://api.github.com/repos/$repository/releases',
-        queryParameters: {'per_page': 30},
-        options: Options(responseType: ResponseType.json),
-      );
-      final releases = {
-        for (final release in response.data!)
-          if (release case {'draft': false, 'tag_name': final String tag})
-            tag: release as Map<String, dynamic>,
-      };
-      for (final tag in _candidates(releases.keys)) {
-        if (releases[tag] case {
-          'assets': final List<dynamic> assets,
-        } when _namesChecksums(assets, tag)) {
-          return releases[tag]!;
+      for (var page = 1; page <= _releasePages; page++) {
+        final response = await dio.get<List<dynamic>>(
+          'https://api.github.com/repos/$repository/releases',
+          queryParameters: {'per_page': _releasesPerPage, 'page': page},
+          options: Options(responseType: ResponseType.json),
+        );
+        final listed = response.data!;
+        final releases = {
+          for (final release in listed)
+            if (release case {'draft': false, 'tag_name': final String tag})
+              tag: release as Map<String, dynamic>,
+        };
+        for (final tag in _candidates(releases.keys)) {
+          if (releases[tag] case {
+            'assets': final List<dynamic> assets,
+          } when _namesChecksums(assets, tag)) {
+            return releases[tag]!;
+          }
+        }
+        if (listed.length < _releasesPerPage) {
+          break;
         }
       }
       throw FormatException('No ${appReleaseLine.name} release in the list');

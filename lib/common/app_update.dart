@@ -66,6 +66,16 @@ String installedVersionLabel(
   String builtTag = _builtReleaseTag,
 }) => ReleaseVersion.tryParse(builtTag)?.toString() ?? 'v$packageVersion';
 
+/// The installed version as the update card sets it beside a tag without its
+/// leading `v`.
+String installedVersionName(
+  String packageVersion, {
+  String builtTag = _builtReleaseTag,
+}) => installedVersionLabel(
+  packageVersion,
+  builtTag: builtTag,
+).replaceFirst(RegExp('^v'), '');
+
 Future<bool> openReleasePage(String tag) {
   return launchReleasePage(
     Uri.https('github.com', '/$repository/releases/tag/$tag'),

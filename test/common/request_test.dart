@@ -81,6 +81,28 @@ class _UrlAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
+/// Answers the release list by its page and everything else with a 404.
+class _PageAdapter implements HttpClientAdapter {
+  _PageAdapter(this.byPage);
+
+  final Map<String, ResponseBody Function()> byPage;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    final answer = options.uri.path.endsWith('/releases')
+        ? byPage[options.uri.queryParameters['page'] ?? '1']
+        : null;
+    return answer == null ? ResponseBody.fromString('', 404) : answer();
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
 const _feed = '''
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
@@ -261,6 +283,20 @@ void main() {
       expect(
         (await request.newestRelease(UpdateChannel.pre))['tag_name'],
         'v1.3.0',
+      );
+    });
+
+    test('pre looks past a full page with no dev release on it', () async {
+      final request = Request()
+        ..dio.httpClientAdapter = _PageAdapter({
+          '1': () =>
+              json([for (var i = 1; i <= 100; i++) listed('v1.3.0-rs.$i')]),
+          '2': () => json([listed('v1.3.0-pre.2')]),
+        });
+
+      expect(
+        (await request.newestRelease(UpdateChannel.pre))['tag_name'],
+        'v1.3.0-pre.2',
       );
     });
 
