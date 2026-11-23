@@ -26,19 +26,19 @@ void main() {
 
   List<PageLabel> labelsFor(
     NavigationItemMode mode, {
-    bool decrypting = false,
+    bool capturing = false,
   }) => [
     for (final item in navigation.getItems(
       openLogs: true,
       hasProxies: true,
-      decrypting: decrypting,
+      capturing: capturing,
     ))
       if (item.modes.contains(mode)) item.label,
   ];
 
   test('the desktop sidebar keeps connections right after proxies', () {
-    for (final decrypting in [false, true]) {
-      expect(labelsFor(NavigationItemMode.desktop, decrypting: decrypting), [
+    for (final capturing in [false, true]) {
+      expect(labelsFor(NavigationItemMode.desktop, capturing: capturing), [
         PageLabel.dashboard,
         PageLabel.proxies,
         PageLabel.requests,
@@ -58,8 +58,8 @@ void main() {
     }
   });
 
-  test('connections leaves the tools list for the mobile bar only while '
-      'HTTPS is decrypted', () {
+  test('requests leaves the tools list for the mobile bar only while HTTP '
+      'is captured', () {
     expect(labelsFor(NavigationItemMode.mobile), [
       PageLabel.dashboard,
       PageLabel.proxies,
@@ -71,7 +71,7 @@ void main() {
       contains(PageLabel.requests),
     );
 
-    expect(labelsFor(NavigationItemMode.mobile, decrypting: true), [
+    expect(labelsFor(NavigationItemMode.mobile, capturing: true), [
       PageLabel.dashboard,
       PageLabel.proxies,
       PageLabel.requests,
@@ -79,7 +79,7 @@ void main() {
       PageLabel.tools,
     ]);
     expect(
-      labelsFor(NavigationItemMode.moreFull, decrypting: true),
+      labelsFor(NavigationItemMode.moreFull, capturing: true),
       isNot(contains(PageLabel.requests)),
     );
   });

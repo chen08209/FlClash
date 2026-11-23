@@ -4,8 +4,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-bool httpCapturing(PatchClashConfig state) =>
-    state.mitm.enable && state.mitm.capture;
+bool httpCapturing(PatchClashConfig state) => state.mitm.capturesHttp;
 
 /// No listed host and no module to list one: capture records nothing.
 bool httpCaptureHasNoHost(PatchClashConfig state, bool hasModule) =>

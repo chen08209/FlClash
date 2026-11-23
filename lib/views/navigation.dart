@@ -11,7 +11,7 @@ class Navigation implements NavigationPort {
   List<NavigationItem> getItems({
     bool openLogs = false,
     bool hasProxies = false,
-    bool decrypting = false,
+    bool capturing = false,
   }) {
     return [
       NavigationItem(
@@ -31,7 +31,7 @@ class Navigation implements NavigationPort {
         glyph: AppGlyphs.requests,
         label: PageLabel.requests,
         builder: (_) => const RequestsView(),
-        modes: decrypting
+        modes: capturing
             ? [NavigationItemMode.desktop, NavigationItemMode.mobile]
             : [NavigationItemMode.desktop, NavigationItemMode.moreFull],
       ),

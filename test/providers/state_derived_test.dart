@@ -397,11 +397,11 @@ void main() {
     expect(container.read(navigationStateProvider).currentIndex, 0);
   });
 
-  test('on mobile, connections stays in the tools list while HTTPS is not '
-      'decrypted, and dev never decrypts', () {
+  test('requests joins the mobile bar only while HTTP is captured, and '
+      'stays in the desktop sidebar either way', () {
     container
-        .read(viewSizeProvider.notifier)
-        .update((_) => Size(maxMobileWidth.toDouble(), 800));
+        .read(currentPageLabelProvider.notifier)
+        .toPage(PageLabel.requests);
     List<PageLabel> bar() => [
       for (final item
           in container.read(currentNavigationItemsStateProvider).value)
@@ -413,18 +413,40 @@ void main() {
         item.label,
     ];
 
-    expect(bar(), isNot(contains(PageLabel.requests)));
-    expect(tools(), contains(PageLabel.requests));
+    for (final enable in [false, true]) {
+      for (final capture in [false, true]) {
+        container
+            .read(patchClashConfigProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                mitm: state.mitm.copyWith(enable: enable, capture: capture),
+              ),
+            );
+        final reason = 'decrypting: $enable, capturing: $capture';
+        final joinsBar = rsFeature && enable && capture;
 
-    container
-        .read(patchClashConfigProvider.notifier)
-        .update(
-          (state) => state.copyWith(mitm: state.mitm.copyWith(enable: true)),
+        container
+            .read(viewSizeProvider.notifier)
+            .update((_) => Size(maxMobileWidth.toDouble(), 800));
+        expect(bar().contains(PageLabel.requests), joinsBar, reason: reason);
+        expect(tools().contains(PageLabel.requests), !joinsBar, reason: reason);
+        expect(
+          container.read(shownPageLabelProvider),
+          joinsBar ? PageLabel.requests : bar().first,
+          reason: reason,
         );
-    final joinsBar =
-        rsFeature && container.read(patchClashConfigProvider).mitm.enable;
-    expect(bar().contains(PageLabel.requests), joinsBar);
-    expect(tools().contains(PageLabel.requests), !joinsBar);
+
+        container
+            .read(viewSizeProvider.notifier)
+            .update((_) => const Size(1200, 800));
+        expect(bar(), contains(PageLabel.requests), reason: reason);
+        expect(
+          container.read(shownPageLabelProvider),
+          PageLabel.requests,
+          reason: reason,
+        );
+      }
+    }
   });
 
   test('layout and page state providers compose their dependencies', () {

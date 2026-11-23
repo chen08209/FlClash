@@ -39,7 +39,7 @@ abstract interface class NavigationPort {
   List<NavigationItem> getItems({
     bool openLogs,
     bool hasProxies,
-    bool decrypting,
+    bool capturing,
   });
 }
 
