@@ -664,7 +664,7 @@ Subjects follow Conventional Commits and are enforced by the `commit-msg` hook i
 Write what the change does, not that something changed: `perf(views): stop redoing per-frame work in build`, not
 `Optimize more details`.
 
-Install the hooks once with `pre-commit install --hook-type pre-commit --hook-type pre-push --hook-type commit-msg`.
+Install the hooks once with `pre-commit install --hook-type pre-commit --hook-type commit-msg`. CI analyzes every pushed branch, so no hook runs on push.
 
 ### Fixup Commits
 
