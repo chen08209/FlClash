@@ -422,7 +422,13 @@ footnote 15.51), so baselines are compared, not boxes.
 - Deliberate deviation: a detail (connection, request, DNS query, outbound IP, log) sets its list a step smaller under
   `ListTextScope(scale: ListTextScale.compact)`: titles and values subheadline 15, subtitles footnote 13, headers
   subheadline semibold 15, with the same paddings, so its rows stand 51 and 58. Its rows carry dense values such as
-  addresses, hops and headers, which crowd at body.
+  addresses, hops and headers, which crowd at body. iOS has no such page, so its spacing is FlClash's own, set with
+  that design rather than measured: a value stands at least 24 from its key (`_valueGap` in `lib/widgets/record.dart`);
+  the head's well is 40 on a phone and 48 on desktop, with the line under its name at the list's subtitle size
+  (`DetailHeader`); the head stands 16 above the tabs on a phone and 20 on desktop, and the tabs 20 above the first
+  section (`_clearance` in `lib/features/connection/detail_tabs.dart`); a `FigureCard` figure is headline 17. The tabs
+  and the status segments over the request lists are `TonalButtonSize.section`, 36 tall with 15 labels padded 14 on
+  each side.
 - Deliberate deviation: desktop uses the same sizes, at the iPad rule (20/20), and no longer tightens rows with
   `VisualDensity.compact`.
 - Deliberate deviation: a leading icon stays a 24 dp line glyph with no plate. iOS's 29 pt settings icon is a filled
