@@ -549,7 +549,7 @@ void main() {
               'PROXY',
               builtin: false,
             ),
-            moduleRule(4, 'PROTOCOL,UDP', 'REJECT'),
+            moduleRule(4, 'USER-AGENT,httpdns*', 'REJECT'),
             moduleRule(5, 'RULE-SET,mitm-0123456789ab', 'REJECT'),
             moduleRule(6, 'SCRIPT,pick', 'PROXY', requiresResolve: true),
           ],
@@ -567,7 +567,7 @@ void main() {
       ),
     );
     final l10n = currentAppLocalizations;
-    expect(find.text(l10n.invalidOfCount(1, 6)), findsOneWidget);
+    expect(find.text(l10n.itemsCount(6)), findsOneWidget);
 
     await tester.tap(find.text(l10n.mitmRoutingRules));
     await tester.pumpAndSettle();
@@ -601,19 +601,23 @@ void main() {
     expect(colorOf('DIRECT'), colorScheme.success);
     expect(colorOf('PROXY'), colorScheme.tertiary);
 
-    expect(find.text('PROTOCOL,UDP,REJECT'), findsOneWidget);
-    expect(
-      tester
-          .widget<DecorationListItem>(
-            find.ancestor(
-              of: find.text('SCRIPT,pick,PROXY,requires-resolve'),
-              matching: find.byType(DecorationListItem),
-            ),
-          )
-          .invalid,
-      isFalse,
-    );
-    expect(find.text(l10n.mitmSkipRule), findsOneWidget);
+    for (final line in [
+      'USER-AGENT,httpdns*,REJECT',
+      'SCRIPT,pick,PROXY,requires-resolve',
+    ]) {
+      expect(
+        tester
+            .widget<DecorationListItem>(
+              find.ancestor(
+                of: find.text(line),
+                matching: find.byType(DecorationListItem),
+              ),
+            )
+            .invalid,
+        isFalse,
+      );
+    }
+    expect(find.text(l10n.mitmSkipRule), findsNothing);
 
     expect(find.byType(Checkbox), findsNothing);
     await tester.tap(find.text('ads.example.com'));
@@ -626,15 +630,66 @@ void main() {
     await tester.tap(find.text(l10n.confirm));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('PROTOCOL,UDP,REJECT'));
+    await tester.tap(find.text('USER-AGENT,httpdns*,REJECT'));
     await tester.pumpAndSettle();
     expect(
-      find.text(
-        'PROTOCOL,UDP,REJECT\n\n${l10n.mitmSkipRule}',
-        findRichText: true,
-      ),
-      findsOneWidget,
+      find.text('USER-AGENT,httpdns*,REJECT', findRichText: true),
+      findsNWidgets(2),
     );
+  });
+
+  testWidgets('a routing rule shows as skipped only with the Core\'s reason', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      MitmModuleView(id: _remote.id),
+      remoteContent: moduleDetails(
+        '',
+        moduleRead(
+          rules: [
+            moduleRule(1, 'DOMAIN-KEYWORD,httpdns', 'REJECT'),
+            moduleRule(2, 'USER-AGENT,Httpsdns*', 'REJECT'),
+            moduleRule(
+              3,
+              r'URL-REGEX,^http:\/\/\[[0-9a-fA-F:]+\](?:\/v?[0-9]+)?\/(?:sign_)?(?:(?:d|ss)[46]?|resolve)\?',
+              'REJECT',
+            ),
+            moduleRule(4, 'USER-AGENT,refused*', 'REJECT'),
+          ],
+        ),
+      ),
+      statuses: {
+        '${_remote.id}': MitmModuleStatus.fromJson({
+          'name': '${_remote.id}',
+          'inForce': true,
+          'refusedRules': [
+            {'line': 4, 'detail': 'the Core says why'},
+          ],
+        }),
+      },
+    );
+    final l10n = currentAppLocalizations;
+    expect(find.text(l10n.invalidOfCount(1, 4)), findsOneWidget);
+
+    await tester.tap(find.text(l10n.mitmRoutingRules));
+    await tester.pumpAndSettle();
+
+    expect(find.text('DOMAIN-KEYWORD'), findsOneWidget);
+    expect(find.text('DOMAIN_KEYWORD'), findsNothing);
+    expect(find.text(l10n.mitmSkipRule), findsNothing);
+    expect(find.text('the Core says why'), findsOneWidget);
+    bool invalid(String prefix) => tester
+        .widget<DecorationListItem>(
+          find.ancestor(
+            of: find.textContaining(prefix),
+            matching: find.byType(DecorationListItem),
+          ),
+        )
+        .invalid;
+    expect(invalid('USER-AGENT,Httpsdns*'), isFalse);
+    expect(invalid('URL-REGEX,'), isFalse);
+    expect(invalid('USER-AGENT,refused*'), isTrue);
   });
 
   testWidgets('routing rules say which ask for extended matching', (

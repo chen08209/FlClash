@@ -583,21 +583,40 @@ final class RpcCoreApi implements CoreApi {
   );
 
   @override
-  Future<JsonMap> readMitmModule(
+  Future<T> readMitmModule<T>(
     String text, {
     Map<String, String> arguments = const {},
     Map<String, String> attachments = const {},
     String language = '',
-  }) => _call(
-    'mitm.readModule',
-    (r) => _object(r),
-    params: {
-      'text': text,
-      'arguments': arguments,
-      'attachments': attachments,
-      'language': language,
-    },
-  );
+    required T Function(JsonMap answer) read,
+  }) async {
+    final mapped = await _call(
+      'mitm.readModule',
+      _carrying(read),
+      params: {
+        'text': text,
+        'arguments': arguments,
+        'attachments': attachments,
+        'language': language,
+      },
+    );
+    if (mapped.error case final error?) {
+      return Future.error(error);
+    }
+    return mapped.value as T;
+  }
+
+  /// Made outside an async body, whose frame the closure would carry.
+  static ({T? value, Object? error}) Function(Object? result) _carrying<T>(
+    T Function(JsonMap answer) read,
+  ) => (result) {
+    final answer = _object(result);
+    try {
+      return (value: read(answer), error: null);
+    } catch (error) {
+      return (value: null, error: error);
+    }
+  };
 
   @override
   Future<JsonMap> mitmModuleStatus() =>

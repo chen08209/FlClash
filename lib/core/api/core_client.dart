@@ -330,13 +330,13 @@ final class CoreClient {
     final decode = pending.decode;
     Object? outcome;
     try {
-      outcome = await Isolate.run(() => _decodeResponse(frame, decode));
-    } catch (_) {
-      try {
-        outcome = _decodeResponse(frame, decode);
-      } catch (error) {
-        outcome = _Failed(error);
-      }
+      outcome = await Isolate.run(() => _settleResponse(frame, decode));
+    } catch (error) {
+      commonPrint.log(
+        'Core response $id decoded on the UI isolate: $error',
+        logLevel: LogLevel.warning,
+      );
+      outcome = _settleResponse(frame, decode);
     }
     final current = _pending.remove(id);
     if (current == null) {
@@ -446,6 +446,16 @@ final class _Failed {
   final Object error;
 
   const _Failed(this.error);
+}
+
+/// A failure comes back as a value, so only a response or error that cannot
+/// cross the isolate falls back to decoding again.
+Object? _settleResponse(Uint8List frame, Decoder<Object?> decode) {
+  try {
+    return _decodeResponse(frame, decode);
+  } catch (error) {
+    return _Failed(error);
+  }
 }
 
 Object? _decodeResponse(Uint8List frame, Decoder<Object?> decode) {

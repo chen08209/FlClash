@@ -669,43 +669,34 @@ class MitmModuleView extends ConsumerWidget {
     _ => appLocalizations.mitmFetchOther,
   };
 
-  List<Widget> _resourceItems(
+  Widget _resourceItem(
+    BuildContext context,
+    MitmModuleResourceStatus resource,
+  ) => ListItem(
+    title: Text(resource.url, maxLines: 1, overflow: TextOverflow.ellipsis),
+    subtitle: Text(
+      _resourceState(context.appLocalizations, resource),
+      style: resource.state == MitmResourceState.failed
+          ? TextStyle(color: context.colorScheme.error)
+          : null,
+    ),
+    trailing: resource.state == MitmResourceState.fetching
+        ? const ActivityIndicator(size: 24)
+        : null,
+  );
+
+  Widget _fetchResourcesItem(
     BuildContext context,
     WidgetRef ref,
     MitmModule module,
-    MitmModuleStatus status,
-  ) {
-    final appLocalizations = context.appLocalizations;
-    return [
-      for (final resource in status.resources)
-        ListItem(
-          title: Text(
-            resource.url,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            _resourceState(appLocalizations, resource),
-            style: resource.state == MitmResourceState.failed
-                ? TextStyle(color: context.colorScheme.error)
-                : null,
-          ),
-          trailing: resource.state == MitmResourceState.fetching
-              ? const ActivityIndicator(size: 24)
-              : null,
-        ),
-      ListItem(
-        title: Text(appLocalizations.mitmResourcesFetch),
-        onTap: () => globalState.safeRun(
-          () => ref
-              .read(mitmModulesActionProvider.notifier)
-              .fetchResources(module),
-          title: module.name,
-          silence: false,
-        ),
-      ),
-    ];
-  }
+  ) => ListItem(
+    title: Text(context.appLocalizations.mitmResourcesFetch),
+    onTap: () => globalState.safeRun(
+      () => ref.read(mitmModulesActionProvider.notifier).fetchResources(module),
+      title: module.name,
+      silence: false,
+    ),
+  );
 
   Widget _networkItem(BuildContext context, MitmNetworkChangeState state) {
     final appLocalizations = context.appLocalizations;
@@ -740,181 +731,200 @@ class MitmModuleView extends ConsumerWidget {
     final details = ref.watch(mitmModuleContentProvider(id));
     final content = details.value;
     final status = ref.watch(mitmModuleStatusProvider).value?['$id'];
-    final refused = {
-      for (final rule in status?.refusedRules ?? const <MitmRefusedRule>[])
-        rule.line: rule.detail,
-    };
     final networkChanges =
         ref.watch(mitmModuleNetworkChangesProvider(id)).value ?? const [];
+    final resources = status?.resources ?? const <MitmModuleResourceStatus>[];
     return Scaffold(
       title: module?.name ?? appLocalizations.mitmModule,
       body: NullStatusSwitcher(
         isLoading: module == null || details.isLoading && !details.hasValue,
         child: module == null
             ? const SizedBox()
-            : ListView(
-                padding: context.listInsets.page().copyWith(
-                  top: context.sectionsTopPadding,
-                  bottom: 16 + context.bottomInset,
-                ),
-                children: [
-                  generateSection(
-                    items: [
-                      ListItem.toggle(
-                        title: Text(appLocalizations.enabled),
-                        value: module.enabled,
-                        onChanged: (value) => _setEnabled(ref, module, value),
+            : ArrivalCacheExtentBuilder(
+                builder: (cacheExtent) => CustomScrollView(
+                  scrollCacheExtent: cacheExtent,
+                  slivers: [
+                    SliverPadding(
+                      padding: context.listInsets.page().copyWith(
+                        top: context.sectionsTopPadding,
+                        bottom: 16 + context.bottomInset,
                       ),
-                    ],
-                    footer: _aboutFooter(
-                      appLocalizations,
-                      module,
-                      content,
-                      readError: details.hasValue ? null : details.error,
-                    ),
-                  ),
-                  generateSection(
-                    title: appLocalizations.source,
-                    items: _sourceItems(context, ref, module),
-                  ),
-                  if (!module.isRemote)
-                    generateSection(
-                      title: appLocalizations.mitmAttachments,
-                      items: _attachmentItems(context, ref, module),
-                      footer: appLocalizations.mitmAttachmentsDesc,
-                      last: content == null && networkChanges.isEmpty,
-                    ),
-                  if (content != null && content.read.arguments.isNotEmpty)
-                    generateSection(
-                      title: appLocalizations.arguments,
-                      items: [
-                        for (final argument in content.read.arguments)
-                          _argumentItem(ref, module, argument),
-                      ],
-                      footer: _argumentsFooter(content),
-                    ),
-                  if (status != null && status.resources.isNotEmpty)
-                    generateSection(
-                      title: appLocalizations.mitmResources,
-                      items: _resourceItems(context, ref, module, status),
-                    ),
-                  if (networkChanges.isNotEmpty)
-                    generateSection(
-                      title: appLocalizations.mitmNetworkChanges,
-                      items: [
-                        for (final state in networkChanges)
-                          _networkItem(context, state),
-                      ],
-                      footer: appLocalizations.mitmNetworkRisk,
-                      last: content == null,
-                    ),
-                  if (content != null)
-                    generateSection(
-                      title: appLocalizations.rules,
-                      items: [
-                        for (final list in MitmList.values)
-                          if (content.lists[list] case final lines?
-                              when lines.isNotEmpty)
-                            _linesItem(
-                              list.label,
-                              [
-                                for (final line in lines)
-                                  (
-                                    text: line.text,
-                                    issue: line.issue,
-                                    view: line.view,
-                                  ),
+                      sliver: SliverMainAxisGroup(
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: generateSection(
+                              items: [
+                                ListItem.toggle(
+                                  title: Text(appLocalizations.enabled),
+                                  value: module.enabled,
+                                  onChanged: (value) =>
+                                      _setEnabled(ref, module, value),
+                                ),
                               ],
-                              note: list == MitmList.clientSourceAddress
-                                  ? appLocalizations.mitmClientSourceTunTip
-                                  : null,
-                              menuItemsOf:
-                                  list == MitmList.script && module.enabled
-                                  ? (line) => [
-                                      ?mitmRunScriptItem(ref, line.view),
-                                    ]
-                                  : null,
-                            ),
-                        if (content.read.rules.isNotEmpty)
-                          _linesItem(
-                            appLocalizations.mitmRoutingRules,
-                            [
-                              for (final rule in content.read.rules)
-                                _ruleLine(
-                                  rule,
-                                  refused[rule.line],
-                                  appLocalizations,
-                                ),
-                            ],
-                            note: switch (content.read.rules
-                                .where((rule) => rule.extendedMatching)
-                                .length) {
-                              0 => null,
-                              final count =>
-                                appLocalizations.mitmExtendedMatchingNote(
-                                  count,
-                                ),
-                            },
-                            rules: true,
-                            ruleSets: {
-                              for (final set in content.read.ruleSets)
-                                set.name: {'url': ?set.url, 'path': ?set.file},
-                            },
-                          ),
-                        if (content.read.ignored.isNotEmpty)
-                          ListItem.open(
-                            title: Text(appLocalizations.mitmIgnoredLines),
-                            subtitle: Text(
-                              appLocalizations.itemsCount(
-                                content.read.ignored.length,
+                              footer: _aboutFooter(
+                                appLocalizations,
+                                module,
+                                content,
+                                readError: details.hasValue
+                                    ? null
+                                    : details.error,
                               ),
                             ),
-                            builder: (_) => _MitmModuleLinesView(
-                              title: appLocalizations.mitmIgnoredLines,
-                              notes: true,
-                              lines: [
-                                for (final skip in content.read.ignored)
-                                  (
-                                    text: skip.text,
-                                    issue: _skipReason(appLocalizations, skip),
-                                    view: null,
-                                  ),
-                              ],
+                          ),
+                          SliverToBoxAdapter(
+                            child: generateSection(
+                              title: appLocalizations.source,
+                              items: _sourceItems(context, ref, module),
                             ),
                           ),
-                      ],
-                      footer: [
-                        appLocalizations.mitmModuleRulesDesc,
-                        if (content.read.rules.any(_isRequestRule))
-                          appLocalizations.mitmRequestRulesDesc,
-                      ].join(' '),
-                      last: true,
+                          if (!module.isRemote)
+                            SliverToBoxAdapter(
+                              child: generateSection(
+                                title: appLocalizations.mitmAttachments,
+                                items: _attachmentItems(context, ref, module),
+                                footer: appLocalizations.mitmAttachmentsDesc,
+                                last: content == null && networkChanges.isEmpty,
+                              ),
+                            ),
+                          if (content != null)
+                            generateSliverSection(
+                              title: appLocalizations.arguments,
+                              items: content.read.arguments,
+                              itemBuilder: (argument) =>
+                                  _argumentItem(ref, module, argument),
+                              footer: _argumentsFooter(content),
+                            ),
+                          if (resources.isNotEmpty)
+                            generateSliverSection<MitmModuleResourceStatus?>(
+                              title: appLocalizations.mitmResources,
+                              items: [...resources, null],
+                              itemBuilder: (resource) => resource == null
+                                  ? _fetchResourcesItem(context, ref, module)
+                                  : _resourceItem(context, resource),
+                            ),
+                          generateSliverSection(
+                            title: appLocalizations.mitmNetworkChanges,
+                            items: networkChanges,
+                            itemBuilder: (state) =>
+                                _networkItem(context, state),
+                            footer: appLocalizations.mitmNetworkRisk,
+                            last: content == null,
+                          ),
+                          if (content != null)
+                            SliverToBoxAdapter(
+                              child: MemoBuilder(
+                                inputs: [
+                                  content,
+                                  module.enabled,
+                                  for (final rule
+                                      in status?.refusedRules ??
+                                          const <MitmRefusedRule>[]) ...[
+                                    rule.line,
+                                    rule.detail,
+                                  ],
+                                ],
+                                builder: (context) => _rulesSection(
+                                  context,
+                                  ref,
+                                  module,
+                                  content,
+                                  status,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                ],
+                  ],
+                ),
               ),
       ),
+    );
+  }
+
+  Widget _rulesSection(
+    BuildContext context,
+    WidgetRef ref,
+    MitmModule module,
+    MitmModuleDetails content,
+    MitmModuleStatus? status,
+  ) {
+    final appLocalizations = context.appLocalizations;
+    final refused = {
+      for (final rule in status?.refusedRules ?? const <MitmRefusedRule>[])
+        rule.line: rule.detail,
+    };
+    return generateSection(
+      title: appLocalizations.rules,
+      items: [
+        for (final list in MitmList.values)
+          if (content.lists[list] case final lines? when lines.isNotEmpty)
+            _linesItem(
+              list.label,
+              [
+                for (final line in lines)
+                  (text: line.text, issue: line.issue, view: line.view),
+              ],
+              note: list == MitmList.clientSourceAddress
+                  ? appLocalizations.mitmClientSourceTunTip
+                  : null,
+              menuItemsOf: list == MitmList.script && module.enabled
+                  ? (line) => [?mitmRunScriptItem(ref, line.view)]
+                  : null,
+            ),
+        if (content.read.rules.isNotEmpty)
+          _linesItem(
+            appLocalizations.mitmRoutingRules,
+            [
+              for (final rule in content.read.rules)
+                _ruleLine(rule, refused[rule.line]),
+            ],
+            note: switch (content.read.rules
+                .where((rule) => rule.extendedMatching)
+                .length) {
+              0 => null,
+              final count => appLocalizations.mitmExtendedMatchingNote(count),
+            },
+            rules: true,
+            ruleSets: {
+              for (final set in content.read.ruleSets)
+                set.name: {'url': ?set.url, 'path': ?set.file},
+            },
+          ),
+        if (content.read.ignored.isNotEmpty)
+          ListItem.open(
+            title: Text(appLocalizations.mitmIgnoredLines),
+            subtitle: Text(
+              appLocalizations.itemsCount(content.read.ignored.length),
+            ),
+            builder: (_) => _MitmModuleLinesView(
+              title: appLocalizations.mitmIgnoredLines,
+              notes: true,
+              lines: [
+                for (final skip in content.read.ignored)
+                  (
+                    text: skip.text,
+                    issue: _skipReason(appLocalizations, skip),
+                    view: null,
+                  ),
+              ],
+            ),
+          ),
+      ],
+      footer: [
+        appLocalizations.mitmModuleRulesDesc,
+        if (content.read.rules.any(_isRequestRule))
+          appLocalizations.mitmRequestRulesDesc,
+      ].join(' '),
+      last: true,
     );
   }
 }
 
 typedef _ShownLine = ({String text, String? issue, MitmLineView? view});
 
-_ShownLine _ruleLine(
-  MitmModuleRule rule,
-  String? refused,
-  AppLocalizations appLocalizations,
-) {
-  final text = _ruleText(rule);
-  return (
-    text: text,
-    issue:
-        refused ??
-        (_moduleRule(text) == null && !_isScriptRule(text)
-            ? appLocalizations.mitmSkipRule
-            : null),
-    view: null,
-  );
-}
+_ShownLine _ruleLine(MitmModuleRule rule, String? refused) =>
+    (text: _ruleText(rule), issue: refused, view: null);
 
 String _ruleText(MitmModuleRule rule) => [
   rule.rule,
@@ -922,9 +932,6 @@ String _ruleText(MitmModuleRule rule) => [
   if (rule.noResolve) 'no-resolve',
   if (rule.requiresResolve) 'requires-resolve',
 ].join(',');
-
-/// A `SCRIPT` rule, which the Core runs but the rule editor has no type for.
-bool _isScriptRule(String line) => line.startsWith('SCRIPT,');
 
 /// A rule decided by the request a session decrypts.
 bool _isRequestRule(MitmModuleRule rule) =>
@@ -1006,28 +1013,25 @@ class _MitmModuleLinesView extends StatelessWidget {
         onEdit: (_) => _showLine(context, line, issue),
       );
     }
-    final message =
-        issue ??
-        (_isScriptRule(line) ? null : context.appLocalizations.mitmSkipRule);
     return DecorationListItem(
       minVerticalPadding: 0,
-      invalid: message != null,
+      invalid: issue != null,
       title: Text(
         line,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: DefaultTextStyle.of(context).style.toJetBrainsMono,
       ),
-      subtitle: switch (message) {
-        final message? => Text(
-          message,
+      subtitle: switch (issue) {
+        final issue? => Text(
+          issue,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(color: context.colorScheme.error),
         ),
         null => null,
       },
-      onPressed: () => _showLine(context, line, message),
+      onPressed: () => _showLine(context, line, issue),
     );
   }
 

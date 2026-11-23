@@ -70,25 +70,26 @@ extension ModelApi on CoreApi {
   Future<MitmCheck> checkMitmRules(MitmRules rules) async =>
       mitmCheckOf(await validateMitm(rules.toJson()));
 
-  Future<({MitmModuleRead read, MitmCheck check})> getMitmModuleRead(
+  /// [map] runs where the answer is decoded, as [CoreApi.readMitmModule]'s
+  /// `read` does.
+  Future<T> getMitmModuleRead<T>(
     String text, {
     Map<String, String> arguments = const {},
     Map<String, String> attachments = const {},
     String language = '',
-  }) async {
-    final read = MitmModuleRead.fromJson(
-      await readMitmModule(
-        text,
-        arguments: arguments,
-        attachments: attachments,
-        language: language,
-      ),
-    );
-    return (
-      read: read,
-      check: mitmCheckOf({'issues': read.issues, 'views': read.views}),
-    );
-  }
+    required T Function(MitmModuleRead read, MitmCheck check) map,
+  }) => readMitmModule(
+    text,
+    arguments: arguments,
+    attachments: attachments,
+    language: language,
+    read: _moduleReader(map),
+  );
+
+  static T Function(JsonMap answer) _moduleReader<T>(
+    T Function(MitmModuleRead read, MitmCheck check) map,
+  ) =>
+      (answer) => map(MitmModuleRead.fromJson(answer), mitmCheckOf(answer));
 
   Future<List<MitmModuleStatus>> getMitmModuleStatus() async {
     final status = await mitmModuleStatus();

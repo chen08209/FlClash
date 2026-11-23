@@ -346,11 +346,14 @@ abstract interface class CoreApi {
 
   Future<Object?> mitmBody(int id, {required bool response});
 
-  Future<JsonMap> readMitmModule(
+  /// [read] runs where the answer is decoded, which for a large module is
+  /// another isolate, so it may only hold what an isolate can receive.
+  Future<T> readMitmModule<T>(
     String text, {
     Map<String, String> arguments = const {},
     Map<String, String> attachments = const {},
     String language = '',
+    required T Function(JsonMap answer) read,
   });
 
   Future<JsonMap> mitmModuleStatus();

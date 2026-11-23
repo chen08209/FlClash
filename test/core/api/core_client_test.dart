@@ -213,6 +213,42 @@ void main() {
       expect(isolateName, isNot('main'));
     });
 
+    test('a large response it fails to decode is not decoded again', () async {
+      await connect();
+      final result = client.call<Object?>(
+        'connection.list',
+        decode: (_) => throw StateError('${Isolate.current.debugName}'),
+      );
+      await settle();
+      channel.answerHello();
+      await settle();
+      final id = channel.lastCall('connection.list')['id'];
+      final items = List.generate(3000, (index) => 'connection-$index-padding');
+      channel.pushRaw(
+        Uint8List.fromList(
+          utf8.encode(
+            json.encode({
+              'jsonrpc': '2.0',
+              'id': id,
+              'result': {'items': items},
+            }),
+          ),
+        ),
+      );
+      await expectLater(
+        result,
+        throwsA(
+          isA<CoreMethodException>()
+              .having((error) => error.code, 'code', 'invalid_response')
+              .having(
+                (error) => error.details,
+                'details',
+                isNot(contains('main')),
+              ),
+        ),
+      );
+    });
+
     test('decodes a small response on the calling isolate', () async {
       await connect();
       final result = client.call<String?>(
