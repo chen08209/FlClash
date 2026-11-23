@@ -22,6 +22,8 @@ void main() {
           channel.answer(message['id'], {
             'result': {'id': 7},
           });
+        case 'mitm.readModule':
+          channel.answer(message['id'], {'format': 'surge'});
         case 'mitm.validate':
           channel.answer(message['id'], {
             'issues': {
@@ -208,6 +210,20 @@ void main() {
       expect(exchange.start, DateTime.utc(2026, 11, 21, 8, 0, 1));
     },
   );
+
+  test('what reading a module throws reaches the caller as it is', () async {
+    expect(
+      await api.readMitmModule('', read: (answer) => answer['format']),
+      'surge',
+    );
+    await expectLater(
+      api.readMitmModule<Object?>(
+        '',
+        read: (_) => throw const FormatException('bad field'),
+      ),
+      throwsA(isA<FormatException>()),
+    );
+  });
 
   test('an MITM record the Core has dropped reads as null', () async {
     expect(await api.mitmBody(7, response: true), isNull);

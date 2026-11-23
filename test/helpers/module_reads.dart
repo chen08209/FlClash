@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/models/models.dart';
@@ -74,29 +75,38 @@ JsonMap moduleRule(
 };
 
 MitmModuleDetails moduleDetails(String text, JsonMap read) {
-  final parsed = MitmModuleRead.fromJson(read);
   return mitmModuleDetailsOf(
     text,
-    parsed,
-    ModelApi.mitmCheckOf({'issues': parsed.issues, 'views': parsed.views}),
+    MitmModuleRead.fromJson(read),
+    ModelApi.mitmCheckOf(read),
   );
 }
 
+/// Maps each answer on another isolate, as the Core client does with a large
+/// one, so a mapper that cannot cross fails the test instead of falling back.
 void stubModuleReads(
   MockCoreApi api,
   JsonMap Function(String text, Map<String, String> arguments) read,
 ) {
   when(
-    () => api.readMitmModule(
+    () => api.readMitmModule<MitmModuleDetails>(
       any(),
       arguments: any(named: 'arguments'),
       attachments: any(named: 'attachments'),
       language: any(named: 'language'),
+      read: any(named: 'read'),
     ),
-  ).thenAnswer(
-    (invocation) async => read(
+  ).thenAnswer((invocation) {
+    final answer = read(
       invocation.positionalArguments.first as String,
       invocation.namedArguments[#arguments] as Map<String, String>? ?? const {},
-    ),
-  );
+    );
+    return _mapAway(
+      invocation.namedArguments[#read] as MitmModuleDetails Function(JsonMap),
+      answer,
+    );
+  });
 }
+
+Future<T> _mapAway<T>(T Function(JsonMap answer) map, JsonMap answer) =>
+    Isolate.run(() => map(answer));

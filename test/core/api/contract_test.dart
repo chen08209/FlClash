@@ -193,6 +193,7 @@ final Map<String, _Call> _calls = {
     arguments: const {'a': '1'},
     attachments: const {'a.js': 'f.js'},
     language: 'zh-Hans',
+    read: (answer) => answer,
   ),
   'mitm.moduleStatus': (api) => api.mitmModuleStatus(),
   'mitm.fetchModule': (api) async {

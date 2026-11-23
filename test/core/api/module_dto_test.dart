@@ -121,10 +121,7 @@ void main() {
     expect(read.rules[1].noResolve, isTrue);
     expect(read.ruleSets.single.rules, ['DOMAIN,b.test']);
     expect(read.ignored.single.reason, 'appOnly');
-    final check = ModelApi.mitmCheckOf({
-      'issues': read.issues,
-      'views': read.views,
-    });
+    final check = ModelApi.mitmCheckOf(_read);
     expect(check.issues[MitmList.urlRewrite], {12: 'bad pattern'});
     expect(check.views[MitmList.urlRewrite]?[11], isA<MitmUrlRewriteView>());
   });

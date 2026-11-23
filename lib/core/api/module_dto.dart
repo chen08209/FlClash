@@ -7,7 +7,8 @@ List<int> _ints(Object? value) => [
 ];
 
 /// `mitm.readModule`: how the Core reads a module with these argument values,
-/// each line by its line number in the module.
+/// each line by its line number in the module. The answer's `issues` and
+/// `views` are read by `ModelApi.mitmCheckOf` instead, and not kept twice.
 @immutable
 final class MitmModuleRead {
   const MitmModuleRead({
@@ -18,8 +19,6 @@ final class MitmModuleRead {
     this.resources = const [],
     this.declaredScripts = const [],
     this.asksConsent = false,
-    this.issues = const {},
-    this.views = const {},
     this.rules = const [],
     this.ruleSets = const [],
     this.network = const {},
@@ -37,10 +36,6 @@ final class MitmModuleRead {
   final List<MitmModuleResource> resources;
   final List<int> declaredScripts;
   final bool asksConsent;
-
-  /// As `mitm.validate` answers them, by list key; an `index` is a module line.
-  final JsonMap issues;
-  final JsonMap views;
   final List<MitmModuleRule> rules;
   final List<MitmModuleRuleSet> ruleSets;
 
@@ -56,8 +51,6 @@ final class MitmModuleRead {
     resources: _list(json['resources'], MitmModuleResource.fromJson),
     declaredScripts: _ints(json['declaredScripts']),
     asksConsent: json['asksConsent'] as bool? ?? false,
-    issues: _optionalMap(json['issues']) ?? const {},
-    views: _optionalMap(json['views']) ?? const {},
     rules: _list(json['rules'], MitmModuleRule.fromJson),
     ruleSets: _list(json['ruleSets'], MitmModuleRuleSet.fromJson),
     network: _optionalMap(json['network']) ?? const {},

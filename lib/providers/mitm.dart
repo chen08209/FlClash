@@ -373,7 +373,7 @@ Future<MitmModuleDetails> readMitmModule(
       await File(
         join(await appPath.mitmModulesDirPath, module.fileName),
       ).readAsString();
-  final result = await ref
+  return ref
       .read(coreHandlerProvider)
       .api
       .getMitmModuleRead(
@@ -381,9 +381,16 @@ Future<MitmModuleDetails> readMitmModule(
         arguments: arguments ?? module.arguments,
         attachments: mitmAttachments(module),
         language: mitmModuleLanguage,
+        map: _detailsOf(source),
       );
-  return mitmModuleDetailsOf(source, result.read, result.check);
 }
+
+/// Made outside [readMitmModule], whose async frame holds `ref`: a closure
+/// made there would carry it and could not reach the decoding isolate.
+MitmModuleDetails Function(MitmModuleRead, MitmCheck) _detailsOf(
+  String source,
+) =>
+    (read, check) => mitmModuleDetailsOf(source, read, check);
 
 MitmModuleDetails mitmModuleDetailsOf(
   String source,
