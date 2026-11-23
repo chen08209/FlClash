@@ -54,7 +54,7 @@ final class _Absent extends _Core {
 final class _Live extends _Core {
   final DesktopCoreSession session;
 
-  /// The newest revision issued by the time the session came up.
+  /// The newest revision issued before its launcher was chosen.
   final int epoch;
 
   const _Live(this.session, this.epoch);
@@ -235,7 +235,8 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
     _publish(DesktopCoreStarting(revision: revision, sessionId: sessionId));
     CoreProcessLease? lease;
     try {
-      if (transport.connection != null) {
+      if (transport.connection != null ||
+          transport.state == DesktopTransportState.starting) {
         await transport.reset();
       }
       final listening = await _whileWanted(
@@ -244,6 +245,7 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
       if (listening == null) {
         return;
       }
+      final launchEpoch = _revision;
       final launcher = await launcherResolver.resolve();
       if (!_wantsCore) {
         return;
@@ -284,7 +286,7 @@ final class DesktopCoreLifecycle implements DesktopCoreLifecycleController {
         connectionGeneration: connection.generation,
       );
       lease = null;
-      _core = _Live(session, _revision);
+      _core = _Live(session, launchEpoch);
       _publish(DesktopCoreRunning(session));
     } on DesktopCoreFailure {
       rethrow;

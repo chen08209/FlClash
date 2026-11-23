@@ -55,6 +55,11 @@ final class FakeDesktopCoreTransport implements DesktopCoreTransport {
   @override
   Stream<Uint8List> get frames => _frameController.stream;
 
+  /// Makes the next bind hang, as one that never returns does; an open while
+  /// the transport is starting gets the bind already under way.
+  bool hangOpen = false;
+  Future<void>? _opening;
+
   @override
   Future<void> open() async {
     if (state == DesktopTransportState.closed) {
@@ -64,7 +69,14 @@ final class FakeDesktopCoreTransport implements DesktopCoreTransport {
         state == DesktopTransportState.connected) {
       return;
     }
+    if (state == DesktopTransportState.starting && _opening != null) {
+      return _opening;
+    }
     state = DesktopTransportState.starting;
+    await (_opening = hangOpen ? Completer<void>().future : _awaitReady());
+  }
+
+  Future<void> _awaitReady() async {
     final event = await events.firstWhere(
       (event) => event is TransportReady || event is TransportFailed,
     );
@@ -76,6 +88,7 @@ final class FakeDesktopCoreTransport implements DesktopCoreTransport {
   @override
   Future<void> reset() async {
     resetCount++;
+    _opening = null;
     final connection = _connection;
     _connection = null;
     _failure = null;

@@ -95,6 +95,58 @@ void main() {
     await _closeRunning(lifecycle, transport, helper.lease, 2);
   });
 
+  test('a restart issued while a start is launching waits for a Core '
+      'launched after it', () async {
+    final transport = FakeDesktopCoreTransport();
+    final direct = FakeLauncher(owner: CoreProcessOwner.direct, pid: 42);
+    final helper = FakeLauncher(owner: CoreProcessOwner.helper, pid: 84);
+    final resolver = MutableLauncherResolver(direct);
+    final lifecycle = _createLifecycle(
+      transport: transport,
+      resolver: resolver,
+    );
+
+    final start = lifecycle.start();
+    transport.ready();
+    await direct.started;
+    direct.lease.stopGate = Completer<void>();
+    resolver.launcher = helper;
+    final restart = lifecycle.restart();
+    transport.connect(pid: 42, generation: 1);
+    await pumpEventQueue();
+
+    expect(direct.lease.stopCount, 1);
+    transport.disconnect(1);
+    direct.lease.stopGate!.complete();
+    await helper.started;
+    transport.connect(pid: 84, generation: 2);
+
+    await start;
+    expect((await restart).session?.owner, CoreProcessOwner.helper);
+    await _closeRunning(lifecycle, transport, helper.lease, 2);
+  });
+
+  test('a start after a bind that never returned binds again', () async {
+    final transport = FakeDesktopCoreTransport()..hangOpen = true;
+    final launcher = FakeLauncher(owner: CoreProcessOwner.direct, pid: 42);
+    final lifecycle = _createLifecycle(
+      transport: transport,
+      resolver: MutableLauncherResolver(launcher),
+    );
+    await expectLater(lifecycle.start(), throwsA(isA<DesktopCoreFailure>()));
+
+    transport.hangOpen = false;
+    final start = lifecycle.start();
+    await pumpEventQueue();
+    transport.ready();
+    await pumpEventQueue();
+    expect(launcher.startCount, 1);
+    transport.connect(pid: 42, generation: 1);
+
+    expect((await start).session?.owner, CoreProcessOwner.direct);
+    await _closeRunning(lifecycle, transport, launcher.lease, 1);
+  });
+
   test('close supersedes an in-flight start and cleans its lease', () async {
     final transport = FakeDesktopCoreTransport();
     final launcher = FakeLauncher(owner: CoreProcessOwner.direct, pid: 42);
