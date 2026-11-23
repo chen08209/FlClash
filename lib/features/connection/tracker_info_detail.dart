@@ -85,12 +85,9 @@ class TrackerPathSection extends ConsumerWidget {
                     ? null
                     : Text(
                         '$delay ms',
-                        style: AppTextStyle.body
-                            .of(context)
-                            .toTabular
-                            .copyWith(
-                              color: context.colorScheme.delayColor(delay),
-                            ),
+                        style: TextStyle(
+                          color: context.colorScheme.delayColor(delay),
+                        ),
                       ),
               ),
             ),
@@ -276,23 +273,26 @@ class TrackerInfoDetailView extends ConsumerWidget {
             ).select((value) => value.value?.exchanges.length ?? 0),
           )
         : 0;
-    return DetailTabs(
-      header: header,
-      initialIndex: opensRequests && capturing ? 1 : 0,
-      tabs: [
-        (
-          appLocalizations.timeline,
-          (context) => _buildTimeline(context, capturing: capturing),
-        ),
-        if (capturing)
+    return ListTextScope(
+      scale: ListTextScale.compact,
+      child: DetailTabs(
+        header: header,
+        initialIndex: opensRequests && capturing ? 1 : 0,
+        tabs: [
           (
-            exchanges == 0
-                ? appLocalizations.httpRequests
-                : '${appLocalizations.httpRequests} $exchanges',
-            (_) => MitmExchangesView(trackerInfo: trackerInfo),
+            appLocalizations.timeline,
+            (context) => _buildTimeline(context, capturing: capturing),
           ),
-        (appLocalizations.connectionInfo, _buildOverview),
-      ],
+          if (capturing)
+            (
+              exchanges == 0
+                  ? appLocalizations.httpRequests
+                  : '${appLocalizations.httpRequests} $exchanges',
+              (_) => MitmExchangesView(trackerInfo: trackerInfo),
+            ),
+          (appLocalizations.connectionInfo, _buildOverview),
+        ],
+      ),
     );
   }
 }

@@ -55,23 +55,26 @@ class MitmExchangeView extends ConsumerWidget {
               load: () async => exchange,
             ),
           );
-    final content = NullStatusSwitcher(
-      isLoading: value.isLoading && !value.hasValue,
-      isEmpty: exchange == null,
-      nullStatus: NullStatus(
-        label: appLocalizations.httpRequestCleared,
-        illustration: NullStatusIllustration.requests,
-      ),
-      child: exchange == null
-          ? const SizedBox.shrink()
-          : _BodyHold(
-              child: _MitmExchangeDetail(
-                exchange: exchange,
-                menu: inPane ? menu : null,
-                showsConnection: showsConnection,
-                onOpenConnection: onOpenConnection,
+    final content = ListTextScope(
+      scale: ListTextScale.compact,
+      child: NullStatusSwitcher(
+        isLoading: value.isLoading && !value.hasValue,
+        isEmpty: exchange == null,
+        nullStatus: NullStatus(
+          label: appLocalizations.httpRequestCleared,
+          illustration: NullStatusIllustration.requests,
+        ),
+        child: exchange == null
+            ? const SizedBox.shrink()
+            : _BodyHold(
+                child: _MitmExchangeDetail(
+                  exchange: exchange,
+                  menu: inPane ? menu : null,
+                  showsConnection: showsConnection,
+                  onOpenConnection: onOpenConnection,
+                ),
               ),
-            ),
+      ),
     );
     if (inPane) {
       return content;

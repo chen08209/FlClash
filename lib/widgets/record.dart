@@ -208,6 +208,7 @@ class DetailRow extends StatelessWidget {
     }
     return DecorationListItem(
       onPressed: onPressed,
+      horizontalTitleGap: _valueGap,
       title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: DefaultTextStyle.merge(
         textAlign: TextAlign.end,
@@ -217,6 +218,8 @@ class DetailRow extends StatelessWidget {
     );
   }
 }
+
+const _valueGap = 24.0;
 
 /// A row one level up from its run, marked at its start.
 class RecordSelectedRow extends StatelessWidget {
@@ -271,7 +274,7 @@ class DetailHeader extends StatelessWidget {
     return Row(
       spacing: compact ? 14 : 16,
       children: [
-        well(compact ? 44 : 52),
+        well(compact ? 40 : 48),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -527,7 +530,7 @@ class FigureCard extends StatelessWidget {
             Text(
               figure,
               maxLines: 1,
-              style: AppTextStyle.title3
+              style: AppTextStyle.headline
                   .of(context, emphasized: true)
                   .toTabular,
             ),

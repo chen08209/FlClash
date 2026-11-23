@@ -342,7 +342,10 @@ void _showLogDetail(BuildContext context, Log log) {
           onPressed: () => _copyLog(context, log),
         ),
       ],
-      body: _LogDetailView(log: log),
+      body: ListTextScope(
+        scale: ListTextScale.compact,
+        child: _LogDetailView(log: log),
+      ),
     ),
   );
 }

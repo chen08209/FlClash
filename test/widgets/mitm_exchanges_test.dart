@@ -409,7 +409,7 @@ void main() {
               ),
             )
             .height,
-        listRowExtent(titleHeight: 22, subtitleHeight: 20),
+        listRowExtent(titleHeight: 20, subtitleHeight: 18),
       );
       expect(
         find.text(

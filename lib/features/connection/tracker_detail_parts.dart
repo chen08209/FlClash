@@ -73,9 +73,7 @@ class TrackerRailRow extends StatelessWidget {
           title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: mark == RailMark.end
-              ? AppTextStyle.body.of(context, emphasized: true)
-              : null,
+          style: mark == RailMark.end ? AppTextStyle.emphasis : null,
         ),
         subtitle: subtitle.isEmpty
             ? null

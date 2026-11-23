@@ -153,7 +153,7 @@ void main() {
               ),
             )
             .height,
-        listRowExtent(titleHeight: 22),
+        listRowExtent(titleHeight: 20),
       );
       expect(tester.takeException(), isNull);
 
@@ -792,7 +792,7 @@ void main() {
       await tester.pump();
 
       final shown = tester.getSize(find.byType(Image).first);
-      expect(shown.width, 52);
+      expect(shown.width, 48);
       expect(
         rendered,
         everyElement(

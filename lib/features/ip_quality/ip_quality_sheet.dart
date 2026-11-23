@@ -41,7 +41,10 @@ class _IpQualitySheet extends ConsumerWidget {
           ),
         ),
       ],
-      body: _IpQualityDetail(ip: ip),
+      body: ListTextScope(
+        scale: ListTextScale.compact,
+        child: _IpQualityDetail(ip: ip),
+      ),
     );
   }
 }
@@ -90,9 +93,7 @@ class _IpQualityDetail extends ConsumerWidget {
           ).copyWith(top: infoSectionContentGap),
           child: Text(
             localizations.detectionTip,
-            style: AppTextStyle.body
-                .of(context)
-                .copyWith(color: context.colorScheme.onSurfaceVariant),
+            style: context.listCaptionStyle,
           ),
         ),
         generateSection(

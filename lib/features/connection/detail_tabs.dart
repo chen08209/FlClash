@@ -1,7 +1,7 @@
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 
-const _clearance = 16.0;
+const _clearance = 20.0;
 
 /// Starts a tab's content [_clearance] under the tabs, for a first section
 /// that passes `atTop` to add no gap of its own.
@@ -79,7 +79,7 @@ class _DetailTabsState extends State<DetailTabs> {
                       margin,
                       0,
                       margin,
-                      compact ? 12 : 16,
+                      compact ? 16 : 20,
                     ),
                     child: header,
                   ),

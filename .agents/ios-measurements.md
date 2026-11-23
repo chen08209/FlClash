@@ -419,6 +419,10 @@ footnote 15.51), so baselines are compared, not boxes.
 - Deliberate deviation: a two-line row is 62, not 69.33: 10 above and below a title and subtitle stacked with no
   overlap. FlClash has no 29 pt icon plate to fill the height, and its subtitles are mostly a short status, so the
   iOS row reads loose.
+- Deliberate deviation: a detail (connection, request, DNS query, outbound IP, log) sets its list a step smaller under
+  `ListTextScope(scale: ListTextScale.compact)`: titles and values subheadline 15, subtitles footnote 13, headers
+  subheadline semibold 15, with the same paddings, so its rows stand 51 and 58. Its rows carry dense values such as
+  addresses, hops and headers, which crowd at body.
 - Deliberate deviation: desktop uses the same sizes, at the iPad rule (20/20), and no longer tightens rows with
   `VisualDensity.compact`.
 - Deliberate deviation: a leading icon stays a 24 dp line glyph with no plate. iOS's 29 pt settings icon is a filled
