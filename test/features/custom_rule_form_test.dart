@@ -207,7 +207,7 @@ void main() {
       tester,
       initialRules: [Rule.parse('SUB-RULE,(NETWORK,tcp),streaming')],
     );
-    await tester.tap(find.text(RuleAction.SUB_RULE.name));
+    await tester.tap(find.text(RuleAction.SUB_RULE.value));
     await tester.pumpAndSettle();
     await harness.save(tester);
 
@@ -473,7 +473,7 @@ void main() {
     await harness.pump(tester, initialRules: rules, size: const Size(360, 800));
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.text(RuleAction.PROCESS_NAME_REGEX.name));
+    await tester.tap(find.text(RuleAction.PROCESS_NAME_REGEX.value));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 

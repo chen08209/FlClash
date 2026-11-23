@@ -143,7 +143,7 @@ void main() {
     );
 
     final action = tester.renderObject<RenderParagraph>(
-      find.text(RuleAction.DOMAIN_KEYWORD.name),
+      find.text(RuleAction.DOMAIN_KEYWORD.value),
     );
     expect(action.didExceedMaxLines, isFalse);
     expect(action.size.height, action.getMinIntrinsicHeight(double.infinity));
