@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
@@ -22,6 +23,14 @@ extension ConnectionStatusExt on ConnectionStatus {
       ConnectionStatus.failed => appLocalizations.connectionsFailed,
     };
   }
+
+  String emptyLabel(AppLocalizations appLocalizations) => switch (this) {
+    ConnectionStatus.all => appLocalizations.nullTip(
+      appLocalizations.connections,
+    ),
+    ConnectionStatus.active => appLocalizations.noActiveConnections,
+    ConnectionStatus.failed => appLocalizations.noFailedConnections,
+  };
 }
 
 /// A list's filters: one of [statuses], the first keeping all, values of the
@@ -83,8 +92,10 @@ class ConditionFilterController<T extends Object, S extends Enum>
   }
 
   @override
-  bool get isFiltering =>
-      super.isFiltering || _status != statuses.first || _conditions.isNotEmpty;
+  bool get isFiltering => narrowsPastStatus || _status != statuses.first;
+
+  /// A status alone gets the list's own empty state rather than a search's.
+  bool get narrowsPastStatus => super.isFiltering || _conditions.isNotEmpty;
 
   List<RecordCondition<T>> get conditions => _conditions;
 

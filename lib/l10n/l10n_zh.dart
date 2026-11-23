@@ -2489,6 +2489,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noSearchResults => '没有匹配的结果';
 
   @override
+  String get noActiveConnections => '暂无活动连接';
+
+  @override
+  String get noFailedConnections => '暂无失败的连接';
+
+  @override
+  String get noFailedDnsQueries => '暂无失败的DNS查询';
+
+  @override
+  String get noCachedDnsQueries => '暂无命中缓存的DNS查询';
+
+  @override
+  String get noFailedHttpRequests => '暂无失败的 HTTP 请求';
+
+  @override
+  String get noRewrittenHttpRequests => '暂无改写过的 HTTP 请求';
+
+  @override
   String get showPassword => '显示密码';
 
   @override

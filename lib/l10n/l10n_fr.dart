@@ -2666,6 +2666,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noSearchResults => 'Aucun résultat';
 
   @override
+  String get noActiveConnections => 'Aucune connexion active';
+
+  @override
+  String get noFailedConnections => 'Aucune connexion échouée';
+
+  @override
+  String get noFailedDnsQueries => 'Aucune requête DNS échouée';
+
+  @override
+  String get noCachedDnsQueries => 'Aucune requête DNS servie par le cache';
+
+  @override
+  String get noFailedHttpRequests => 'Aucune requête HTTP échouée';
+
+  @override
+  String get noRewrittenHttpRequests => 'Aucune requête HTTP réécrite';
+
+  @override
   String get showPassword => 'Afficher le mot de passe';
 
   @override

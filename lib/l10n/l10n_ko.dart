@@ -2559,6 +2559,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noSearchResults => '일치하는 결과 없음';
 
   @override
+  String get noActiveConnections => '활성 연결이 없습니다';
+
+  @override
+  String get noFailedConnections => '실패한 연결이 없습니다';
+
+  @override
+  String get noFailedDnsQueries => '실패한 DNS 쿼리가 없습니다';
+
+  @override
+  String get noCachedDnsQueries => '캐시에서 응답한 DNS 쿼리가 없습니다';
+
+  @override
+  String get noFailedHttpRequests => '실패한 HTTP 요청이 없습니다';
+
+  @override
+  String get noRewrittenHttpRequests => '재작성된 HTTP 요청이 없습니다';
+
+  @override
   String get showPassword => '비밀번호 표시';
 
   @override

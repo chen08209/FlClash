@@ -803,9 +803,10 @@ class _RequestsViewState extends ConsumerState<RequestsView>
       child: RecordFeedView<String>(
         rows: _rows,
         isEmpty: _rows.shownCount == 0,
-        isSearching: SearchQuery(_query).isNotEmpty || _filters.isFiltering,
+        isSearching:
+            SearchQuery(_query).isNotEmpty || _filters.narrowsPastStatus,
         nullStatus: NullStatus(
-          label: appLocalizations.nullTip(appLocalizations.connections),
+          label: _filters.status.emptyLabel(appLocalizations),
           illustration: NullStatusIllustration.connections,
         ),
         controller: scrollController,

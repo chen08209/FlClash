@@ -262,6 +262,29 @@ void main() {
     await teardownView(tester);
   });
 
+  testWidgets('a status with no connections says so, and a search that '
+      'matches none says nothing matched', (tester) async {
+    seedRequests([_tracker(id: '1', host: 'alpha.test')]);
+
+    await pumpRequests(tester, size: _listSize);
+    await tester.ensureVisible(statusSegment('Failed 0'));
+    await tester.pumpAndSettle();
+    await tester.tap(statusSegment('Failed 0'));
+    await tester.pumpAndSettle();
+    expect(find.text('No failed connections'), findsOneWidget);
+    expect(find.text('No matching results'), findsNothing);
+
+    await tester.tap(find.byTooltip('Search'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'nowhere.test');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(find.text('No matching results'), findsOneWidget);
+    expect(find.text('No failed connections'), findsNothing);
+
+    await teardownView(tester);
+  });
+
   testWidgets('renders the requests already in the store on mount', (
     tester,
   ) async {

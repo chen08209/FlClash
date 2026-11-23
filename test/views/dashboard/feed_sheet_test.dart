@@ -99,9 +99,9 @@ void main() {
       'on all of them', (tester) async {
     await pumpCard(tester);
 
-    for (final (label, status) in [
-      ('Live connections', ConnectionStatus.active),
-      ('Recent requests', ConnectionStatus.all),
+    for (final (label, status, empty) in [
+      ('Live connections', ConnectionStatus.active, 'No active connections'),
+      ('Recent requests', ConnectionStatus.all, 'No Connections yet'),
     ]) {
       await tester.tap(
         find.descendant(
@@ -115,6 +115,7 @@ void main() {
         find.byType(SegmentedControl<ConnectionStatus>),
       );
       expect(control.value, status);
+      expect(find.text(empty), findsOneWidget);
 
       await tester.tap(find.byGlyph(AppGlyphs.close));
       await tester.pumpAndSettle();

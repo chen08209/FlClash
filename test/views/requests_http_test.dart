@@ -550,6 +550,29 @@ void main() {
       await teardownView(tester);
     });
 
+    testWidgets('a status with no requests says so rather than that nothing '
+        'matched', (tester) async {
+      setUpContainer();
+      capture();
+      await pumpHttp(
+        tester,
+        query: ({before, since, required limit}) async => MitmQueryPage(
+          capturing: true,
+          version: 1,
+          exchanges: [_exchanges.first],
+        ),
+      );
+
+      await tester.ensureVisible(statusSegment('Rewritten 0'));
+      await tester.pumpAndSettle();
+      await tester.tap(statusSegment('Rewritten 0'));
+      await tester.pumpAndSettle();
+      expect(find.text('No rewritten HTTP requests'), findsOneWidget);
+      expect(find.text('No matching results'), findsNothing);
+
+      await teardownView(tester);
+    });
+
     testWidgets('a condition is set on the request fields', (tester) async {
       setUpContainer();
       capture();

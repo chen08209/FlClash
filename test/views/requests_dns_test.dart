@@ -263,6 +263,25 @@ void main() {
     await teardownView(tester);
   });
 
+  testWidgets('a status with no queries says so rather than that nothing '
+      'matched', (tester) async {
+    seedDnsQueries([_dnsQuery('alpha.test')]);
+
+    await pumpDnsQueries(tester);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(SegmentedControl<DnsStatus>),
+        matching: find.text('Failed 0'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No failed DNS queries'), findsOneWidget);
+    expect(find.text('No matching results'), findsNothing);
+
+    await teardownView(tester);
+  });
+
   testWidgets('the Cached segment keeps only the queries the cache answered', (
     tester,
   ) async {

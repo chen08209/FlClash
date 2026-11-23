@@ -2632,6 +2632,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noSearchResults => 'No matching results';
 
   @override
+  String get noActiveConnections => 'No active connections';
+
+  @override
+  String get noFailedConnections => 'No failed connections';
+
+  @override
+  String get noFailedDnsQueries => 'No failed DNS queries';
+
+  @override
+  String get noCachedDnsQueries => 'No DNS queries answered from cache';
+
+  @override
+  String get noFailedHttpRequests => 'No failed HTTP requests';
+
+  @override
+  String get noRewrittenHttpRequests => 'No rewritten HTTP requests';
+
+  @override
   String get showPassword => 'Show password';
 
   @override

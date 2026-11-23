@@ -2510,6 +2510,24 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noSearchResults => '一致する結果はありません';
 
   @override
+  String get noActiveConnections => 'アクティブな接続はありません';
+
+  @override
+  String get noFailedConnections => '失敗した接続はありません';
+
+  @override
+  String get noFailedDnsQueries => '失敗したDNSクエリはありません';
+
+  @override
+  String get noCachedDnsQueries => 'キャッシュから応答したDNSクエリはありません';
+
+  @override
+  String get noFailedHttpRequests => '失敗した HTTP リクエストはありません';
+
+  @override
+  String get noRewrittenHttpRequests => '書き換えられた HTTP リクエストはありません';
+
+  @override
   String get showPassword => 'パスワードを表示';
 
   @override

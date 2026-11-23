@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
@@ -22,6 +23,12 @@ extension DnsStatusExt on DnsStatus {
     DnsStatus.all => currentAppLocalizations.connectionsAll,
     DnsStatus.failed => currentAppLocalizations.connectionsFailed,
     DnsStatus.cached => currentAppLocalizations.cache,
+  };
+
+  String emptyLabel(AppLocalizations appLocalizations) => switch (this) {
+    DnsStatus.all => appLocalizations.nullTip(appLocalizations.dnsQueries),
+    DnsStatus.failed => appLocalizations.noFailedDnsQueries,
+    DnsStatus.cached => appLocalizations.noCachedDnsQueries,
   };
 }
 
@@ -109,9 +116,9 @@ class DnsQueryList extends StatelessWidget {
             ObjectKey.new,
           ),
           isEmpty: dnsQueries.isEmpty,
-          isSearching: feed.isSearching || filters.isFiltering,
+          isSearching: feed.isSearching || filters.narrowsPastStatus,
           nullStatus: NullStatus(
-            label: appLocalizations.nullTip(appLocalizations.dnsQueries),
+            label: filters.status.emptyLabel(appLocalizations),
             illustration: NullStatusIllustration.dns,
           ),
           controller: scrollController,

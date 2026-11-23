@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
@@ -178,6 +179,14 @@ extension HttpRequestStatusExt on HttpRequestStatus {
     HttpRequestStatus.failed => currentAppLocalizations.connectionsFailed,
     HttpRequestStatus.rewritten => currentAppLocalizations.httpRewritten,
   };
+
+  String emptyLabel(AppLocalizations appLocalizations) => switch (this) {
+    HttpRequestStatus.all => appLocalizations.nullTip(
+      appLocalizations.httpRequests,
+    ),
+    HttpRequestStatus.failed => appLocalizations.noFailedHttpRequests,
+    HttpRequestStatus.rewritten => appLocalizations.noRewrittenHttpRequests,
+  };
 }
 
 typedef HttpFilterController =
@@ -235,9 +244,9 @@ class HttpRequestList extends StatelessWidget {
             (exchange) => ValueKey(exchange.id),
           ),
           isEmpty: exchanges.isEmpty,
-          isSearching: feed.isSearching || filters.isFiltering,
+          isSearching: feed.isSearching || filters.narrowsPastStatus,
           nullStatus: NullStatus(
-            label: appLocalizations.nullTip(appLocalizations.httpRequests),
+            label: filters.status.emptyLabel(appLocalizations),
             description: emptyDescription,
             illustration: NullStatusIllustration.requests,
           ),
