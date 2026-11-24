@@ -96,6 +96,7 @@ class RecordFeedView<T> extends StatefulWidget {
   /// Whether the pointer rests on a list with records in it, told on desktop.
   final ValueChanged<bool> onHover;
   final Widget Function(T item) itemBuilder;
+  final bool addAutomaticKeepAlives;
 
   const RecordFeedView({
     super.key,
@@ -110,6 +111,7 @@ class RecordFeedView<T> extends StatefulWidget {
     required this.onFollow,
     required this.onHover,
     required this.itemBuilder,
+    this.addAutomaticKeepAlives = true,
   });
 
   @override
@@ -175,6 +177,7 @@ class _RecordFeedViewState<T> extends State<RecordFeedView<T>> {
             controller: widget.controller,
             padding: context.listInsets.page(bottom: 16 + context.bottomInset),
             itemBuilder: widget.itemBuilder,
+            addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
           ),
         ),
       ),

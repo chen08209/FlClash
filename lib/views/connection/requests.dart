@@ -820,6 +820,7 @@ class _RequestsViewState extends ConsumerState<RequestsView>
           detailTitle: _detailTitleOf(context),
           onClose: _closeConnection,
         ),
+        addAutomaticKeepAlives: false,
       ),
     );
   }

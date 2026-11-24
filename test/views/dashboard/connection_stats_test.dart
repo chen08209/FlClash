@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/route_cover.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 import '../../helpers/host_scaffold.dart';
@@ -250,6 +251,23 @@ void main() {
 
     expect(position().pixels, position().maxScrollExtent);
     expect(find.textContaining('host-${next - 1}.test'), findsWidgets);
+
+    await teardownCard(tester);
+  });
+
+  testWidgets('a page pushed over the card and popped rebuilds none of it', (
+    tester,
+  ) async {
+    when(() => core.getConnectionCount()).thenAnswer((_) async => 34);
+    await pumpCard(tester);
+
+    expect(
+      await rebuildsWhileCovered<ConnectionStatsCard>(
+        tester,
+        find.byType(ConnectionStatsCard),
+      ),
+      0,
+    );
 
     await teardownCard(tester);
   });

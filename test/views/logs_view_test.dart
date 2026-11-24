@@ -12,6 +12,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/route_cover.dart';
 import '../helpers/scrollbar.dart';
 import '../helpers/test_app.dart';
 import '../helpers/host_scaffold.dart';
@@ -377,5 +378,16 @@ void main() {
     debugOnRebuildDirtyWidget = null;
 
     expect(built, 1);
+  });
+
+  testWidgets('a page pushed over the logs and popped rebuilds none of them', (
+    tester,
+  ) async {
+    await pumpLogsView(tester);
+
+    expect(
+      await rebuildsWhileCovered<LogsView>(tester, find.byType(LogsView)),
+      0,
+    );
   });
 }

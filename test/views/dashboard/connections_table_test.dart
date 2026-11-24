@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:prism_ui/prism_list.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/route_cover.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 import '../../helpers/host_scaffold.dart';
@@ -303,5 +304,21 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('a page pushed over the table and popped rebuilds none of it', (
+    tester,
+  ) async {
+    await pumpRequestsTable(tester);
+
+    expect(
+      await rebuildsWhileCovered<ConnectionsTableCard>(
+        tester,
+        find.byType(ConnectionsTableCard),
+      ),
+      0,
+    );
+
+    await teardown(tester);
   });
 }

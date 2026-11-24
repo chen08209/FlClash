@@ -20,9 +20,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/route_cover.dart';
 import '../helpers/detail_tabs.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/hidden_segments.dart';
+import '../helpers/keep_alive.dart';
 import '../helpers/record_lines.dart';
 import '../helpers/scrollbar.dart';
 import '../helpers/status_menu.dart';
@@ -2185,6 +2187,42 @@ void main() {
 
       await teardownView(tester);
     });
+  });
+
+  testWidgets('a row asks nothing to keep it alive, and one pressed and '
+      'scrolled away comes back at rest', (tester) async {
+    seedRequests([
+      for (var i = 0; i < 80; i++) _tracker(id: '$i', host: 'host-$i.test'),
+    ]);
+    await pumpRequests(tester, size: _listSize);
+    await tester.pump(const Duration(seconds: 1));
+    final host = tester
+        .widget<TrackerInfoItem>(find.byType(TrackerInfoItem).at(2))
+        .trackerInfo
+        .metadata
+        .host;
+
+    await expectRowNeedsNoKeepAlive(
+      tester,
+      find.widgetWithText(TrackerInfoItem, host),
+    );
+
+    await teardownView(tester);
+  });
+
+  testWidgets('a page pushed over the requests and popped rebuilds none of '
+      'them', (tester) async {
+    await pumpRequests(tester);
+
+    expect(
+      await rebuildsWhileCovered<RequestsView>(
+        tester,
+        find.byType(RequestsView),
+      ),
+      0,
+    );
+
+    await teardownView(tester);
   });
 }
 

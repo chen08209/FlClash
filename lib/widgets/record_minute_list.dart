@@ -130,6 +130,7 @@ class RecordMinuteList<T> extends StatelessWidget {
   final ScrollPhysics? physics;
   final EdgeInsetsGeometry? padding;
   final Widget Function(T item) itemBuilder;
+  final bool addAutomaticKeepAlives;
 
   const RecordMinuteList({
     super.key,
@@ -138,6 +139,7 @@ class RecordMinuteList<T> extends StatelessWidget {
     this.controller,
     this.physics,
     this.padding,
+    this.addAutomaticKeepAlives = true,
   });
 
   @override
@@ -157,6 +159,7 @@ class RecordMinuteList<T> extends StatelessWidget {
               estimatedItemExtent: recordListEstimatedExtent,
               findChildIndexCallback: rows.indexOfKey,
               anchorAtEnd: true,
+              addAutomaticKeepAlives: addAutomaticKeepAlives,
               itemBuilder: (context, index) => switch (rows.rowAt(index)) {
                 MinuteHeader(:final key, :final label, :final count) =>
                   KeyedSubtree(

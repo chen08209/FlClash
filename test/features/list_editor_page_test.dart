@@ -467,4 +467,107 @@ void main() {
     expect(builds.length, greaterThan(arrived.length));
     expect([for (final index in arrived) builds[index]], everyElement(1));
   });
+
+  testWidgets('a pushed page builds its rows a held frame after the rest', (
+    tester,
+  ) async {
+    var built = 0;
+    final page = ListEditorPage<String, String>(
+      title: 'Editor',
+      itemsOf: (_) => const ['a', 'b'],
+      itemBuilder:
+          (context, ref, item, index, isEditing, isSelected, onToggleSelected) {
+            built++;
+            return TestRow(title: Text(item));
+          },
+      onReorder: (oldIndex, newIndex) {},
+      onAdd: () {},
+      emptyLabel: 'Empty',
+      idOf: (item) => item,
+    );
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        overrides: [
+          viewSizeProvider.overrideWithBuild((_, _) => const Size(400, 600)),
+        ],
+        child: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => BaseNavigator.push(context, page),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    double pushed() =>
+        ModalRoute.of(tester.element(find.text('Editor')))!.animation!.value;
+
+    await tester.tap(find.text('open'));
+    await tester.pump();
+    expect(find.text('Editor'), findsOneWidget);
+    expect(built, 0);
+
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(built, 2);
+    expect(pushed(), 0);
+
+    await tester.pumpAndSettle();
+    expect(pushed(), 1);
+    expect(find.text('b'), findsOneWidget);
+  });
+
+  testWidgets('a page pushed over the editor and popped rebuilds none of it', (
+    tester,
+  ) async {
+    final page = ListEditorPage<String, String>(
+      title: 'Editor',
+      itemsOf: (_) => const ['a', 'b'],
+      itemBuilder:
+          (context, ref, item, index, isEditing, isSelected, onToggleSelected) {
+            return Builder(
+              builder: (context) => TextButton(
+                onPressed: () =>
+                    BaseNavigator.push(context, const Text('child')),
+                child: Text(item),
+              ),
+            );
+          },
+      onReorder: (oldIndex, newIndex) {},
+      onAdd: () {},
+      emptyLabel: 'Empty',
+      idOf: (item) => item,
+    );
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        overrides: [
+          viewSizeProvider.overrideWithBuild((_, _) => const Size(400, 600)),
+        ],
+        child: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => BaseNavigator.push(context, page),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    var rebuilds = 0;
+    debugOnRebuildDirtyWidget = (element, builtOnce) {
+      if (element.widget is ListEditorPage) {
+        rebuilds++;
+      }
+    };
+    addTearDown(() => debugOnRebuildDirtyWidget = null);
+    await tester.tap(find.text('a'));
+    await tester.pumpAndSettle();
+    expect(find.text('child'), findsOneWidget);
+    Navigator.of(tester.element(find.text('child'))).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('child'), findsNothing);
+
+    expect(rebuilds, 0);
+  });
 }
