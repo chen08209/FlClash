@@ -17,6 +17,7 @@ import '../../helpers/glyph_finders.dart';
 import '../../helpers/test_app.dart';
 import '../../helpers/test_profiles.dart';
 import '../../helpers/host_scaffold.dart';
+import '../../helpers/status_menu.dart';
 
 const _mobileSize = Size(400, 800);
 final _shortTop = _mobileSize.height * (1 - snapSheetDetents.first);
@@ -100,8 +101,8 @@ void main() {
     await pumpCard(tester);
 
     for (final (label, status, empty) in [
-      ('Live connections', ConnectionStatus.active, 'No active connections'),
-      ('Recent requests', ConnectionStatus.all, 'No Connections yet'),
+      ('Live connections', 'Active 0', 'No active connections'),
+      ('Recent requests', 'All 0', 'No Connections yet'),
     ]) {
       await tester.tap(
         find.descendant(
@@ -111,10 +112,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final control = tester.widget<SegmentedControl<ConnectionStatus>>(
-        find.byType(SegmentedControl<ConnectionStatus>),
-      );
-      expect(control.value, status);
+      expect(shownStatusText(tester), status);
       expect(find.text(empty), findsOneWidget);
 
       await tester.tap(find.byGlyph(AppGlyphs.close));

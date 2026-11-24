@@ -34,7 +34,7 @@ class DnsQueryDetailSheet extends StatelessWidget {
   );
 }
 
-String _failureTitle(AppLocalizations appLocalizations, DnsQuery dnsQuery) {
+String dnsFailureTitle(AppLocalizations appLocalizations, DnsQuery dnsQuery) {
   final error = dnsQuery.error;
   // A rule answers through mihomo's rcode:// upstream; the rest is Go's wording.
   if (dnsQuery.upstream.startsWith('rcode://')) {
@@ -144,7 +144,7 @@ class DnsQueryDetailView extends ConsumerWidget {
                             AppGlyphs.error,
                             color: context.colorScheme.error,
                           ),
-                          title: _failureTitle(appLocalizations, dnsQuery),
+                          title: dnsFailureTitle(appLocalizations, dnsQuery),
                           value: dnsQuery.error.isNotEmpty
                               ? dnsQuery.error
                               : dnsQuery.rcode,
@@ -216,16 +216,19 @@ class _DnsQueryHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final initiator = dnsQuery.initiator;
-    final subtitle = [
-      if (initiator != null)
-        context.appLocalizations.dnsQueryAskedBy(initiator.label),
-      dnsQuery.time.showTime,
-      '${dnsQuery.delay} ms',
-    ].join(' · ');
     return DetailHeader(
       well: (size) => LabelWell(label: dnsQuery.type, size: size),
       title: dnsQuery.domain,
-      subtitle: Text(subtitle),
+      subtitle: RecordLabelLine(
+        labels: [
+          if (initiator != null)
+            RecordLabel(
+              label: context.appLocalizations.dnsQueryAskedBy(initiator.label),
+            ),
+          RecordLabel(label: dnsQuery.time.showTime),
+          RecordLabel(label: '${dnsQuery.delay} ms'),
+        ],
+      ),
       actions: [
         if (showsMenu)
           DetailMenuButton(items: () => dnsQueryMenuItems(context, dnsQuery)),

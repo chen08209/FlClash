@@ -9,6 +9,7 @@ export 'plain_text.dart';
 export 'record.dart';
 export 'record_feed_list.dart';
 export 'record_filter.dart';
+export 'record_label_line.dart';
 export 'record_minute_list.dart';
 export 'record_table.dart';
 export 'staggered_notifier.dart';

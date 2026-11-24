@@ -23,7 +23,9 @@ import 'package:mocktail/mocktail.dart';
 import '../helpers/detail_tabs.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/hidden_segments.dart';
+import '../helpers/record_lines.dart';
 import '../helpers/scrollbar.dart';
+import '../helpers/status_menu.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -134,17 +136,6 @@ void main() {
     of: find.byType(ConditionFilterRow<TrackerInfo, ConnectionStatus>),
     matching: finder,
   );
-
-  Finder statusSegment(String label) => find.descendant(
-    of: find.byType(SegmentedControl<ConnectionStatus>),
-    matching: find.text(label),
-  );
-
-  ConnectionStatus shownStatus(WidgetTester tester) => tester
-      .widget<SegmentedControl<ConnectionStatus>>(
-        find.byType(SegmentedControl<ConnectionStatus>),
-      )
-      .value;
 
   final addCondition = inFilterRow(find.byGlyph(AppGlyphs.add));
 
@@ -267,10 +258,7 @@ void main() {
     seedRequests([_tracker(id: '1', host: 'alpha.test')]);
 
     await pumpRequests(tester, size: _listSize);
-    await tester.ensureVisible(statusSegment('Failed 0'));
-    await tester.pumpAndSettle();
-    await tester.tap(statusSegment('Failed 0'));
-    await tester.pumpAndSettle();
+    await pickStatus(tester, 'Failed 0');
     expect(find.text('No failed connections'), findsOneWidget);
     expect(find.text('No matching results'), findsNothing);
 
@@ -664,8 +652,7 @@ void main() {
       open,
     ], closedCapacity: 2);
     await pumpRequests(tester, connectionsReader: () async => [open]);
-    await tester.tap(statusSegment('Failed 2'));
-    await tester.pumpAndSettle();
+    await pickStatus(tester, 'Failed 2');
 
     addRequest(_failed(id: 'f3', host: 'three.test', second: 3));
     await tester.binding.delayed(const Duration(milliseconds: 400));
@@ -1119,8 +1106,7 @@ void main() {
 
     await pumpRequests(tester, connectionsReader: () async => live);
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(statusSegment('Active 2'));
-    await tester.pumpAndSettle();
+    await pickStatus(tester, 'Active 2');
     await openMenu(tester, 'alpha.test');
 
     addRequest(_tracker(id: 'c', host: 'gamma.test'));
@@ -1260,15 +1246,15 @@ void main() {
         find.descendant(of: header, matching: finder);
     expect(inHeader(find.text('alpha.test')), findsOneWidget);
     expect(
-      inHeader(find.textContaining('curl · Proxy · Active ')),
-      findsOneWidget,
+      recordLinesIn(tester, header).single,
+      startsWith('curl [Proxy] [Active '),
     );
 
     live = [];
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     expect(inHeader(find.textContaining('Active')), findsNothing);
-    expect(inHeader(find.text('curl · Proxy · Closed')), findsOneWidget);
+    expect(recordLinesIn(tester, header), ['curl [Proxy] [Closed]']);
 
     await teardownView(tester);
   });
@@ -1435,9 +1421,9 @@ void main() {
       size: _listSize,
       connectionsReader: () => unanswered.future,
     );
-    final age = find.textContaining('curl · Proxy · ');
     final revision = container.read(requestsProvider).revision;
-    final before = tester.widget<Text>(age).data;
+    final before = recordLinesIn(tester).single;
+    expect(before, startsWith('[Proxy] [0:1'));
 
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 1100)),
@@ -1445,7 +1431,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(container.read(requestsProvider).revision, revision);
-    expect(tester.widget<Text>(age).data, isNot(before));
+    expect(recordLinesIn(tester).single, isNot(before));
 
     await teardownView(tester);
   });
@@ -1467,14 +1453,8 @@ void main() {
       );
       await tester.tap(targetOf('alpha.test'));
       await tester.pumpAndSettle();
-      final head = find.descendant(
-        of: find.byType(TrackerInfoHeader),
-        matching: find.descendant(
-          of: find.byType(TrackerLifetime),
-          matching: find.byType(RichText),
-        ),
-      );
-      String age() => tester.widget<RichText>(head).text.toPlainText();
+      String age() =>
+          recordLinesIn(tester, find.byType(TrackerInfoHeader)).single;
       final before = age();
 
       await tester.runAsync(
@@ -1685,12 +1665,10 @@ void main() {
     expect(find.byType(ConditionBlock<TrackerInfo>), findsOneWidget);
 
     var blocks = 0;
-    var segments = 0;
+    final counted = shownStatusText(tester);
     debugOnRebuildDirtyWidget = (element, _) {
       if (element.widget is ConditionBlock<TrackerInfo>) {
         blocks++;
-      } else if (element.widget is SegmentedControl<ConnectionStatus>) {
-        segments++;
       }
     };
     addTearDown(() => debugOnRebuildDirtyWidget = null);
@@ -1700,7 +1678,7 @@ void main() {
     await tester.pump();
     debugOnRebuildDirtyWidget = null;
 
-    expect(segments, greaterThan(0));
+    expect(shownStatusText(tester), isNot(counted));
     expect(blocks, 0);
 
     await teardownView(tester);
@@ -1786,16 +1764,14 @@ void main() {
     ]);
 
     await pumpRequests(tester, size: _listSize);
-    await tester.tap(statusSegment('Failed 4'));
-    await tester.pumpAndSettle();
+    await pickStatus(tester, 'Failed 4');
 
     final rows = topDown<TrackerInfoItem>(tester);
     expect(rows.map((row) => row.trackerInfo.id), ['o', 't2']);
     expect(find.widgetWithText(TonalChip, '×3'), findsOneWidget);
-    expect(find.text('curl · Timeout'), findsNWidgets(2));
+    expect(recordLinesIn(tester), ['[!Timeout] [×3]', '[!Timeout]']);
 
-    await tester.tap(statusSegment('All 5'));
-    await tester.pumpAndSettle();
+    await pickStatus(tester, 'All 5');
     expect(find.byType(TrackerInfoItem), findsNWidgets(5));
     expect(find.widgetWithText(TonalChip, '×3'), findsNothing);
 
@@ -2087,8 +2063,8 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('the status segments count the connections and show one '
-      'status at a time', (tester) async {
+  testWidgets('the status menu counts the connections live, checks the one '
+      'shown and shows one status at a time', (tester) async {
     final open = _tracker(id: 'a', host: 'alpha.test');
     seedRequests([
       open,
@@ -2097,22 +2073,25 @@ void main() {
 
     await pumpRequests(tester, connectionsReader: () async => [open]);
     await tester.pump(const Duration(milliseconds: 400));
-    expect(statusSegment('All 2'), findsOneWidget);
-    expect(statusSegment('Active 1'), findsOneWidget);
-    expect(statusSegment('Failed 1'), findsOneWidget);
-    expect(shownStatus(tester), ConnectionStatus.all);
+    expect(shownStatusText(tester), 'All 2');
+    await openStatusMenu(tester);
+    expect(statusMenuItems(tester), ['All 2 ✓', 'Active 1', 'Failed 1']);
+    addRequest(_failed(id: 'c', host: 'gamma.test', second: 3));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(statusMenuItems(tester), ['All 3 ✓', 'Active 1', 'Failed 2']);
+    expect(shownStatusText(tester), 'All 3');
+    await closeStatusMenu(tester);
 
-    await tester.ensureVisible(statusSegment('Failed 1'));
-    await tester.pumpAndSettle();
-    await tester.tap(statusSegment('Failed 1'));
-    await tester.pumpAndSettle();
-    expect(shownStatus(tester), ConnectionStatus.failed);
+    await pickStatus(tester, 'Failed 2');
+    expect(shownStatusText(tester), 'Failed 2');
+    await openStatusMenu(tester);
+    expect(statusMenuItems(tester), ['All 3', 'Active 1', 'Failed 2 ✓']);
+    await closeStatusMenu(tester);
     expect(targetOf('alpha.test'), findsNothing);
-    expect(find.text('curl · Timeout'), findsOneWidget);
+    expect(recordLinesIn(tester), ['[!Timeout]', '[!Timeout]']);
 
-    await tester.tap(statusSegment('Active 1'));
-    await tester.pumpAndSettle();
-    expect(shownStatus(tester), ConnectionStatus.active);
+    await pickStatus(tester, 'Active 1');
+    expect(shownStatusText(tester), 'Active 1');
     expect(targetOf('alpha.test'), findsWidgets);
     expect(targetOf('beta.test'), findsNothing);
 

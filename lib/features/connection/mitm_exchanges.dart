@@ -122,10 +122,11 @@ class _MitmExchangeItem extends ConsumerWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text.rich(
-          joinedSpan([
-            (exchange.method, null),
-            ...outcomeParts(
+        subtitle: DefaultTextStyle.merge(
+          style: context.listSubtitleStyle.toTabular,
+          child: RecordLabelLine(
+            text: exchange.method,
+            labels: outcomeLabels(
               context,
               status: exchange.status,
               error: exchange.error,
@@ -136,10 +137,7 @@ class _MitmExchangeItem extends ConsumerWidget {
                 ?exchangeMark(context.appLocalizations, exchange),
               ],
             ),
-          ]),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.listSubtitleStyle.toTabular,
+          ),
         ),
         trailing: const GlyphIcon(AppGlyphs.chevronForward),
       ),

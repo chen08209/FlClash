@@ -17,7 +17,7 @@ import 'tracker_clock.dart';
 class TimelineEvent {
   final String kind;
   final String title;
-  final String note;
+  final List<(String, RecordTone)> notes;
   final DateTime? at;
   final RailMark mark;
 
@@ -30,7 +30,7 @@ class TimelineEvent {
   const TimelineEvent({
     required this.kind,
     this.title = '',
-    this.note = '',
+    this.notes = const [],
     this.at,
     this.mark = RailMark.step,
     this.now = false,
@@ -111,8 +111,10 @@ List<TimelineEvent> trackerTimelineEvents(
   DateTime? at(int? offset) => timing == null || offset == null
       ? null
       : timing.accepted.add(Duration(microseconds: offset));
-  String join(List<String?> parts) =>
-      parts.whereType<String>().where((part) => part.isNotEmpty).join(' · ');
+  List<(String, RecordTone)> notes(List<String?> parts) => [
+    for (final part in parts)
+      if (part != null && part.isNotEmpty) (part, RecordTone.neutral),
+  ];
   final dnsMode = _dnsModeLabel(appLocalizations, metadata.dnsMode);
   final dnsTime = switch (timing) {
     ConnectionTiming(:final dnsStart?, :final dnsEnd?) => _milliseconds(
@@ -130,10 +132,10 @@ List<TimelineEvent> trackerTimelineEvents(
       ? metadata.destinationIP
       : metadata.host;
   final target = trackerEndpointText(address, metadata.destinationPort);
-  final traffic = join([
+  final traffic = [
     '${appLocalizations.download} ${trackerInfo.download.traffic.show}',
     '${appLocalizations.upload} ${trackerInfo.upload.traffic.show}',
-  ]);
+  ];
   final failed =
       failure != null ||
       end?.reason == ConnectionEndReason.error ||
@@ -153,7 +155,7 @@ List<TimelineEvent> trackerTimelineEvents(
       TimelineEvent(
         kind: 'DNS',
         title: '${query.type} → ${query.summary}',
-        note: join([
+        notes: notes([
           dnsMode,
           if (query.cached) appLocalizations.cache,
           '${query.delay} ms',
@@ -167,24 +169,24 @@ List<TimelineEvent> trackerTimelineEvents(
       TimelineEvent(
         kind: 'DNS',
         title: metadata.host,
-        note: join([dnsMode, dnsTime]),
+        notes: notes([dnsMode, dnsTime]),
         at: at(timing?.dnsStart),
       ),
     TimelineEvent(
       kind: appLocalizations.rule,
       title: trackerRuleLine(appLocalizations, trackerInfo),
-      note: [
+      notes: notes([
         if (ruleIndex != null)
           appLocalizations.connectionRuleIndex(ruleIndex + 1),
         if (chains.lastOrNull case final target?) '→ $target',
-      ].join(' '),
+      ]),
       at: at(timing?.routed),
     ),
     if (chains.length > 1)
       TimelineEvent(
         kind: appLocalizations.proxyNode,
         title: chains.first,
-        note: join([
+        notes: notes([
           pickedBy?.type.name,
           if (delay != null) '${appLocalizations.delay} $delay ms',
         ]),
@@ -193,9 +195,12 @@ List<TimelineEvent> trackerTimelineEvents(
     TimelineEvent(
       kind: appLocalizations.connection,
       title: '${metadata.network.toUpperCase()} $target',
-      note: failure != null
-          ? join([failure.kind.label, failure.message])
-          : dialTime ?? '',
+      notes: failure != null
+          ? [
+              (failure.kind.label, RecordTone.error),
+              ...notes([failure.message]),
+            ]
+          : notes([dialTime]),
       at: at(timing?.dialEnd ?? timing?.connected),
       mark: failure != null ? RailMark.error : RailMark.step,
     ),
@@ -215,13 +220,15 @@ List<TimelineEvent> trackerTimelineEvents(
       TimelineEvent(
         kind: 'HTTP',
         title: appLocalizations.httpRequestCount(exchanges.length),
-        note: appLocalizations.latestHttpRequest(
-          [
-            latest.method,
-            exchangePathOf(latest.url),
-            if (latest.status > 0) '${latest.status}',
-          ].join(' '),
-        ),
+        notes: notes([
+          appLocalizations.latestHttpRequest(
+            [
+              latest.method,
+              exchangePathOf(latest.url),
+              if (latest.status > 0) '${latest.status}',
+            ].join(' '),
+          ),
+        ]),
         at: timing == null ? null : first.start,
         onPressed: onOpenRequests,
       ),
@@ -230,7 +237,7 @@ List<TimelineEvent> trackerTimelineEvents(
         kind: appLocalizations.status,
         titleOf: (lifetime) =>
             '${appLocalizations.connectionsActive} $lifetime',
-        note: traffic,
+        notes: notes(traffic),
         mark: RailMark.end,
         now: true,
       )
@@ -238,7 +245,7 @@ List<TimelineEvent> trackerTimelineEvents(
       TimelineEvent(
         kind: appLocalizations.status,
         titleOf: (lifetime) => '${appLocalizations.connectionClosed} $lifetime',
-        note: join([end?.reason.label, traffic]),
+        notes: notes([end?.reason.label, ...traffic]),
         at: timing == null ? null : trackerInfo.endedAt,
         mark: failed ? RailMark.error : RailMark.end,
       ),
@@ -359,10 +366,11 @@ class _EventRow extends StatelessWidget {
     final time = this.time;
     return TrackerRailRow(
       title: title,
-      subtitle: [
-        event.kind,
-        event.note,
-      ].where((part) => part.isNotEmpty).join(' · '),
+      subtitle: event.kind,
+      labels: [
+        for (final (text, tone) in event.notes)
+          RecordLabel(label: text, tone: tone),
+      ],
       trailing: time == null || time.isEmpty ? null : Text(time),
       mark: event.mark,
       first: first,

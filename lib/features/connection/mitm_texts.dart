@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -23,46 +24,42 @@ String exchangePathOf(String url) {
 String httpStatusText(int status, String reason) =>
     reason.isEmpty ? '$status' : '$status $reason';
 
-Color? httpStatusColor(ColorScheme colorScheme, int status) => switch (status) {
-  >= 400 => colorScheme.error,
-  >= 200 && < 300 => colorScheme.success,
-  _ => null,
+Color? httpStatusColor(ColorScheme colorScheme, int status) =>
+    switch (httpStatusTone(status)) {
+      RecordTone.error => colorScheme.error,
+      RecordTone.success => colorScheme.success,
+      RecordTone.warning => colorScheme.warning,
+      RecordTone.neutral => null,
+    };
+
+RecordTone httpStatusTone(int status) => switch (status) {
+  >= 400 => RecordTone.error,
+  >= 200 && < 300 => RecordTone.success,
+  _ => RecordTone.neutral,
 };
 
-TextSpan joinedSpan(List<(String text, Color? color)> parts) => TextSpan(
-  children: [
-    for (final (index, (text, color)) in parts.indexed) ...[
-      if (index > 0) const TextSpan(text: ' · '),
-      TextSpan(
-        text: text,
-        style: color == null ? null : TextStyle(color: color),
-      ),
-    ],
-  ],
-);
-
 /// How a request ended, or that it has not: its status, then its error, or
-/// that it is still in progress, or [finished].
-List<(String, Color?)> outcomeParts(
+/// that it is still in progress, or [finished], each a label.
+List<Widget> outcomeLabels(
   BuildContext context, {
   required int status,
   required String error,
   required bool pending,
   required List<String> finished,
   String reason = '',
-}) {
-  final colorScheme = context.colorScheme;
-  return [
-    if (status != 0)
-      (httpStatusText(status, reason), httpStatusColor(colorScheme, status)),
-    if (error.isNotEmpty)
-      (error, colorScheme.error)
-    else if (pending)
-      (context.appLocalizations.inProgress, null)
-    else
-      for (final part in finished) (part, null),
-  ];
-}
+}) => [
+  if (status != 0)
+    RecordLabel(
+      label: httpStatusText(status, reason),
+      tone: httpStatusTone(status),
+    ),
+  if (error.isNotEmpty)
+    RecordLabel(label: error, tone: RecordTone.error)
+  else if (pending)
+    RecordLabel(label: context.appLocalizations.inProgress)
+  else
+    for (final part in finished) RecordLabel(label: part),
+];
 
 String mitmActionLabel(AppLocalizations appLocalizations, String kind) =>
     switch (kind) {

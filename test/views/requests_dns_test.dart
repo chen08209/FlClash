@@ -19,6 +19,8 @@ import 'package:mocktail/mocktail.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/hidden_segments.dart';
+import '../helpers/record_lines.dart';
+import '../helpers/status_menu.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -170,16 +172,18 @@ void main() {
 
     expect(find.byType(DnsQueryRow), findsNWidgets(4));
     expect(find.text('alpha.test'), findsOneWidget);
-    expect(find.text('App · 93.184.216.34, 93.184.216.35'), findsOneWidget);
-    expect(find.text('NXDOMAIN'), findsOneWidget);
-    expect(find.text('i/o timeout'), findsOneWidget);
-    expect(find.text('12 ms'), findsNWidgets(4));
-    expect(find.text('Cache'), findsOneWidget);
-    final error = tester.widget<Text>(find.text('i/o timeout'));
     expect(
-      error.style?.color,
-      Theme.of(tester.element(find.text('i/o timeout'))).colorScheme.error,
+      recordLinesIn(tester),
+      unorderedEquals([
+        '93.184.216.34, 93.184.216.35 [App]',
+        '1.1.1.1 [Cache]',
+        '[!No such domain]',
+        '[!Query timed out]',
+      ]),
     );
+    expect(find.text('NXDOMAIN'), findsNothing);
+    expect(find.text('i/o timeout'), findsNothing);
+    expect(find.text('12 ms'), findsNWidgets(4));
 
     await teardownView(tester);
   });
@@ -248,13 +252,7 @@ void main() {
     await pumpDnsQueries(tester);
     expect(find.text('alpha.test'), findsOneWidget);
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(SegmentedControl<DnsStatus>),
-        matching: find.text('Failed 2'),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await pickStatus(tester, 'Failed 2');
 
     expect(find.text('alpha.test'), findsNothing);
     expect(find.text('missing.test'), findsOneWidget);
@@ -268,13 +266,7 @@ void main() {
     seedDnsQueries([_dnsQuery('alpha.test')]);
 
     await pumpDnsQueries(tester);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(SegmentedControl<DnsStatus>),
-        matching: find.text('Failed 0'),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await pickStatus(tester, 'Failed 0');
 
     expect(find.text('No failed DNS queries'), findsOneWidget);
     expect(find.text('No matching results'), findsNothing);
@@ -291,14 +283,7 @@ void main() {
     ]);
 
     await pumpDnsQueries(tester);
-    final cached = find.descendant(
-      of: find.byType(SegmentedControl<DnsStatus>),
-      matching: find.text('Cache 1'),
-    );
-    await tester.ensureVisible(cached);
-    await tester.pumpAndSettle();
-    await tester.tap(cached);
-    await tester.pumpAndSettle();
+    await pickStatus(tester, 'Cache 1');
 
     expect(find.text('alpha.test'), findsOneWidget);
     expect(find.text('beta.test'), findsNothing);
@@ -608,11 +593,8 @@ void main() {
       expect(find.text('Related connections 1'), findsOneWidget);
       expect(related, findsOneWidget);
       expect(
-        find.descendant(
-          of: related,
-          matching: find.textContaining(RegExp(r'^DIRECT · (Active|Closed) ')),
-        ),
-        findsOneWidget,
+        recordLinesIn(tester, related).single,
+        matches(RegExp(r'^\[DIRECT\] \[(Active|Closed) ')),
       );
       expect(
         find.descendant(

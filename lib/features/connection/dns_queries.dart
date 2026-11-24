@@ -165,6 +165,8 @@ class DnsQueryRow extends StatelessWidget {
     final appLocalizations = context.appLocalizations;
     final colorScheme = context.colorScheme;
     final secondary = colorScheme.onSurfaceVariant;
+    final failed = dnsQuery.isFailed;
+    final initiator = dnsQuery.initiator;
     final row = DecorationListItem(
       isSelected: selected,
       leading: LabelWell(label: dnsQuery.type),
@@ -174,38 +176,30 @@ class DnsQueryRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: AppTextStyle.subheadline.of(context),
       ),
-      subtitle: Text(
-        [
-          dnsQuery.initiator?.label ?? '',
-          dnsQuery.summary,
-        ].where((text) => text.isNotEmpty).join(' · '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      subtitle: DefaultTextStyle.merge(
         style: AppTextStyle.caption1
             .of(context)
             .toTabular
-            .copyWith(color: dnsQuery.isFailed ? colorScheme.error : secondary),
+            .copyWith(color: secondary),
+        child: RecordLabelLine(
+          text: failed ? '' : dnsQuery.summary,
+          labels: [
+            if (failed)
+              RecordLabel(
+                label: dnsFailureTitle(appLocalizations, dnsQuery),
+                tone: RecordTone.error,
+              ),
+            if (initiator != null) RecordLabel(label: initiator.label),
+            if (dnsQuery.cached) RecordLabel(label: appLocalizations.cache),
+          ],
+        ),
       ),
-      trailing: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        spacing: 2,
-        children: [
-          Text(
-            '${dnsQuery.delay} ms',
-            style: AppTextStyle.footnote
-                .of(context)
-                .toTabular
-                .copyWith(color: secondary),
-          ),
-          if (dnsQuery.cached)
-            Text(
-              appLocalizations.cache,
-              style: AppTextStyle.caption2
-                  .of(context)
-                  .copyWith(color: secondary),
-            ),
-        ],
+      trailing: Text(
+        '${dnsQuery.delay} ms',
+        style: AppTextStyle.footnote
+            .of(context)
+            .toTabular
+            .copyWith(color: secondary),
       ),
       onPressed: onPressed,
     );

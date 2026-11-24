@@ -22,6 +22,7 @@ enum RailMark { step, end, error }
 class TrackerRailRow extends StatelessWidget {
   final String title;
   final String subtitle;
+  final List<Widget> labels;
   final Widget? trailing;
   final RailMark mark;
   final bool first;
@@ -32,6 +33,7 @@ class TrackerRailRow extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle = '',
+    this.labels = const [],
     this.trailing,
     this.mark = RailMark.step,
     this.first = false,
@@ -75,13 +77,11 @@ class TrackerRailRow extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: mark == RailMark.end ? AppTextStyle.emphasis : null,
         ),
-        subtitle: subtitle.isEmpty
+        subtitle: subtitle.isEmpty && labels.isEmpty
             ? null
-            : Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            : DefaultTextStyle.merge(
                 style: subtitleStyle.toTabular,
+                child: RecordLabelLine(text: subtitle, labels: labels),
               ),
         trailing: trailing == null && !opens
             ? null

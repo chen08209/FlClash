@@ -21,6 +21,7 @@ import '../helpers/detail_tabs.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/host_scaffold.dart';
+import '../helpers/record_lines.dart';
 
 TrackerInfo _tracker({
   String rule = 'DOMAIN-SUFFIX',
@@ -87,7 +88,7 @@ void main() {
 
     expect(find.text('DOMAIN-SUFFIX,example.com'), findsOneWidget);
     expect(find.text('chrome'), findsOneWidget);
-    expect(find.text('Process · UID 1000'), findsOneWidget);
+    expect(findRecordLine('Process [UID 1000]'), findsOneWidget);
     expect(find.text('1.2.3.4:8080'), findsOneWidget);
     expect(find.text('5.6.7.8:443'), findsOneWidget);
     expect(find.text('example.com'), findsOneWidget);
@@ -190,23 +191,9 @@ void main() {
     );
     await tester.pump();
 
-    final head = tester.widget<RichText>(
-      find.descendant(
-        of: find.byType(TrackerInfoHeader),
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is RichText &&
-              widget.text.toPlainText().startsWith('curl · Proxy · '),
-        ),
-      ),
-    );
-    final spans = <TextSpan>[];
-    head.text.visitChildren((span) {
-      if (span is TextSpan && span.text == 'Failed') spans.add(span);
-      return true;
-    });
-    expect(spans.single.style?.color, isNotNull);
-    expect(head.text.toPlainText(), 'curl · Proxy · Failed · 3 s');
+    expect(recordLinesIn(tester, find.byType(TrackerInfoHeader)), [
+      'curl [Proxy] [!Failed] [3 s]',
+    ]);
 
     await openDetailTab(tester, 'Info');
     final failure = find.ancestor(
@@ -267,12 +254,7 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.text('Timeout'), findsOneWidget);
-    expect(find.byType(RecordLabel), findsNothing);
-    expect(
-      tester.widget<Text>(find.text('Timeout')).style?.color,
-      tester.element(find.byType(TrackerInfoItem)).colorScheme.error,
-    );
+    expect(recordLinesIn(tester), ['[!Timeout]']);
 
     await tester.pumpWidget(
       TestApp(
@@ -329,7 +311,8 @@ void main() {
     );
 
     expect(find.text('example.com'), findsOneWidget);
-    expect(find.text('chrome · Group · 1:15'), findsOneWidget);
+    expect(recordLinesIn(tester), ['[Group] [1:15]']);
+    expect(find.text('chrome'), findsNothing);
     expect(find.text('C'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
@@ -435,8 +418,8 @@ void main() {
     expect(topOf('chrome'), lessThan(topOf('DOMAIN-SUFFIX,example.com')));
     expect(topOf('DOMAIN-SUFFIX,example.com'), lessThan(topOf('Auto')));
     expect(topOf('Auto'), lessThan(topOf('Tokyo 01')));
-    expect(find.text('Proxy group · URLTest'), findsOneWidget);
-    expect(find.text('Node · Trojan'), findsOneWidget);
+    expect(findRecordLine('Proxy group [URLTest]'), findsOneWidget);
+    expect(findRecordLine('Node [Trojan]'), findsOneWidget);
     expect(find.text('38 ms'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());

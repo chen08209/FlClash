@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
@@ -195,24 +196,19 @@ class TrackerInfoHeader extends ConsumerWidget {
       title: trackerInfo.title,
       subtitle: TrackerLifetime(
         trackerInfo: trackerInfo,
-        builder: (lifetime) => Text.rich(
-          TextSpan(
-            children: [
-              for (final (index, part) in trackerHeadlineParts(
-                appLocalizations,
-                trackerInfo,
-                lifetime,
-              ).indexed) ...[
-                if (index > 0) const TextSpan(text: ' · '),
-                TextSpan(
-                  text: part.text,
-                  style: part.failed
-                      ? TextStyle(color: context.colorScheme.error)
-                      : null,
-                ),
-              ],
-            ],
-          ),
+        builder: (lifetime) => RecordLabelLine(
+          text: trackerInfo.metadata.process.trim(),
+          labels: [
+            for (final part in trackerHeadlineLabels(
+              appLocalizations,
+              trackerInfo,
+              lifetime,
+            ))
+              RecordLabel(
+                label: part.text,
+                tone: part.failed ? RecordTone.error : RecordTone.neutral,
+              ),
+          ],
         ),
       ),
       actions: [

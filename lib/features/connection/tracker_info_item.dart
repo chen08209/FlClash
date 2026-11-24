@@ -114,17 +114,6 @@ class TrackerInfoItem extends StatelessWidget {
     final metadata = trackerInfo.metadata;
     final secondary = colorScheme.onSurfaceVariant;
     final failure = trackerInfo.failure;
-    final about = [
-      metadata.process,
-      if (failure != null)
-        failure.kind.label
-      else
-        trackerInfo.chains.lastOrNull ?? '',
-    ].where((text) => text.isNotEmpty).join(' · ');
-    final aboutStyle = AppTextStyle.caption1
-        .of(context)
-        .toTabular
-        .copyWith(color: failure != null ? colorScheme.error : secondary);
     final row = DecorationListItem(
       isSelected: selected,
       leading: TrackerAppWell(trackerInfo: trackerInfo, size: 40),
@@ -139,29 +128,25 @@ class TrackerInfoItem extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: AppTextStyle.subheadline.of(context),
       ),
-      subtitle: Row(
-        spacing: 4,
-        children: [
-          Flexible(
-            child: failure != null
-                ? Text(
-                    about,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: aboutStyle,
-                  )
-                : TrackerLifetime(
-                    trackerInfo: trackerInfo,
-                    builder: (lifetime) => Text(
-                      about.isEmpty ? lifetime : '$about · $lifetime',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: aboutStyle,
-                    ),
-                  ),
-          ),
-          ...trackerLabels(context, trackerInfo, failure: false),
-        ],
+      subtitle: DefaultTextStyle.merge(
+        style: AppTextStyle.caption1
+            .of(context)
+            .toTabular
+            .copyWith(color: secondary),
+        child: failure != null
+            ? RecordLabelLine(labels: trackerLabels(context, trackerInfo))
+            : TrackerLifetime(
+                trackerInfo: trackerInfo,
+                builder: (lifetime) => RecordLabelLine(
+                  labels: [
+                    if (trackerInfo.chains.lastOrNull case final node?
+                        when node.isNotEmpty)
+                      RecordLabel(label: node),
+                    RecordLabel(label: lifetime),
+                    ...trackerLabels(context, trackerInfo, failure: false),
+                  ],
+                ),
+              ),
       ),
       trailing: switch ((traffic, latest)) {
         (final traffic?, final latest?) => ListenableBuilder(

@@ -313,24 +313,18 @@ class HttpRequestRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: AppTextStyle.subheadline.of(context),
       ),
-      subtitle: Row(
-        spacing: 4,
-        children: [
-          Flexible(
-            child: Text(
-              [
-                exchange.host,
-                exchange.app?.process ?? '',
-              ].where((part) => part.isNotEmpty).join(' · '),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.caption1
-                  .of(context)
-                  .copyWith(color: secondary),
-            ),
-          ),
-          if (mark != null) Flexible(child: MetaChip(label: mark)),
-        ],
+      subtitle: DefaultTextStyle.merge(
+        style: AppTextStyle.caption1
+            .of(context)
+            .toTabular
+            .copyWith(color: secondary),
+        child: RecordLabelLine(
+          text: exchange.host,
+          labels: [
+            RecordLabel(label: httpMillisText(exchange.duration)),
+            if (mark != null) RecordLabel(label: mark),
+          ],
+        ),
       ),
       trailing: Column(
         mainAxisSize: MainAxisSize.min,
@@ -345,10 +339,7 @@ class HttpRequestRow extends StatelessWidget {
                 .copyWith(color: statusColor),
           ),
           Text(
-            [
-              exchange.responseSize.traffic.show,
-              httpMillisText(exchange.duration),
-            ].join(' · '),
+            exchange.responseSize.traffic.show,
             style: AppTextStyle.caption2
                 .of(context)
                 .toTabular

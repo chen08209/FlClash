@@ -158,22 +158,23 @@ String trackerHeadline(
   AppLocalizations appLocalizations,
   TrackerInfo trackerInfo,
   String lifetime,
-) => trackerHeadlineParts(
-  appLocalizations,
-  trackerInfo,
-  lifetime,
-).map((part) => part.text).join(' · ');
+) => [
+  trackerInfo.metadata.process.trim(),
+  for (final part in trackerHeadlineLabels(
+    appLocalizations,
+    trackerInfo,
+    lifetime,
+  ))
+    part.text,
+].where((part) => part.isNotEmpty).join(' · ');
 
-List<({String text, bool failed})> trackerHeadlineParts(
+List<({String text, bool failed})> trackerHeadlineLabels(
   AppLocalizations appLocalizations,
   TrackerInfo trackerInfo,
   String lifetime,
 ) => [
-  for (final part in [
-    trackerInfo.metadata.process.trim(),
-    trackerInfo.chains.firstOrNull ?? '',
-  ])
-    if (part.isNotEmpty) (text: part, failed: false),
+  if (trackerInfo.chains.firstOrNull case final node? when node.isNotEmpty)
+    (text: node, failed: false),
   if (trackerInfo.failure != null) ...[
     (text: appLocalizations.connectionsFailed, failed: true),
     (text: lifetime, failed: false),

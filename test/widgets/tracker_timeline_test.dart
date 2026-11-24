@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/record_lines.dart';
 import '../helpers/detail_tabs.dart';
 import '../helpers/host_scaffold.dart';
 import '../helpers/test_app.dart';
@@ -77,7 +78,7 @@ void main() {
       tester.widgetList<TrackerRailRow>(find.byType(TrackerRailRow)).toList();
 
   List<String> kinds(WidgetTester tester) => [
-    for (final row in rows(tester)) row.subtitle.split(' · ').first,
+    for (final row in rows(tester)) row.subtitle,
   ];
 
   testWidgets('a narrow timeline keeps each step on a two-line row, a long '
@@ -154,7 +155,7 @@ void main() {
       ],
     );
 
-    expect(find.text('Node · URLTest · Delay 38 ms'), findsOneWidget);
+    expect(findRecordLine('Node [URLTest] [Delay 38 ms]'), findsOneWidget);
 
     await unmount(tester);
   });
@@ -259,7 +260,7 @@ void main() {
     await pumpTimeline(tester, _tracker(dnsMode: DnsMode.fakeIp));
 
     expect(kinds(tester), ['DNS', 'Rule', 'Connection', 'Status']);
-    expect(find.text('DNS · fake-ip mapping'), findsOneWidget);
+    expect(findRecordLine('DNS [fake-ip mapping]'), findsOneWidget);
 
     await unmount(tester);
   });
@@ -289,7 +290,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Rule · #2 → DIRECT'), findsOneWidget);
+    expect(findRecordLine('Rule [#2] [→ DIRECT]'), findsOneWidget);
 
     rules = RuleTable.of(const [
       (type: 'DOMAIN-SUFFIX', payload: 'example.com'),
@@ -301,7 +302,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Rule · → DIRECT'), findsOneWidget);
+    expect(findRecordLine('Rule [→ DIRECT]'), findsOneWidget);
 
     await unmount(tester);
   });
@@ -320,7 +321,7 @@ void main() {
       ],
     );
     await tester.pump();
-    expect(find.text('Rule · → DIRECT'), findsOneWidget);
+    expect(findRecordLine('Rule [→ DIRECT]'), findsOneWidget);
     await unmount(tester);
 
     await pumpTimeline(
@@ -333,7 +334,7 @@ void main() {
       ],
     );
     await tester.pump();
-    expect(find.text('Rule · → DIRECT'), findsOneWidget);
+    expect(findRecordLine('Rule [→ DIRECT]'), findsOneWidget);
 
     await unmount(tester);
   });
@@ -352,7 +353,9 @@ void main() {
     );
 
     expect(
-      find.text('Connection · Timeout · dial tcp 5.6.7.8:443: i/o timeout'),
+      findRecordLine(
+        'Connection [!Timeout] [dial tcp 5.6.7.8:443: i/o timeout]',
+      ),
       findsOneWidget,
     );
     expect(

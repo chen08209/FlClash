@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
@@ -109,10 +110,6 @@ class RelatedConnectionRow extends StatelessWidget {
     final appLocalizations = context.appLocalizations;
     final metadata = trackerInfo.metadata;
     final failure = trackerInfo.failure;
-    final route = [
-      trackerEndpointText(metadata.destinationIP, metadata.destinationPort),
-      trackerInfo.chains.firstOrNull ?? '',
-    ].where((part) => part.isNotEmpty).join(' · ');
     return DecorationListItem(
       onPressed: () => openTrackerInfo(
         context,
@@ -131,30 +128,28 @@ class RelatedConnectionRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: failure != null
-          ? Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: appLocalizations.connectionsFailed,
-                    style: TextStyle(color: context.colorScheme.error),
-                  ),
-                  TextSpan(text: ' · ${failure.kind.label}'),
-                ],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          ? RecordLabelLine(
+              labels: [
+                RecordLabel(label: failure.kind.label, tone: RecordTone.error),
+              ],
             )
           : TrackerLifetime(
               trackerInfo: trackerInfo,
-              builder: (lifetime) => Text(
-                [
-                  route,
-                  trackerInfo.isActive
-                      ? '${appLocalizations.connectionsActive} $lifetime'
-                      : '${appLocalizations.connectionClosed} $lifetime',
-                ].where((part) => part.isNotEmpty).join(' · '),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              builder: (lifetime) => RecordLabelLine(
+                text: trackerEndpointText(
+                  metadata.destinationIP,
+                  metadata.destinationPort,
+                ),
+                labels: [
+                  if (trackerInfo.chains.firstOrNull case final node?
+                      when node.isNotEmpty)
+                    RecordLabel(label: node),
+                  RecordLabel(
+                    label: trackerInfo.isActive
+                        ? '${appLocalizations.connectionsActive} $lifetime'
+                        : '${appLocalizations.connectionClosed} $lifetime',
+                  ),
+                ],
               ),
             ),
       trailing: const GlyphIcon(Glyphs.chevronForward),
