@@ -160,19 +160,35 @@ tuning.
   Two or three items take 86 each and center the bar (188 and 274 wide); four and five fill the width.
 - An item centers its symbol (18 pt Medium, large scale) 24 below the bar's top and sets its 10 pt title, Medium and
   Semibold when selected, in a 12 high frame 39 below the top. A title never shrinks: a long one widens its item at
-  its neighbours' expense and truncates at the tail.
-- The resting lens is the selected item's frame. With short titles, such as Chinese ones, the items are equal and each
-  is 8.25 wider than the pitch between them, 77 on a 68.75 pitch at 402. Where that pitch falls below 68, on a bar
-  under 356 wide for five items, neighbours overlap by 20 instead: 84 on 64 at 390. English titles share the width out
-  by title (96, 83, 87, 83 and 83 for Dashboard, Proxies, Requests, Profiles and Tools at 402), and four items keep
-  the lens at least 94 wide.
-- FlClash: `navigation_dock.dart` follows the bar, the item's symbol and title, and the pitch rule (`_minPitch`,
-  `_crowdedOverhang`). Deliberate deviations: items stay equal, since the lens springs across a uniform pitch, and a
-  title that does not fit shrinks to 9 dp and then ellipsizes behind a tooltip; four items stop at 360 wide and take no
-  94 floor; five items stop at 398, the row of the widest iPhone (440), and center in a wider window such as a narrow
-  desktop one, where a bar filling the row would grow its lens with it (the standalone sweep grows linearly to 480,
-  which puts the lens near 118 at 600); the selected title keeps Medium, its color alone marking it; and the bottom
-  margin is at least the system bar's inset, since on Android that can be a three-button bar.
+  its neighbours' expense and truncates at the tail once wider than its lens less 22.
+- The resting lens is the selected item's frame, symmetric about the item's center; the layout does not depend on
+  which item is selected. Fitted to the whole sweep (17 locales' titles and 36 sets of equal titles, 300 to 480 in
+  half points) within 0.001 pt, for four and five items, with span the bar less 4 at each end: each item wants a
+  room of its title plus 12, at least 54. While the span is less than the rooms plus 78 (five items) or 82 (four),
+  the items split the span by title: the cells take the span less 20 in proportion to their rooms (an equal cut
+  once the rooms no longer fit) and each lens is its cell plus 20, so neighbours overlap by 20. Past that the lenses
+  are even, each the span plus `(n-1)·8.25` over n for five items (`40/3` for four with titles of 42 or less, `28/3`
+  for four with longer ones), and at least the widest title plus 34 (five) or 40 (four); four short titles keep the
+  lens at least 94. Where that even lens would overlap its neighbours by more than 20 (five) or 22 (four), the items
+  split by title again with an overlap of 22 or 28. So Chinese titles stay equal at every width (77 at 402, 84 on a
+  64 pitch at 390), while English ones are unequal until the bar is wide enough: Dashboard, Proxies, Requests,
+  Profiles and Tools take 96.3, 82.8, 87.4, 82.8 and 82.8 on a 402 screen (Tools' room at its floor of 54),
+  and are equal again at 440 (87.7). The five-item lens drops by about 10 where a sweep crosses into the even
+  branch: 85.3 to 75.9 between 397.5 and 398 for Chinese, and the Dashboard lens 98.7 to 87.7 at 414 for English.
+- FlClash: `navigation_dock.dart` follows the bar, the item's symbol and title, and this rule (`_dockLayout`); the
+  lens, a drag, a fling and the hover highlight move between the items' centers, interpolating the lens width between
+  neighbours (the drag mapping on iOS was not measured), while a tap, press or hover picks the destination whose cell
+  is under the pointer. Label widths are measured once per change of label, style, text scale or direction. Deliberate
+  deviations: where UIKit crowds four or five items with an overlap of 20, the dock keeps neighbours overlapping by
+  8.25, its cells sharing the span less 8.25 by the same rule, since at 20 a 375 wide English bar looked crowded. Five
+  short titles so narrow smoothly to 71.6 at 375 instead of dropping at 398; the looser 22 and 28 still follow UIKit,
+  so four long titles jump from 8.25 to 28 where they reach it (French at 378, Russian at 372). A title that does not
+  fit shrinks to 9 dp and then ellipsizes behind a tooltip; three or fewer items stay even, the bar not widening for a
+  long title; four items stop at 360 wide; five items stop at 398, the row of the widest iPhone (440), and center in a
+  wider window such as a narrow desktop one, where a bar filling the row would grow its lens with it (the standalone
+  sweep grows linearly to 480, which puts the lens near 118 at 600); the selected title keeps Medium, its color alone
+  marking it; and the bottom margin is at least the system bar's inset, since on Android that can be a three-button
+  bar.
 
 ## Top bar button inset
 
