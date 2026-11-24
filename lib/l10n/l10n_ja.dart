@@ -3924,6 +3924,9 @@ class AppLocalizationsJa extends AppLocalizations {
       'モジュールファイルを読み取れないため、何が変更されるかわかりません。提供元を信頼できる場合にのみオンにしてください。';
 
   @override
+  String get mitmModuleHostsUnread => 'このモジュールのホスト名を読み込めませんでした';
+
+  @override
   String get skipServerCertVerify => 'サーバー証明書の検証をスキップ';
 
   @override

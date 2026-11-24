@@ -273,6 +273,7 @@ _MitmHostEntry _$MitmHostEntryFromJson(Map<String, dynamic> json) =>
       host: json['host'] as String,
       port: (json['port'] as num?)?.toInt(),
       exclude: json['exclude'] as bool? ?? false,
+      reason: json['reason'] as String?,
     );
 
 Map<String, dynamic> _$MitmHostEntryToJson(_MitmHostEntry instance) =>
@@ -280,6 +281,7 @@ Map<String, dynamic> _$MitmHostEntryToJson(_MitmHostEntry instance) =>
       'host': instance.host,
       'port': instance.port,
       'exclude': instance.exclude,
+      'reason': instance.reason,
     };
 
 _MitmSourceEntry _$MitmSourceEntryFromJson(Map<String, dynamic> json) =>

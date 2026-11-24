@@ -4170,6 +4170,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo leer el archivo del módulo, así que no se sabe qué cambia. Actívalo solo si confías en su origen.';
 
   @override
+  String get mitmModuleHostsUnread =>
+      'No se pudieron leer los hosts de este módulo';
+
+  @override
   String get skipServerCertVerify =>
       'Omitir la verificación del certificado del servidor';
 

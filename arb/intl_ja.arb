@@ -1188,6 +1188,7 @@
   "mitmModulesTurnedOffDesc": "{count, plural, other{{count} 個のモジュールの更新に、まだ同意していないスクリプトまたはネットワーク変更が含まれています}}",
   "mitmScriptRisk": "スクリプトは一致したホストの通信を読み取り、変更できます。Cookie やトークンも含まれ、独自にリクエストを送ることもできます。提供元を信頼できる場合にのみオンにしてください。オンにすると、以後の更新は確認なしで反映されます。",
   "mitmModuleUnreadableRisk": "モジュールファイルを読み取れないため、何が変更されるかわかりません。提供元を信頼できる場合にのみオンにしてください。",
+  "mitmModuleHostsUnread": "このモジュールのホスト名を読み込めませんでした",
   "skipServerCertVerify": "サーバー証明書の検証をスキップ",
   "blockQuic": "QUIC をブロック",
   "http2": "HTTP/2",

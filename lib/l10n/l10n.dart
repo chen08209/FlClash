@@ -7242,6 +7242,12 @@ abstract class AppLocalizations {
   /// **'The module file could not be read, so what it changes is unknown. Turn it on only if you trust where it comes from.'**
   String get mitmModuleUnreadableRisk;
 
+  /// No description provided for @mitmModuleHostsUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read this module\'s hosts'**
+  String get mitmModuleHostsUnread;
+
   /// No description provided for @skipServerCertVerify.
   ///
   /// In en, this message translates to:

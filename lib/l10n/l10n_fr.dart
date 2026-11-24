@@ -4169,6 +4169,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le fichier du module est illisible, on ne sait donc pas ce qu\'il modifie. Ne l\'activez que si vous faites confiance à sa source.';
 
   @override
+  String get mitmModuleHostsUnread =>
+      'Impossible de lire les hôtes de ce module';
+
+  @override
   String get skipServerCertVerify =>
       'Ignorer la vérification du certificat serveur';
 

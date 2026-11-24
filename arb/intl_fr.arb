@@ -1188,6 +1188,7 @@
   "mitmModulesTurnedOffDesc": "{count, plural, other{Les mises à jour de {count} modules ont apporté des scripts ou des changements réseau que vous n'avez pas acceptés}}",
   "mitmScriptRisk": "Ses scripts lisent et modifient le trafic des hôtes qu'ils ciblent, cookies et jetons compris, et peuvent envoyer leurs propres requêtes. Ne l'activez que si vous faites confiance à sa source. Une fois activé, ses mises à jour s'appliquent sans nouvelle demande.",
   "mitmModuleUnreadableRisk": "Le fichier du module est illisible, on ne sait donc pas ce qu'il modifie. Ne l'activez que si vous faites confiance à sa source.",
+  "mitmModuleHostsUnread": "Impossible de lire les hôtes de ce module",
   "skipServerCertVerify": "Ignorer la vérification du certificat serveur",
   "blockQuic": "Bloquer QUIC",
   "http2": "HTTP/2",

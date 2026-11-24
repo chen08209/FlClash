@@ -4123,6 +4123,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось прочитать файл модуля, поэтому неизвестно, что он меняет. Включайте, только если доверяете источнику.';
 
   @override
+  String get mitmModuleHostsUnread => 'Не удалось прочитать хосты этого модуля';
+
+  @override
   String get skipServerCertVerify => 'Пропускать проверку сертификата сервера';
 
   @override

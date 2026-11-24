@@ -3156,7 +3156,7 @@ as String,
 /// @nodoc
 mixin _$MitmHostEntry {
 
- String get host; int? get port; bool get exclude;
+ String get host; int? get port; bool get exclude; String? get reason;
 /// Create a copy of MitmHostEntry
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3170,20 +3170,20 @@ $MitmHostEntryCopyWith<MitmHostEntry> get copyWith => _$MitmHostEntryCopyWithImp
 @override
 bool operator ==(Object other) {
   final _this = this as MitmHostEntry;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmHostEntry&&(identical(other.host, _this.host) || other.host == _this.host)&&(identical(other.port, _this.port) || other.port == _this.port)&&(identical(other.exclude, _this.exclude) || other.exclude == _this.exclude));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmHostEntry&&(identical(other.host, _this.host) || other.host == _this.host)&&(identical(other.port, _this.port) || other.port == _this.port)&&(identical(other.exclude, _this.exclude) || other.exclude == _this.exclude)&&(identical(other.reason, _this.reason) || other.reason == _this.reason));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as MitmHostEntry;
-  return Object.hash(runtimeType,_this.host,_this.port,_this.exclude);
+  return Object.hash(runtimeType,_this.host,_this.port,_this.exclude,_this.reason);
 }
 
 @override
 String toString() {
   final _this = this as MitmHostEntry;
-  return 'MitmHostEntry(host: ${_this.host}, port: ${_this.port}, exclude: ${_this.exclude})';
+  return 'MitmHostEntry(host: ${_this.host}, port: ${_this.port}, exclude: ${_this.exclude}, reason: ${_this.reason})';
 }
 
 
@@ -3194,7 +3194,7 @@ abstract mixin class $MitmHostEntryCopyWith<$Res>  {
   factory $MitmHostEntryCopyWith(MitmHostEntry value, $Res Function(MitmHostEntry) _then) = _$MitmHostEntryCopyWithImpl;
 @useResult
 $Res call({
- String host, int? port, bool exclude
+ String host, int? port, bool exclude, String? reason
 });
 
 
@@ -3211,12 +3211,13 @@ class _$MitmHostEntryCopyWithImpl<$Res>
 
 /// Create a copy of MitmHostEntry
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? host = null,Object? port = freezed,Object? exclude = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? host = null,Object? port = freezed,Object? exclude = null,Object? reason = freezed,}) {
   return _then(MitmHostEntry(
 host: null == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
 as String,port: freezed == port ? _self.port : port // ignore: cast_nullable_to_non_nullable
 as int?,exclude: null == exclude ? _self.exclude : exclude // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,reason: freezed == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -3301,10 +3302,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String host,  int? port,  bool exclude)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String host,  int? port,  bool exclude,  String? reason)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MitmHostEntry() when $default != null:
-return $default(_that.host,_that.port,_that.exclude);case _:
+return $default(_that.host,_that.port,_that.exclude,_that.reason);case _:
   return orElse();
 
 }
@@ -3322,10 +3323,10 @@ return $default(_that.host,_that.port,_that.exclude);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String host,  int? port,  bool exclude)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String host,  int? port,  bool exclude,  String? reason)  $default,) {final _that = this;
 switch (_that) {
 case _MitmHostEntry():
-return $default(_that.host,_that.port,_that.exclude);case _:
+return $default(_that.host,_that.port,_that.exclude,_that.reason);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3342,10 +3343,10 @@ return $default(_that.host,_that.port,_that.exclude);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String host,  int? port,  bool exclude)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String host,  int? port,  bool exclude,  String? reason)?  $default,) {final _that = this;
 switch (_that) {
 case _MitmHostEntry() when $default != null:
-return $default(_that.host,_that.port,_that.exclude);case _:
+return $default(_that.host,_that.port,_that.exclude,_that.reason);case _:
   return null;
 
 }
@@ -3357,12 +3358,13 @@ return $default(_that.host,_that.port,_that.exclude);case _:
 @JsonSerializable()
 
 class _MitmHostEntry implements MitmHostEntry {
-  const _MitmHostEntry({required this.host, this.port, this.exclude = false});
+  const _MitmHostEntry({required this.host, this.port, this.exclude = false, this.reason});
   factory _MitmHostEntry.fromJson(Map<String, dynamic> json) => _$MitmHostEntryFromJson(json);
 
 @override final  String host;
 @override final  int? port;
 @override@JsonKey() final  bool exclude;
+@override final  String? reason;
 
 /// Create a copy of MitmHostEntry
 /// with the given fields replaced by the non-null parameter values.
@@ -3377,18 +3379,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmHostEntry&&(identical(other.host, host) || other.host == host)&&(identical(other.port, port) || other.port == port)&&(identical(other.exclude, exclude) || other.exclude == exclude));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmHostEntry&&(identical(other.host, host) || other.host == host)&&(identical(other.port, port) || other.port == port)&&(identical(other.exclude, exclude) || other.exclude == exclude)&&(identical(other.reason, reason) || other.reason == reason));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,host,port,exclude);
+    return Object.hash(runtimeType,host,port,exclude,reason);
 }
 
 @override
 String toString() {
-    return 'MitmHostEntry(host: $host, port: $port, exclude: $exclude)';
+    return 'MitmHostEntry(host: $host, port: $port, exclude: $exclude, reason: $reason)';
 }
 
 
@@ -3399,7 +3401,7 @@ abstract mixin class _$MitmHostEntryCopyWith<$Res> implements $MitmHostEntryCopy
   factory _$MitmHostEntryCopyWith(_MitmHostEntry value, $Res Function(_MitmHostEntry) _then) = __$MitmHostEntryCopyWithImpl;
 @override @useResult
 $Res call({
- String host, int? port, bool exclude
+ String host, int? port, bool exclude, String? reason
 });
 
 
@@ -3416,12 +3418,13 @@ class __$MitmHostEntryCopyWithImpl<$Res>
 
 /// Create a copy of MitmHostEntry
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? host = null,Object? port = freezed,Object? exclude = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? host = null,Object? port = freezed,Object? exclude = null,Object? reason = freezed,}) {
   return _then(_MitmHostEntry(
 host: null == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
 as String,port: freezed == port ? _self.port : port // ignore: cast_nullable_to_non_nullable
 as int?,exclude: null == exclude ? _self.exclude : exclude // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,reason: freezed == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
