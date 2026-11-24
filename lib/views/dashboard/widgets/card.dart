@@ -1,10 +1,12 @@
 import 'dart:math' as math;
+import 'dart:ui' show ClipOp;
 
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:prism_ui/shapes/shapes.dart';
@@ -61,13 +63,10 @@ class DashboardCard extends StatelessWidget {
       child: child,
     );
     final onTap = this.onTap;
+    final color = DashboardColors.of(context).card;
     final card = Container(
       clipBehavior: clipBehavior,
-      decoration: ShapeDecoration(
-        color: DashboardColors.of(context).card,
-        shape: shape,
-        shadows: DashboardShadows.e1(context),
-      ),
+      decoration: ShapeDecoration(color: color, shape: shape),
       foregroundDecoration: side == BorderSide.none
           ? null
           : ShapeDecoration(shape: shape.copyWith(side: side)),
@@ -81,11 +80,108 @@ class DashboardCard extends StatelessWidget {
               child: Semantics(label: semanticLabel, child: content),
             ),
     );
+    final shadowed = CustomPaint(
+      painter: _CardShadowPainter(
+        shape: shape,
+        shadows: DashboardShadows.e1(context),
+        opaque: color.a == 1,
+        textDirection: Directionality.of(context),
+      ),
+      child: card,
+    );
     if (onTap != null) {
-      return card;
+      return shadowed;
     }
-    return Semantics(container: true, label: semanticLabel, child: card);
+    return Semantics(container: true, label: semanticLabel, child: shadowed);
   }
+}
+
+/// Casts [shadows] as [ShapeDecoration] does but skips what an [opaque] card
+/// hides: Impeller shades all of a blurred superellipse's bounds.
+class _CardShadowPainter extends CustomPainter {
+  const _CardShadowPainter({
+    required this.shape,
+    required this.shadows,
+    required this.opaque,
+    required this.textDirection,
+  });
+
+  static const _fillRim = 1.0;
+
+  final RoundedSuperellipseBorder shape;
+  final List<BoxShadow> shadows;
+  final bool opaque;
+  final TextDirection textDirection;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    canvas.save();
+    if (opaque) {
+      final inset = _straightFrom(rect);
+      if (inset != null) {
+        canvas
+          ..clipRect(
+            Rect.fromLTRB(
+              inset,
+              _fillRim,
+              size.width - inset,
+              size.height - _fillRim,
+            ),
+            clipOp: ClipOp.difference,
+          )
+          ..clipRect(
+            Rect.fromLTRB(
+              _fillRim,
+              inset,
+              size.width - _fillRim,
+              size.height - inset,
+            ),
+            clipOp: ClipOp.difference,
+          );
+      }
+    }
+    for (final shadow in shadows) {
+      shape.paintInterior(
+        canvas,
+        rect.shift(shadow.offset).inflate(shadow.spreadRadius),
+        shadow.toPaint(),
+        textDirection: textDirection,
+      );
+    }
+    canvas.restore();
+  }
+
+  /// Where the clip may start from a corner, clear of the fill's rim; null
+  /// when the card is too small to hide any shadow.
+  double? _straightFrom(Rect rect) {
+    final outline = shape.borderRadius
+        .resolve(textDirection)
+        .toRSuperellipse(rect);
+    final half = rect.shortestSide / 2;
+    var outside = 0.0;
+    var inside = half;
+    if (!outline.contains(Offset(inside, _fillRim))) {
+      return null;
+    }
+    while (inside - outside > 0.25) {
+      final middle = (outside + inside) / 2;
+      if (outline.contains(Offset(middle, _fillRim))) {
+        inside = middle;
+      } else {
+        outside = middle;
+      }
+    }
+    final from = inside + _fillRim;
+    return from < half ? from : null;
+  }
+
+  @override
+  bool shouldRepaint(_CardShadowPainter oldDelegate) =>
+      oldDelegate.shape != shape ||
+      !listEquals(oldDelegate.shadows, shadows) ||
+      oldDelegate.opaque != opaque ||
+      oldDelegate.textDirection != textDirection;
 }
 
 class DashboardCardHeader extends StatelessWidget {

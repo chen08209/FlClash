@@ -32,6 +32,17 @@ class _RunRequest {
   });
 }
 
+const _closestBeats = Duration(milliseconds: 500);
+
+int _nextRunTime(int? shown, Duration elapsed) {
+  final rounded = (elapsed.inMilliseconds / 1000).round() * 1000;
+  if (shown == null) {
+    return rounded;
+  }
+  final next = shown + 1000;
+  return (next - elapsed.inMilliseconds).abs() > 1000 ? rounded : next;
+}
+
 @Riverpod(keepAlive: true)
 class SetupAction extends _$SetupAction {
   CoreController get _core => ref.read(coreHandlerProvider);
@@ -42,6 +53,7 @@ class SetupAction extends _$SetupAction {
   _RunRequest? _latestRunRequest;
   Future<void>? _initialRun;
   DateTime? _startTime;
+  DateTime? _runTimeMovedAt;
   var _resumeOnRestart = false;
   ({String digest, Set<String> names})? _outboundNames;
   _SetupInputs? _appliedInputs;
@@ -130,17 +142,32 @@ class SetupAction extends _$SetupAction {
     _runtimeTimer = null;
   }
 
+  // The runtime waits for its tick's traffic, so both redraw in one frame.
   void _refreshRunningState() {
-    _updateRunTime();
-    unawaited(ref.read(commonActionProvider.notifier).updateTraffic());
+    unawaited(
+      ref
+          .read(commonActionProvider.notifier)
+          .updateTraffic()
+          .whenComplete(_updateRunTime),
+    );
   }
 
   void _updateRunTime() {
     final startTime = _startTime;
-    ref.read(runTimeProvider.notifier).value = startTime == null
-        ? null
-        : DateTime.now().millisecondsSinceEpoch -
-              startTime.millisecondsSinceEpoch;
+    final runTime = ref.read(runTimeProvider.notifier);
+    if (startTime == null) {
+      _runTimeMovedAt = null;
+      runTime.value = null;
+      return;
+    }
+    final now = DateTime.now();
+    final movedAt = _runTimeMovedAt;
+    // Starting sets it just before the first tick's read returns.
+    if (movedAt != null && now.difference(movedAt) < _closestBeats) {
+      return;
+    }
+    _runTimeMovedAt = now;
+    runTime.value = _nextRunTime(runTime.value, now.difference(startTime));
   }
 
   @protected

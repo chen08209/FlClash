@@ -1149,6 +1149,9 @@ void main() {
 
       container.read(currentPageLabelProvider.notifier).toPage(PageLabel.tools);
       await tester.pump();
+      expect(tester.getTopLeft(find.text('page:dashboard')).dx, 0);
+      expect(snapshots('page:dashboard'), isTrue);
+
       await tester.pump(const Duration(milliseconds: 60));
       expect(snapshots('page:dashboard'), isTrue);
       expect(snapshots('page:tools'), isTrue);

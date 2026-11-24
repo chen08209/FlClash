@@ -2,6 +2,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/dashboard.dart';
+import 'package:fl_clash/views/dashboard/widgets/card.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,6 +69,38 @@ void main() {
     await gesture.up();
     await tester.pump(const Duration(seconds: 2));
     expect(position.pixels, end);
+
+    await teardown(tester);
+  });
+
+  testWidgets('a phone card out of view stops its tickers until it is back', (
+    tester,
+  ) async {
+    final position = await pumpDashboard(
+      tester,
+      const Size(412, 700),
+      SupportPlatform.Android,
+    );
+    bool ticking(Finder card) =>
+        TickerMode.valuesOf(tester.element(card)).enabled;
+    final first = find.byType(DashboardCard).first;
+    final last = find.byType(DashboardCard).last;
+    expect(ticking(first), isTrue);
+    expect(ticking(last), isFalse);
+
+    position.jumpTo(position.maxScrollExtent);
+    await tester.pump();
+    await tester.pump();
+    expect(ticking(first), isFalse);
+    expect(ticking(last), isTrue);
+
+    container.read(runTimeProvider.notifier).value = 3723000;
+    await tester.pump();
+    position.jumpTo(0);
+    await tester.pump();
+    await tester.pump();
+    expect(ticking(first), isTrue);
+    expect(find.text('01:02:03'), findsOneWidget);
 
     await teardown(tester);
   });

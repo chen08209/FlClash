@@ -66,10 +66,12 @@ class _CappedDebounceSetupAction extends _UnflooredDebounceSetupAction {
 
 class TestCommonAction extends CommonAction {
   int trafficUpdates = 0;
+  Completer<void>? trafficGate;
 
   @override
   Future<void> updateTraffic() async {
     trafficUpdates++;
+    await trafficGate?.future;
   }
 }
 
@@ -461,6 +463,29 @@ void main() {
       expect(trafficUpdates(), 4);
       await tester.pump(const Duration(seconds: 1));
       expect(trafficUpdates(), 5);
+
+      await setup.setRunning(false);
+    });
+
+    testWidgets('the clock moves once its tick has read the traffic', (
+      tester,
+    ) async {
+      final setup = buildScoped();
+      await setup.setRunning(true);
+      final common =
+          scoped.read(commonActionProvider.notifier) as TestCommonAction;
+      final gate = common.trafficGate = Completer<void>();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 700)),
+      );
+
+      await tester.pump(const Duration(seconds: 1));
+      expect(trafficUpdates(), 2);
+      expect(scoped.read(runTimeProvider), 0);
+
+      gate.complete();
+      await tester.pump();
+      expect(scoped.read(runTimeProvider), 1000);
 
       await setup.setRunning(false);
     });

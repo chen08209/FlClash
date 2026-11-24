@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
@@ -8,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
 import 'connections_table.dart';
+import 'traffic_beat.dart';
 
 /// The counts of the three feeds, each opening its list, for the phone and
 /// for a desktop page too short for the table.
@@ -24,11 +27,55 @@ class _ConnectionStatsCardState extends ConsumerState<ConnectionStatsCard>
         WidgetsBindingObserver,
         ActivePollingMixin<ConnectionStatsCard>,
         RouteMotionHoldMixin<ConnectionStatsCard>,
-        ConnectionsPolling<ConnectionStatsCard> {
+        ConnectionsPolling<ConnectionStatsCard>,
+        TrafficBeatMixin<ConnectionStatsCard> {
   static const _inset = 8.0;
+
+  late var _connections = connectionCount.value;
+  late var _requests = ref.read(requestCountProvider);
+  late var _dns = ref.read(dnsQueryCountProvider);
+  Timer? _throttle;
 
   @override
   bool get pollsConnections => false;
+
+  @override
+  void initState() {
+    super.initState();
+    connectionCount.addListener(_connectionsMoved);
+    ref.listenManual(requestCountProvider, (_, _) => _eventsCounted());
+    ref.listenManual(dnsQueryCountProvider, (_, _) => _eventsCounted());
+  }
+
+  void _connectionsMoved() => showOnBeat(_showCounts);
+
+  // Requests and queries move per event, too often to redraw for each.
+  void _eventsCounted() {
+    if (ref.read(runTimeProvider) != null) {
+      showOnBeat(_showCounts);
+    } else {
+      _throttle ??= Timer(renderThrottleDuration, _showCounts);
+    }
+  }
+
+  void _showCounts() {
+    _throttle?.cancel();
+    _throttle = null;
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _connections = connectionCount.value;
+      _requests = ref.read(requestCountProvider);
+      _dns = ref.read(dnsQueryCountProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    _throttle?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,27 +90,14 @@ class _ConnectionStatsCardState extends ConsumerState<ConnectionStatsCard>
           _Stat(
             feed: DashboardFeed.connections,
             shape: shape,
-            count: ValueListenableBuilder(
-              valueListenable: connectionCount,
-              builder: (context, count, _) => _Count(count),
-            ),
+            count: _Count(_connections),
           ),
           _Stat(
             feed: DashboardFeed.requests,
             shape: shape,
-            count: ThrottledCount(
-              provider: requestCountProvider,
-              builder: (_, count) => _Count(count),
-            ),
+            count: _Count(_requests),
           ),
-          _Stat(
-            feed: DashboardFeed.dns,
-            shape: shape,
-            count: ThrottledCount(
-              provider: dnsQueryCountProvider,
-              builder: (_, count) => _Count(count),
-            ),
-          ),
+          _Stat(feed: DashboardFeed.dns, shape: shape, count: _Count(_dns)),
         ],
       ),
     );

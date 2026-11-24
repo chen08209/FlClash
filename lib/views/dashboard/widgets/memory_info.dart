@@ -16,6 +16,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
+import 'traffic_beat.dart';
 
 @immutable
 class MemorySnapshot {
@@ -95,7 +96,10 @@ class MemoryInfo extends ConsumerStatefulWidget {
 }
 
 class _MemoryInfoState extends ConsumerState<MemoryInfo>
-    with WidgetsBindingObserver, ActivePollingMixin<MemoryInfo> {
+    with
+        WidgetsBindingObserver,
+        ActivePollingMixin<MemoryInfo>,
+        TrafficBeatMixin<MemoryInfo> {
   final _memoryStateNotifier = ValueNotifier<MemorySnapshot>(
     const MemorySnapshot(),
   );
@@ -119,7 +123,7 @@ class _MemoryInfoState extends ConsumerState<MemoryInfo>
     if (memory == null || !isCurrent()) {
       return;
     }
-    _memoryStateNotifier.value = memory;
+    showOnBeat(() => _memoryStateNotifier.value = memory);
   }
 
   // The sheet outlives the card when a resize swaps the dashboard layout, so it
