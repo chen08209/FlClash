@@ -223,9 +223,17 @@ void main() {
       ),
       throwsA(isA<FormatException>()),
     );
+    try {
+      await api.readMitmModule<Object?>('', read: (_) => _refuse());
+      fail('the read did not throw');
+    } on FormatException catch (_, stack) {
+      expect('$stack', contains('_refuse'));
+    }
   });
 
   test('an MITM record the Core has dropped reads as null', () async {
     expect(await api.mitmBody(7, response: true), isNull);
   });
 }
+
+Never _refuse() => throw const FormatException('bad field');

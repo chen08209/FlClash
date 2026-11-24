@@ -178,6 +178,7 @@ abstract class MitmHostEntry with _$MitmHostEntry {
     required String host,
     int? port,
     @Default(false) bool exclude,
+    String? reason,
   }) = _MitmHostEntry;
 
   factory MitmHostEntry.fromJson(Map<String, Object?> json) =>

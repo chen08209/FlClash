@@ -10,8 +10,10 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/config/mitm_hosts.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
@@ -626,6 +628,83 @@ class _MitmHostnameView extends ConsumerWidget {
     _updateMitm(ref, (state) => state.copyWith(hostname: lines));
   }
 
+  /// Each enabled module's hosts, read whether or not MITM is on; null while
+  /// one of them is still being read.
+  List<Widget>? _moduleSections(
+    WidgetRef ref,
+    AppLocalizations appLocalizations,
+    SearchQuery query, {
+    required bool atTop,
+  }) {
+    final modules = [
+      for (final module
+          in ref.watch(mitmModulesProvider).value ?? const <MitmModule>[])
+        if (module.enabled)
+          (module, ref.watch(mitmModuleContentProvider(module.id))),
+    ];
+    if (modules.any((module) => module.$2.isLoading && !module.$2.hasValue)) {
+      return null;
+    }
+    final sections = <Widget>[];
+    for (final (module, content) in modules) {
+      final section = _moduleSection(
+        module,
+        content,
+        appLocalizations,
+        query,
+        atTop: atTop && sections.isEmpty,
+      );
+      if (section != null) {
+        sections.add(section);
+      }
+    }
+    return sections;
+  }
+
+  Widget? _moduleSection(
+    MitmModule module,
+    AsyncValue<MitmModuleDetails?> content,
+    AppLocalizations appLocalizations,
+    SearchQuery query, {
+    required bool atTop,
+  }) {
+    if (!content.hasValue) {
+      return switch (content.error) {
+        final error? when query.isEmpty => generateSliverSection(
+          title: module.name,
+          atTop: atTop,
+          items: [error],
+          itemBuilder: MitmUnreadHostsItem.new,
+        ),
+        _ => null,
+      };
+    }
+    final details = content.value;
+    final rows = details?.hostRows ?? const <MitmHostRow>[];
+    final List<MitmHostRow> matches;
+    if (query.isEmpty || details == null) {
+      matches = rows;
+    } else {
+      final texts = details.hostSearchTexts(appLocalizations.mitmExcluded);
+      matches = [
+        for (var i = 0; i < rows.length; i++)
+          if (query.matchesText(texts[i])) rows[i],
+      ];
+    }
+    return matches.isEmpty
+        ? null
+        : generateSliverSection(
+            title: module.name,
+            atTop: atTop,
+            items: matches,
+            addAutomaticKeepAlives: false,
+            itemBuilder: (row) => MemoBuilder(
+              inputs: [row, module.name],
+              builder: (_) => MitmHostRowItem(row, title: module.name),
+            ),
+          );
+  }
+
   Future<void> _handleAddOrUpdate(
     BuildContext context,
     WidgetRef ref, [
@@ -673,7 +752,7 @@ class _MitmHostnameView extends ConsumerWidget {
           (context, ref, line, index, isEditing, isSelected, onToggleSelected) {
             final issue = issues[line];
             return SelectedDecorationListItem(
-              title: Text(line),
+              title: Text(line, style: const TextStyle().toJetBrainsMono),
               subtitle: issue == null ? null : Text(issue, style: errorStyle),
               invalid: issue != null,
               isEditing: isEditing,
@@ -691,6 +770,9 @@ class _MitmHostnameView extends ConsumerWidget {
           if (!lines.contains(line)) line,
       ]),
       searchFieldsOf: (line) => [line],
+      itemsTitle: context.appLocalizations.custom,
+      sectionsOf: (ref, query, {required atTop}) =>
+          _moduleSections(ref, context.appLocalizations, query, atTop: atTop),
       emptyLabel: context.appLocalizations.nullTip(title),
     );
   }

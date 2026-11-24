@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -12,6 +13,7 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/list_item.dart';
 import 'package:fl_clash/views/config/advanced.dart';
 import 'package:fl_clash/views/config/mitm.dart';
+import 'package:fl_clash/views/config/mitm_hosts.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,6 +21,10 @@ import 'package:mocktail/mocktail.dart';
 import 'package:prism_ui/prism_ui.dart';
 
 import '../helpers/core_mocks.dart';
+import '../helpers/glyph_finders.dart';
+import '../helpers/keep_alive.dart';
+import '../helpers/module_reads.dart';
+import '../helpers/test_database_providers.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -104,6 +110,8 @@ void main() {
     MitmTrustStore? store,
     bool safeMode = false,
     Widget view = const MitmOptionsView(isAndroid: false),
+    List<(MitmModule, Future<MitmModuleDetails?> Function())> modules =
+        const [],
   }) async {
     tester.view.physicalSize = const Size(1000, 2000);
     tester.view.devicePixelRatio = 1;
@@ -137,6 +145,11 @@ void main() {
         coreHandlerProvider.overrideWithValue(mocks.controller),
         safeModeProvider.overrideWithValue(safeMode),
         mitmTrustStoreProvider.overrideWithValue(store),
+        mitmModulesProvider.overrideWith(
+          () => TestMitmModules([for (final (module, _) in modules) module]),
+        ),
+        for (final (module, read) in modules)
+          mitmModuleContentProvider(module.id).overrideWith((ref) => read()),
       ],
     );
     addTearDown(container.dispose);
@@ -689,5 +702,379 @@ void main() {
       findsOneWidget,
     );
     expect(saved().hostname, isEmpty);
+  });
+
+  group('the hostname page', () {
+    final date = DateTime(2026, 11, 24);
+    MitmModule entry(int id, String name, {bool enabled = true}) =>
+        MitmModule(id: id, name: name, enabled: enabled, lastUpdateTime: date);
+    MitmModuleDetails details(String name) => moduleDetails(
+      '[MITM]\nhostname = $name.test, -skip.$name.test\nhostname = glued$name x',
+      moduleRead(
+        views: {
+          'hostname': [
+            lineEntry(
+              1,
+              MitmLineView.hosts(
+                entries: [
+                  MitmHostEntry(host: '$name.test'),
+                  MitmHostEntry(host: 'skip.$name.test', exclude: true),
+                ],
+              ),
+            ),
+            lineEntry(
+              2,
+              MitmLineView.hosts(
+                entries: [
+                  MitmHostEntry(host: 'glued$name x', reason: 'unsupported'),
+                ],
+              ),
+            ),
+          ],
+        },
+        issues: {
+          'hostname': [lineIssue(2, '"glued$name x": unsupported')],
+        },
+      ),
+    );
+    (MitmModule, Future<MitmModuleDetails?> Function()) module(
+      int id,
+      String name, {
+      bool enabled = true,
+    }) => (entry(id, name, enabled: enabled), () async => details(name));
+
+    testWidgets('lists each enabled module after the hosts written here', (
+      tester,
+    ) async {
+      await pumpView(
+        tester,
+        mitm: const Mitm(hostname: ['mine.test']),
+        view: const AdvancedConfigView(),
+        modules: [module(1, 'ads'), module(2, 'off', enabled: false)],
+      );
+      final l10n = currentAppLocalizations;
+
+      expect(
+        find.descendant(
+          of: find.byType(MitmHostnameItem),
+          matching: find.text(l10n.itemsCount(1)),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(l10n.hostname));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.custom), findsOneWidget);
+      expect(find.text('mine.test'), findsOneWidget);
+      expect(find.text('ads'), findsOneWidget);
+      expect(find.text('ads.test'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.widgetWithText(MitmHostRowItem, 'skip.ads.test'),
+          matching: find.text(l10n.mitmExcluded),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('gluedads x'), findsOneWidget);
+      expect(find.text('unsupported'), findsOneWidget);
+      expect(find.text('off'), findsNothing);
+      expect(find.text('off.test'), findsNothing);
+
+      await tester.tap(find.text('gluedads x'));
+      await tester.pumpAndSettle();
+      expect(find.text('ads'), findsNWidgets(2));
+      await tester.tap(find.text(l10n.confirm));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('ads.test'));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.confirm), findsNothing);
+    });
+
+    testWidgets('a search reaches into the modules and drops those it misses', (
+      tester,
+    ) async {
+      await pumpView(
+        tester,
+        mitm: const Mitm(hostname: ['mine.test']),
+        view: const AdvancedConfigView(),
+        modules: [module(1, 'ads'), module(2, 'trk')],
+      );
+      await tester.tap(find.text(currentAppLocalizations.hostname));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byGlyph(AppGlyphs.search));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'skip.trk');
+      await tester.pump();
+      expect(find.text('skip.trk.test'), findsOneWidget);
+      expect(find.text('trk'), findsOneWidget);
+      expect(find.text('ads'), findsNothing);
+      expect(find.text('mine.test'), findsNothing);
+
+      await tester.enterText(find.byType(TextField), 'nowhere');
+      await tester.pump();
+      expect(
+        find.text(currentAppLocalizations.noSearchResults),
+        findsOneWidget,
+      );
+    });
+
+    bool headsPage(WidgetTester tester, String title) =>
+        tester.widget<ListHeader>(find.widgetWithText(ListHeader, title)).atTop;
+
+    testWidgets('the first section shown heads the page', (tester) async {
+      await pumpView(
+        tester,
+        mitm: const Mitm(hostname: ['mine.test']),
+        view: const AdvancedConfigView(),
+        modules: [module(1, 'ads'), module(2, 'trk')],
+      );
+      await tester.tap(find.text(currentAppLocalizations.hostname));
+      await tester.pumpAndSettle();
+      expect(headsPage(tester, currentAppLocalizations.custom), isTrue);
+      expect(headsPage(tester, 'ads'), isFalse);
+
+      await tester.tap(find.byGlyph(AppGlyphs.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'trk');
+      await tester.pump();
+      expect(headsPage(tester, 'trk'), isTrue);
+    });
+
+    testWidgets('with no host written here a module heads the page', (
+      tester,
+    ) async {
+      await pumpView(
+        tester,
+        view: const AdvancedConfigView(),
+        modules: [module(1, 'ads'), module(2, 'trk')],
+      );
+      await tester.tap(find.text(currentAppLocalizations.hostname));
+      await tester.pumpAndSettle();
+      expect(find.text(currentAppLocalizations.custom), findsNothing);
+      expect(headsPage(tester, 'ads'), isTrue);
+      expect(headsPage(tester, 'trk'), isFalse);
+    });
+
+    testWidgets('modules read while the page moves in wait until it settles', (
+      tester,
+    ) async {
+      final read = Completer<MitmModuleDetails?>();
+      await pumpView(
+        tester,
+        mitm: const Mitm(hostname: ['mine.test']),
+        view: const AdvancedConfigView(),
+        modules: [(entry(1, 'ads'), () => read.future)],
+      );
+      await tester.tap(find.text(currentAppLocalizations.hostname));
+      bool moving() {
+        if (find.text('mine.test').evaluate().isEmpty) {
+          return false;
+        }
+        final page = tester.element(find.text('mine.test'));
+        final value = ModalRoute.of(page)!.animation!.value;
+        return isRouteMoving(page) && value > 0;
+      }
+
+      var frames = 0;
+      while (!moving()) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(++frames, lessThan(30));
+      }
+      await tester.pump(const Duration(milliseconds: 16));
+      read.complete(details('ads'));
+      var movingFrames = 0;
+      while (moving()) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(find.text('ads'), findsNothing);
+        movingFrames++;
+      }
+      expect(movingFrames, greaterThan(0));
+      await tester.pumpAndSettle();
+      expect(find.text('ads'), findsOneWidget);
+    });
+
+    testWidgets('a module row asks nothing to keep it alive, and one pressed '
+        'and scrolled away comes back at rest', (tester) async {
+      final hosts = [for (var i = 0; i < 80; i++) 'h$i.ads.test'];
+      await pumpView(
+        tester,
+        view: const AdvancedConfigView(),
+        modules: [
+          (
+            entry(1, 'ads'),
+            () async => moduleDetails(
+              '[MITM]\nhostname = glued x\nhostname = ${hosts.join(', ')}',
+              moduleRead(
+                views: {
+                  'hostname': [
+                    lineEntry(
+                      1,
+                      const MitmLineView.hosts(
+                        entries: [
+                          MitmHostEntry(host: 'glued x', reason: 'unsupported'),
+                        ],
+                      ),
+                    ),
+                    lineEntry(
+                      2,
+                      MitmLineView.hosts(
+                        entries: [
+                          for (final host in hosts) MitmHostEntry(host: host),
+                        ],
+                      ),
+                    ),
+                  ],
+                },
+                issues: {
+                  'hostname': [lineIssue(1, '"glued x": unsupported')],
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+      await tester.tap(find.text(currentAppLocalizations.hostname));
+      await tester.pumpAndSettle();
+
+      await expectRowNeedsNoKeepAlive(
+        tester,
+        find.widgetWithText(MitmHostRowItem, 'glued x'),
+      );
+    });
+
+    testWidgets('a host written here rebuilds none of the module rows', (
+      tester,
+    ) async {
+      await pumpView(
+        tester,
+        mitm: const Mitm(hostname: ['mine.test']),
+        view: const AdvancedConfigView(),
+        modules: [module(1, 'ads')],
+      );
+      await tester.tap(find.text(currentAppLocalizations.hostname));
+      await tester.pumpAndSettle();
+
+      var built = 0;
+      debugOnRebuildDirtyWidget = (element, _) {
+        if (element.widget is MitmHostRowItem) {
+          built++;
+        }
+      };
+      addTearDown(() => debugOnRebuildDirtyWidget = null);
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update(
+            (state) => state.copyWith(
+              mitm: state.mitm.copyWith(hostname: ['mine.test', 'more.test']),
+            ),
+          );
+      await tester.pumpAndSettle();
+      debugOnRebuildDirtyWidget = null;
+
+      expect(find.text('more.test'), findsOneWidget);
+      expect(built, 0);
+    });
+
+    testWidgets('without enabled modules the page has no sections', (
+      tester,
+    ) async {
+      await pumpView(
+        tester,
+        mitm: const Mitm(hostname: ['mine.test']),
+        view: const AdvancedConfigView(),
+        modules: [module(2, 'off', enabled: false)],
+      );
+
+      expect(
+        find.descendant(
+          of: find.byType(MitmHostnameItem),
+          matching: find.text(currentAppLocalizations.itemsCount(1)),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(currentAppLocalizations.hostname));
+      await tester.pumpAndSettle();
+      expect(find.text(currentAppLocalizations.custom), findsNothing);
+      expect(find.text('mine.test'), findsOneWidget);
+    });
+
+    testWidgets('a module still being read shows no empty page', (
+      tester,
+    ) async {
+      final read = Completer<MitmModuleDetails?>();
+      await pumpView(
+        tester,
+        view: const AdvancedConfigView(),
+        modules: [(entry(1, 'ads'), () => read.future)],
+      );
+      final l10n = currentAppLocalizations;
+      await tester.tap(find.text(l10n.hostname));
+      for (var frame = 0; frame < 10; frame++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      expect(find.text(l10n.nullTip(l10n.hostname)), findsNothing);
+      expect(find.text('ads.test'), findsNothing);
+
+      read.complete(details('ads'));
+      await tester.pumpAndSettle();
+      expect(find.text('ads.test'), findsOneWidget);
+      expect(find.text(l10n.nullTip(l10n.hostname)), findsNothing);
+    });
+
+    testWidgets('a module that cannot be read says so in its section', (
+      tester,
+    ) async {
+      await pumpView(
+        tester,
+        mitm: const Mitm(hostname: ['mine.test']),
+        view: const AdvancedConfigView(),
+        modules: [
+          (entry(1, 'ads'), () async => throw StateError('no core')),
+          module(2, 'trk'),
+        ],
+      );
+      final l10n = currentAppLocalizations;
+      await tester.tap(find.text(l10n.hostname));
+      await tester.pumpAndSettle();
+
+      expect(find.text('ads'), findsOneWidget);
+      expect(find.text(l10n.mitmModuleHostsUnread), findsOneWidget);
+      expect(find.text('Bad state: no core'), findsOneWidget);
+      expect(find.text('trk.test'), findsOneWidget);
+
+      await tester.tap(find.byGlyph(AppGlyphs.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'trk');
+      await tester.pump();
+      expect(find.text(l10n.mitmModuleHostsUnread), findsNothing);
+    });
+
+    testWidgets('a search matches the excluded tag and the reason', (
+      tester,
+    ) async {
+      await pumpView(
+        tester,
+        view: const AdvancedConfigView(),
+        modules: [module(1, 'ads')],
+      );
+      final l10n = currentAppLocalizations;
+      await tester.tap(find.text(l10n.hostname));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byGlyph(AppGlyphs.search));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), l10n.mitmExcluded);
+      await tester.pump();
+      expect(find.text('skip.ads.test'), findsOneWidget);
+      expect(find.text('ads.test'), findsNothing);
+
+      await tester.enterText(find.byType(TextField), 'unsupported');
+      await tester.pump();
+      expect(find.text('gluedads x'), findsOneWidget);
+      expect(find.text('skip.ads.test'), findsNothing);
+    });
   });
 }

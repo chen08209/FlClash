@@ -601,20 +601,24 @@ final class RpcCoreApi implements CoreApi {
       },
     );
     if (mapped.error case final error?) {
-      return Future.error(error);
+      return Future.error(error, mapped.stack);
     }
     return mapped.value as T;
   }
 
-  /// Made outside an async body, whose frame the closure would carry.
-  static ({T? value, Object? error}) Function(Object? result) _carrying<T>(
-    T Function(JsonMap answer) read,
-  ) => (result) {
+  /// Made outside an async body, whose frame the closure would carry; the
+  /// stack goes back as text, which any isolate can send.
+  static ({T? value, Object? error, StackTrace? stack}) Function(Object? result)
+  _carrying<T>(T Function(JsonMap answer) read) => (result) {
     final answer = _object(result);
     try {
-      return (value: read(answer), error: null);
-    } catch (error) {
-      return (value: null, error: error);
+      return (value: read(answer), error: null, stack: null);
+    } catch (error, stack) {
+      return (
+        value: null,
+        error: error,
+        stack: StackTrace.fromString('$stack'),
+      );
     }
   };
 

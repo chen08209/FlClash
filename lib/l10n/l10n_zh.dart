@@ -3883,6 +3883,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mitmModuleUnreadableRisk => '无法读取模块文件，不清楚它会改动什么。只在信任其来源时开启。';
 
   @override
+  String get mitmModuleHostsUnread => '无法读取此模块的主机名';
+
+  @override
   String get skipServerCertVerify => '跳过服务器证书验证';
 
   @override

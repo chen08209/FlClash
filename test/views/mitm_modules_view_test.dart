@@ -818,24 +818,6 @@ void main() {
     await tester.pumpAndSettle();
     await back();
 
-    await tester.tap(find.text(MitmList.hostname.label));
-    await tester.pumpAndSettle();
-    const shown = '*.example.com, -login.example.com:8443';
-    expect(find.text(shown), findsOneWidget);
-    expect(find.text('unsupported character'), findsOneWidget);
-    expect(
-      tester
-          .widget<DecorationListItem>(
-            find.ancestor(
-              of: find.text(shown),
-              matching: find.byType(DecorationListItem),
-            ),
-          )
-          .invalid,
-      isFalse,
-    );
-    await back();
-
     await tester.tap(find.text(MitmList.script.label));
     await tester.pumpAndSettle();
     expect(find.text('Daily'), findsOneWidget);
@@ -852,6 +834,167 @@ void main() {
     expect(find.text('a.json'), findsOneWidget);
     expect(find.text('Content-Type: application/json'), findsOneWidget);
     expect(find.text('X-A: 1  +1'), findsOneWidget);
+  });
+
+  testWidgets('a hostname line with no host to show leaves no hostname row', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      MitmModuleView(id: _remote.id),
+      remoteContent: moduleDetails(
+        '[MITM]\nhostname = %APPEND%\n',
+        moduleRead(
+          views: {
+            'hostname': [lineEntry(2, const MitmLineView.hosts(entries: []))],
+          },
+        ),
+      ),
+    );
+
+    expect(find.text(currentAppLocalizations.hostname), findsNothing);
+    expect(find.text(currentAppLocalizations.itemsCount(0)), findsNothing);
+  });
+
+  testWidgets('a refusal no item carries stays with its whole line', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      MitmModuleView(id: _remote.id),
+      remoteContent: moduleDetails(
+        '[MITM]\nhostname = a.test, b c\n',
+        moduleRead(
+          issues: {
+            'hostname': [lineIssue(2, '"b c": unsupported')],
+          },
+          views: {
+            'hostname': [
+              lineEntry(
+                2,
+                const MitmLineView.hosts(
+                  entries: [MitmHostEntry(host: 'a.test')],
+                ),
+              ),
+            ],
+          },
+        ),
+      ),
+    );
+    final l10n = currentAppLocalizations;
+
+    expect(find.text(l10n.invalidOfCount(1, 2)), findsOneWidget);
+    await tester.tap(find.text(l10n.hostname));
+    await tester.pumpAndSettle();
+    expect(find.text('a.test'), findsOneWidget);
+    expect(find.text('hostname = a.test, b c'), findsOneWidget);
+    expect(find.text('"b c": unsupported'), findsOneWidget);
+  });
+
+  testWidgets(
+    'the hostname row opens on each host of the module, one to a row',
+    (tester) async {
+      const line =
+          'hostname = *.example.com, -login.example.com:8443, bad host';
+      await pump(
+        tester,
+        MitmModuleView(id: _remote.id),
+        remoteContent: moduleDetails(
+          '[MITM]\n$line\nhostname = %BOTH% x.test\n',
+          moduleRead(
+            issues: {
+              'hostname': [
+                lineIssue(2, '"bad host": unsupported character U+0020'),
+                lineIssue(3, 'unknown prefix'),
+              ],
+            },
+            views: {
+              'hostname': [
+                lineEntry(
+                  2,
+                  const MitmLineView.hosts(
+                    entries: [
+                      MitmHostEntry(host: '*.example.com'),
+                      MitmHostEntry(
+                        host: 'login.example.com',
+                        port: 8443,
+                        exclude: true,
+                      ),
+                      MitmHostEntry(
+                        host: 'bad host',
+                        reason: 'unsupported character U+0020',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            },
+          ),
+        ),
+      );
+      final l10n = currentAppLocalizations;
+      DecorationListItem row(String text) => tester.widget(
+        find.ancestor(
+          of: find.text(text),
+          matching: find.byType(DecorationListItem),
+        ),
+      );
+
+      expect(find.text(l10n.invalidOfCount(2, 4)), findsOneWidget);
+      expect(find.text('*.example.com'), findsNothing);
+      await tester.tap(find.text(l10n.hostname));
+      await tester.pumpAndSettle();
+
+      expect(row('*.example.com').invalid, isFalse);
+      expect(row('login.example.com:8443').trailing, isA<Text>());
+      expect(find.text(l10n.mitmExcluded), findsOneWidget);
+      expect(row('bad host').invalid, isTrue);
+      expect(find.text('unsupported character U+0020'), findsOneWidget);
+      expect(row('hostname = %BOTH% x.test').invalid, isTrue);
+
+      await tester.tap(find.text('bad host'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'bad host\n\nunsupported character U+0020',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(l10n.confirm));
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('a long host list builds only the rows in view', (tester) async {
+    await pump(
+      tester,
+      MitmModuleView(id: _remote.id),
+      remoteContent: moduleDetails(
+        '[MITM]\nhostname = many\n',
+        moduleRead(
+          views: {
+            'hostname': [
+              lineEntry(
+                2,
+                MitmLineView.hosts(
+                  entries: [
+                    for (var i = 0; i < 1000; i++)
+                      MitmHostEntry(host: 'h$i.example.com'),
+                  ],
+                ),
+              ),
+            ],
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text(currentAppLocalizations.hostname));
+    await tester.pumpAndSettle();
+
+    expect(find.text('h0.example.com'), findsOneWidget);
+    expect(find.text('h999.example.com', skipOffstage: false), findsNothing);
   });
 
   testWidgets('a line opens in full, its issue below it', (tester) async {

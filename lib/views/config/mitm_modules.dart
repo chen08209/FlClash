@@ -19,6 +19,7 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/views/config/mitm_hosts.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -472,10 +473,11 @@ class MitmModuleView extends ConsumerWidget {
     return Builder(
       builder: (context) {
         final appLocalizations = context.appLocalizations;
-        final invalid = lines.where((line) => line.issue != null).length;
-        final count = invalid == 0
-            ? appLocalizations.itemsCount(lines.length)
-            : appLocalizations.invalidOfCount(invalid, lines.length);
+        final count = _countOf(
+          appLocalizations,
+          lines.where((line) => line.issue != null).length,
+          lines.length,
+        );
         return ListItem.open(
           title: Text(title),
           subtitle: Text([count, ?note].join('\n')),
@@ -488,6 +490,24 @@ class MitmModuleView extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _hostsItem(
+    AppLocalizations appLocalizations,
+    String title,
+    List<MitmHostRow> hosts,
+  ) {
+    return ListItem.open(
+      title: Text(title),
+      subtitle: Text(
+        _countOf(
+          appLocalizations,
+          hosts.where((host) => host.issue != null).length,
+          hosts.length,
+        ),
+      ),
+      widget: _MitmHostsView(title: title, hosts: hosts),
     );
   }
 
@@ -858,7 +878,11 @@ class MitmModuleView extends ConsumerWidget {
       title: appLocalizations.rules,
       items: [
         for (final list in MitmList.values)
-          if (content.lists[list] case final lines? when lines.isNotEmpty)
+          if (list == MitmList.hostname) ...[
+            if (content.hostRows case final hosts when hosts.isNotEmpty)
+              _hostsItem(appLocalizations, list.label, hosts),
+          ] else if (content.lists[list] case final lines?
+              when lines.isNotEmpty)
             _linesItem(
               list.label,
               [
@@ -923,6 +947,36 @@ class MitmModuleView extends ConsumerWidget {
 
 typedef _ShownLine = ({String text, String? issue, MitmLineView? view});
 
+String _countOf(AppLocalizations appLocalizations, int invalid, int count) =>
+    invalid == 0
+    ? appLocalizations.itemsCount(count)
+    : appLocalizations.invalidOfCount(invalid, count);
+
+class _MitmHostsView extends StatelessWidget {
+  const _MitmHostsView({required this.title, required this.hosts});
+
+  final String title;
+  final List<MitmHostRow> hosts;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      title: title,
+      body: PrismListView(
+        padding: context.listInsets.page().copyWith(
+          top: context.contentTopPadding,
+          bottom: 16 + context.bottomInset,
+        ),
+        itemCount: hosts.length,
+        itemBuilder: (context, index) => ItemPositionProvider(
+          position: ItemPosition.get(index, hosts.length),
+          child: MitmHostRowItem(hosts[index], title: title),
+        ),
+      ),
+    );
+  }
+}
+
 _ShownLine _ruleLine(MitmModuleRule rule, String? refused) =>
     (text: _ruleText(rule), issue: refused, view: null);
 
@@ -975,21 +1029,8 @@ class _MitmModuleLinesView extends StatelessWidget {
   Color? _issueColor(BuildContext context) =>
       notes ? null : context.colorScheme.error;
 
-  void _showLine(BuildContext context, String line, String? issue) {
-    dialogs.showAlert(
-      title: title,
-      message: TextSpan(
-        children: [
-          TextSpan(text: line, style: const TextStyle().toJetBrainsMono),
-          if (issue != null)
-            TextSpan(
-              text: '\n\n$issue',
-              style: TextStyle(color: _issueColor(context)),
-            ),
-        ],
-      ),
-    );
-  }
+  void _showLine(BuildContext context, String line, String? issue) =>
+      showMitmLine(title, line, issue, _issueColor(context));
 
   /// A rule set the module's reader named after a hash shows where it reads
   /// from instead.
@@ -1275,19 +1316,11 @@ class _MitmLineParts {
           _ => appLocalizations.mitmScriptGeneric,
         },
       ),
-      MitmHostsView(:final entries) =>
-        _MitmLineParts._entries(appLocalizations, colorScheme, [
-          for (final entry in entries)
-            (
-              switch (entry.port) {
-                final port? when entry.host.contains(':') =>
-                  '[${entry.host}]:$port',
-                final port? => '${entry.host}:$port',
-                null => entry.host,
-              },
-              entry.exclude,
-            ),
-        ]),
+      MitmHostsView(:final entries) => _MitmLineParts._entries(
+        appLocalizations,
+        colorScheme,
+        [for (final entry in entries) (mitmHostText(entry), entry.exclude)],
+      ),
       MitmSourcesView(:final entries) => _MitmLineParts._entries(
         appLocalizations,
         colorScheme,

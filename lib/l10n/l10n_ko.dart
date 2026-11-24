@@ -4002,6 +4002,9 @@ class AppLocalizationsKo extends AppLocalizations {
       '모듈 파일을 읽을 수 없어 무엇을 바꾸는지 알 수 없습니다. 출처를 신뢰할 때만 켜세요.';
 
   @override
+  String get mitmModuleHostsUnread => '이 모듈의 호스트 이름을 읽을 수 없습니다';
+
+  @override
   String get skipServerCertVerify => '서버 인증서 검증 건너뛰기';
 
   @override
