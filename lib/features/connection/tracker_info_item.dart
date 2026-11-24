@@ -134,10 +134,14 @@ class TrackerInfoItem extends StatelessWidget {
             .toTabular
             .copyWith(color: secondary),
         child: failure != null
-            ? RecordLabelLine(labels: trackerLabels(context, trackerInfo))
+            ? RecordLabelLine(
+                labels: trackerLabels(context, trackerInfo),
+                underTitle: true,
+              )
             : TrackerLifetime(
                 trackerInfo: trackerInfo,
                 builder: (lifetime) => RecordLabelLine(
+                  underTitle: true,
                   labels: [
                     if (trackerInfo.chains.lastOrNull case final node?
                         when node.isNotEmpty)

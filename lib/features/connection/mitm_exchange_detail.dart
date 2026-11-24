@@ -407,11 +407,12 @@ class _MatchedRuleRow extends StatelessWidget {
       title: Text(title),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 4,
+        spacing: recordLabelLineGap,
         children: [
           if (detail.isNotEmpty)
             Text(detail, maxLines: 3, overflow: TextOverflow.ellipsis),
-          if (labels.isNotEmpty) RecordLabelLine(labels: labels),
+          if (labels.isNotEmpty)
+            RecordLabelLine(labels: labels, underTitle: detail.isEmpty),
         ],
       ),
     );

@@ -5,6 +5,9 @@ import 'package:flutter/widgets.dart';
 
 const _gap = 4.0;
 
+/// Lets the labels' fills clear the line of text above them.
+const recordLabelLineGap = 4.0;
+
 /// A line of one [text], a long value or a kind, and [labels] after it at
 /// their own widths. The text gives way first, then the last label within
 /// itself; the labels before it never shrink.
@@ -12,17 +15,31 @@ class RecordLabelLine extends StatelessWidget {
   final String text;
   final List<Widget> labels;
 
-  const RecordLabelLine({super.key, this.text = '', this.labels = const []});
+  final bool underTitle;
+
+  const RecordLabelLine({
+    super.key,
+    this.text = '',
+    this.labels = const [],
+    this.underTitle = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return _LabelLine(
+    final line = _LabelLine(
       leadsWithText: text.isNotEmpty,
       children: [
         if (text.isNotEmpty)
           Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
         ...labels,
       ],
+    );
+    if (!underTitle || labels.isEmpty) {
+      return line;
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: recordLabelLineGap),
+      child: line,
     );
   }
 }

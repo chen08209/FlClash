@@ -580,7 +580,10 @@ class _MemberRow extends ConsumerWidget {
       subtitle: subtitle == null
           ? null
           : Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 2),
+              padding: const EdgeInsets.only(
+                top: recordLabelLineGap,
+                bottom: 2,
+              ),
               child: Row(
                 children: [
                   Flexible(

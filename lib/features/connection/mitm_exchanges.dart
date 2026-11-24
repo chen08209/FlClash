@@ -125,6 +125,7 @@ class _MitmExchangeItem extends ConsumerWidget {
         subtitle: DefaultTextStyle.merge(
           style: context.listSubtitleStyle.toTabular,
           child: RecordLabelLine(
+            underTitle: true,
             text: exchange.method,
             labels: outcomeLabels(
               context,

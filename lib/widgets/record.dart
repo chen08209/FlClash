@@ -4,6 +4,8 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/widgets.dart';
 
+import 'record_label_line.dart';
+
 const _valueGap = 24.0;
 
 class RecordTextStyles {
@@ -278,7 +280,7 @@ class DetailHeader extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 2,
+            spacing: recordLabelLineGap,
             children: [
               Text(
                 title,

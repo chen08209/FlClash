@@ -182,6 +182,7 @@ class DnsQueryRow extends StatelessWidget {
             .toTabular
             .copyWith(color: secondary),
         child: RecordLabelLine(
+          underTitle: true,
           text: failed ? '' : dnsQuery.summary,
           labels: [
             if (failed)

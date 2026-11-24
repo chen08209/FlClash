@@ -19,6 +19,7 @@ void main() {
       '2:14',
       'connection reset by peer',
     ],
+    bool underTitle = false,
   }) async {
     tester.view.physicalSize = const Size(1200, 400);
     tester.view.devicePixelRatio = 1;
@@ -34,6 +35,7 @@ void main() {
               child: RecordLabelLine(
                 text: text,
                 labels: [for (final label in labels) RecordLabel(label: label)],
+                underTitle: underTitle,
               ),
             ),
           ),
@@ -192,6 +194,23 @@ void main() {
     );
     expect(rectOf(tester, '2:14').right, moreOrLessEquals(age.right));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('under a title the line drops by the gap only while it holds '
+      'labels', (tester) async {
+    await pumpLine(tester, width: 600);
+    final chipTop = rectOf(tester, '2:14').top;
+    final textTop = tester.getRect(find.text('api.example.com')).top;
+
+    await pumpLine(tester, width: 600, underTitle: true);
+    expect(rectOf(tester, '2:14').top, chipTop + recordLabelLineGap);
+    expect(
+      tester.getRect(find.text('api.example.com')).top,
+      textTop + recordLabelLineGap,
+    );
+
+    await pumpLine(tester, width: 600, underTitle: true, labels: const []);
+    expect(tester.getRect(find.text('api.example.com')).top, 0);
   });
 
   testWidgets('right to left the line runs from the right edge', (

@@ -410,7 +410,7 @@ void main() {
               ),
             )
             .height,
-        listRowExtent(titleHeight: 20, subtitleHeight: 18),
+        listRowExtent(titleHeight: 20, subtitleHeight: 18 + recordLabelLineGap),
       );
       expect(
         findRecordLine(

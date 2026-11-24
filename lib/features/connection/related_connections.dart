@@ -129,6 +129,7 @@ class RelatedConnectionRow extends StatelessWidget {
       ),
       subtitle: failure != null
           ? RecordLabelLine(
+              underTitle: true,
               labels: [
                 RecordLabel(label: failure.kind.label, tone: RecordTone.error),
               ],
@@ -136,6 +137,7 @@ class RelatedConnectionRow extends StatelessWidget {
           : TrackerLifetime(
               trackerInfo: trackerInfo,
               builder: (lifetime) => RecordLabelLine(
+                underTitle: true,
                 text: trackerEndpointText(
                   metadata.destinationIP,
                   metadata.destinationPort,

@@ -97,10 +97,14 @@ void main() {
       'DOMAIN-SUFFIX,static-assets.cdn.example.com.long-suffix.test',
     );
     expect(tester.renderObject<RenderParagraph>(rule).didExceedMaxLines, true);
-    for (final row in find.byType(TrackerRailRow).evaluate()) {
+    for (final element in find.byType(TrackerRailRow).evaluate()) {
+      final row = element.widget as TrackerRailRow;
       expect(
-        row.size!.height,
-        listRowExtent(titleHeight: 22, subtitleHeight: 20),
+        element.size!.height,
+        listRowExtent(
+          titleHeight: 22,
+          subtitleHeight: 20 + (row.labels.isEmpty ? 0 : recordLabelLineGap),
+        ),
       );
     }
     expect(

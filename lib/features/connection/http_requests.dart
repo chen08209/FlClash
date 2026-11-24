@@ -319,6 +319,7 @@ class HttpRequestRow extends StatelessWidget {
             .toTabular
             .copyWith(color: secondary),
         child: RecordLabelLine(
+          underTitle: true,
           text: exchange.host,
           labels: [
             RecordLabel(label: httpMillisText(exchange.duration)),
