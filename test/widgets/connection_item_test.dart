@@ -153,7 +153,7 @@ void main() {
               ),
             )
             .height,
-        listRowMinHeight,
+        listRowExtent(titleHeight: 22),
       );
       expect(tester.takeException(), isNull);
 

@@ -17,8 +17,8 @@ const _ruleRowVerticalPadding = 7.0;
 /// Rule lists run to thousands of rows, so a rule row is padded tighter than
 /// other list rows.
 double get ruleItemHeight =>
-    globalState.measure.listTitleHeight +
-    globalState.measure.listSubtitleHeight +
+    globalState.measure.listTitleHeight() +
+    globalState.measure.listSubtitleHeight() +
     2 * _ruleRowVerticalPadding;
 
 class RuleItem extends StatelessWidget {

@@ -25,7 +25,7 @@ void main() {
     final row = tester.getRect(find.byType(ListRow));
     final label = tester.getRect(find.text('Source'));
     final text = tester.getRect(find.text(value));
-    expect(row.height, listRowMinHeight);
+    expect(row.height, listRowExtent(titleHeight: 22));
     expect(text.height, label.height);
     expect(text.center.dy, moreOrLessEquals(label.center.dy, epsilon: 1));
     expect(text.left, greaterThan(label.right));

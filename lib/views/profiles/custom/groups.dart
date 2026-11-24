@@ -138,7 +138,7 @@ enum _GroupOption {
   };
 }
 
-double get _groupRowExtent => globalState.measure.listTwoLineRowHeight;
+double get _groupRowExtent => globalState.measure.listTwoLineRowHeight();
 
 /// Keeps the actions on the groups in their own header, off the page bar,
 /// which belongs to the whole profile.

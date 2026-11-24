@@ -392,8 +392,11 @@ footnote 15.51), so baselines are compared, not boxes.
   text at 63.67; AX-XL: 79 and 122). Header and footer text from `titleForHeader`/`titleForFooter` does not scale.
 - FlClash: `ListInsets` in `prism_ui/lib/metrics.dart` (`context.listInsets`, from `ViewScope` or the view's width)
   gives the margin and inner inset, under 400 → 16/16, 400 to 402 → 20/16, over 402 → 20/20; pages and sheets pad with
-  `listInsets.page()`. `AppCorner.listGroup = 26` rounds a run's ends. `ListRow` sets one line at `listRowMinHeight` 53
-  and stacks two lines `listTwoLineRowVerticalPadding` 10 in from each edge. A leading glyph keeps its own size in the
+  `listInsets.page()`. `AppCorner.listGroup = 26` rounds a run's ends. `ListRow` pads one line
+  `listRowVerticalPadding` 15.5 above and below its text (53 at body) and stacks two lines
+  `listTwoLineRowVerticalPadding` 10 in from each edge, so a row is its padding plus its text at any text size; a row
+  that drops its padding still stands a padded line tall, none under `listRowMinHeight` 44, and a side taller than the
+  text stands the row as tall. A leading glyph keeps its own size in the
   `listLeadingSlotWidth` 24 slot, centered 12 past the inset with the text 40 past it. `ListItem` ends its chevron,
   picker, checkbox and switch at `listInsets.trailing` by the glyph's own inset (`_chevronInset`,
   `_OptionsValueButton.endInset`, `Checkbox.edgeInset`, `Switch.edgeInset`). `ListHeader` stands 35 (`listSectionGap`)
