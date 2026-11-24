@@ -452,7 +452,7 @@ void main() {
         matching: find.byType(RuleItem),
       );
       expect(
-        find.descendant(of: row, matching: find.text(action.name)),
+        find.descendant(of: row, matching: find.text(action.value)),
         findsOneWidget,
       );
       expect(
