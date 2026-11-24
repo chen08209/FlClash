@@ -253,7 +253,8 @@ class RenderUnfoldSliver extends RenderProxySliver {
   }
 }
 
-/// One row of a group, built once [motion] passes [buildAfter].
+/// One card of a group, built once [motion] passes [buildAfter], the share of
+/// the unfolding at which its row shows.
 class UnfoldRow extends StatefulWidget {
   const UnfoldRow({
     super.key,

@@ -409,6 +409,117 @@ void main() {
     expect(tester.widget(card), same(before));
   });
 
+  testWidgets('groups arriving again rebuild only the cards whose proxy '
+      'changed', (tester) async {
+    Group group(String changed) => Group(
+      type: GroupType.Selector,
+      name: 'B',
+      all: [
+        for (var i = 0; i < 4; i++)
+          Proxy(name: 'B-$i', type: i == 2 ? changed : 'ss'),
+      ],
+    );
+    globalContainer
+        .read(_tabStateProvider.notifier)
+        .set(_tabState([_group('A'), group('ss')]));
+    await pumpTabView(tester);
+    final before = tester.widgetList(find.byType(ProxyCard)).toList();
+
+    globalContainer
+        .read(_tabStateProvider.notifier)
+        .set(_tabState([_group('A'), group('trojan')]));
+    await tester.pump();
+
+    final after = tester.widgetList(find.byType(ProxyCard)).toList();
+    expect(
+      [for (var i = 0; i < 4; i++) identical(after[i], before[i])],
+      [true, true, false, true],
+    );
+  });
+
+  testWidgets('groups arriving in a new order move the cards already built', (
+    tester,
+  ) async {
+    Group group(List<int> order) => Group(
+      type: GroupType.Selector,
+      name: 'B',
+      all: [for (final i in order) Proxy(name: 'B-$i', type: 'ss')],
+    );
+    ProxyCard card(String name) => tester.widget(
+      find.byWidgetPredicate(
+        (widget) => widget is ProxyCard && widget.proxy.name == name,
+      ),
+    );
+    globalContainer
+        .read(_tabStateProvider.notifier)
+        .set(
+          _tabState([
+            _group('A'),
+            group([0, 1, 2, 3]),
+          ]),
+        );
+    await pumpTabView(tester);
+    final before = [for (var i = 0; i < 4; i++) card('B-$i')];
+
+    globalContainer
+        .read(_tabStateProvider.notifier)
+        .set(
+          _tabState([
+            _group('A'),
+            group([2, 0, 3, 1]),
+          ]),
+        );
+    await tester.pump();
+
+    expect([for (var i = 0; i < 4; i++) card('B-$i')], before);
+    final moved = tester.getTopLeft(find.text('B-2'));
+    final last = tester.getTopLeft(find.text('B-1'));
+    expect(
+      moved.dy < last.dy || (moved.dy == last.dy && moved.dx < last.dx),
+      isTrue,
+    );
+  });
+
+  testWidgets('a page swiped into view builds the cards in view, and the rows '
+      'ahead once the swipe rests', (tester) async {
+    Group long(String name) => Group(
+      type: GroupType.Selector,
+      name: name,
+      all: [for (var i = 0; i < 80; i++) Proxy(name: '$name-$i', type: 'ss')],
+    );
+    globalContainer
+        .read(_tabStateProvider.notifier)
+        .set(_tabState([long('A'), long('B')]));
+    await pumpTabView(tester);
+    await tester.pumpAndSettle();
+    final incoming = find.byWidgetPredicate(
+      (widget) => widget is ProxyCard && widget.groupName == 'A',
+      skipOffstage: false,
+    );
+    expect(incoming, findsNothing);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(TabBarView)),
+    );
+    await gesture.moveBy(const Offset(40, 0));
+    await gesture.moveBy(const Offset(40, 0));
+    await tester.pump();
+    final viewBottom = tester.getRect(find.byType(TabBarView)).bottom;
+    final inView = tester.widgetList(incoming).length;
+    expect(inView, greaterThan(0));
+    for (final card in tester.elementList(incoming)) {
+      expect(
+        tester.getRect(find.byWidget(card.widget)).top,
+        lessThan(viewBottom),
+      );
+    }
+
+    await gesture.moveBy(const Offset(500, 0));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(tester.widgetList(incoming).length, greaterThan(inView));
+  });
+
   testWidgets('lays each tab out at the width its label takes, up to the '
       'more menu\'s', (tester) async {
     const names = ['A', '🚀 节点选择', 'Group with a long name'];

@@ -256,28 +256,36 @@ class ProxyGroupView extends ConsumerWidget {
     return Scrollbar(
       controller: controller,
       thumbVisibility: true,
-      child: GridView.builder(
-        key: _getPageStorageKey(ref),
-        controller: controller,
-        padding: context.listInsets.page(bottom: 16 + context.bottomInset),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          mainAxisSpacing: proxyGridSpacing,
-          crossAxisSpacing: 8,
-          mainAxisExtent: getItemHeight(cardType),
+      child: ArrivalCacheExtentBuilder(
+        builder: (cacheExtent) => GridView.builder(
+          key: _getPageStorageKey(ref),
+          controller: controller,
+          scrollCacheExtent: cacheExtent,
+          padding: context.listInsets.page(bottom: 16 + context.bottomInset),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: proxyGridSpacing,
+            crossAxisSpacing: 8,
+            mainAxisExtent: getItemHeight(cardType),
+          ),
+          itemCount: proxies.length,
+          addAutomaticKeepAlives: false,
+          findChildIndexCallback: proxyIndexFinder(proxies),
+          itemBuilder: (_, index) {
+            final proxy = proxies[index];
+            return MemoBuilder(
+              key: ValueKey(proxy.name),
+              inputs: [proxy, group.name, group.type, group.testUrl, cardType],
+              builder: (_) => ProxyCard(
+                testUrl: group.testUrl,
+                groupType: group.type,
+                type: cardType,
+                proxy: proxy,
+                groupName: group.name,
+              ),
+            );
+          },
         ),
-        itemCount: proxies.length,
-        addAutomaticKeepAlives: false,
-        itemBuilder: (_, index) {
-          final proxy = proxies[index];
-          return ProxyCard(
-            testUrl: group.testUrl,
-            groupType: group.type,
-            type: cardType,
-            proxy: proxy,
-            groupName: group.name,
-          );
-        },
       ),
     );
   }

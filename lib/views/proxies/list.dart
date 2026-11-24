@@ -347,37 +347,24 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     }
   }
 
-  Widget _buildRow(BuildContext context, List<Proxy> proxies) {
+  Widget _buildCard(Proxy proxy) {
     final group = widget.group;
     final cardType = widget.cardType;
-    final groupName = group.name;
-    final children = proxies
-        .map<Widget>(
-          (proxy) => Flexible(
-            child: SizedBox(
-              height: getItemHeight(cardType),
-              child: ProxyCard(
-                testUrl: group.testUrl,
-                type: cardType,
-                groupType: group.type,
-                key: ValueKey('$groupName.${proxy.name}'),
-                proxy: proxy,
-                groupName: groupName,
-              ),
-            ),
+    return MemoBuilder(
+      inputs: [proxy, group.name, group.type, group.testUrl, cardType],
+      builder: (context) => SurfaceScope(
+        level: context.raisedSurfaceLevel,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: proxyGridSpacing),
+          child: ProxyCard(
+            key: ValueKey('${group.name}.${proxy.name}'),
+            testUrl: group.testUrl,
+            type: cardType,
+            groupType: group.type,
+            proxy: proxy,
+            groupName: group.name,
           ),
-        )
-        .fill(widget.columns, filler: (_) => const Flexible(child: SizedBox()))
-        .separated(const SizedBox(width: 8));
-    return SurfaceScope(
-      level: context.raisedSurfaceLevel,
-      child: Padding(
-        padding: const EdgeInsets.only(
-          left: _headerInset,
-          right: _headerInset,
-          bottom: proxyGridSpacing,
         ),
-        child: Row(children: children.toList()),
       ),
     );
   }
@@ -385,19 +372,33 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
   /// Rows past the [count] the unfolding shows stay hidden until it settles,
   /// and build one after another behind the ones it shows.
   Widget _buildRows(double extent, double unfoldingExtent, int count) {
-    final rows = widget.group.all.chunks(widget.columns).toList();
-    return SliverFixedExtentList(
-      itemExtent: extent,
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => UnfoldRow(
-          motion: _controller,
-          buildAfter: index < count
-              ? max(0.0, 1 - (index + 1) * extent / unfoldingExtent)
-              : min(0.6 + 0.1 * (index - count), 0.95),
-          builder: (context) => _buildRow(context, rows[index]),
+    final proxies = widget.group.all;
+    final columns = widget.columns;
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: _headerInset),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: 8,
+          mainAxisExtent: extent,
         ),
-        childCount: rows.length,
-        addAutomaticKeepAlives: false,
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final row = index ~/ columns;
+            final proxy = proxies[index];
+            return UnfoldRow(
+              key: ValueKey(proxy.name),
+              motion: _controller,
+              buildAfter: row < count
+                  ? max(0.0, 1 - (row + 1) * extent / unfoldingExtent)
+                  : min(0.6 + 0.1 * (row - count), 0.95),
+              builder: (_) => _buildCard(proxy),
+            );
+          },
+          childCount: proxies.length,
+          addAutomaticKeepAlives: false,
+          findChildIndexCallback: proxyIndexFinder(proxies),
+        ),
       ),
     );
   }
@@ -489,6 +490,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
         (_controller.isDismissed
             ? 0.0
             : _rowsExtent(rowCount, getRowExtent(widget.cardType)));
+    final coversRows = !_controller.isDismissed;
     (double, double, double, Color)? headerState;
     Widget? header;
     return SliverLayoutBuilder(
@@ -525,13 +527,14 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                Positioned(
-                  top: -cover,
-                  left: 0,
-                  right: 0,
-                  height: cover + listHeaderHeight / 2,
-                  child: ColoredBox(color: pageColor),
-                ),
+                if (coversRows)
+                  Positioned(
+                    top: -cover,
+                    left: 0,
+                    right: 0,
+                    height: cover + listHeaderHeight / 2,
+                    child: ColoredBox(color: pageColor),
+                  ),
                 buildHeader(floating: floating, lift: lift),
               ],
             ),
@@ -592,6 +595,7 @@ class ListHeader extends ConsumerWidget {
       enterAnimated: enterAnimated,
       key: key,
       radius: radius - _headerButtonInset,
+      fill: const Color(0x00000000),
       child: Padding(
         padding: const EdgeInsets.all(_headerInset - _headerButtonInset),
         child: Row(

@@ -67,6 +67,21 @@ double? selectedRowOffset({
   return (index ~/ columns) * rowExtent;
 }
 
+/// Finds a card keyed `ValueKey(proxy.name)` in [proxies] once a refresh
+/// moved it, so its element is kept rather than built again.
+ChildIndexGetter proxyIndexFinder(List<Proxy> proxies) {
+  Map<String, int>? indexes;
+  return (key) {
+    if (key case ValueKey<String>(:final value)) {
+      indexes ??= {
+        for (final (index, proxy) in proxies.indexed) proxy.name: index,
+      };
+      return indexes![value];
+    }
+    return null;
+  };
+}
+
 void animateScrollTo(ScrollController controller, double offset) {
   if (!controller.hasClients) {
     return;

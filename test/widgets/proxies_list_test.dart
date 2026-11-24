@@ -47,6 +47,7 @@ void main() {
     Set<String> unfoldSet = const {'G0', 'G1', 'G2'},
     ValueListenable<Brightness>? brightness,
     bool disableAnimations = false,
+    bool liveGroups = false,
   }) async {
     tester.view.physicalSize = const Size(900, 700);
     tester.view.devicePixelRatio = 1;
@@ -63,9 +64,13 @@ void main() {
         viewModeProvider.overrideWithValue(viewMode),
         currentProfileIdProvider.overrideWithBuild((_, _) => profile.id),
         profilesProvider.overrideWith(() => TestProfiles([profile])),
-        currentGroupsStateProvider.overrideWithValue(
-          GroupsState(value: groups),
-        ),
+        liveGroups
+            ? currentGroupsStateProvider.overrideWith(
+                (ref) => GroupsState(value: ref.watch(groupsProvider)),
+              )
+            : currentGroupsStateProvider.overrideWithValue(
+                GroupsState(value: groups),
+              ),
         proxiesActionProvider.overrideWith(_RecordingProxiesAction.new),
       ],
     );
@@ -154,6 +159,31 @@ void main() {
     final header = tester.getRect(headerOf('G1'));
     final card = tester.getRect(find.byKey(const ValueKey('G1.G1-25')).first);
     expect(card.top, header.bottom);
+  });
+
+  testWidgets('a refresh that moves a card to another row keeps its element', (
+    tester,
+  ) async {
+    await pumpList(tester, liveGroups: true, unfoldSet: {'G0'});
+    final card = find.byKey(const ValueKey('G0.G0-5')).first;
+    final element = tester.element(card);
+    final top = tester.getTopLeft(card).dy;
+
+    final group = _group('G0', 40);
+    container.read(groupsProvider.notifier).value = [
+      group.copyWith(
+        all: [
+          group.all[5],
+          ...group.all.where((proxy) => proxy != group.all[5]),
+        ],
+      ),
+      _group('G1', 30),
+      _group('G2', 60),
+    ];
+    await tester.pump();
+
+    expect(tester.getTopLeft(card).dy, lessThan(top));
+    expect(tester.element(card), same(element));
   });
 
   testWidgets('folding a group leaves the cards of the others as they were', (
@@ -327,12 +357,11 @@ void main() {
     expect(surfaceOf(tester, 'G0').shadows, isNull);
   });
 
-  testWidgets('a folded pinned header takes the page color of a new theme', (
-    tester,
-  ) async {
+  testWidgets('the cover behind an unfolded header takes the page color of a '
+      'new theme', (tester) async {
     final brightness = ValueNotifier(Brightness.light);
     addTearDown(brightness.dispose);
-    await pumpList(tester, unfoldSet: const {}, brightness: brightness);
+    await pumpList(tester, brightness: brightness);
 
     brightness.value = Brightness.dark;
     await tester.pumpAndSettle();
@@ -347,6 +376,45 @@ void main() {
     );
     expect(context.colorScheme.brightness, Brightness.dark);
     expect(cover.color, context.surfaceLevel.colorOf(context.colorScheme));
+  });
+
+  testWidgets('a folded header paints nothing under itself: no cover for rows '
+      'it has not got, no card fill over the box of the same color', (
+    tester,
+  ) async {
+    await pumpList(tester, unfoldSet: const {'G1'});
+    List<Widget> layersOf(String groupName) => tester
+        .widget<Stack>(
+          find
+              .descendant(
+                of: find.ancestor(
+                  of: headerOf(groupName),
+                  matching: find.byType(PinnedHeaderSliver),
+                ),
+                matching: find.byType(Stack),
+              )
+              .first,
+        )
+        .children;
+    expect(layersOf('G0'), hasLength(1));
+    expect(layersOf('G1'), hasLength(2));
+
+    for (final groupName in ['G0', 'G1']) {
+      final card = tester.widget<CardSurface>(
+        find
+            .descendant(
+              of: headerOf(groupName),
+              matching: find.byType(CardSurface),
+            )
+            .first,
+      );
+      expect(card.fill.a, 0);
+      expect(surfaceOf(tester, groupName).color!.a, 1);
+    }
+
+    await tester.tap(find.text('G1'));
+    await tester.pumpAndSettle();
+    expect(layersOf('G1'), hasLength(1));
   });
 
   testWidgets('the last row sits as far from the bottom of its group card as '
