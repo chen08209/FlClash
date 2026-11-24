@@ -173,6 +173,7 @@ abstract class SharedState with _$SharedState {
     required String stopText,
     required bool onlyStatisticsProxy,
     @Default(true) bool showStopAction,
+    @Default(false) bool mitm,
   }) = _SharedState;
 
   factory SharedState.fromJson(Map<String, Object?> json) =>

@@ -658,6 +658,29 @@ void main() {
     expect(vpnOptions.systemProxy, isFalse);
   });
 
+  test('the shared state tells the service whether MITM is on', () {
+    loadAppLocalizations(const Locale('en'));
+    final scoped = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        mitmModuleNetworkProvider.overrideWith(
+          (ref) async => const MitmNetwork(),
+        ),
+      ],
+    );
+    addTearDown(scoped.dispose);
+    scoped.listen(sharedStateProvider, (_, _) {});
+    expect(scoped.read(sharedStateProvider).mitm, isFalse);
+
+    scoped
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(mitm: state.mitm.copyWith(enable: true)),
+        );
+    expect(scoped.read(sharedStateProvider).mitm, isTrue);
+    expect(scoped.read(sharedStateProvider).toJson()['mitm'], isTrue);
+  });
+
   test('selection and delay providers resolve groups and profile state', () {
     final profile = Profile.normal().copyWith(
       selectedMap: {'Selector': 'Leaf'},

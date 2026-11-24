@@ -110,6 +110,7 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
     val toasts = mutableListOf<String>()
     val logs = mutableListOf<String>()
     val notificationParams = mutableListOf<NotificationParams>()
+    val mitm = mutableListOf<Boolean>()
     var setupCalls = 0
     var startCalls = 0
     var stopCalls = 0
@@ -128,6 +129,10 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
 
     override fun updateNotificationParams(params: NotificationParams) {
         notificationParams += params
+    }
+
+    override fun updateMitm(enabled: Boolean) {
+        mitm += enabled
     }
 
     override fun loadSharedState(): SharedState = storedSharedState
@@ -200,6 +205,17 @@ class ServiceStateMachineTest {
         )
 
         assertEquals(false, params.showStopAction)
+    }
+
+    @Test
+    fun `a synced shared state hands the service its MITM switch`() = runTest {
+        val host = FakeHost(backgroundScope)
+        val machine = ServiceStateMachine(host)
+
+        machine.syncSharedState(configuredState().copy(mitm = true))
+        machine.syncSharedState(configuredState())
+
+        assertEquals(listOf(true, false), host.mitm)
     }
 
     @Test

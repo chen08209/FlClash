@@ -16,11 +16,10 @@ import com.follow.clash.common.quickIntent
 import com.follow.clash.common.receiveBroadcastFlow
 import com.follow.clash.common.startForeground
 import com.follow.clash.common.toPendingIntent
-import com.follow.clash.core.Core
 import com.follow.clash.service.R
 import com.follow.clash.service.ServiceConfig
+import com.follow.clash.service.SpeedTextReader
 import com.follow.clash.service.models.NotificationParams
-import com.follow.clash.service.models.getSpeedTrafficText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -38,18 +37,20 @@ private data class ExtendedNotificationParams(
     val contentText: String,
 )
 
-private val NotificationParams.extended: ExtendedNotificationParams
-    get() = ExtendedNotificationParams(
-        title,
-        stopText,
-        showStopAction,
-        Core.getSpeedTrafficText(onlyStatisticsProxy),
-    )
-
 internal class NotificationModule(
     private val service: Service,
     private val scope: CoroutineScope,
 ) : ServiceModule {
+    private val speedTexts = SpeedTextReader()
+
+    private val NotificationParams.extended: ExtendedNotificationParams
+        get() = ExtendedNotificationParams(
+            title,
+            stopText,
+            showStopAction,
+            speedTexts.read(onlyStatisticsProxy),
+        )
+
     override fun start() {
         service.ensureNotificationChannel()
         update(ServiceConfig.notificationParams.value.extended)

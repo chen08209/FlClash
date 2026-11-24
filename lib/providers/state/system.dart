@@ -209,6 +209,9 @@ SharedState sharedState(Ref ref) {
       options: ref.watch(coreOptionsProvider),
     ),
     vpnOptions: ref.watch(vpnOptionsProvider).value,
+    mitm: ref.watch(
+      patchClashConfigProvider.select((config) => config.mitm.enable),
+    ),
   );
 }
 

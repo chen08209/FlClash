@@ -37,6 +37,8 @@ internal interface ServiceStateHost {
 
     fun updateNotificationParams(params: NotificationParams)
 
+    fun updateMitm(enabled: Boolean)
+
     fun loadSharedState(): SharedState
 
     fun isVpnPermissionGranted(): Boolean
@@ -102,6 +104,8 @@ internal object AndroidServiceStateHost : ServiceStateHost {
 
     override fun updateNotificationParams(params: NotificationParams) =
         ServiceConfig.updateNotificationParams(params)
+
+    override fun updateMitm(enabled: Boolean) = ServiceConfig.updateMitm(enabled)
 
     override fun loadSharedState(): SharedState = GlobalState.application.sharedState
 

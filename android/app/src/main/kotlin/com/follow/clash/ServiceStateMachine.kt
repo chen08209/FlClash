@@ -188,6 +188,7 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
 
     private fun applySharedState() {
         host.updateNotificationParams(notificationParams(sharedState))
+        host.updateMitm(sharedState.mitm)
     }
 
     private suspend fun setupCore(): Boolean {

@@ -9,11 +9,14 @@ object ServiceConfig {
     @Volatile
     private var currentVpnOptions: VpnOptions? = null
     private val mutableNotificationParams = MutableStateFlow(NotificationParams())
+    private val mutableMitm = MutableStateFlow(false)
 
     val vpnOptions: VpnOptions?
         get() = currentVpnOptions
 
     val notificationParams = mutableNotificationParams.asStateFlow()
+
+    val mitm = mutableMitm.asStateFlow()
 
     fun updateVpnOptions(options: VpnOptions) {
         currentVpnOptions = options
@@ -21,5 +24,9 @@ object ServiceConfig {
 
     fun updateNotificationParams(params: NotificationParams) {
         mutableNotificationParams.value = params
+    }
+
+    fun updateMitm(enabled: Boolean) {
+        mutableMitm.value = enabled
     }
 }
