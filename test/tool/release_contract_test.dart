@@ -117,6 +117,8 @@ void main() {
         'FlClash-0.9.5-android-amd64.apk',
         'FlClash-0.9.5-windows-amd64-setup.exe',
         'FlClash-0.9.5-windows-arm64-setup.exe',
+        'FlClash-0.9.5-macos-arm64.dmg',
+        'FlClash-0.9.5-macos-amd64.dmg',
       ]),
     );
   });

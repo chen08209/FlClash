@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:crypto/crypto.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/macos_update.dart';
 import 'package:fl_clash/common/release_asset.dart';
 import 'package:fl_clash/common/release_version.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -37,8 +38,21 @@ final class UpdateReady extends UpdateDownload {
 @visibleForTesting
 SelfUpdateAsset? Function() resolveSelfUpdateAsset = () => selfUpdateAssetFor(
   Abi.current(),
-  windowsInstalled: system.isWindows && isInstalledWindowsBuild,
+  replaceable: system.isWindows
+      ? isInstalledWindowsBuild
+      : macosAppUpdate?.canReplace ?? false,
 );
+
+final MacosAppUpdate? macosAppUpdate = switch (system.isMacOS
+    ? appBundleOf(Platform.resolvedExecutable)
+    : null) {
+  final bundle? => MacosAppUpdate(bundle),
+  null => null,
+};
+
+Future<String> get macosInstallFailurePath async {
+  return join(await appPath.updateDirPath, 'install-failed');
+}
 
 SelfUpdateAsset? get selfUpdateAsset => resolveSelfUpdateAsset();
 

@@ -111,6 +111,19 @@ void main() {
     });
   });
 
+  test('a tag carrying a path names no release file', () {
+    const asset = (
+      os: ReleaseOs.macos,
+      arch: ReleaseArch.arm64,
+      form: null,
+      extension: 'dmg',
+    );
+    for (final tag in ['v1.0.0-a/../../b', 'v1.0.0/..', '../v1.0.0']) {
+      expect(namesReleaseFiles(tag), isFalse, reason: tag);
+      expect(() => updateAssetName(tag, asset), throwsArgumentError);
+    }
+  });
+
   test('a rebuild tag keeps its number without a plus', () {
     expect(releaseVersionOfTag('v0.9.4'), '0.9.4');
     expect(releaseVersionOfTag('v0.9.4-rs.1+2'), '0.9.4-rs.1.2');

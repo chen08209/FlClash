@@ -238,7 +238,12 @@ class CommonAction extends _$CommonAction {
           );
         },
       );
-      download.value = UpdateReady(tag, path);
+      final ready = switch (macosAppUpdate) {
+        final macos? => await macos.stage(path, directory),
+        null => path,
+      };
+      if (cancelToken.cancelError case final cancelled?) throw cancelled;
+      download.value = UpdateReady(tag, ready);
       dialogs.showBanner(
         currentAppLocalizations.updateReadyTip,
         level: BannerLevel.success,
@@ -295,6 +300,10 @@ class CommonAction extends _$CommonAction {
       }
       return;
     }
+    if (macosAppUpdate case final macos?) {
+      await _installMacosUpdate(macos, download);
+      return;
+    }
     final started = windows?.runas(download.path, windowsUpdateArguments(pid));
     if (started == true) {
       await ref.read(systemActionProvider.notifier).handleExit();
@@ -304,6 +313,49 @@ class CommonAction extends _$CommonAction {
         currentAppLocalizations.updateInstallFailed,
       );
     }
+  }
+
+  Future<void> _installMacosUpdate(
+    MacosAppUpdate macos,
+    UpdateReady download,
+  ) async {
+    try {
+      final started = await macos.install(
+        staged: download.path,
+        tag: download.tag,
+        marker: await macosInstallFailurePath,
+      );
+      if (!started) return;
+    } catch (error) {
+      commonPrint.log(
+        'Update install failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
+      await _showUpdateFailure(
+        download.tag,
+        currentAppLocalizations.updateInstallFailed,
+      );
+      return;
+    }
+    await ref.read(systemActionProvider.notifier).handleExit();
+  }
+
+  /// Clears what an earlier update left behind and reports a macOS install
+  /// that could not finish after the app quit.
+  Future<void> settleUpdateDownloads() async {
+    final failure = system.isMacOS
+        ? await takeMacosInstallFailure(await macosInstallFailurePath)
+        : null;
+    await clearUpdateDownloads();
+    if (failure == null) return;
+    commonPrint.log(
+      'Update install failed: ${failure.reason}',
+      logLevel: LogLevel.warning,
+    );
+    await _showUpdateFailure(
+      failure.tag,
+      currentAppLocalizations.updateInstallFailed,
+    );
   }
 
   Future<void> _showUpdateFailure(String tag, String message) async {

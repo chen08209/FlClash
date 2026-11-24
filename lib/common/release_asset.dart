@@ -81,8 +81,11 @@ typedef SelfUpdateAsset = ({
   String extension,
 });
 
-// The release matrix in .github/workflows/build.yaml builds each of these.
-SelfUpdateAsset? selfUpdateAssetFor(Abi abi, {required bool windowsInstalled}) {
+/// The release matrix in .github/workflows/build.yaml builds each of these.
+/// [replaceable] says the running desktop install is one the updater can
+/// replace: the Windows build Inno Setup installed, or a macOS app bundle
+/// this user can write.
+SelfUpdateAsset? selfUpdateAssetFor(Abi abi, {required bool replaceable}) {
   SelfUpdateAsset apk(ReleaseArch arch) =>
       (os: ReleaseOs.android, arch: arch, form: null, extension: 'apk');
   SelfUpdateAsset setup(ReleaseArch arch) => (
@@ -91,12 +94,16 @@ SelfUpdateAsset? selfUpdateAssetFor(Abi abi, {required bool windowsInstalled}) {
     form: ReleaseForm.setup,
     extension: 'exe',
   );
+  SelfUpdateAsset dmg(ReleaseArch arch) =>
+      (os: ReleaseOs.macos, arch: arch, form: null, extension: 'dmg');
   return switch (abi) {
     Abi.androidArm64 => apk(ReleaseArch.arm64),
     Abi.androidArm => apk(ReleaseArch.armv7),
     Abi.androidX64 => apk(ReleaseArch.amd64),
-    Abi.windowsX64 when windowsInstalled => setup(ReleaseArch.amd64),
-    Abi.windowsArm64 when windowsInstalled => setup(ReleaseArch.arm64),
+    Abi.windowsX64 when replaceable => setup(ReleaseArch.amd64),
+    Abi.windowsArm64 when replaceable => setup(ReleaseArch.arm64),
+    Abi.macosArm64 when replaceable => dmg(ReleaseArch.arm64),
+    Abi.macosX64 when replaceable => dmg(ReleaseArch.amd64),
     _ => null,
   };
 }

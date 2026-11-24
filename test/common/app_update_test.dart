@@ -8,56 +8,60 @@ import 'package:fl_clash/common/release_asset.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  String? nameOn(Abi abi, {required bool windowsInstalled}) {
-    final asset = selfUpdateAssetFor(abi, windowsInstalled: windowsInstalled);
+  String? nameOn(Abi abi, {required bool replaceable}) {
+    final asset = selfUpdateAssetFor(abi, replaceable: replaceable);
     return asset == null ? null : updateAssetName('v0.9.4', asset);
   }
 
   group('selfUpdateAssetFor', () {
     test('names the APK built for the running ABI', () {
       expect(
-        nameOn(Abi.androidArm64, windowsInstalled: false),
+        nameOn(Abi.androidArm64, replaceable: false),
         'FlClash-0.9.4-android-arm64.apk',
       );
       expect(
-        nameOn(Abi.androidArm, windowsInstalled: false),
+        nameOn(Abi.androidArm, replaceable: false),
         'FlClash-0.9.4-android-armv7.apk',
       );
       expect(
-        nameOn(Abi.androidX64, windowsInstalled: false),
+        nameOn(Abi.androidX64, replaceable: false),
         'FlClash-0.9.4-android-amd64.apk',
       );
     });
 
     test('names the Windows installer only for an installed build', () {
       expect(
-        nameOn(Abi.windowsX64, windowsInstalled: true),
+        nameOn(Abi.windowsX64, replaceable: true),
         'FlClash-0.9.4-windows-amd64-setup.exe',
       );
       expect(
-        nameOn(Abi.windowsArm64, windowsInstalled: true),
+        nameOn(Abi.windowsArm64, replaceable: true),
         'FlClash-0.9.4-windows-arm64-setup.exe',
       );
-      expect(nameOn(Abi.windowsX64, windowsInstalled: false), isNull);
+      expect(nameOn(Abi.windowsX64, replaceable: false), isNull);
     });
 
-    test('leaves macOS and Linux to the release page', () {
-      for (final abi in [
-        Abi.macosArm64,
-        Abi.macosX64,
-        Abi.linuxX64,
-        Abi.linuxArm64,
-      ]) {
-        expect(nameOn(abi, windowsInstalled: true), isNull);
+    test('names the macOS dmg only for a bundle the updater can replace', () {
+      expect(
+        nameOn(Abi.macosArm64, replaceable: true),
+        'FlClash-0.9.4-macos-arm64.dmg',
+      );
+      expect(
+        nameOn(Abi.macosX64, replaceable: true),
+        'FlClash-0.9.4-macos-amd64.dmg',
+      );
+      expect(nameOn(Abi.macosArm64, replaceable: false), isNull);
+    });
+
+    test('leaves Linux to the release page', () {
+      for (final abi in [Abi.linuxX64, Abi.linuxArm64]) {
+        expect(nameOn(abi, replaceable: true), isNull);
       }
     });
   });
 
   test('asks for the files a rebuild tag published', () {
-    final asset = selfUpdateAssetFor(
-      Abi.androidArm64,
-      windowsInstalled: false,
-    )!;
+    final asset = selfUpdateAssetFor(Abi.androidArm64, replaceable: false)!;
 
     expect(
       updateAssetName('v0.9.4-pre.1+2', asset),

@@ -73,8 +73,7 @@ List<String> homebrewAssetNames(String cask, String version) {
 
 List<String> updaterAssetNames(String version) {
   final assets = {
-    for (final abi in Abi.values)
-      ?selfUpdateAssetFor(abi, windowsInstalled: true),
+    for (final abi in Abi.values) ?selfUpdateAssetFor(abi, replaceable: true),
   };
   return [
     for (final asset in assets)

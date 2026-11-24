@@ -411,8 +411,8 @@ to `releaseAssetName` or to the build matrix has to reach all of them:
 - `site/assets/app.js`: the ids in `buildsFor` and the checksum link.
 - `.github/release_template.md`: one link per file.
 - `.github/homebrew_cask_template.rb`: the disk image url.
-- `selfUpdateAssetFor` in `lib/common/release_asset.dart`: the installers the updater downloads and verifies against
-  `FlClash-<version>-SHA256SUMS`.
+- `selfUpdateAssetFor` in `lib/common/release_asset.dart`: the APKs, Windows installers and macOS disk images the
+  updater downloads and verifies against `FlClash-<version>-SHA256SUMS`.
 
 `dart run tool/package.dart check dist` reads the names out of those files and fails when the merged release lacks one
 or its checksum file misstates an installer; the upload job runs it before it publishes anything, and

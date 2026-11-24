@@ -59,6 +59,11 @@ brew tap chen08209/tap
 brew install --cask flclash
 ```
 
+**macOS 首次打开**
+
+应用未经 Apple 公证，macOS 第一次会拒绝打开。拖进“应用程序”后运行
+`xattr -dr com.apple.quarantine /Applications/FlClash*.app`，或在“系统设置 > 隐私与安全性”里点“仍要打开”。之后的更新在应用内直接安装。
+
 **Linux 托盘图标**
 
 托盘图标是 StatusNotifierItem。KDE Plasma、XFCE 和多数面板直接显示；GNOME 需要安装 AppIndicator and KStatusNotifierItem Support 扩展。

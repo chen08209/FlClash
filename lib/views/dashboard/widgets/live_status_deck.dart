@@ -694,7 +694,7 @@ String _progressText(UpdateDownloading download) {
   return '$received / ${download.total.traffic.show}';
 }
 
-String _readyTip(AppLocalizations appLocalizations) => system.isWindows
+String _readyTip(AppLocalizations appLocalizations) => system.isDesktop
     ? '${appLocalizations.updateReadyTip}\n${appLocalizations.updateRestartTip}'
     : appLocalizations.updateReadyTip;
 
