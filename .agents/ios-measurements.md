@@ -169,8 +169,10 @@ tuning.
 - FlClash: `navigation_dock.dart` follows the bar, the item's symbol and title, and the pitch rule (`_minPitch`,
   `_crowdedOverhang`). Deliberate deviations: items stay equal, since the lens springs across a uniform pitch, and a
   title that does not fit shrinks to 9 dp and then ellipsizes behind a tooltip; four items stop at 360 wide and take no
-  94 floor; the selected title keeps Medium, its color alone marking it; and the bottom margin is at least the system
-  bar's inset, since on Android that can be a three-button bar.
+  94 floor; five items stop at 398, the row of the widest iPhone (440), and center in a wider window such as a narrow
+  desktop one, where a bar filling the row would grow its lens with it (the standalone sweep grows linearly to 480,
+  which puts the lens near 118 at 600); the selected title keeps Medium, its color alone marking it; and the bottom
+  margin is at least the system bar's inset, since on Android that can be a three-button bar.
 
 ## Top bar button inset
 

@@ -513,27 +513,32 @@ void main() {
     });
   }
 
-  testWidgets('four destinations keep to their width and five fill the row', (
-    tester,
-  ) async {
-    const size = Size(560, 800);
-    tester.view.physicalSize = size;
+  testWidgets('four destinations keep to their width, and five fill the row '
+      'up to the widest iPhone and center past it', (tester) async {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    Future<Rect> pumpBar(int count) async {
+    Future<Rect> pumpBar(double width, int count) async {
+      tester.view.physicalSize = Size(width, 800);
       await _pumpDock(tester, [
         for (var index = 0; index < count; index++) '$index',
       ]);
       return tester.getRect(find.byType(FloatingNavigationBar));
     }
 
-    final four = await pumpBar(4);
-    expect(four.center.dx, size.width / 2);
-    expect(four.width, lessThan(size.width - 42));
-    final five = await pumpBar(5);
-    expect(five.left, 21);
-    expect(five.right, size.width - 21);
+    final four = await pumpBar(560, 4);
+    expect(four.center.dx, 280);
+    expect(four.width, 360);
+    for (final width in [402.0, 440.0]) {
+      final five = await pumpBar(width, 5);
+      expect(five.left, 21);
+      expect(five.right, width - 21);
+    }
+    for (final width in [441.0, 500.0, 600.0]) {
+      final five = await pumpBar(width, 5);
+      expect(five.width, 398);
+      expect(five.center.dx, width / 2);
+    }
   });
 
   testWidgets('five destinations rest as wide as iOS 27 rests them, and '
@@ -551,6 +556,8 @@ void main() {
     expect(await lensWidthAt(402), closeTo(76.8, 0.01));
     expect(await lensWidthAt(397), closeTo(85.4, 0.01));
     expect(await lensWidthAt(390), closeTo(84, 0.01));
+    expect(await lensWidthAt(440), closeTo(84.4, 0.01));
+    expect(await lensWidthAt(600), closeTo(84.4, 0.01));
   });
 
   testWidgets('a destination stands its glyph and label where iOS 27 does', (
