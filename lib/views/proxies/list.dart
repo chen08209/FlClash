@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
 import 'common.dart';
+import 'unfold.dart';
 
 const _headerInset = 10.0;
 const _headerButtonInset = 4.0;
@@ -305,12 +306,12 @@ class _GroupSliver extends ConsumerStatefulWidget {
 class _GroupSliverState extends ConsumerState<_GroupSliver>
     with SingleTickerProviderStateMixin {
   Widget? _rows;
+  (double, double)? _rowsShape;
   double _rowExtent = 0;
   late final _controller = AnimationController(
     vsync: this,
     value: ref.read(unfoldSetProvider).contains(widget.group.name) ? 1 : 0,
   );
-  late final _unfold = UnfoldEntryTransition.curveOf(_controller);
 
   @override
   void initState() {
@@ -324,16 +325,16 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
 
   @override
   void dispose() {
-    _unfold.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   void _handleUnfold(bool isExpand) {
-    _controller.duration = context.motionDuration(
-      UnfoldEntryTransition.duration,
+    UnfoldMotion.run(
+      _controller,
+      open: isExpand,
+      animate: !context.disableAnimations,
     );
-    isExpand ? _controller.forward() : _controller.reverse();
   }
 
   @override
@@ -381,57 +382,23 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     );
   }
 
-  Widget _buildRows(double extent) {
+  /// Rows past the [count] the unfolding shows stay hidden until it settles,
+  /// and build one after another behind the ones it shows.
+  Widget _buildRows(double extent, double unfoldingExtent, int count) {
     final rows = widget.group.all.chunks(widget.columns).toList();
     return SliverFixedExtentList(
       itemExtent: extent,
       delegate: SliverChildBuilderDelegate(
-        (context, index) => _buildRow(context, rows[index]),
+        (context, index) => UnfoldRow(
+          motion: _controller,
+          buildAfter: index < count
+              ? max(0.0, 1 - (index + 1) * extent / unfoldingExtent)
+              : min(0.6 + 0.1 * (index - count), 0.95),
+          builder: (context) => _buildRow(context, rows[index]),
+        ),
         childCount: rows.length,
         addAutomaticKeepAlives: false,
       ),
-    );
-  }
-
-  /// The card reaches up behind the header's rounded bottom corners, so the
-  /// two read as one while the rows unfold or fold.
-  Widget _buildUnfoldingRows(double extent, ShapeDecoration decoration) {
-    final rows = widget.group.all.chunks(widget.columns).toList();
-    final visible = min(
-      rows.length.toDouble(),
-      MediaQuery.sizeOf(context).height / extent,
-    );
-    final count = min(rows.length, visible.floor() + 1);
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned(
-          top: -AppCorner.xl.ap(context),
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: DecoratedBox(decoration: decoration),
-        ),
-        SizeTransition(
-          sizeFactor: _unfold,
-          alignment: Alignment.topCenter,
-          child: Column(
-            children: [
-              for (var index = 0; index < count; index++)
-                UnfoldEntryTransition(
-                  animation: _unfold,
-                  index: index,
-                  visibleCount: visible,
-                  child: SizedBox(
-                    height: extent,
-                    child: _buildRow(context, rows[index]),
-                  ),
-                ),
-              if (count == rows.length) const SizedBox(height: _lastRowGrowth),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -445,33 +412,40 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     Widget? rows;
     if (!_controller.isDismissed && widget.group.all.isNotEmpty) {
       final extent = getRowExtent(widget.cardType);
-      final decoration = ShapeDecoration(
-        color: context.raisedSurfaceLevel.colorOf(context.colorScheme),
-        shape: AppShape.vertical(
-          top: AppCorner.none,
-          bottom: AppCorner.xl.ap(context),
+      final columns = widget.columns;
+      final rowCount = (widget.group.all.length + columns - 1) ~/ columns;
+      final visible = min(
+        rowCount.toDouble(),
+        MediaQuery.sizeOf(context).height / extent,
+      );
+      final count = min(rowCount, visible.floor() + 1);
+      final unfoldingExtent =
+          count * extent + (count == rowCount ? _lastRowGrowth : 0);
+      if (_rows == null || _rowsShape != (extent, unfoldingExtent)) {
+        _rows = _buildRows(extent, unfoldingExtent, count);
+        _rowsShape = (extent, unfoldingExtent);
+      }
+      if (unfolded) {
+        _rowExtent = extent;
+      }
+      rows = UnfoldSliver(
+        motion: _controller,
+        unfoldingExtent: unfoldingExtent,
+        reach: AppCorner.xl.ap(context),
+        decoration: ShapeDecoration(
+          color: context.raisedSurfaceLevel.colorOf(context.colorScheme),
+          shape: AppShape.vertical(
+            top: AppCorner.none,
+            bottom: AppCorner.xl.ap(context),
+          ),
+        ),
+        sliver: SliverMainAxisGroup(
+          slivers: [
+            _rows!,
+            const SliverToBoxAdapter(child: SizedBox(height: _lastRowGrowth)),
+          ],
         ),
       );
-      if (!unfolded) {
-        _rows = null;
-        rows = SliverToBoxAdapter(
-          child: _buildUnfoldingRows(extent, decoration),
-        );
-      } else {
-        if (_rows == null || _rowExtent != extent) {
-          _rows = _buildRows(extent);
-          _rowExtent = extent;
-        }
-        rows = DecoratedSliver(
-          decoration: decoration,
-          sliver: SliverMainAxisGroup(
-            slivers: [
-              _rows!,
-              const SliverToBoxAdapter(child: SizedBox(height: _lastRowGrowth)),
-            ],
-          ),
-        );
-      }
     } else {
       _rows = null;
     }
@@ -485,6 +459,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
         key: ValueKey(groupName),
         isExpand: isExpand,
         unfolded: unfolded,
+        unfold: _controller,
         group: widget.group,
         onChange: widget.onChange,
       ),
@@ -586,6 +561,8 @@ class ListHeader extends ConsumerWidget {
   /// The shadow that lifts the header off the rows under it.
   final double lift;
 
+  final Animation<double> unfold;
+
   const ListHeader({
     super.key,
     this.enterAnimated = true,
@@ -596,6 +573,7 @@ class ListHeader extends ConsumerWidget {
     required this.onScrollToSelected,
     required this.isExpand,
     required this.unfolded,
+    required this.unfold,
   });
 
   @override
@@ -629,6 +607,7 @@ class ListHeader extends ConsumerWidget {
             ),
             _GroupActions(
               isExpand: isExpand,
+              unfold: unfold,
               isDelayTesting: isDelayTesting,
               groupType: group.type.name,
               onScrollToSelected: () {
@@ -802,6 +781,7 @@ class _SelectedProxyName extends ConsumerWidget {
 class _GroupActions extends StatelessWidget {
   const _GroupActions({
     required this.isExpand,
+    required this.unfold,
     required this.isDelayTesting,
     required this.groupType,
     required this.onScrollToSelected,
@@ -810,6 +790,7 @@ class _GroupActions extends StatelessWidget {
   });
 
   final bool isExpand;
+  final Animation<double> unfold;
   final bool isDelayTesting;
   final String groupType;
   final VoidCallback onScrollToSelected;
@@ -855,7 +836,10 @@ class _GroupActions extends StatelessWidget {
                   ? context.appLocalizations.showLess
                   : context.appLocalizations.showMore,
               onPressed: onToggle,
-              icon: ExpandIcon(expand: isExpand),
+              icon: RotationTransition(
+                turns: unfold.drive(UnfoldMotion.chevronTurns),
+                child: const GlyphIcon(Glyphs.caretDown, fill: 1),
+              ),
             ),
           ),
         ],

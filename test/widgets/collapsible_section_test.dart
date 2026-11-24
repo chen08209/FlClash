@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -30,18 +32,11 @@ void main() {
     );
   }
 
-  double opacityOf(WidgetTester tester, String text) {
-    final fades = find.ancestor(
-      of: find.text(text),
-      matching: find.descendant(
-        of: find.byType(SliverCollapsibleSection),
-        matching: find.byType(FadeTransition),
-      ),
-    );
-    if (fades.evaluate().isEmpty) {
-      return 1;
-    }
-    return tester.widget<FadeTransition>(fades.first).opacity.value;
+  // Where iOS 27's outline spring (stiffness 631.65, critically damped)
+  // stands after [seconds] from rest.
+  double spring(double seconds) {
+    final omega = math.sqrt(631.65);
+    return 1 - (1 + omega * seconds) * math.exp(-omega * seconds);
   }
 
   testWidgets('shows its count and folds away from its header', (tester) async {
@@ -54,7 +49,7 @@ void main() {
 
     await tester.tap(find.text('Nodes 3'));
     await tester.pumpAndSettle();
-    expect(opacityOf(tester, 'n0'), 1);
+    expect(find.text('n0'), findsOneWidget);
   });
 
   testWidgets('a keyboard reaches the header and folds the section', (
@@ -103,28 +98,180 @@ void main() {
     expect(find.text('n0'), findsNothing);
   });
 
-  testWidgets('a long list unfolds with its first entry visible but faint '
-      'until the middle of the screen has faded in', (tester) async {
+  testWidgets('a list unfolds as one block from behind its header on the '
+      'iOS outline spring, turns its chevron with it and folds back the '
+      'same way', (tester) async {
     await pumpSection(tester, 40);
+    final header = find.text('Nodes 40');
+    final settled = [
+      for (final entry in ['n0', 'n6']) tester.getTopLeft(find.text(entry)).dy,
+    ];
+    List<double> shifts() => [
+      for (final (i, entry) in ['n0', 'n6'].indexed)
+        tester.getTopLeft(find.text(entry)).dy - settled[i],
+    ];
+    double turns() => tester
+        .widget<RotationTransition>(
+          find.descendant(
+            of: find.byType(CollapsibleHeader),
+            matching: find.byType(RotationTransition),
+          ),
+        )
+        .turns
+        .value;
+
+    await tester.tap(header);
+    await tester.pumpAndSettle();
+    await tester.tap(header);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    final early = shifts();
+    expect(early.first, lessThan(0));
+    expect(early.last, moreOrLessEquals(early.first, epsilon: 1e-6));
+    expect(
+      tester.getTopLeft(find.text('n0')).dy,
+      lessThan(tester.getBottomLeft(find.byType(CollapsibleHeader)).dy),
+    );
+    expect(
+      find.descendant(
+        of: find.byType(SliverCollapsibleSection),
+        matching: find.byType(FadeTransition),
+      ),
+      findsNothing,
+    );
+    expect(
+      turns(),
+      moreOrLessEquals(-0.25 * (1 - spring(0.05)), epsilon: 1e-3),
+    );
+
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(
+      shifts().first / early.first,
+      moreOrLessEquals((1 - spring(0.1)) / (1 - spring(0.05)), epsilon: 0.01),
+    );
+
+    await tester.pump(const Duration(milliseconds: 260));
+    expect(tester.hasRunningAnimations, isTrue);
+    await tester.pump(const Duration(milliseconds: 15));
+    expect(tester.hasRunningAnimations, isFalse);
+    expect(shifts(), [0, 0]);
+    expect(turns(), 0);
+
+    await tester.tap(header);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    final folding = shifts().first;
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(
+      shifts().first / folding,
+      moreOrLessEquals(spring(0.1) / spring(0.05), epsilon: 0.01),
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.text('n0'), findsNothing);
+  });
+
+  testWidgets('a tap during the motion turns it around at the speed it had', (
+    tester,
+  ) async {
+    await pumpSection(tester, 40);
+    final header = find.text('Nodes 40');
+    final settled = tester.getTopLeft(find.text('n6')).dy;
+    double shift() => tester.getTopLeft(find.text('n6')).dy - settled;
+
+    await tester.tap(header);
+    await tester.pumpAndSettle();
+    await tester.tap(header);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final turning = shift();
+    await tester.tap(header);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 8));
+    expect(shift(), greaterThan(turning));
+
+    await tester.pumpAndSettle();
+    expect(find.text('n6'), findsNothing);
+  });
+
+  testWidgets('entries keep their elements from the motion into the settled '
+      'list and back', (tester) async {
+    await pumpSection(tester, 40);
+    final header = find.text('Nodes 40');
+    await tester.tap(header);
+    await tester.pumpAndSettle();
+
+    await tester.tap(header);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    final unfolding = tester.element(find.text('n3'));
+
+    await tester.pumpAndSettle();
+    expect(tester.element(find.text('n3')), same(unfolding));
+
+    await tester.tap(header);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(tester.element(find.text('n3')), same(unfolding));
+  });
+
+  testWidgets('with animations off a list unfolds and folds at once', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      TestApp(
+        child: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: Surface(
+              child: CustomScrollView(
+                slivers: [
+                  SliverCollapsibleSection(
+                    label: 'Nodes',
+                    itemCount: 40,
+                    itemBuilder: (_, index) =>
+                        SizedBox(height: 64, child: Text('n$index')),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
     final top = tester.getTopLeft(find.text('n6')).dy;
 
     await tester.tap(find.text('Nodes 40'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    expect(tester.hasRunningAnimations, isFalse);
+    expect(find.text('n0'), findsNothing);
+
     await tester.tap(find.text('Nodes 40'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.text('n6')).dy, lessThan(top));
-    expect(opacityOf(tester, 'n6'), 1);
-    expect(opacityOf(tester, 'n0'), lessThan(0.5));
-
-    await tester.pump(const Duration(milliseconds: 60));
-    final later = opacityOf(tester, 'n0');
-    expect(later, greaterThan(0.5));
-    expect(later, lessThan(1));
-
-    await tester.pumpAndSettle();
-    expect(opacityOf(tester, 'n0'), 1);
+    expect(tester.hasRunningAnimations, isFalse);
     expect(tester.getTopLeft(find.text('n6')).dy, top);
+  });
+
+  testWidgets('the motion does not start where it already stands', (
+    tester,
+  ) async {
+    final controller = AnimationController(vsync: tester, value: 1);
+    addTearDown(controller.dispose);
+    final statuses = <AnimationStatus>[];
+    controller.addStatusListener(statuses.add);
+
+    UnfoldMotion.run(controller, open: true);
+    expect(controller.isAnimating, isFalse);
+    expect(statuses, isEmpty);
+
+    UnfoldMotion.run(controller, open: false);
+    expect(controller.isAnimating, isTrue);
+    expect(statuses, [AnimationStatus.reverse]);
+    controller.stop();
   });
 
   testWidgets('builds only the entries in view, open or unfolding', (

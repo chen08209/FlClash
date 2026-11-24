@@ -451,6 +451,46 @@ footnote 15.51), so baselines are compared, not boxes.
   rounded square around an 18-20 pt symbol, and a bare glyph grown to that size reads far heavier than the rows'
   text; only the slot, its center and the text start follow iOS.
 
+## Outline disclosure (group unfold and fold)
+
+Measured from a `UICollectionView` list (`.insetGrouped` and `.plain` appearances) whose parent rows carry
+`UICellAccessory.outlineDisclosure`, both with the parent as a section header outside the card
+(`headerMode .firstItemInSection`, style `.header`) and as a row inside the card (style `.cell`), with groups of 6 and
+40 children; the animations were read from the `CASpringAnimation`s on the layers and filmed at 60 fps. For comparison
+SwiftUI's `DisclosureGroup` and `Section(isExpanded:)` (`.sidebar`) were measured the same way.
+
+- One spring drives every part: mass 1, stiffness 631.65, damping 50.27, critically damped (response 0.25 s, bounce
+  0); the `CASpringAnimation` lasts 0.367 s, where it is within a thousandth of its target. The motion starts on
+  touch-up and the next frame already moves.
+- The children move as one rigid block from behind the parent, clipped at the parent's bottom edge, so the block's
+  bottom shows first. They neither fade, stagger nor scale. The block travels its on-screen extent: a group of 6 moves
+  312 (6 × 52), a group of 40 moves 728, from the parent to the bottom of the screen. The card's bottom corners move
+  with the block.
+- What follows the group moves with the same spring by the group's full height (2080 for 40 rows).
+- The chevron turns 90° on the same spring, from pointing at the label to pointing down. In the in-card variant the
+  parent's bottom corners and its separator animate with it.
+- Folding runs the same spring toward 0; it is not the unfold played backwards. A tap during the motion turns it
+  around from where it stands at the speed it had (additive animations). A second tap within about 160 ms of the
+  first is ignored; from about 260 ms on it reverses.
+- SwiftUI differs: `DisclosureGroup` and `Section(isExpanded:)` fade their rows in place while what follows slides over
+  them, on a spring of stiffness 438.65, damping 41.89 (response 0.3). In `.insetGrouped`, `Section(isExpanded:)` has
+  no control to fold it.
+- FlClash follows the UIKit outline. `UnfoldMotion` in `prism_ui/lib/collapsible_section.dart` holds the spring and
+  runs it from the controller's current value and velocity (`SpringSimulation`, tolerance 1e-3, so it ends at 0.367 s
+  from rest); reduced motion (`context.disableAnimations`) jumps to the end. `SliverCollapsibleGroups` slides the
+  screen of entries it shows as one block in a bottom-aligned `SizeTransition`; the proxy page's `UnfoldSliver`
+  (`lib/views/proxies/unfold.dart`) lifts its rows by the part of the block still behind the header, clips them at the
+  header's bottom and grows the group card with the block's bottom, building each row as it comes out. Both chevrons
+  turn from -90° by `UnfoldMotion.chevronTurns`: `Glyphs.chevronDown` on the prism header, `Glyphs.caretDown` (fill 1)
+  on the proxy page's.
+- Deliberate deviation: what follows a group moves with the block's bottom, by the group's on-screen extent, not by
+  its full height. For a group taller than the screen the content below leaves the screen slower than in UIKit; a
+  sliver list knows the full height only once it has laid out every row.
+- Deliberate deviation: every tap reverses the motion, including one within 160 ms of the last.
+- Deliberate deviation: the proxy page's header squares its bottom corners when the group settles open instead of
+  animating them; while the group moves, the card behind the rows reaches up behind the header's rounded corners, so
+  no gap shows.
+
 ## Navigation push/pop and zoom transitions
 
 Read from the UIKit settings objects `_UIFluidNavigationTransitionsDomain` and `UIKit._UIZoomTransitionSettingsDomain`,

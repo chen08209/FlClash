@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -44,6 +46,7 @@ void main() {
     List<Group>? groups,
     Set<String> unfoldSet = const {'G0', 'G1', 'G2'},
     ValueListenable<Brightness>? brightness,
+    bool disableAnimations = false,
   }) async {
     tester.view.physicalSize = const Size(900, 700);
     tester.view.devicePixelRatio = 1;
@@ -76,9 +79,10 @@ void main() {
           homeBuilder: (child) => HostScaffold(
             body: Builder(
               builder: (context) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(padding: const EdgeInsets.only(top: 64)),
+                data: MediaQuery.of(context).copyWith(
+                  padding: const EdgeInsets.only(top: 64),
+                  disableAnimations: disableAnimations,
+                ),
                 child: child,
               ),
             ),
@@ -168,42 +172,127 @@ void main() {
     expect(tester.widget(card), same(before));
   });
 
-  testWidgets('a group unfolds its rows from under its header and folds them '
-      'back', (tester) async {
+  testWidgets('a group unfolds its rows as one block from behind its header '
+      'on the iOS outline spring, each built as it shows and none again, and '
+      'folds them back', (tester) async {
+    // Where iOS 27's outline spring (stiffness 631.65, critically damped)
+    // stands after [seconds] from rest.
+    double spring(double seconds) {
+      final omega = sqrt(631.65);
+      return 1 - (1 + omega * seconds) * exp(-omega * seconds);
+    }
+
     await pumpList(tester);
+    final cards = find.byWidgetPredicate(
+      (widget) => widget is ProxyCard && widget.groupName == 'G0',
+    );
+    final settled = {
+      for (final element in cards.evaluate())
+        element.widget.key!: tester
+            .getTopLeft(find.byWidget(element.widget))
+            .dy,
+    };
     container.read(proxiesActionProvider.notifier).updateCurrentUnfoldSet({
       'G1',
       'G2',
     });
     await tester.pumpAndSettle();
     final radius = AppCorner.xl.ap(tester.element(find.text('G0')));
-    final unfolding = find.byType(UnfoldEntryTransition);
-    final cards = find.byWidgetPredicate(
-      (widget) => widget is ProxyCard && widget.groupName == 'G0',
-    );
+    final firstCard = find.byKey(const ValueKey('G0.G0-0')).first;
     BorderRadiusGeometry headerCorners() =>
         (surfaceOf(tester, 'G0').shape as RoundedSuperellipseBorder)
             .borderRadius;
+    double lead() =>
+        tester.getRect(firstCard).top - tester.getRect(headerOf('G0')).bottom;
+    Set<double> shifts() => {
+      for (final element in cards.evaluate())
+        if (settled[element.widget.key] case final top?)
+          ((tester.getTopLeft(find.byWidget(element.widget)).dy - top) * 1000)
+                  .round() /
+              1000,
+    };
+    double turns() => tester
+        .widget<RotationTransition>(
+          find.descendant(
+            of: headerOf('G0'),
+            matching: find.byType(RotationTransition),
+          ),
+        )
+        .turns
+        .value;
+    expect(turns(), -0.25);
 
     await tester.tap(find.text('G0'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 120));
-    expect(unfolding, findsWidgets);
+    expect(cards, findsNothing);
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(cards, findsWidgets);
+    expect(find.byKey(const ValueKey('G0.G0-0')), findsNothing);
+    await tester.pump(const Duration(milliseconds: 44));
+    final early = shifts();
+    expect(early, hasLength(1));
+    expect(early.single, lessThan(0));
+    expect(
+      turns(),
+      moreOrLessEquals(-0.25 * (1 - spring(0.06)), epsilon: 1e-3),
+    );
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(
+      shifts().single / early.single,
+      moreOrLessEquals((1 - spring(0.12)) / (1 - spring(0.06)), epsilon: 0.01),
+    );
     expect(headerCorners(), AppRadius.all(radius));
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(lead(), lessThan(0));
+    final unfolding = tester.element(firstCard);
 
     await tester.pumpAndSettle();
-    expect(unfolding, findsNothing);
-    expect(cards, findsWidgets);
+    expect(lead(), 0);
+    expect(shifts(), {0});
+    expect(turns(), 0);
+    expect(tester.element(firstCard), same(unfolding));
     expect(headerCorners(), AppRadius.vertical(top: radius));
 
     await tester.tap(find.text('G0'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 120));
-    expect(unfolding, findsWidgets);
+    expect(lead(), lessThan(0));
+    expect(shifts(), hasLength(1));
+    expect(tester.element(firstCard), same(unfolding));
     expect(headerCorners(), AppRadius.all(radius));
 
     await tester.pumpAndSettle();
     expect(cards, findsNothing);
+  });
+
+  testWidgets('with animations off a group folds and unfolds at once', (
+    tester,
+  ) async {
+    await pumpList(tester, disableAnimations: true);
+    final firstCard = find.byKey(const ValueKey('G0.G0-0'));
+    double turns() => tester
+        .widget<RotationTransition>(
+          find.descendant(
+            of: headerOf('G0'),
+            matching: find.byType(RotationTransition),
+          ),
+        )
+        .turns
+        .value;
+    expect(firstCard, findsWidgets);
+
+    await tester.tap(find.text('G0'));
+    await tester.pump();
+    expect(firstCard, findsNothing);
+    expect(turns(), -0.25);
+
+    await tester.tap(find.text('G0'));
+    await tester.pump();
+    expect(
+      tester.getRect(firstCard.first).top,
+      tester.getRect(headerOf('G0')).bottom,
+    );
+    expect(turns(), 0);
   });
 
   testWidgets('the pinned header floats over its rows and leaves with the '
