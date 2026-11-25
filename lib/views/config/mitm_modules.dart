@@ -463,29 +463,27 @@ class MitmModuleView extends ConsumerWidget {
   }
 
   Widget _linesItem(
-    String title,
-    List<_ShownLine> lines, {
+    String title, {
+    required int count,
+    required int invalid,
+    required List<_ShownLine> Function() linesOf,
     String? note,
     bool rules = false,
-    Map<String, Map<String, Object?>> ruleSets = const {},
+    Map<String, Map<String, Object?>> Function()? ruleSetsOf,
     List<PopupMenuItem> Function(_ShownLine line)? menuItemsOf,
   }) {
     return Builder(
       builder: (context) {
         final appLocalizations = context.appLocalizations;
-        final count = _countOf(
-          appLocalizations,
-          lines.where((line) => line.issue != null).length,
-          lines.length,
-        );
+        final summary = _countOf(appLocalizations, invalid, count);
         return ListItem.open(
           title: Text(title),
-          subtitle: Text([count, ?note].join('\n')),
+          subtitle: Text([summary, ?note].join('\n')),
           builder: (_) => _MitmModuleLinesView(
             title: title,
-            lines: lines,
+            lines: linesOf(),
             rules: rules,
-            ruleSets: ruleSets,
+            ruleSets: ruleSetsOf?.call() ?? const {},
             menuItemsOf: menuItemsOf,
           ),
         );
@@ -507,7 +505,7 @@ class MitmModuleView extends ConsumerWidget {
           hosts.length,
         ),
       ),
-      widget: _MitmHostsView(title: title, hosts: hosts),
+      builder: (_) => _MitmHostsView(title: title, hosts: hosts),
     );
   }
 
@@ -897,7 +895,9 @@ class MitmModuleView extends ConsumerWidget {
               when lines.isNotEmpty)
             _linesItem(
               list.label,
-              [
+              count: lines.length,
+              invalid: lines.where((line) => line.issue != null).length,
+              linesOf: () => [
                 for (final line in lines)
                   (text: line.text, issue: line.issue, view: line.view),
               ],
@@ -911,12 +911,16 @@ class MitmModuleView extends ConsumerWidget {
         if (content.read.rules.isNotEmpty)
           _linesItem(
             appLocalizations.mitmRoutingRules,
-            [
+            count: content.read.rules.length,
+            invalid: content.read.rules
+                .where((rule) => refused[rule.line] != null)
+                .length,
+            linesOf: () => [
               for (final rule in content.read.rules)
                 _ruleLine(rule, refused[rule.line]),
             ],
             rules: true,
-            ruleSets: {
+            ruleSetsOf: () => {
               for (final set in content.read.ruleSets)
                 set.name: {'url': ?set.url, 'path': ?set.file},
             },
