@@ -1281,12 +1281,6 @@
   "mitmIgnoredLines": "Ignored lines",
   "mitmModuleRulesDesc": "Matched before the profile’s rules.",
   "mitmRequestRulesDesc": "URL-REGEX and USER-AGENT rules run as URL rewrites, on HTTPS only for listed hosts.",
-  "mitmExtendedMatchingNote": "{count} use extended matching",
-  "@mitmExtendedMatchingNote": {
-    "placeholders": {
-      "count": {}
-    }
-  },
   "mitmActionModule": "From {module}",
   "mitmModuleSystemTip": "Written for {system}; some lines may not match apps on this device.",
   "mitmModuleRequirementTip": "The module requires {requirement}, which this device does not meet; it may not work as intended.",

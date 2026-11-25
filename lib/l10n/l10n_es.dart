@@ -3910,11 +3910,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Las reglas URL-REGEX y USER-AGENT funcionan como reescrituras de URL; en HTTPS, solo para los hosts de la lista.';
 
   @override
-  String mitmExtendedMatchingNote(Object count) {
-    return '$count usan coincidencia extendida';
-  }
-
-  @override
   String mitmActionModule(Object module) {
     return 'De $module';
   }

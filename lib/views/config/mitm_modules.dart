@@ -903,12 +903,6 @@ class MitmModuleView extends ConsumerWidget {
               for (final rule in content.read.rules)
                 _ruleLine(rule, refused[rule.line]),
             ],
-            note: switch (content.read.rules
-                .where((rule) => rule.extendedMatching)
-                .length) {
-              0 => null,
-              final count => appLocalizations.mitmExtendedMatchingNote(count),
-            },
             rules: true,
             ruleSets: {
               for (final set in content.read.ruleSets)

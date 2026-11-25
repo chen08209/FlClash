@@ -24,6 +24,36 @@ final _responsePrefix = utf8.encode('{"jsonrpc":"2.0","id":');
 
 typedef Decoder<T> = T Function(Object? result);
 
+/// A string counts its UTF-16 length, which its UTF-8 never undercuts.
+bool _encodesToAtLeast(Object? value, int bytes) {
+  var left = bytes;
+  bool reached(Object? node) {
+    switch (node) {
+      case String():
+        left -= node.length + 2;
+      case Map():
+        left -= 2;
+        for (final entry in node.entries) {
+          if (reached(entry.key) || reached(entry.value)) {
+            return true;
+          }
+        }
+      case List():
+        left -= 2;
+        for (final item in node) {
+          if (reached(item)) {
+            return true;
+          }
+        }
+      default:
+        left -= 1;
+    }
+    return left <= 0;
+  }
+
+  return reached(value);
+}
+
 /// What one batch of a stream carried. [snapshot] is set on the first frame of
 /// a subscription and again after a resync, which means the consumer must drop
 /// what it held; [resynced] marks a frame that follows lost events.
@@ -68,6 +98,7 @@ final class CoreClient {
   Future<HelloResult>? _hello;
   HelloResult? _session;
   bool _closed = false;
+  Future<void>? _sendTail;
 
   CoreClient(
     this._channel, {
@@ -228,28 +259,28 @@ final class CoreClient {
         TimeoutException('Core method $method timed out', timeout),
       );
     });
-    try {
-      _channel.send(
-        _encoder.convert({
-          'jsonrpc': '2.0',
-          'id': id,
-          'method': method,
-          'params': ?params,
-        }),
-      );
-    } catch (error) {
-      _pending.remove(id);
+    void failed(Object error) {
+      if (_pending.remove(id) == null) {
+        return;
+      }
       pending.timer?.cancel();
-      return (
-        id: id,
-        result: Future<T>.error(
-          CoreMethodException(
-            code: 'transport_error',
-            message: 'Unable to send $method to Core',
-            details: error.toString(),
-          ),
+      pending.completer.completeError(
+        CoreMethodException(
+          code: 'transport_error',
+          message: 'Unable to send $method to Core',
+          details: error.toString(),
         ),
       );
+    }
+
+    try {
+      _send(
+        {'jsonrpc': '2.0', 'id': id, 'method': method, 'params': ?params},
+        isWanted: () => _pending.containsKey(id),
+        failed: failed,
+      );
+    } catch (error) {
+      failed(error);
     }
     return (
       id: id,
@@ -257,18 +288,48 @@ final class CoreClient {
     );
   }
 
+  /// Messages go out in the order sent: one after a large message waits for it.
+  void _send(
+    Map<String, Object?> message, {
+    bool Function()? isWanted,
+    void Function(Object error)? failed,
+  }) {
+    final queued = _sendTail;
+    final large = _encodesToAtLeast(message, coreOffloadBytes);
+    if (queued == null && !large) {
+      _channel.send(_encoder.convert(message));
+      return;
+    }
+    late final Future<void> sent;
+    sent = (queued ?? Future<void>.value())
+        .then((_) async {
+          final frame = large
+              ? await _encodeOffIsolate(message)
+              : _encoder.convert(message);
+          if (_closed || !(isWanted?.call() ?? true)) {
+            return;
+          }
+          _channel.send(frame);
+        })
+        .catchError((Object error) => failed?.call(error))
+        .whenComplete(() {
+          if (identical(_sendTail, sent)) {
+            _sendTail = null;
+          }
+        });
+    _sendTail = sent;
+  }
+
+  /// Static, so the closure carries only [message] to the isolate.
+  static Future<List<int>> _encodeOffIsolate(Map<String, Object?> message) =>
+      Isolate.run(() => _encoder.convert(message));
+
   void _notify(String method, Map<String, Object?> params) {
     if (_closed) {
       return;
     }
     try {
-      _channel.send(
-        _encoder.convert({
-          'jsonrpc': '2.0',
-          'method': method,
-          'params': params,
-        }),
-      );
+      _send({'jsonrpc': '2.0', 'method': method, 'params': params});
     } catch (_) {}
   }
 

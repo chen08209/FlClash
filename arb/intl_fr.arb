@@ -1121,7 +1121,6 @@
   "mitmIgnoredLines": "Lignes ignorées",
   "mitmModuleRulesDesc": "Évaluées avant les règles du profil.",
   "mitmRequestRulesDesc": "Les règles URL-REGEX et USER-AGENT agissent comme des réécritures d’URL, en HTTPS seulement pour les hôtes listés.",
-  "mitmExtendedMatchingNote": "{count} utilisent la correspondance étendue",
   "mitmActionModule": "De {module}",
   "mitmModuleSystemTip": "Écrit pour {system} ; certaines lignes peuvent ne pas correspondre aux applications de cet appareil.",
   "mitmModuleRequirementTip": "Le module exige {requirement}, que cet appareil ne remplit pas ; il risque de ne pas fonctionner comme prévu.",

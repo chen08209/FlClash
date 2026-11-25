@@ -3865,11 +3865,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Правила URL-REGEX и USER-AGENT работают как перезаписи URL, для HTTPS — только для хостов из списка.';
 
   @override
-  String mitmExtendedMatchingNote(Object count) {
-    return '$count используют расширенное сопоставление';
-  }
-
-  @override
   String mitmActionModule(Object module) {
     return 'Из $module';
   }

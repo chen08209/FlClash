@@ -3682,11 +3682,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'URL-REGEX と USER-AGENT のルールは URL 書き換えとして動作し、HTTPS ではホスト名に含まれるホストだけが対象です。';
 
   @override
-  String mitmExtendedMatchingNote(Object count) {
-    return 'うち $count 件は拡張マッチング';
-  }
-
-  @override
   String mitmActionModule(Object module) {
     return '$module から';
   }

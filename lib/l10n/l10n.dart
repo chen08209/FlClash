@@ -6840,12 +6840,6 @@ abstract class AppLocalizations {
   /// **'URL-REGEX and USER-AGENT rules run as URL rewrites, on HTTPS only for listed hosts.'**
   String get mitmRequestRulesDesc;
 
-  /// No description provided for @mitmExtendedMatchingNote.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} use extended matching'**
-  String mitmExtendedMatchingNote(Object count);
-
   /// No description provided for @mitmActionModule.
   ///
   /// In en, this message translates to:

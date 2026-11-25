@@ -929,7 +929,7 @@ final class MitmModuleContentProvider
   }
 }
 
-String _$mitmModuleContentHash() => r'f563b3d246dc2518ee94dd867c75dbd9546b0f0b';
+String _$mitmModuleContentHash() => r'77df70b71ff327d293943c2909183f6bbf3da1ff';
 
 /// Null while the module's file is not on disk. A file that fails to read
 /// fails again until it or the module changes, which rebuilds this anyway.

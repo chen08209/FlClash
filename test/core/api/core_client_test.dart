@@ -14,6 +14,13 @@ Future<void> settle() => Future<void>.delayed(Duration.zero);
 
 JsonMap _object(Object? value) => value as JsonMap;
 
+/// Lets pending microtasks run but no event, such as an isolate's result.
+Future<void> _runMicrotasks() async {
+  for (var turn = 0; turn < 20; turn++) {
+    await Future<void>.value();
+  }
+}
+
 void main() {
   late FakeFrameChannel channel;
   late CoreClient client;
@@ -247,6 +254,63 @@ void main() {
               ),
         ),
       );
+    });
+
+    test('sends a large request after the encoding and in order', () async {
+      await connect();
+      final ready = client.ready();
+      await settle();
+      channel.answerHello();
+      await ready;
+      final text = 'x' * coreOffloadBytes;
+      final large = client.call<Object?>(
+        'mitm.readModule',
+        params: {'text': text},
+        decode: (result) => result,
+      );
+      final small = client.call<Object?>(
+        'engine.state',
+        decode: (result) => result,
+      );
+      await _runMicrotasks();
+      expect(channel.calls('mitm.readModule'), isEmpty);
+      expect(channel.calls('engine.state'), isEmpty);
+      while (channel.calls('engine.state').isEmpty) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      final methods = [for (final message in channel.sent) message['method']];
+      expect(methods.sublist(methods.length - 2), [
+        'mitm.readModule',
+        'engine.state',
+      ]);
+      expect(
+        (channel.lastCall('mitm.readModule')['params'] as Map)['text'],
+        text,
+      );
+      channel
+        ..answer(channel.lastCall('mitm.readModule')['id'], 'read')
+        ..answer(channel.lastCall('engine.state')['id'], 'state');
+      expect(await large, 'read');
+      expect(await small, 'state');
+    });
+
+    test('drops a large request the session lost while encoding', () async {
+      await connect();
+      final first = client.ready();
+      await settle();
+      channel.answerHello();
+      await first;
+      final large = client.call<Object?>(
+        'mitm.readModule',
+        params: {'text': 'x' * coreOffloadBytes},
+        decode: (result) => result,
+      );
+      final failed = expectLater(large, throwsA(isA<CoreMethodException>()));
+      await _runMicrotasks();
+      channel.disconnect();
+      await failed;
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      expect(channel.calls('mitm.readModule'), isEmpty);
     });
 
     test('decodes a small response on the calling isolate', () async {

@@ -1121,7 +1121,6 @@
   "mitmIgnoredLines": "Пропущенные строки",
   "mitmModuleRulesDesc": "Проверяются раньше правил профиля.",
   "mitmRequestRulesDesc": "Правила URL-REGEX и USER-AGENT работают как перезаписи URL, для HTTPS — только для хостов из списка.",
-  "mitmExtendedMatchingNote": "{count} используют расширенное сопоставление",
   "mitmActionModule": "Из {module}",
   "mitmModuleSystemTip": "Написан для {system}; некоторые строки могут не подходить к приложениям на этом устройстве.",
   "mitmModuleRequirementTip": "Модуль требует {requirement}, а это устройство не удовлетворяет условию; он может работать не так, как задумано.",
