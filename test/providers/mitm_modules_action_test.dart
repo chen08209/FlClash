@@ -423,28 +423,19 @@ Sample = type=http-response,pattern=$pattern,script-path=${urlOf('/sample.js')}
       expect((await stored()).single.enabled, isTrue);
     });
 
-    if (rsFeature) {
-      test(
-        'stays on through an auto update that changes its scripts',
-        () async {
-          final ads = await accepted();
-          bodies['/sample.js'] = 'two';
-          action().putModule(ads.copyWith(lastUpdateTime: DateTime.utc(2000)));
-          container
-              .read(patchClashConfigProvider.notifier)
-              .value = const PatchClashConfig(
-            mitm: Mitm(enable: true),
-            geoAutoUpdate: true,
-          );
+    test('stays on through an auto update that changes its scripts', () async {
+      final ads = await accepted();
+      bodies['/sample.js'] = 'two';
+      action().putModule(ads.copyWith(lastUpdateTime: DateTime.utc(2000)));
+      container.read(patchClashConfigProvider.notifier).value =
+          const PatchClashConfig(mitm: Mitm(enable: true), geoAutoUpdate: true);
 
-          await action().autoUpdate();
+      await action().autoUpdate();
 
-          final updated = (await stored()).single;
-          expect(updated.enabled, isTrue);
-          expect(updated.lastUpdateTime.isAfter(DateTime.utc(2000)), isTrue);
-        },
-      );
-    }
+      final updated = (await stored()).single;
+      expect(updated.enabled, isTrue);
+      expect(updated.lastUpdateTime.isAfter(DateTime.utc(2000)), isTrue);
+    });
   });
 
   group('values that declare a new script', () {
@@ -619,15 +610,13 @@ Sample = type=http-response,pattern=$pattern,script-path=${urlOf('/sample.js')}
     bool recent(DateTime time) =>
         DateTime.now().difference(time) < const Duration(minutes: 1);
 
-    if (rsFeature) {
-      test('a module past the interval updates', () async {
-        final time = await updatedAfter(
-          autoUpdate: true,
-          age: const Duration(hours: 25),
-        );
-        expect(recent(time), isTrue);
-      });
-    }
+    test('a module past the interval updates', () async {
+      final time = await updatedAfter(
+        autoUpdate: true,
+        age: const Duration(hours: 25),
+      );
+      expect(recent(time), isTrue);
+    });
 
     test('a module within the interval waits', () async {
       final time = await updatedAfter(
@@ -645,27 +634,23 @@ Sample = type=http-response,pattern=$pattern,script-path=${urlOf('/sample.js')}
       expect(recent(time), isFalse);
     });
 
-    if (rsFeature) {
-      test('auto update off still brings back missing content', () async {
-        bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
-        final added = await action().addFromUrl(urlOf('/sample.sgmodule'));
-        await stored();
-        container
-            .read(patchClashConfigProvider.notifier)
-            .update(
-              (state) => state.copyWith(
-                geoAutoUpdate: false,
-                mitm: state.mitm.copyWith(enable: true),
-              ),
-            );
-        final file = File(
-          join(await appPath.mitmModulesDirPath, added.fileName),
-        );
-        await file.delete();
-        await action().autoUpdate();
-        expect(await file.exists(), isTrue);
-      });
-    }
+    test('auto update off still brings back missing content', () async {
+      bodies = {'/sample.sgmodule': module('Sample'), '/blank.json': '{}'};
+      final added = await action().addFromUrl(urlOf('/sample.sgmodule'));
+      await stored();
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update(
+            (state) => state.copyWith(
+              geoAutoUpdate: false,
+              mitm: state.mitm.copyWith(enable: true),
+            ),
+          );
+      final file = File(join(await appPath.mitmModulesDirPath, added.fileName));
+      await file.delete();
+      await action().autoUpdate();
+      expect(await file.exists(), isTrue);
+    });
   });
 
   test('deleting a module removes its content', () async {
