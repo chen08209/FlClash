@@ -234,6 +234,30 @@ void main() {
   test('an MITM record the Core has dropped reads as null', () async {
     expect(await api.mitmBody(7, response: true), isNull);
   });
+
+  test('traffic samples go out as taken, with no batch window', () async {
+    final subscription = api.watchTraffic(intervalMs: 1000).listen((_) {});
+    await pumpEventQueue();
+    expect(channel.lastCall('traffic.watch')['params'], {
+      'intervalMs': 1000,
+      'onlyProxy': false,
+      'credit': 0,
+      'maxBatchMs': 0,
+    });
+    await subscription.cancel();
+  });
+
+  test('a traffic watch of changes says so to the Core', () async {
+    final subscription = api
+        .watchTraffic(intervalMs: 1000, changesOnly: true)
+        .listen((_) {});
+    await pumpEventQueue();
+    expect(
+      channel.lastCall('traffic.watch')['params'],
+      containsPair('changesOnly', true),
+    );
+    await subscription.cancel();
+  });
 }
 
 Never _refuse() => throw const FormatException('bad field');

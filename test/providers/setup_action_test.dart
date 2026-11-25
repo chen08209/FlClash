@@ -60,11 +60,11 @@ class _CappedDebounceSetupAction extends _UnflooredDebounceSetupAction {
 }
 
 class TestCommonAction extends CommonAction {
-  bool trafficFeed = false;
+  var trafficFeed = TrafficFeed.off;
 
   @override
-  void setTrafficFeed(bool wanted) {
-    trafficFeed = wanted;
+  void setTrafficFeed(TrafficFeed feed) {
+    trafficFeed = feed;
   }
 }
 
@@ -461,26 +461,26 @@ void main() {
       return scoped.read(setupActionProvider.notifier);
     }
 
-    bool trafficFeed() =>
+    TrafficFeed trafficFeed() =>
         (scoped.read(commonActionProvider.notifier) as TestCommonAction)
             .trafficFeed;
 
     int? runTime() => scoped.read(runTimeProvider);
 
     void setVisible(bool visible) =>
-        scoped.read(appVisibleProvider.notifier).value = visible;
+        scoped.read(appVisibleProvider.notifier).shown = visible;
 
     testWidgets('feeds traffic only while the app is visible', (tester) async {
       final setup = buildScoped();
       await setup.setRunning(true);
-      expect(trafficFeed(), isTrue);
+      expect(trafficFeed(), TrafficFeed.everySecond);
 
       final started = runTime()!;
       await tester.pump(const Duration(seconds: 2));
       expect(runTime(), greaterThan(started));
 
       setVisible(false);
-      expect(trafficFeed(), isFalse);
+      expect(trafficFeed(), TrafficFeed.off);
       final hiddenAt = runTime();
       await tester.pump(const Duration(seconds: 5));
       expect(runTime(), hiddenAt);
@@ -488,12 +488,47 @@ void main() {
 
       setVisible(true);
       await tester.pump();
-      expect(trafficFeed(), isTrue);
+      expect(trafficFeed(), TrafficFeed.everySecond);
       await tester.pump(const Duration(seconds: 1));
       expect(runTime(), greaterThan(hiddenAt!));
 
       await setup.setRunning(false);
-      expect(trafficFeed(), isFalse);
+      expect(trafficFeed(), TrafficFeed.off);
+    });
+
+    testWidgets('the clock moves with each traffic sample, and on its own '
+        'once they stop', (tester) async {
+      final setup = buildScoped();
+      await setup.setRunning(true);
+      await tester.pump(const Duration(milliseconds: 2600));
+      expect(runTime(), 2000);
+
+      scoped.read(trafficsProvider.notifier).addTraffic(const Traffic());
+      expect(runTime(), 3000);
+      await tester.pump(const Duration(milliseconds: 1400));
+      expect(runTime(), 3000);
+
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(runTime(), 4000);
+      await tester.pump(const Duration(seconds: 1));
+      expect(runTime(), 5000);
+
+      await setup.setRunning(false);
+    });
+
+    testWidgets('the clock moves a second for each sample, however late it '
+        'lands', (tester) async {
+      final setup = buildScoped();
+      await setup.setRunning(true);
+      final shown = <int?>[];
+      for (final gap in const [600, 800, 1200, 800, 1200, 100]) {
+        await tester.pump(Duration(milliseconds: gap));
+        scoped.read(trafficsProvider.notifier).addTraffic(const Traffic());
+        shown.add(runTime());
+      }
+      expect(shown, [1000, 2000, 3000, 4000, 5000, 5000]);
+
+      await setup.setRunning(false);
     });
 
     testWidgets('a lost Core session stops the clock for good', (tester) async {
@@ -505,7 +540,7 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
 
       expect(runTime(), isNull);
-      expect(trafficFeed(), isFalse);
+      expect(trafficFeed(), TrafficFeed.off);
       expect(scoped.read(isStartProvider), isFalse);
     });
 
@@ -518,30 +553,103 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
 
       expect(scoped.read(runTimeProvider), isNotNull);
-      expect(trafficFeed(), isFalse);
+      expect(trafficFeed(), TrafficFeed.off);
 
       setVisible(true);
       await tester.pump();
-      expect(trafficFeed(), isTrue);
+      expect(trafficFeed(), TrafficFeed.everySecond);
 
       await setup.setRunning(false);
     });
 
-    testWidgets('the macOS menu bar title keeps traffic coming while hidden', (
+    testWidgets('a hidden menu bar title takes only the changed samples', (
       tester,
     ) async {
       final setup = buildScoped();
       setVisible(false);
       await setup.setRunning(true);
       await tester.pump(const Duration(seconds: 2));
-      expect(trafficFeed(), isFalse);
+      expect(trafficFeed(), TrafficFeed.off);
 
       scoped
           .read(appSettingProvider.notifier)
           .update((state) => state.copyWith(showTrayTitle: true));
       await tester.pump(const Duration(seconds: 2));
 
-      expect(trafficFeed(), system.isMacOS);
+      expect(
+        trafficFeed(),
+        system.isMacOS ? TrafficFeed.changesOnly : TrafficFeed.off,
+      );
+      final hiddenAt = runTime();
+      await tester.pump(const Duration(seconds: 3));
+      expect(runTime(), hiddenAt, reason: 'no clock to move while hidden');
+
+      setVisible(true);
+      await tester.pump();
+      expect(trafficFeed(), TrafficFeed.everySecond);
+
+      await setup.setRunning(false);
+    });
+
+    testWidgets('dark screens stop the menu bar title feed until they '
+        'light up, keeping the last sample shown', (tester) async {
+      final setup = buildScoped();
+      scoped
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(showTrayTitle: true));
+      setVisible(false);
+      await setup.setRunning(true);
+      await tester.pump();
+      final titled = system.isMacOS ? TrafficFeed.changesOnly : TrafficFeed.off;
+      expect(trafficFeed(), titled);
+      const last = Traffic(up: 2048, down: 4096);
+      scoped.read(trafficsProvider.notifier).addTraffic(last);
+
+      scoped.read(screensSeenProvider.notifier).value = false;
+      expect(trafficFeed(), TrafficFeed.off);
+      await tester.pump(const Duration(seconds: 3));
+      expect(
+        scoped.read(trafficsProvider).list.last,
+        last,
+        reason: 'no zero sample to show on waking',
+      );
+
+      scoped.read(screensSeenProvider.notifier).value = true;
+      expect(trafficFeed(), titled, reason: 'back at once, no debounce');
+
+      scoped.read(screensSeenProvider.notifier).value = false;
+      setVisible(true);
+      expect(
+        trafficFeed(),
+        TrafficFeed.off,
+        reason: 'a window shown on dark screens feeds nothing',
+      );
+      scoped.read(screensSeenProvider.notifier).value = true;
+      await tester.pump();
+      expect(trafficFeed(), TrafficFeed.everySecond);
+
+      await setup.setRunning(false);
+    });
+
+    testWidgets('exit ends the feed for good, so closing the window opens no '
+        'menu bar title watch', (tester) async {
+      final setup = buildScoped();
+      scoped
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(showTrayTitle: true));
+      await setup.setRunning(true);
+      expect(trafficFeed(), TrafficFeed.everySecond);
+
+      setup.endTrafficFeedForExit();
+      expect(trafficFeed(), TrafficFeed.off);
+      final endedAt = runTime();
+
+      setVisible(false);
+      expect(trafficFeed(), TrafficFeed.off);
+      setVisible(true);
+      await tester.pump(const Duration(seconds: 3));
+      expect(trafficFeed(), TrafficFeed.off);
+      expect(runTime(), endedAt);
 
       await setup.setRunning(false);
     });

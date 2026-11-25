@@ -4,50 +4,36 @@ import com.follow.clash.common.GlobalState
 import com.follow.clash.core.Core
 import com.follow.clash.service.models.Traffic
 import com.follow.clash.service.models.speedText
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.retryWhen
+import java.util.concurrent.atomic.AtomicReference
 
-internal suspend fun Flow<Boolean>.whileScreenOn(
-    meter: TrafficMeter,
-    show: suspend () -> Unit,
-) = collectLatest { screenOn -> if (screenOn) show() else meter.close() }
+private const val REOPEN_DELAY_MILLIS = 1_000L
 
-internal class TrafficMeter(
-    private val watchTraffic: (Boolean, () -> Unit, (Long, Long) -> Unit) -> AutoCloseable = Core::watchTraffic,
-) {
-    private var watch: AutoCloseable? = null
-    private var watchedProxyOnly: Boolean? = null
+internal val idleSpeedText = Traffic(up = 0, down = 0).speedText
 
-    private var generation = 0
+private class WatchLost : Exception()
 
-    @Volatile
-    private var lostGeneration = -1
-
-    @Volatile
-    private var latest = Traffic(up = 0, down = 0)
-
-    @Synchronized
-    fun speedText(onlyStatisticsProxy: Boolean): String {
-        if (watchedProxyOnly != onlyStatisticsProxy || lostGeneration == generation) {
-            watch?.close()
-            watchedProxyOnly = onlyStatisticsProxy
-            val mine = ++generation
-            watch = runCatching {
-                watchTraffic(onlyStatisticsProxy, { lostGeneration = mine }) { up, down ->
-                    latest = Traffic(up, down)
-                }
-            }.onFailure { error ->
-                GlobalState.log("Unable to read traffic: $error")
-            }.getOrNull()
+/** Emits only when the text changes; the Core sends only changed samples, so an idle tunnel wakes neither side. */
+internal fun speedTexts(
+    onlyStatisticsProxy: Boolean,
+    watchTraffic: (Boolean, () -> Unit, (Long, Long) -> Unit) -> AutoCloseable = Core::watchTraffic,
+): Flow<String> =
+    callbackFlow {
+        val shown = AtomicReference<String?>(null)
+        val watch = watchTraffic(onlyStatisticsProxy, { close(WatchLost()) }) { up, down ->
+            val text = Traffic(up, down).speedText
+            if (shown.getAndSet(text) != text) trySend(text)
         }
-        return latest.speedText
+        awaitClose { watch.close() }
+    }.retryWhen { error, _ ->
+        if (error !is WatchLost) GlobalState.log("Unable to read traffic: $error")
+        delay(REOPEN_DELAY_MILLIS)
+        true
+    }.onStart {
+        emit(idleSpeedText)
     }
-
-    @Synchronized
-    fun close() {
-        watch?.close()
-        watch = null
-        watchedProxyOnly = null
-        latest = Traffic(up = 0, down = 0)
-    }
-}

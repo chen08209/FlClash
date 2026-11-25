@@ -32,6 +32,19 @@ class _RunRequest {
   });
 }
 
+const _trafficLapse = Duration(milliseconds: 1500);
+
+const _closestBeats = Duration(milliseconds: 500);
+
+int _nextRunTime(int? shown, Duration elapsed) {
+  final rounded = (elapsed.inMilliseconds / 1000).round() * 1000;
+  if (shown == null) {
+    return rounded;
+  }
+  final next = shown + 1000;
+  return (next - elapsed.inMilliseconds).abs() > 1000 ? rounded : next;
+}
+
 @Riverpod(keepAlive: true)
 class SetupAction extends _$SetupAction {
   CoreController get _core => ref.read(coreHandlerProvider);
@@ -42,7 +55,9 @@ class SetupAction extends _$SetupAction {
   _RunRequest? _latestRunRequest;
   Future<void>? _initialRun;
   DateTime? _startTime;
+  DateTime? _runTimeMovedAt;
   var _resumeOnRestart = false;
+  var _exiting = false;
   ({String digest, Set<String> names})? _outboundNames;
   _SetupInputs? _appliedInputs;
   var _lastPushDuration = Duration.zero;
@@ -63,18 +78,30 @@ class SetupAction extends _$SetupAction {
   @override
   void build() {
     ref.onDispose(_stopRuntimeTicker);
+    ref.listen(trafficsProvider, (_, _) => _tickWithTraffic());
     ref.listen(appVisibleProvider, (_, _) => _syncRuntimeTicker());
+    ref.listen(screensSeenProvider, (_, _) => _syncRuntimeTicker());
     ref.listen(
       appSettingProvider.select((state) => state.showTrayTitle),
       (_, _) => _syncRuntimeTicker(),
     );
   }
 
-  bool get _isTrafficShown =>
-      ref.read(appVisibleProvider) ||
-      (system.isMacOS &&
-          !ref.read(safeModeProvider) &&
-          ref.read(appSettingProvider).showTrayTitle);
+  /// The clock and the chart move with every sample; the macOS menu bar title,
+  /// all a hidden window shows, needs only the samples that change it.
+  TrafficFeed get _trafficFeed {
+    if (_exiting || _startTime == null || !ref.read(screensSeenProvider)) {
+      return TrafficFeed.off;
+    }
+    if (ref.read(appVisibleProvider)) {
+      return TrafficFeed.everySecond;
+    }
+    final titled =
+        system.isMacOS &&
+        !ref.read(safeModeProvider) &&
+        ref.read(appSettingProvider).showTrayTitle;
+    return titled ? TrafficFeed.changesOnly : TrafficFeed.off;
+  }
 
   SetupParams get _setupParams => SetupParams(
     selectedMap: ref.read(selectedMapProvider),
@@ -117,7 +144,7 @@ class SetupAction extends _$SetupAction {
     _stopRuntimeTicker();
     if (!running) {
       _startTime = null;
-      ref.read(commonActionProvider.notifier).setTrafficFeed(false);
+      ref.read(commonActionProvider.notifier).setTrafficFeed(TrafficFeed.off);
       debouncer.cancel(FunctionTag.applyProfile);
       _pendingForceApply = false;
       _updateRunTime();
@@ -129,21 +156,42 @@ class SetupAction extends _$SetupAction {
     _syncRuntimeTicker();
   }
 
+  /// Exit closes the window before the Core; a hidden window would otherwise
+  /// open a fresh menu bar title watch on a Core that is about to go.
+  void endTrafficFeedForExit() {
+    _exiting = true;
+    _syncRuntimeTicker();
+  }
+
   void _syncRuntimeTicker() {
-    final shown = _startTime != null && _isTrafficShown;
-    ref.read(commonActionProvider.notifier).setTrafficFeed(shown);
-    if (!shown) {
+    final feed = _trafficFeed;
+    ref.read(commonActionProvider.notifier).setTrafficFeed(feed);
+    if (feed != TrafficFeed.everySecond) {
       _stopRuntimeTicker();
       return;
     }
     if (_runtimeTimer != null) {
       return;
     }
+    _tickOnItsOwn();
+  }
+
+  void _tickOnItsOwn() {
     _refreshRunningState();
     _runtimeTimer = Timer.periodic(
       const Duration(seconds: 1),
       (_) => _refreshRunningState(),
     );
+  }
+
+  void _tickWithTraffic() {
+    final timer = _runtimeTimer;
+    if (timer == null) {
+      return;
+    }
+    timer.cancel();
+    _refreshRunningState();
+    _runtimeTimer = Timer(_trafficLapse, _tickOnItsOwn);
   }
 
   void _stopRuntimeTicker() {
@@ -157,9 +205,20 @@ class SetupAction extends _$SetupAction {
 
   void _updateRunTime() {
     final startTime = _startTime;
-    ref.read(runTimeProvider.notifier).value = startTime == null
-        ? null
-        : clock.now().millisecondsSinceEpoch - startTime.millisecondsSinceEpoch;
+    final runTime = ref.read(runTimeProvider.notifier);
+    if (startTime == null) {
+      _runTimeMovedAt = null;
+      runTime.value = null;
+      return;
+    }
+    final now = clock.now();
+    final movedAt = _runTimeMovedAt;
+    // A sample landing just after the ticker's own beat is the same second.
+    if (movedAt != null && now.difference(movedAt) < _closestBeats) {
+      return;
+    }
+    _runTimeMovedAt = now;
+    runTime.value = _nextRunTime(runTime.value, now.difference(startTime));
   }
 
   @protected

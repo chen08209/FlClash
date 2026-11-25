@@ -126,14 +126,16 @@ class CoreClient(
     }
 
     /**
-     * Subscribes to a stream method. [onEvent] gets each element of each batch, and credit goes
-     * back as batches are handled. Closing the result unsubscribes. [onLost] runs once if the
-     * stream cannot open or the session ends under it, and not after a close.
+     * Subscribes to a stream method. [onSnapshot] gets the snapshot the subscription opens with,
+     * before any event; [onEvent] gets each element of each batch, and credit goes back as batches
+     * are handled. Closing the result unsubscribes. [onLost] runs once if the stream cannot open
+     * or the session ends under it, and not after a close.
      */
     fun watch(
         method: String,
         params: Map<String, Any?>,
         onLost: () -> Unit = {},
+        onSnapshot: (JsonElement) -> Unit = {},
         onEvent: (JsonElement) -> Unit,
     ): AutoCloseable {
         val sub = AtomicLong(-1)
@@ -144,6 +146,7 @@ class CoreClient(
             begin(method, params + ("credit" to INITIAL_CREDIT), callId) { opened ->
                 val id = opened.get("sub").asLong
                 if (closed.get()) return@begin
+                opened.get("snapshot")?.takeUnless { it.isJsonNull }?.let(onSnapshot)
                 watches[id] =
                     Watch(callId) { batch ->
                         val elements = if (batch is JsonArray) batch.toList() else listOf(batch)

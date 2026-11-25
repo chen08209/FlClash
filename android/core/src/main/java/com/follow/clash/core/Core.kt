@@ -90,15 +90,7 @@ object Core {
         onlyProxy: Boolean,
         onLost: () -> Unit,
         onTraffic: (up: Long, down: Long) -> Unit,
-    ): AutoCloseable =
-        client.watch(
-            "traffic.watch",
-            mapOf("intervalMs" to TRAFFIC_INTERVAL_MILLIS, "onlyProxy" to onlyProxy),
-            onLost,
-        ) { event ->
-            val traffic = event.asJsonObject
-            onTraffic(traffic.get("up").asLong, traffic.get("down").asLong)
-        }
+    ): AutoCloseable = client.watchTraffic(onlyProxy, onLost, onTraffic)
 
     fun quickSetup(
         initParams: String,
@@ -163,7 +155,6 @@ object Core {
     }
 
     private const val TAG = "FlClash"
-    private const val TRAFFIC_INTERVAL_MILLIS = 1000
 }
 
 // The certificate's answer completes on the Core's frame thread, and the trust check reads the device's key store.

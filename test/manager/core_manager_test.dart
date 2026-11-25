@@ -77,7 +77,8 @@ class _LostRecordingSetupAction extends SetupAction {
 
 class _Feeds {
   final crashes = StreamController<String>.broadcast();
-  final dns = StreamController<List<DnsEntry>>.broadcast();
+  final dns =
+      StreamController<({List<DnsEntry> entries, int dropped})>.broadcast();
   final events = StreamController<List<CoreEventDto>>.broadcast();
   final connections = StreamController<ConnectionUpdate>.broadcast();
   final proxies = StreamController<ProxyUpdate>.broadcast();
@@ -150,7 +151,6 @@ Future<ProviderContainer> _pumpCoreManager(
   WidgetTester tester,
   CoreController core, {
   List<Override> overrides = const [],
-  bool? pausesInBackground,
 }) async {
   final container = ProviderContainer(
     overrides: [coreHandlerProvider.overrideWithValue(core), ...overrides],
@@ -165,10 +165,7 @@ Future<ProviderContainer> _pumpCoreManager(
           globalState.measure = Measure.of(context, 1);
           return BannerHost(stacked: false, topInset: 0, child: child!);
         },
-        home: CoreManager(
-          pausesInBackground: pausesInBackground,
-          child: const SizedBox(),
-        ),
+        home: const CoreManager(child: SizedBox()),
       ),
     ),
   );
@@ -179,13 +176,11 @@ Future<ProviderContainer> _pumpConnected(
   WidgetTester tester,
   _Harness harness, {
   List<Override> overrides = const [],
-  bool? pausesInBackground,
 }) async {
   final container = await _pumpCoreManager(
     tester,
     harness.mocks.controller,
     overrides: overrides,
-    pausesInBackground: pausesInBackground,
   );
   container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
   await tester.pump();
@@ -355,7 +350,7 @@ void main() {
     harness.feeds.connections.add(
       ConnectionsReset(ConnectionSnapshot([_connection(1), _connection(2)])),
     );
-    harness.feeds.dns.add([query('before.test')]);
+    harness.feeds.dns.add((entries: [query('before.test')], dropped: 0));
     await tester.pump();
     final status = container.read(coreStatusProvider.notifier);
     status.value = CoreStatus.disconnected;
@@ -369,7 +364,7 @@ void main() {
         ConnectionDelta(opened: [_connection(1, host: 'after.test')]),
       ),
     );
-    harness.feeds.dns.add([query('after.test')]);
+    harness.feeds.dns.add((entries: [query('after.test')], dropped: 0));
     await tester.pump();
 
     final log = container.read(requestsProvider);
@@ -615,21 +610,24 @@ void main() {
     final harness = _harness();
     final container = await _pumpConnected(tester, harness);
 
-    harness.feeds.dns.add([
-      for (final domain in ['alpha.test', 'beta.test'])
-        DnsEntry(
-          domain: domain,
-          type: 'A',
-          initiator: 'user',
-          upstream: '',
-          cached: false,
-          answers: const ['1.1.1.1'],
-          rcode: '',
-          error: '',
-          delay: 3,
-          time: 1,
-        ),
-    ]);
+    harness.feeds.dns.add((
+      entries: [
+        for (final domain in ['alpha.test', 'beta.test'])
+          DnsEntry(
+            domain: domain,
+            type: 'A',
+            initiator: 'user',
+            upstream: '',
+            cached: false,
+            answers: const ['1.1.1.1'],
+            rcode: '',
+            error: '',
+            delay: 3,
+            time: 1,
+          ),
+      ],
+      dropped: 0,
+    ));
     await tester.pump();
 
     expect(
@@ -647,17 +645,20 @@ void main() {
     final harness = _harness();
     final container = await _pumpConnected(tester, harness);
 
-    harness.feeds.dns.add([
-      DnsEntry.fromJson({
-        'id': 7,
-        'domain': 'host1.test',
-        'type': 'A',
-        'initiator': 'rule',
-        'answers': ['1.1.1.1'],
-        'delay': 3,
-        'time': 1,
-      }),
-    ]);
+    harness.feeds.dns.add((
+      entries: [
+        DnsEntry.fromJson({
+          'id': 7,
+          'domain': 'host1.test',
+          'type': 'A',
+          'initiator': 'rule',
+          'answers': ['1.1.1.1'],
+          'delay': 3,
+          'time': 1,
+        }),
+      ],
+      dropped: 0,
+    ));
     harness.feeds.connections.add(
       ConnectionsChanged(
         ConnectionDelta(
@@ -907,27 +908,134 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('the connection feed is not read while the app is in the '
-      'background and catches up on return', (tester) async {
+  testWidgets('the connection feed is not read while the app is out of '
+      'sight and catches up on return', (tester) async {
     final harness = _harness();
-    final container = await _pumpConnected(
-      tester,
-      harness,
-      pausesInBackground: true,
-    );
+    final container = await _pumpConnected(tester, harness);
 
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    container.read(appVisibleProvider.notifier).value = false;
     harness.feeds.connections.add(
       ConnectionsReset(ConnectionSnapshot([_connection(1)])),
     );
     await tester.pump();
     expect(container.read(requestCountProvider), 0);
 
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    container.read(appVisibleProvider.notifier).value = true;
     await tester.pump();
     expect(container.read(requestCountProvider), 1);
 
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  group('DNS and logs while the app is out of sight', () {
+    DnsEntry query(int id) => DnsEntry(
+      id: id,
+      domain: 'q$id.test',
+      type: 'A',
+      initiator: 'user',
+      upstream: '',
+      cached: false,
+      answers: const [],
+      rcode: '',
+      error: '',
+      delay: 1,
+      time: 1,
+    );
+
+    Future<List<String>> run(WidgetTester tester, {required bool hide}) async {
+      final harness = _harness();
+      final container = await _pumpConnected(tester, harness);
+      container
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(openLogs: true));
+      await tester.pump();
+      if (hide) {
+        container.read(appVisibleProvider.notifier).value = false;
+      }
+      for (var i = 0; i < 3; i++) {
+        harness.feeds.dns.add((
+          entries: [query(i * 2), query(i * 2 + 1)],
+          dropped: 0,
+        ));
+        harness.feeds.logs.add([
+          LogEntry(level: 'info', time: 1, text: 'line $i'),
+        ]);
+      }
+      await tester.pump();
+      if (hide) {
+        expect(container.read(dnsQueriesProvider).list, isEmpty);
+        expect(container.read(logsProvider).list, isEmpty);
+        container.read(appVisibleProvider.notifier).value = true;
+        await tester.pump();
+      }
+      final shown = [
+        ...container.read(dnsQueriesProvider).list.map((query) => query.domain),
+        ...container.read(logsProvider).list.map((log) => log.payload),
+        '${container.read(dnsQueryCountProvider)}',
+      ];
+      await tester.pumpWidget(const SizedBox.shrink());
+      return shown;
+    }
+
+    testWidgets('what arrives meanwhile is listed on return as if never '
+        'paused', (tester) async {
+      final unpaused = await run(tester, hide: false);
+      expect(await run(tester, hide: true), unpaused);
+      expect(unpaused.last, '6');
+    });
+
+    testWidgets('the queries the Core dropped count in the total', (
+      tester,
+    ) async {
+      final harness = _harness();
+      final container = await _pumpConnected(tester, harness);
+
+      harness.feeds.dns.add((entries: [query(9)], dropped: 5));
+      await tester.pump();
+
+      expect(container.read(dnsQueryCountProvider), 6);
+      expect(container.read(dnsQueriesProvider).list, hasLength(1));
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('an error logged while hidden is listed without a banner, and '
+        'a new one still has its banner', (tester) async {
+      final harness = _harness();
+      final container = await _pumpConnected(tester, harness);
+      container
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(openLogs: true));
+      await tester.pump();
+
+      container.read(appVisibleProvider.notifier).value = false;
+      final hiddenAt = DateTime.now().millisecondsSinceEpoch;
+      harness.feeds.logs.add([
+        LogEntry(level: 'error', time: hiddenAt - 1, text: 'while hidden'),
+      ]);
+      await tester.pump();
+      container.read(appVisibleProvider.notifier).value = true;
+      await tester.pump();
+      await tester.pump();
+
+      expect(container.read(logsProvider).list.map((log) => log.payload), [
+        'while hidden',
+      ]);
+      expect(find.text('while hidden'), findsNothing);
+
+      harness.feeds.logs.add([
+        LogEntry(
+          level: 'error',
+          time: DateTime.now().millisecondsSinceEpoch,
+          text: 'after return',
+        ),
+      ]);
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('after return'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 3));
+    });
   });
 
   testWidgets('a reconnect starts the connection book afresh', (tester) async {

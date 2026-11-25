@@ -4,7 +4,7 @@ part of '../action.dart';
 class CommonAction extends _$CommonAction {
   CoreController get _core => ref.read(coreHandlerProvider);
   StreamSubscription<TrafficSample>? _trafficSubscription;
-  bool _trafficWanted = false;
+  var _trafficFeed = TrafficFeed.off;
   CancelToken? _updateCancelToken;
 
   @override
@@ -62,20 +62,20 @@ class CommonAction extends _$CommonAction {
     });
   }
 
-  /// The Core pushes a sample a second while this is on; the subscription ends
-  /// with it, so a hidden window costs the Core nothing.
-  void setTrafficFeed(bool wanted) {
-    if (_trafficWanted == wanted) {
+  /// The subscription ends with [TrafficFeed.off], so a feed nobody shows
+  /// costs the Core nothing.
+  void setTrafficFeed(TrafficFeed feed) {
+    if (_trafficFeed == feed) {
       return;
     }
-    _trafficWanted = wanted;
+    _trafficFeed = feed;
     _syncTrafficFeed();
   }
 
   void _syncTrafficFeed() {
     unawaited(_trafficSubscription?.cancel());
     _trafficSubscription = null;
-    if (!_trafficWanted ||
+    if (_trafficFeed == TrafficFeed.off ||
         ref.read(coreStatusProvider) != CoreStatus.connected) {
       return;
     }
@@ -83,7 +83,11 @@ class CommonAction extends _$CommonAction {
       appSettingProvider.select((state) => state.onlyStatisticsProxy),
     );
     _trafficSubscription = _core.api
-        .watchTraffic(intervalMs: 1000, onlyProxy: onlyProxy)
+        .watchTraffic(
+          intervalMs: 1000,
+          onlyProxy: onlyProxy,
+          changesOnly: _trafficFeed == TrafficFeed.changesOnly,
+        )
         .listen(
           (sample) {
             ref

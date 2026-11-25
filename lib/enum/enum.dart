@@ -37,6 +37,8 @@ const desktopPlatforms = [
 
 enum GroupName { GLOBAL }
 
+enum TrafficFeed { off, everySecond, changesOnly }
+
 /// Why a dial failed, spelled as the Core sends it. `handshake`: the path to the
 /// target opened but the exchange over it failed.
 enum ConnectionFailureKind {
