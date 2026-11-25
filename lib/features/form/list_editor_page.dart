@@ -245,7 +245,7 @@ class _ListEditorPageState<T, K> extends ConsumerState<ListEditorPage<T, K>> {
       ],
       selectionActions: isSelecting ? selectionActions : const [],
       body: _SectionsGate(
-        deferred: sectionsOf != null,
+        deferred: sectionsOf != null && items.isNotEmpty,
         read: builtSections != null,
         builder: (showsSections) {
           final sectionsOrNull = showsSections ? builtSections : null;
@@ -510,11 +510,10 @@ class _RowsAfterPushState extends State<_RowsAfterPush> {
   );
 }
 
-/// Shows the sections a page reads, holding its push until they are read and
-/// keeping ones read after the push went until the route has settled, so a
-/// whole screen of rows does not land in a moving frame. Only this element
-/// depends on the route, and it keeps what it built while the route alone
-/// changes.
+/// Shows the sections a page reads, keeping ones read after the page mounted
+/// until the route has settled so a whole screen of rows does not land in a
+/// moving frame. Only this element depends on the route, and it keeps what it
+/// built while the route alone changes.
 class _SectionsGate extends StatefulWidget {
   const _SectionsGate({
     required this.deferred,
@@ -532,7 +531,7 @@ class _SectionsGate extends StatefulWidget {
 
 class _SectionsGateState extends State<_SectionsGate>
     with RouteMotionHoldMixin<_SectionsGate> {
-  late var _shows = !widget.deferred;
+  late var _shows = !widget.deferred || widget.read;
   var _requested = false;
   Widget? _built;
 
@@ -549,7 +548,7 @@ class _SectionsGateState extends State<_SectionsGate>
     _requested = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        showFirstContent(
+        updateWhenRouteSettled(
           () => setState(() {
             _shows = true;
             _built = null;
@@ -564,6 +563,6 @@ class _SectionsGateState extends State<_SectionsGate>
     if (widget.read && !_shows) {
       _request();
     }
-    return _built ??= ArrivalHold(ready: _shows, child: widget.builder(_shows));
+    return _built ??= widget.builder(_shows);
   }
 }
