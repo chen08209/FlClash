@@ -1239,13 +1239,16 @@ than the frames a load costs. What a transition must not carry is work that repe
   fallback only once the load ends
   without an image, so a grid of placeholders is never painted only to be replaced. `whenRouteSettled`
   (`prism_ui/lib/navigator.dart`) is left for sequencing navigation, such as opening a page once the sheet above it is gone.
-- Two views arrive after the motion. `EditorPage` keeps the document it opened until its route has settled and only
+- Three views arrive after the motion. `EditorPage` keeps the document it opened until its route has settled and only
   then mounts CodeForge, sliding in with its spinner until then: the mount lays out, folds and highlights a screen of
   text in one frame, which a phone cannot fit in a transition frame whatever the file's size.
   `AccessView` reads the installed apps only once its route has settled and its bar items have faded in
   (`whenNothingAnimates`, not counting its own spinner), and slides in with that spinner when this run has not read
   them yet: a list of apps landing while its page moves reads as dropped frames. The spinner only repaints its own
-  boundary. A list already read shows from the first frame.
+  boundary. A list already read shows from the first frame. `MitmOptionsView` asks the platform whether its
+  certificate is trusted only once its route has settled and its bar items have faded in: on Android the answer is
+  built on the main thread, which the UI isolate shares, and the first ask took 43 ms of the push's first frame on a
+  phone.
 - A live feed holds its refreshes while its page moves and replays the latest once it is still, so a list does not
   re-rank, reorder or grow under a transition. `RouteMotionHoldMixin` (`prism_ui/lib/route_motion_hold.dart`) holds them
   while `isRouteMoving`: the page's route or a sheet carrying it is pushed, popped or dragged, a page is pushed over it,

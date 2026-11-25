@@ -48,7 +48,8 @@ class MitmOptionsView extends ConsumerStatefulWidget {
   ConsumerState<MitmOptionsView> createState() => _MitmOptionsViewState();
 }
 
-class _MitmOptionsViewState extends ConsumerState<MitmOptionsView> {
+class _MitmOptionsViewState extends ConsumerState<MitmOptionsView>
+    with RouteSettledMixin<MitmOptionsView> {
   late final AppLifecycleListener _lifecycle;
 
   bool get isAndroid => widget.isAndroid;
@@ -58,8 +59,16 @@ class _MitmOptionsViewState extends ConsumerState<MitmOptionsView> {
     super.initState();
     // The user may come back from installing the certificate in Settings.
     _lifecycle = AppLifecycleListener(onResume: _checkTrust);
-    _checkTrust();
   }
+
+  @override
+  void didSettleRoute() => unawaited(
+    whenNothingAnimates().then((_) {
+      if (mounted) {
+        _checkTrust();
+      }
+    }),
+  );
 
   @override
   void dispose() {
