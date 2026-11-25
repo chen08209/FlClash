@@ -44,6 +44,20 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
   >
   _caretInfoCache = {};
   final Map<int, int> _lineIndentCache = {};
+  final Map<int, ui.Paragraph> _lineNumberCache = {};
+  final Map<int, ui.Paragraph> _activeLineNumberCache = {};
+  TextStyle? _cachedLineNumberStyle;
+  double? _cachedLineNumberFontSize;
+  final Map<String, double> _indentWidthCache = {};
+  ({
+    int version,
+    int first,
+    int last,
+    int tabSize,
+    List<({int startLine, int endLine, int leadingSpaces, int indentLevel})>
+    blocks,
+  })?
+  _viewportGuidesCache;
   final _dtap = DoubleTapGestureRecognizer();
   final _onetap = TapGestureRecognizer();
   late double _gutterPadding;
@@ -88,6 +102,7 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
   double _longLineWidth = 0.0, _wrapWidth = double.infinity;
   bool _wrappedRowEstimateStale = true;
   bool _extentUpdateScheduled = false;
+  bool _deferredPaintScheduled = false;
   List<int> _paintLines = const [];
   Timer? _resizeTimer;
   Timer? _bracketHighlightResumeTimer;
@@ -209,6 +224,8 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
   set gutterStyle(GutterStyle style) {
     if (identical(style, _gutterStyle)) return;
     _gutterStyle = style;
+    _lineNumberCache.clear();
+    _activeLineNumberCache.clear();
     _updateGutterWidth();
     markNeedsLayout();
     markNeedsPaint();
@@ -370,8 +387,21 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
     _foldLayoutPending = false;
   }
 
+  static const int _paintBudgetUs = 3500;
+  static const int _minColdLinesPerFrame = 10;
+
+  void _scheduleDeferredPaint() {
+    if (_deferredPaintScheduled) return;
+    _deferredPaintScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _deferredPaintScheduled = false;
+      if (attached) markNeedsPaint();
+    });
+  }
+
   @override
   void paint(PaintingContext context, Offset offset) {
+    final paintWatch = Stopwatch()..start();
     final canvas = context.canvas;
     final viewTop = _paintViewTop;
     final viewBottom = viewTop + vscrollController.position.viewportDimension;
@@ -394,6 +424,7 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
     final lastVisibleLine = paintLines.last;
 
     _pruneViewportCaches(firstVisibleLine, lastVisibleLine);
+    _prefetchLineText(firstVisibleLine, lastVisibleLine);
     var needsSyntaxHighlight = false;
     for (final i in paintLines) {
       if (!_syntaxHighlighter.hasLineSpan(_lineText(i))) {
@@ -403,18 +434,10 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
     }
     if (needsSyntaxHighlight) {
       unawaited(
-        _syntaxHighlighter
-            .preHighlightLines(paintLines, controller.getLineText)
-            .then((_) {
-              _paragraphCache.removeWhere(
-                (line, entry) =>
-                    !entry.highlighted &&
-                    line >= firstVisibleLine &&
-                    line <= lastVisibleLine,
-              );
-              if (lineWrap && attached) markNeedsLayout();
-              if (attached) markNeedsPaint();
-            }),
+        _syntaxHighlighter.preHighlightLines(paintLines, _lineText).then((_) {
+          if (lineWrap && attached) markNeedsLayout();
+          if (attached) markNeedsPaint();
+        }),
       );
     }
 
@@ -448,9 +471,31 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
       );
     }
 
+    var shapedInFrame = 0;
+    var needsMorePaint = false;
     for (final i in paintLines) {
+      final text = _lineText(i);
+      final cached = _paragraphCache[i];
+      final hasCache = cached != null && cached.text == text;
+      var allowUpgrade = true;
+      if (!hasCache) {
+        if (shapedInFrame >= _minColdLinesPerFrame &&
+            paintWatch.elapsedMicroseconds >= _paintBudgetUs) {
+          needsMorePaint = true;
+          continue;
+        }
+        shapedInFrame++;
+      } else if (!cached.highlighted && _syntaxHighlighter.hasLineSpan(text)) {
+        if (shapedInFrame >= _minColdLinesPerFrame &&
+            paintWatch.elapsedMicroseconds >= _paintBudgetUs) {
+          allowUpgrade = false;
+          needsMorePaint = true;
+        } else {
+          shapedInFrame++;
+        }
+      }
       final contentTop = _lineTop(i);
-      final paragraph = _paragraphFor(i);
+      final paragraph = _paragraphFor(i, allowHighlightUpgrade: allowUpgrade);
 
       final foldRange = _getFoldRangeAtLine(i);
       final isFoldStart =
@@ -479,12 +524,18 @@ class _CodeFieldRenderer extends RenderBox implements MouseTrackerAnnotation {
       (line, _) => line < firstVisibleLine || line > lastVisibleLine,
     );
 
-    _drawGutter(
+    final gutterDeferred = _drawGutter(
       canvas,
       offset,
       bgColor,
       gutterStyle.lineNumberStyle ?? textStyle,
+      paintWatch: paintWatch,
+      budgetUs: _paintBudgetUs,
+      minColdLines: _minColdLinesPerFrame,
     );
+    if (needsMorePaint || gutterDeferred) {
+      _scheduleDeferredPaint();
+    }
 
     canvas.save();
     if (!lineWrap && hscrollController.offset > 0) {

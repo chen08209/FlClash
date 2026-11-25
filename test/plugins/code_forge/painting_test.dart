@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:code_forge/code_forge.dart';
@@ -74,8 +75,45 @@ Future<void> _compose(
   await tester.pump();
 }
 
+int _paintedGuides(WidgetTester tester) {
+  var guides = 0;
+  expect(
+    _renderer(tester),
+    paints..everything((method, _) {
+      if (method == #drawLine) {
+        guides++;
+      }
+      return true;
+    }),
+  );
+  return guides;
+}
+
 void main() {
   setUpAll(initEditorNative);
+
+  testWidgets('an indent taken off a line takes its guide away once kept', (
+    tester,
+  ) async {
+    final controller = CodeForgeController()..text = 'a:\n  b\nc: d\ne';
+    addTearDown(controller.dispose);
+    await pumpEditor(tester, controller);
+    expect(_paintedGuides(tester), greaterThan(0));
+
+    await focusEditor(tester);
+    controller.selection = const TextSelection.collapsed(offset: 5);
+    await tester.pump();
+    final value = controller.currentTextEditingValue;
+    await sendDeltas(tester, [textDelta(value.text, '', 3, 5)]);
+    await tester.pump();
+    expect(controller.isBufferActive, isTrue);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(controller.isBufferActive, isFalse);
+    await settle(tester);
+
+    expect(controller.text, 'a:\nb\nc: d\ne');
+    expect(_paintedGuides(tester), 0);
+  });
 
   testWidgets('the composition overlay redraws the rest of the line after '
       'an astral character', (tester) async {
@@ -285,6 +323,22 @@ void main() {
       }
     },
   );
+
+  testWidgets('a few lines are highlighted at once after the first batch', (
+    tester,
+  ) async {
+    final highlighter = yamlHighlighter();
+    final first = [for (var i = 0; i < 10; i++) 'key$i: "value"'];
+    await tester.runAsync(
+      () => highlighter.preHighlightLines([
+        for (var i = 0; i < first.length; i++) i,
+      ], (line) => first[line]),
+    );
+
+    const next = 'next: 1 # note';
+    unawaited(highlighter.preHighlightLines([0], (_) => next));
+    expect(highlighter.hasLineSpan(next), isTrue);
+  });
 
   test('a line too long to highlight stays plain text', () {
     final highlighter = yamlHighlighter();

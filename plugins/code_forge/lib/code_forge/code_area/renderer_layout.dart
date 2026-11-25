@@ -105,6 +105,7 @@ extension _RendererLayout on _CodeFieldRenderer {
     _lineTextCache.removeWhere(stale);
     _lineWidthCache.removeWhere(stale);
     _indentGuideCache.removeWhere(stale);
+    _viewportGuidesCache = null;
     _lineIndentCache.removeWhere(stale);
     _bracketCache.clear();
     _invalidateCaret();
@@ -120,6 +121,7 @@ extension _RendererLayout on _CodeFieldRenderer {
     _lineWidthCache.clear();
     _indentGuideCache.clear();
     _lineIndentCache.clear();
+    _viewportGuidesCache = null;
     _bracketCache.clear();
     _invalidateCaret();
     if (!layout) return;
@@ -149,6 +151,9 @@ extension _RendererLayout on _CodeFieldRenderer {
     final lineHeightMultiplier = _textStyle?.height ?? 1.2;
     _lineHeight = fontSize * lineHeightMultiplier;
     _gutterPadding = fontSize;
+    _indentWidthCache.clear();
+    _lineNumberCache.clear();
+    _activeLineNumberCache.clear();
     _paragraphStyle = _buildParagraphStyle(
       _textStyle?.fontFamily,
       fontSize,
@@ -158,6 +163,8 @@ extension _RendererLayout on _CodeFieldRenderer {
   }
 
   void _applyColors() {
+    _lineNumberCache.clear();
+    _activeLineNumberCache.clear();
     final color =
         _textStyle?.color ??
         _editorTheme['root']?.color ??
@@ -208,6 +215,40 @@ extension _RendererLayout on _CodeFieldRenderer {
       return _shownBufferLine(controller.bufferLineText!);
     }
     return _lineTextCache[line] ??= _fetchLineText(line);
+  }
+
+  void _prefetchLineText(int start, int end) {
+    final count = controller.lineCount;
+    // A fold in view would have the range read every line it hides.
+    if (count == 0 || start > end || _lines.hasHiddenLines) return;
+    final from = start.clamp(0, count - 1);
+    final to = end.clamp(from, count - 1);
+    var missing = false;
+    for (var i = from; i <= to; i++) {
+      if ((!controller.isBufferActive || i != controller.bufferLineIndex) &&
+          !_lineTextCache.containsKey(i)) {
+        missing = true;
+        break;
+      }
+    }
+    if (!missing) return;
+    if (_cutsLongLines) {
+      final rope = controller.rope;
+      if (_ropeLineEnd(to) - rope.getLineStartOffset(from) > _cutLength * 4) {
+        return;
+      }
+    }
+    final lines = controller.getLinesRange(from, to + 1);
+    for (var offset = 0; offset < lines.length; offset++) {
+      final line = from + offset;
+      if (controller.isBufferActive && line == controller.bufferLineIndex) {
+        continue;
+      }
+      final text = lines[offset];
+      if (!_cutsLongLines || text.length <= _cutLength) {
+        _lineTextCache[line] = text;
+      }
+    }
   }
 
   bool get _cutsLongLines => !lineWrap && !_wholeLines;
@@ -290,14 +331,18 @@ extension _RendererLayout on _CodeFieldRenderer {
   }
 
   // A wrapped line's row count must not change when highlighting lands late.
-  ui.Paragraph _paragraphFor(int line) {
+  ui.Paragraph _paragraphFor(
+    int line, {
+    bool recordExtent = true,
+    bool allowHighlightUpgrade = true,
+  }) {
     final text = _lineText(line);
     final cached = _paragraphCache[line];
     final synchronous = lineWrap || line == controller.bufferLineIndex;
     final highlighted = synchronous || _syntaxHighlighter.hasLineSpan(text);
     if (cached != null &&
         cached.text == text &&
-        (cached.highlighted || !highlighted)) {
+        (cached.highlighted || !highlighted || !allowHighlightUpgrade)) {
       return cached.paragraph;
     }
     final paragraph = _syntaxHighlighter.buildHighlightedParagraph(
@@ -313,7 +358,9 @@ extension _RendererLayout on _CodeFieldRenderer {
       paragraph: paragraph,
       highlighted: highlighted,
     );
-    _recordExtent(line, paragraph);
+    if (recordExtent) {
+      _recordExtent(line, paragraph);
+    }
     return paragraph;
   }
 
@@ -490,12 +537,9 @@ extension _RendererLayout on _CodeFieldRenderer {
     return lineIndex + 1;
   }
 
-  double _getLineWidth(int lineIndex) {
-    final text = _lineText(lineIndex);
+  double _getLineWidth(int lineIndex, {bool recordExtent = true}) {
     return _lineWidthCache[lineIndex] ??=
-        (SyntaxHighlighter.isPlain(text)
-            ? _paragraphFor(lineIndex).maxIntrinsicWidth
-            : _buildParagraph(text).maxIntrinsicWidth) +
+        _paragraphFor(lineIndex, recordExtent: recordExtent).maxIntrinsicWidth +
         _cutMarkerWidth(lineIndex);
   }
 
@@ -750,15 +794,23 @@ extension _RendererLayout on _CodeFieldRenderer {
         (vscrollController.hasClients
             ? vscrollController.position.viewportDimension
             : constraints.minHeight);
-    const buffer = 50;
-    final start = max(0, _lineAtY(viewTop) - buffer);
-    final end = min(lineCount - 1, _lineAtY(viewBottom) + buffer);
+    final start = max(0, _lineAtY(viewTop));
+    final end = min(lineCount - 1, _lineAtY(viewBottom));
+    _prefetchLineText(start, end);
+    var widestLine = -1;
+    var widestLength = -1;
     for (var i = _lines.nextVisible(start); i <= end;) {
-      final width = _getLineWidth(i);
-      if (width > _longLineWidth) _longLineWidth = width;
+      final length = _lineText(i).length;
+      if (length > widestLength) {
+        widestLength = length;
+        widestLine = i;
+      }
       final next = _lines.nextVisible(i + 1);
       if (next <= i) break;
       i = next;
+    }
+    if (widestLine >= 0) {
+      _longLineWidth = _getLineWidth(widestLine, recordExtent: false);
     }
   }
 

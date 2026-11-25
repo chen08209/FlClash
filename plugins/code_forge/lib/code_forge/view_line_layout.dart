@@ -13,7 +13,9 @@ class ViewLineLayout {
   Uint8List _flags = Uint8List(0);
   Float64List _tree = Float64List(1);
   bool _treeDirty = false;
+  bool _uniform = true;
   int _lineCount = 0;
+  int _measuredCount = 0;
   double _estimatedRows = 1;
 
   static const int _hidden = 1;
@@ -26,31 +28,47 @@ class ViewLineLayout {
   bool get hasHiddenLines => _hiddenCount > 0;
   int _hiddenCount = 0;
 
+  void _materialize() {
+    if (!_uniform) return;
+    _uniform = false;
+    _rows = Float64List(_lineCount)..fillRange(0, _lineCount, _estimatedRows);
+    _flags = Uint8List(_lineCount);
+    _treeDirty = true;
+  }
+
   void reset(int lineCount) {
     _lineCount = lineCount;
-    _rows = Float64List(lineCount)..fillRange(0, lineCount, _estimatedRows);
-    _flags = Uint8List(lineCount);
+    _rows = Float64List(0);
+    _flags = Uint8List(0);
+    _tree = Float64List(1);
     _hiddenCount = 0;
-    _treeDirty = true;
+    _measuredCount = 0;
+    _uniform = true;
+    _treeDirty = false;
   }
 
   void setEstimate(double rows) {
     if (rows <= 0 || rows == _estimatedRows) return;
     _estimatedRows = rows;
+    if (_uniform) return;
     for (var i = 0; i < _lineCount; i++) {
       if (_flags[i] & _measured == 0) _rows[i] = rows;
     }
     _treeDirty = true;
   }
 
-  bool isMeasured(int line) => _flags[line] & _measured != 0;
+  bool isMeasured(int line) => !_uniform && _flags[line] & _measured != 0;
 
-  bool isHidden(int line) => _flags[line] & _hidden != 0;
+  bool isHidden(int line) => !_uniform && _flags[line] & _hidden != 0;
 
-  double rowsOf(int line) => _rows[line];
+  double rowsOf(int line) => _uniform ? _estimatedRows : _rows[line];
 
   bool setRows(int line, int rows) {
-    _flags[line] |= _measured;
+    _materialize();
+    if (_flags[line] & _measured == 0) {
+      _flags[line] |= _measured;
+      _measuredCount++;
+    }
     final delta = rows - _rows[line];
     if (delta == 0) return false;
     _rows[line] = rows.toDouble();
@@ -59,8 +77,11 @@ class ViewLineLayout {
   }
 
   void invalidate(int line) {
-    if (line < 0 || line >= _lineCount) return;
-    _flags[line] &= ~_measured;
+    if (_uniform || line < 0 || line >= _lineCount) return;
+    if (_flags[line] & _measured != 0) {
+      _flags[line] &= ~_measured;
+      _measuredCount--;
+    }
     final delta = _estimatedRows - _rows[line];
     if (delta == 0) return;
     _rows[line] = _estimatedRows;
@@ -68,17 +89,32 @@ class ViewLineLayout {
   }
 
   void invalidateAll() {
+    if (_uniform) return;
+    if (_hiddenCount == 0) {
+      reset(_lineCount);
+      return;
+    }
     for (var i = 0; i < _lineCount; i++) {
       _flags[i] &= ~_measured;
     }
+    _measuredCount = 0;
     _rows.fillRange(0, _lineCount, _estimatedRows);
     _treeDirty = true;
   }
 
   void splice(int start, int removed, int inserted) {
     final newCount = _lineCount - removed + inserted;
+    if (_uniform) {
+      _lineCount = newCount;
+      return;
+    }
     for (var i = start; i < start + removed; i++) {
       if (_flags[i] & _hidden != 0) _hiddenCount--;
+      if (_flags[i] & _measured != 0) _measuredCount--;
+    }
+    if (_hiddenCount == 0 && _measuredCount == 0) {
+      reset(newCount);
+      return;
     }
     final rows = Float64List(newCount);
     final flags = Uint8List(newCount);
@@ -95,6 +131,11 @@ class ViewLineLayout {
 
   void setHiddenRanges(Iterable<({int start, int end})> ranges) {
     if (_hiddenCount == 0 && ranges.isEmpty) return;
+    if (ranges.isEmpty && _measuredCount == 0) {
+      reset(_lineCount);
+      return;
+    }
+    _materialize();
     for (var i = 0; i < _lineCount; i++) {
       _flags[i] &= ~_hidden;
     }
@@ -108,21 +149,43 @@ class ViewLineLayout {
         }
       }
     }
+    if (_hiddenCount == 0 && _measuredCount == 0) {
+      reset(_lineCount);
+      return;
+    }
     _treeDirty = true;
   }
 
-  double lineHeight(int line) =>
-      _flags[line] & _hidden != 0 ? 0 : _rows[line] * rowHeight;
+  double lineHeight(int line) => _uniform
+      ? _estimatedRows * rowHeight
+      : (_flags[line] & _hidden != 0 ? 0 : _rows[line] * rowHeight);
 
-  double lineTop(int line) => _prefix(_clampBoundary(line)) * rowHeight;
+  double lineTop(int line) =>
+      (_uniform
+          ? _clampBoundary(line) * _estimatedRows
+          : _prefix(_clampBoundary(line))) *
+      rowHeight;
 
-  double get totalHeight => _prefix(_lineCount) * rowHeight;
+  double get totalHeight =>
+      (_uniform ? _lineCount * _estimatedRows : _prefix(_lineCount)) *
+      rowHeight;
 
-  int lineAt(double y) => _lineAtRow(y / rowHeight);
+  int lineAt(double y) {
+    if (_uniform) {
+      if (_lineCount == 0) return 0;
+      final row = y / (rowHeight * _estimatedRows);
+      if (row <= 0) return 0;
+      if (row >= _lineCount) return _lineCount - 1;
+      return row.floor();
+    }
+    return _lineAtRow(y / rowHeight);
+  }
 
   int nextVisible(int line) {
     final clamped = _clampLine(line);
-    if (_lineCount == 0 || _flags[clamped] & _hidden == 0) return clamped;
+    if (_uniform || _lineCount == 0 || _flags[clamped] & _hidden == 0) {
+      return clamped;
+    }
     return _lineAtRow(_prefix(clamped) + 0.5);
   }
 
