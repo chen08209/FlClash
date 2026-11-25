@@ -383,6 +383,27 @@ void main() {
     });
   });
 
+  group('NextFrame', () {
+    testWidgets('mounts child on the frame after the placeholder', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const HostApp(
+          home: NextFrame(
+            placeholder: Text('placeholder'),
+            child: Text('content'),
+          ),
+        ),
+      );
+      expect(find.text('placeholder'), findsOneWidget);
+      expect(find.text('content'), findsNothing);
+
+      await tester.pump();
+      expect(find.text('placeholder'), findsNothing);
+      expect(find.text('content'), findsOneWidget);
+    });
+  });
+
   group('RouteSettledMixin', () {
     testWidgets('settles at once on a page that sits still', (tester) async {
       final settles = <String>[];

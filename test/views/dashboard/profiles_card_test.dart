@@ -527,10 +527,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(CustomProfileView), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey<Illustration>(NullStatusIllustration.profile)),
-      findsNothing,
-    );
+    expect(find.byType(ActivityIndicator), findsOneWidget);
+
+    await tester.pumpAndSettle();
     expect(
       find.descendant(
         of: find.byType(CustomProfileView),
@@ -538,8 +537,6 @@ void main() {
       ),
       findsWidgets,
     );
-
-    await tester.pumpAndSettle();
     expect(find.byType(NullStatus), findsOneWidget);
     expect(find.byType(ProfileDetailSheet), findsNothing);
     final sheet = find.byType(NestedPagedSheet);

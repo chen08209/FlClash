@@ -458,6 +458,7 @@ void main() {
         matching: find.text(l10n.unknown),
       ),
     );
+    await tester.pumpAndSettle();
     expect(find.byType(ActivityIndicator), findsNothing);
     expect(find.byGlyph(AppGlyphs.sync), findsOneWidget);
 

@@ -103,23 +103,23 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
         inputs != null &&
         (_unappliedOnOpen ||
             !const DeepCollectionEquality().equals(_applied, inputs));
-    return ArrivalHold(
-      ready: inputs != null,
-      child: ProfileIdProvider(
-        profileId: widget.profileId,
-        child: Scaffold(
-          title: appLocalizations.extend,
-          isLoading: _applying,
-          actions: [
-            if (hasChanges || _applying)
-              FilledButton(
-                onPressed: _applying || inputs == null
-                    ? null
-                    : () => _handleApplyNow(inputs),
-                child: Text(appLocalizations.applyNow),
-              ),
-          ],
-          body: ScrollConfiguration(
+    return ProfileIdProvider(
+      profileId: widget.profileId,
+      child: Scaffold(
+        title: appLocalizations.extend,
+        isLoading: _applying,
+        actions: [
+          if (hasChanges || _applying)
+            FilledButton(
+              onPressed: _applying || inputs == null
+                  ? null
+                  : () => _handleApplyNow(inputs),
+              child: Text(appLocalizations.applyNow),
+            ),
+        ],
+        body: NullStatusSwitcher(
+          isLoading: inputs == null,
+          child: ScrollConfiguration(
             behavior: const ShowBarScrollBehavior(),
             child: CustomScrollView(
               slivers: [

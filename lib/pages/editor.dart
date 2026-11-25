@@ -519,7 +519,8 @@ class EditorViewState extends ConsumerState<EditorView> {
     }
     final controller = _controller;
     if (controller == null) {
-      _controller = _load(CodeForgeController(), document);
+      _controller = _load(CodeForgeController(), document)
+        ..setUndoController(_undoController);
       _findController = FindController(_controller!);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -621,25 +622,24 @@ class _EditorBody extends StatelessWidget {
     final controller = this.controller;
     final findController = this.findController;
     final error = this.error;
-    return Stack(
-      children: [
-        if (error != null)
-          NullStatus(
-            label: context.appLocalizations.editorUnavailable,
-            description: '$error',
-            illustration: NullStatusIllustration.error,
-          )
-        else if (controller != null && findController != null)
-          _CodeEditor(
-            controller: controller,
-            findController: findController,
-            undoController: undoController,
-            readOnly: readOnly,
-            language: language,
-            schema: schema,
-          ),
-        if (isLoading) const Center(child: ActivityIndicator.page()),
-      ],
+    return NullStatusSwitcher(
+      isLoading: isLoading,
+      child: error != null
+          ? NullStatus(
+              label: context.appLocalizations.editorUnavailable,
+              description: '$error',
+              illustration: NullStatusIllustration.error,
+            )
+          : controller != null && findController != null
+          ? _CodeEditor(
+              controller: controller,
+              findController: findController,
+              undoController: undoController,
+              readOnly: readOnly,
+              language: language,
+              schema: schema,
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

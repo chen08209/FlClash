@@ -58,9 +58,9 @@ dialogs, and interaction behavior.
 - A page loads what it shows as it mounts, never once its route has settled; what waits out a transition is work
   that repeats, such as a live feed's refreshes (`RouteMotionHoldMixin`), and the rows past the viewport
   (`ArrivalCacheExtentMixin`). Page Arrival in `.agents/architecture.md` has the rule.
-- A page that waits on its data shows nothing until all of it is ready (`NullStatusSwitcher.isLoading`), and a load
-  that can run long adds its illustration or a page spinner as `loadingStatus`, never a skeleton screen; Page Arrival in
-  `.agents/architecture.md` has the rule.
+- A page that waits on its data slides in at once with a page spinner, or the illustration it passes as
+  `loadingStatus`, and shows its content once all of it is ready (`NullStatusSwitcher.isLoading`), never a skeleton
+  screen; Page Arrival in `.agents/architecture.md` has the rule.
 - App bar buttons reach `Scaffold` as data (`primaryAction`, `iconActions`, `menuItems`) so it can fold them into
   its overflow menu; App Bar Actions in `.agents/architecture.md` has the rule.
 - A row's secondary actions open from a context menu, never a trailing more button; a list whose rows have one

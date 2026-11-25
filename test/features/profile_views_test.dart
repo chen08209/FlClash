@@ -670,96 +670,97 @@ void main() {
       expect(container.read(profilesProvider), isEmpty);
     });
 
-    testWidgets('starts opening once its rules are in', (tester) async {
-      final profile = Profile.custom(label: 'mine');
-      final rules = StreamController<List<Rule>>();
-      addTearDown(rules.close);
-      final container = buildContainer([profile], rules: rules.stream);
-      setViewport(tester);
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: TestApp(
-            child: Builder(
-              builder: (context) => FilledButton(
-                onPressed: () => BaseNavigator.push(
-                  context,
-                  CustomProfileView(profileId: profile.id),
+    testWidgets(
+      'opens immediately while its rules load and reveals once settled',
+      (tester) async {
+        final profile = Profile.custom(label: 'mine');
+        final rules = StreamController<List<Rule>>();
+        addTearDown(rules.close);
+        final container = buildContainer([profile], rules: rules.stream);
+        setViewport(tester);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: TestApp(
+              child: Builder(
+                builder: (context) => FilledButton(
+                  onPressed: () => BaseNavigator.push(
+                    context,
+                    CustomProfileView(profileId: profile.id),
+                  ),
+                  child: const Text('open'),
                 ),
-                child: const Text('open'),
               ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.tap(find.text('open'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
-      final route = ModalRoute.of(tester.element(editor))!;
-      expect(route.animation!.value, 0);
+        await tester.tap(find.text('open'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        final route = ModalRoute.of(tester.element(editor))!;
+        expect(route.animation!.value, greaterThan(0));
+        expect(find.byType(ActivityIndicator), findsOneWidget);
 
-      rules.add(const []);
-      await tester.pump(Duration.zero);
-      await tester.pump(Duration.zero);
-      await tester.pump(const Duration(milliseconds: 100));
-      expect(route.animation!.value, greaterThan(0));
-      await tester.pumpAndSettle();
-    });
+        rules.add(const []);
+        await tester.pump();
+        expect(find.text(currentAppLocalizations.rule), findsNothing);
 
-    testWidgets('builds its proxy groups a frame after the rest, held still', (
-      tester,
-    ) async {
-      final profile = Profile.custom(label: 'mine');
-      final rules = StreamController<List<Rule>>();
-      addTearDown(rules.close);
-      final container = buildContainer(
-        [profile],
-        groups: [
-          for (var id = 1; id <= 8; id++)
-            ProxyGroup(id: id, name: 'G$id', type: GroupType.Selector),
-        ],
-        rules: rules.stream,
-      );
-      setViewport(tester);
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: TestApp(
-            child: Builder(
-              builder: (context) => FilledButton(
-                onPressed: () => BaseNavigator.push(
-                  context,
-                  CustomProfileView(profileId: profile.id),
+        await tester.pumpAndSettle();
+        expect(find.text(currentAppLocalizations.rule), findsOneWidget);
+        expect(find.byType(ActivityIndicator), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'builds its proxy groups a frame after the overview once settled',
+      (tester) async {
+        final profile = Profile.custom(label: 'mine');
+        final rules = StreamController<List<Rule>>();
+        addTearDown(rules.close);
+        final container = buildContainer(
+          [profile],
+          groups: [
+            for (var id = 1; id <= 8; id++)
+              ProxyGroup(id: id, name: 'G$id', type: GroupType.Selector),
+          ],
+          rules: rules.stream,
+        );
+        setViewport(tester);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: TestApp(
+              child: Builder(
+                builder: (context) => FilledButton(
+                  onPressed: () => BaseNavigator.push(
+                    context,
+                    CustomProfileView(profileId: profile.id),
+                  ),
+                  child: const Text('open'),
                 ),
-                child: const Text('open'),
               ),
             ),
           ),
-        ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
-      final route = ModalRoute.of(tester.element(editor))!;
-      final overview = find.text(currentAppLocalizations.rule);
-      Finder group(int id) => find.text('G$id', skipOffstage: false);
+        );
+        await tester.tap(find.text('open'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        final overview = find.text(currentAppLocalizations.rule);
+        Finder group(int id) => find.text('G$id', skipOffstage: false);
 
-      rules.add(const []);
-      await tester.pump(Duration.zero);
-      expect(overview, findsOneWidget);
-      expect(group(1), findsNothing);
-      expect(route.animation!.value, 0);
+        rules.add(const []);
+        for (var i = 0; i < 30 && overview.evaluate().isEmpty; i++) {
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+        expect(overview, findsOneWidget);
+        expect(group(1), findsNothing);
 
-      await tester.pump(Duration.zero);
-      expect(group(1), findsOneWidget);
-      expect(route.animation!.value, 0);
-
-      await tester.pump(Duration.zero);
-      await tester.pump(const Duration(milliseconds: 100));
-      expect(route.animation!.value, greaterThan(0));
-      await tester.pumpAndSettle();
-    });
+        await tester.pump();
+        expect(group(1), findsOneWidget);
+        await tester.pumpAndSettle();
+      },
+    );
 
     testWidgets('is dropped on leaving it as it was created', (tester) async {
       final profile = Profile.custom(label: 'Unnamed');

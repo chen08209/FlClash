@@ -13,7 +13,6 @@ Widget _switcher({
   required bool isEmpty,
   bool isLoading = false,
   bool isSearching = false,
-  bool holdsArrival = true,
   String? loadingLabel,
   String label = 'Nothing here',
   MediaQueryData? mediaQuery,
@@ -22,7 +21,6 @@ Widget _switcher({
     isLoading: isLoading,
     isEmpty: isEmpty,
     isSearching: isSearching,
-    holdsArrival: holdsArrival,
     loadingStatus: loadingLabel == null
         ? null
         : NullStatus(
@@ -263,7 +261,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text('Nothing here'), findsOneWidget);
     expect(find.byKey(const ValueKey('content')), findsOneWidget);
-    expect(find.byType(ScaleTransition), findsNWidgets(2));
+    expect(find.byType(ScaleTransition), findsOneWidget);
 
     await tester.pumpAndSettle();
     expect(find.text('Nothing here'), findsNothing);
@@ -271,52 +269,17 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a first load done within a route transition shows no status', (
-    tester,
-  ) async {
+  testWidgets('a first load shows its loading status at once', (tester) async {
     await tester.pumpWidget(
       _switcher(isEmpty: true, isLoading: true, loadingLabel: 'Loading'),
     );
-    await tester.pump(const Duration(milliseconds: 350));
-    expect(find.byType(NullStatus), findsNothing);
-
-    await tester.pumpWidget(_switcher(isEmpty: false, loadingLabel: 'Loading'));
-    await tester.pump(const Duration(seconds: 1));
-
-    expect(find.byType(NullStatus), findsNothing);
-    expect(find.byKey(const ValueKey('content')), findsOneWidget);
-  });
-
-  testWidgets('a first load that outlasts a route transition shows its '
-      'loading status until the content arrives', (tester) async {
-    await tester.pumpWidget(
-      _switcher(isEmpty: true, isLoading: true, loadingLabel: 'Loading'),
-    );
-    await tester.pump(const Duration(milliseconds: 350));
-    expect(find.text('Loading'), findsNothing);
-
-    await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Loading'), findsOneWidget);
-    expect(find.byKey(const ValueKey('content')), findsNothing);
+    expect(find.byType(ArrivalHold), findsNothing);
 
     await tester.pumpWidget(_switcher(isEmpty: false, loadingLabel: 'Loading'));
     await tester.pumpAndSettle();
     expect(find.text('Loading'), findsNothing);
     expect(find.byKey(const ValueKey('content')), findsOneWidget);
-  });
-
-  testWidgets('a first load that holds no arrival shows its loading status '
-      'at once', (tester) async {
-    await tester.pumpWidget(
-      _switcher(
-        isEmpty: true,
-        isLoading: true,
-        holdsArrival: false,
-        loadingLabel: 'Loading',
-      ),
-    );
-    expect(find.text('Loading'), findsOneWidget);
-    expect(find.byType(ArrivalHold), findsNothing);
   });
 
   testWidgets('a first load that finds nothing leaves the loading status for '
@@ -368,12 +331,12 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('shows neither side while the first load is pending', (
-    tester,
-  ) async {
+  testWidgets('shows a spinner and neither side while the first load is '
+      'pending', (tester) async {
     await tester.pumpWidget(_switcher(isEmpty: true, isLoading: true));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
 
+    expect(find.byType(ActivityIndicator), findsOneWidget);
     expect(find.byType(NullStatus), findsNothing);
     expect(find.byKey(const ValueKey('content')), findsNothing);
   });
@@ -435,6 +398,22 @@ void main() {
       tester.getSize(find.byKey(const ValueKey('content'))),
       const Size(300, 500),
     );
+  });
+
+  testWidgets('defaults to immediate activity indicator without ArrivalHold', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const HostApp(
+        home: NullStatusSwitcher(
+          isLoading: true,
+          child: Text('content', key: ValueKey('content')),
+        ),
+      ),
+    );
+    expect(find.byType(ActivityIndicator), findsOneWidget);
+    expect(find.byType(ArrivalHold), findsNothing);
+    expect(find.byKey(const ValueKey('content')), findsNothing);
   });
 
   testWidgets('switches immediately under reduced motion', (tester) async {

@@ -330,10 +330,8 @@ class _AccessViewState extends ConsumerState<AccessView>
   }) {
     return NullStatusSwitcher(
       isLoading: !_loaded,
-      holdsArrival: false,
       isEmpty: packages.isEmpty,
       isSearching: isSearching,
-      loadingStatus: const Center(child: ActivityIndicator.page()),
       nullStatus: NullStatus(
         label: context.appLocalizations.noData,
         illustration: NullStatusIllustration.apps,

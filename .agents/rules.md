@@ -397,14 +397,15 @@ through its push. Check a UI change against these before moving anything to an i
   `ImageFilter.blur` layer; `Opacity` over a subtree, a translucent glyph, and an `SvgPicture` with a `colorFilter` each
   cost a layer. A page that scales as a whole is drawn from a `SnapshotWidget` while it scales,
   since Impeller rasterizes text again at every step of a scale.
-- Keep transitions clear. Page Arrival in `.agents/architecture.md` is binding: a page holds its push until its first
-  content is in (`NullStatusSwitcher`, `ArrivalHold`), a feed holds its refreshes while its route moves, and the editor
-  mounts once its route settles. A route's transition wrapper keeps one structure for every state: switching it moves
+- Keep transitions clear. Page Arrival in `.agents/architecture.md` is binding: a push never waits for a load, as a
+  page waiting on its data slides in with a spinner and mounts its content once the route settles
+  (`NullStatusSwitcher`), a feed holds its refreshes while its route moves, and the editor mounts once its route
+  settles. A route's transition wrapper keeps one structure for every state: switching it moves
   the page under a `GlobalKey`, which rebuilds every element with an inherited dependency.
-- Split a first screen that overruns a frame. The frames a push holds still are frames too: a first screen that takes
-  more than 8 ms to build and lay out is built in parts across them, each part one frame, and the push holds for the
-  last (`ArrivalHold`). `CustomProfileView` builds its proxy groups a frame after its overview this way; one frame of
-  both took 9 to 15 ms on a phone while the menu it was opened from closed.
+- Split a first screen that overruns a frame. A first screen that takes more than 8 ms to build and lay out is built
+  in parts, each part one frame: `NextFrame` mounts its child a frame after itself, and `ArrivalHold` holds a push still
+  for the parts, at most `arrivalHoldLimit` (50 ms). `CustomProfileView` builds its proxy groups a frame after its
+  overview this way; one frame of both took 9 to 15 ms on a phone while the menu it was opened from closed.
 - Build no rows ahead while anything moves. A list on a page coming in takes its cache extent from
   `ArrivalCacheExtentMixin` or `ArrivalCacheExtentBuilder`: none until its route settles and no ticker runs, since the
   rows built ahead at the moment the route settles overran a frame of the bar items still fading in.

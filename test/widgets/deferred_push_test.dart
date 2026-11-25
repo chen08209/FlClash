@@ -68,7 +68,7 @@ void main() {
     unawaited(navigatorKey.currentState!.push(route));
 
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 30));
     expect(route.animation!.value, 0);
 
     ready.value = true;
@@ -147,30 +147,39 @@ void main() {
     expect(route.animation!.value, closeTo(0.5 + firstFrame, 0.01));
   });
 
-  testWidgets('a first load holds the push while it runs', (tester) async {
-    await pumpHome(tester);
-    final loading = ValueNotifier(true);
-    addTearDown(loading.dispose);
-    final route = FadePageRoute<void>(
-      builder: (_) => ValueListenableBuilder(
-        valueListenable: loading,
-        builder: (_, loading, _) =>
-            NullStatusSwitcher(isLoading: loading, child: const Text('page')),
-      ),
-    );
-    unawaited(navigatorKey.currentState!.push(route));
+  testWidgets(
+    'a first load pushes immediately with loading and reveals after settle',
+    (tester) async {
+      await pumpHome(tester);
+      final loading = ValueNotifier(true);
+      addTearDown(loading.dispose);
+      final route = FadePageRoute<void>(
+        builder: (_) => ValueListenableBuilder(
+          valueListenable: loading,
+          builder: (_, loading, _) =>
+              NullStatusSwitcher(isLoading: loading, child: const Text('page')),
+        ),
+      );
+      unawaited(navigatorKey.currentState!.push(route));
 
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 150));
-    expect(route.animation!.value, 0);
+      await tester.pump();
+      expect(
+        find.byType(ActivityIndicator, skipOffstage: false),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(route.animation!.value, greaterThan(0));
 
-    loading.value = false;
-    await tester.pump(Duration.zero);
-    expect(find.text('page'), findsOneWidget);
-    await tester.pump(Duration.zero);
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(route.animation!.value, greaterThan(0));
-  });
+      loading.value = false;
+      await tester.pump();
+      expect(find.text('page'), findsNothing);
+      expect(find.byType(ActivityIndicator), findsOneWidget);
+
+      await tester.pumpAndSettle();
+      expect(find.text('page'), findsOneWidget);
+      expect(find.byType(ActivityIndicator), findsNothing);
+    },
+  );
 
   testWidgets('a bottom sheet waits for what its page holds it for', (
     tester,
@@ -190,7 +199,7 @@ void main() {
     unawaited(navigatorKey.currentState!.push(route));
 
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 30));
     expect(route.animation!.value, 0);
 
     ready.value = true;

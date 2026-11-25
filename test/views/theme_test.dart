@@ -414,8 +414,8 @@ void main() {
       expect(readTheme().fontFamily, isNull);
     });
 
-    testWidgets('lists the fonts as the sheet opens and gives the names '
-        'their fonts once it has stopped', (tester) async {
+    testWidgets('opens the sheet immediately and reveals the font list with '
+        'their own fonts once it has stopped', (tester) async {
       var reads = 0;
       systemFontFamiliesReader = () async {
         reads++;
@@ -426,17 +426,17 @@ void main() {
       await tester.tap(find.text('Aa').first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      await tester.pump(const Duration(milliseconds: 16));
       expect(reads, 1);
-      expect(fontsIllustration, findsNothing);
-      expect(inPage('Arrival Sans'), findsOneWidget);
       expect(
         isRouteMoving(tester.element(find.byType(FontFamilyView))),
         isTrue,
       );
-      expect(previewFamilyOf(tester, 'Arrival Sans'), isNot('Arrival Sans'));
+      expect(fontsIllustration, findsOneWidget);
+      expect(inPage('Arrival Sans'), findsNothing);
 
       await pumpSettled(tester);
+      expect(fontsIllustration, findsNothing);
+      expect(inPage('Arrival Sans'), findsOneWidget);
       expect(previewFamilyOf(tester, 'Arrival Sans'), 'Arrival Sans');
     });
 
@@ -492,10 +492,7 @@ void main() {
 
       await tester.tap(find.text('Aa').first);
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
-      expect(fontsIllustration, findsNothing);
-
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 50));
       expect(fontsIllustration, findsOneWidget);
       expect(inPage('Default'), findsNothing);
 

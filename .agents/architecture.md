@@ -1241,14 +1241,11 @@ than the frames a load costs. What a transition must not carry is work that repe
   (`prism_ui/lib/navigator.dart`) is left for sequencing navigation, such as opening a page once the sheet above it is gone.
 - Two views arrive after the motion. `EditorPage` keeps the document it opened until its route has settled and only
   then mounts CodeForge, sliding in with its spinner until then: the mount lays out, folds and highlights a screen of
-  text in one frame, which a phone cannot fit in a transition frame whatever the file's size. The spinner, with no
-  surface behind it, leaves in the frame the text mounts rather than fading: a fade there runs over the bar items
-  fading in after the route settles, and on a phone at 120 Hz the two together overran a frame.
+  text in one frame, which a phone cannot fit in a transition frame whatever the file's size.
   `AccessView` reads the installed apps only once its route has settled and its bar items have faded in
   (`whenNothingAnimates`, not counting its own spinner), and slides in with that spinner when this run has not read
-  them yet (`NullStatusSwitcher` with `holdsArrival: false`): the read can outlast `arrivalHoldLimit`, and a list of
-  apps landing while its page moves reads as dropped frames. The spinner only repaints its own boundary. A list
-  already read shows from the first frame.
+  them yet: a list of apps landing while its page moves reads as dropped frames. The spinner only repaints its own
+  boundary. A list already read shows from the first frame.
 - A live feed holds its refreshes while its page moves and replays the latest once it is still, so a list does not
   re-rank, reorder or grow under a transition. `RouteMotionHoldMixin` (`prism_ui/lib/route_motion_hold.dart`) holds them
   while `isRouteMoving`: the page's route or a sheet carrying it is pushed, popped or dragged, a page is pushed over it,
@@ -1267,11 +1264,12 @@ than the frames a load costs. What a transition must not carry is work that repe
   (`IconGridScrollView`) and the access control list do this, and so does `ListEditorPage`, whose rows are heavy
   enough that only its list rebuilds as the extent widens, reusing the rows already built.
 - A page whose content waits on what it loads (lists read from the database, file sizes, the installed fonts) shows
-  nothing until all of it is in, then the finished content in one step: `NullStatusSwitcher.isLoading`. A load that can
-  run long also gives the switcher a `loadingStatus`, its `NullStatus` illustration with no label or a page
-  `ActivityIndicator`, which takes the place of a first load still running after about a route transition (400 ms);
-  one that ends sooner goes straight to its content, so it never flashes. The custom profile, resources and font
-  family pages show the illustration; access control, which waits on the system's app list, shows the spinner. Never a
+  nothing of it until all of it is in, then the finished content in one step: `NullStatusSwitcher.isLoading`. Its push
+  never waits for the load: the page slides in with the switcher's `loadingStatus`, a page `ActivityIndicator` unless
+  the page passes its `NullStatus` illustration, as the font family sheet does. On a pushed page that stays at least
+  `minimumLoadingDuration` (400 ms) once shown, so a load that ends just after it appears never flashes it, and the
+  content takes its place once the route has settled and nothing else animates; a home page shows it once loaded. The content comes in under a veil of the surface
+  color fading off it rather than through an `Opacity` layer, and a page leaving before then never mounts it. Never a
   skeleton screen of placeholder rows: it has to guess how many rows are coming, fills in piece by piece, and rebuilds
   every row it stood in for. `SkeletonText` is for a single value inside a card that is already on screen, such as the
   dashboard's service status.

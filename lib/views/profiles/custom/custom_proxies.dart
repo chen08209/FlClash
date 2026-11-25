@@ -489,53 +489,56 @@ class _CustomProxiesViewState extends ConsumerState<CustomProxiesView> {
             ),
           ),
           child: Builder(
-            builder: (context) => CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: SizedBox(height: context.contentTopPadding),
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    0,
-                    16,
-                    16 + context.bottomInset,
+            builder: (context) => ArrivalCacheExtentBuilder(
+              builder: (cacheExtent) => CustomScrollView(
+                scrollCacheExtent: cacheExtent,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: context.contentTopPadding),
                   ),
-                  sliver: reorderable
-                      ? SliverPrismReorderableList(
-                          itemCount: visible.length,
-                          itemBuilder: (_, index) => _buildNode(
-                            visible[index],
-                            selected: selected,
-                            position: ItemPosition.get(index, visible.length),
-                            dragIndex: index,
-                          ),
-                          proxyDecorator: (child, index, animation) =>
-                              commonProxyDecorator(
-                                _buildNode(
-                                  visible[index],
-                                  selected: selected,
-                                  position: ItemPosition.get(
-                                    index,
-                                    visible.length,
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      0,
+                      16,
+                      16 + context.bottomInset,
+                    ),
+                    sliver: reorderable
+                        ? SliverPrismReorderableList(
+                            itemCount: visible.length,
+                            itemBuilder: (_, index) => _buildNode(
+                              visible[index],
+                              selected: selected,
+                              position: ItemPosition.get(index, visible.length),
+                              dragIndex: index,
+                            ),
+                            proxyDecorator: (child, index, animation) =>
+                                commonProxyDecorator(
+                                  _buildNode(
+                                    visible[index],
+                                    selected: selected,
+                                    position: ItemPosition.get(
+                                      index,
+                                      visible.length,
+                                    ),
+                                    dragIndex: index,
                                   ),
-                                  dragIndex: index,
+                                  index,
+                                  animation,
                                 ),
-                                index,
-                                animation,
-                              ),
-                          onReorderItem: _handleReorder,
-                        )
-                      : SliverPrismList(
-                          itemCount: visible.length,
-                          itemBuilder: (_, index) => _buildNode(
-                            visible[index],
-                            selected: selected,
-                            position: ItemPosition.get(index, visible.length),
+                            onReorderItem: _handleReorder,
+                          )
+                        : SliverPrismList(
+                            itemCount: visible.length,
+                            itemBuilder: (_, index) => _buildNode(
+                              visible[index],
+                              selected: selected,
+                              position: ItemPosition.get(index, visible.length),
+                            ),
                           ),
-                        ),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

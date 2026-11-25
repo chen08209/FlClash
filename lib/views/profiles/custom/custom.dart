@@ -88,8 +88,6 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView> {
   var _discarded = false;
   var _discardOnDispose = false;
   var _loaded = false;
-  var _groupsScheduled = false;
-  var _groupsShown = false;
   List<Object?>? _loadedInputs;
   var _edited = false;
   var _importing = false;
@@ -265,79 +263,72 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView> {
             ));
     if (_loaded) {
       _loadedInputs ??= _inputs;
-      _showGroupsNextFrame();
     }
-    return ArrivalHold(
-      ready: _groupsShown,
-      child: PopGuard(
-        onPop: widget.isNew ? _nameBeforeLeaving : null,
-        onPopSuccess: _discardIfUntouched,
-        child: ProfileIdProvider(
-          profileId: profileId,
-          child: Scaffold(
-            title: label,
-            titleMenuItems: [
-              PopupMenuItem(
-                glyph: AppGlyphs.textShort,
-                label: appLocalizations.rename,
-                onPressed: _handleRename,
+    return PopGuard(
+      onPop: widget.isNew ? _nameBeforeLeaving : null,
+      onPopSuccess: _discardIfUntouched,
+      child: ProfileIdProvider(
+        profileId: profileId,
+        child: Scaffold(
+          title: label,
+          titleMenuItems: [
+            PopupMenuItem(
+              glyph: AppGlyphs.textShort,
+              label: appLocalizations.rename,
+              onPressed: _handleRename,
+            ),
+            PopupMenuItem(
+              glyph: AppGlyphs.eye,
+              label: appLocalizations.runtimeConfig,
+              onPressed: _handlePreview,
+            ),
+          ],
+          isLoading: _importing,
+          actions: [
+            PopupAnchor(
+              targetBuilder: (open) => FilledButton(
+                onPressed: _loaded && !_importing ? open : null,
+                child: Text(appLocalizations.import),
               ),
-              PopupMenuItem(
-                glyph: AppGlyphs.eye,
-                label: appLocalizations.runtimeConfig,
-                onPressed: _handlePreview,
+              popupBuilder: (_) => PopupMenu(
+                items: [
+                  PopupMenuItem(
+                    glyph: AppGlyphs.cloudDownload,
+                    label: appLocalizations.importUrl,
+                    onPressed: _handleImportFromUrl,
+                  ),
+                  PopupMenuItem(
+                    glyph: AppGlyphs.importFile,
+                    label: appLocalizations.importFile,
+                    onPressed: _handleImportFromFile,
+                  ),
+                ],
               ),
-            ],
-            isLoading: _importing,
-            actions: [
-              PopupAnchor(
-                targetBuilder: (open) => FilledButton(
-                  onPressed: _loaded && !_importing ? open : null,
-                  child: Text(appLocalizations.import),
-                ),
-                popupBuilder: (_) => PopupMenu(
-                  items: [
-                    PopupMenuItem(
-                      glyph: AppGlyphs.cloudDownload,
-                      label: appLocalizations.importUrl,
-                      onPressed: _handleImportFromUrl,
+            ),
+          ],
+          body: NullStatusSwitcher(
+            isLoading: !_loaded,
+            child: ScrollConfiguration(
+              behavior: const ShowBarScrollBehavior(),
+              child: ArrivalCacheExtentBuilder(
+                builder: (cacheExtent) => CustomScrollView(
+                  scrollCacheExtent: cacheExtent,
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: context.sectionsTopPadding),
                     ),
-                    PopupMenuItem(
-                      glyph: AppGlyphs.importFile,
-                      label: appLocalizations.importFile,
-                      onPressed: _handleImportFromFile,
+                    SliverPadding(
+                      padding: context.listInsets.page().copyWith(
+                        bottom: 24 + context.bottomInset,
+                      ),
+                      sliver: SliverMainAxisGroup(
+                        slivers: [
+                          SliverToBoxAdapter(child: _overview),
+                          NextFrame.sliver(child: _groups),
+                        ],
+                      ),
                     ),
                   ],
-                ),
-              ),
-            ],
-            body: NullStatusSwitcher(
-              isLoading: !_loaded,
-              loadingStatus: const NullStatus(
-                illustration: NullStatusIllustration.profile,
-              ),
-              child: ScrollConfiguration(
-                behavior: const ShowBarScrollBehavior(),
-                child: ArrivalCacheExtentBuilder(
-                  builder: (cacheExtent) => CustomScrollView(
-                    scrollCacheExtent: cacheExtent,
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: SizedBox(height: context.sectionsTopPadding),
-                      ),
-                      SliverPadding(
-                        padding: context.listInsets.page().copyWith(
-                          bottom: 24 + context.bottomInset,
-                        ),
-                        sliver: SliverMainAxisGroup(
-                          slivers: [
-                            SliverToBoxAdapter(child: _overview),
-                            if (_groupsShown) _groups,
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),
@@ -345,20 +336,6 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView> {
         ),
       ),
     );
-  }
-
-  // The groups come a frame after the overview, while the push still holds:
-  // built in one frame, the first screen overran it on a phone.
-  void _showGroupsNextFrame() {
-    if (_groupsScheduled) {
-      return;
-    }
-    _groupsScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() => _groupsShown = true);
-      }
-    });
   }
 
   @override

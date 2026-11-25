@@ -58,6 +58,7 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
   final _revealController = ListController();
   final _selectedKey = GlobalKey();
   var _revealRequested = false;
+  int? _pendingReveal;
   var _query = SearchQuery('');
 
   @override
@@ -161,8 +162,19 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
     return null;
   }
 
+  // The list mounts only once a loading status has had its time, so the
+  // reveal waits for the list rather than for the next frame.
+  void _revealPending() {
+    final index = _pendingReveal;
+    if (index == null || !mounted || !_revealController.isAttached) {
+      return;
+    }
+    _pendingReveal = null;
+    _revealSelected(index);
+  }
+
   void _revealSelected(int index) {
-    if (!mounted || !_controller.hasClients) {
+    if (!_controller.hasClients) {
       return;
     }
     final itemContext = _selectedKey.currentContext;
@@ -284,9 +296,8 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
     final loadingStatus = widget.loadingStatus;
     if (!_revealRequested && location != null && loadingStatus == null) {
       _revealRequested = true;
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _revealSelected(location.index),
-      );
+      _pendingReveal = location.index;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _revealPending());
     }
     final searchable =
         _query.isNotEmpty ||
@@ -307,47 +318,53 @@ class _SelectionSheetState<T> extends ConsumerState<SelectionSheet<T>>
             label: widget.emptyLabel ?? '',
             illustration: NullStatusIllustration.data,
           ),
-          child: CustomScrollView(
-            controller: _controller,
-            slivers: [
-              SliverToBoxAdapter(
-                child: SizedBox(height: context.sectionsTopPadding),
-              ),
-              for (final (sectionIndex, section) in sections.indexed) ...[
-                SliverPadding(
-                  padding: context.listInsets.page(),
-                  sliver: SliverToBoxAdapter(child: _buildHeader(section)),
+          child: NotificationListener<ScrollMetricsNotification>(
+            onNotification: (_) {
+              _revealPending();
+              return false;
+            },
+            child: CustomScrollView(
+              controller: _controller,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.sectionsTopPadding),
                 ),
-                SliverPadding(
-                  padding: context.listInsets.page(),
-                  sliver: SliverPrismList(
-                    listController: sectionIndex == location?.section
-                        ? _revealController
-                        : null,
-                    itemCount: section.items.length,
-                    findChildIndexCallback: widget.removeOnSelect
-                        ? (key) => _indexOf(section, key)
-                        : null,
-                    itemBuilder: (context, index) {
-                      final item = section.items[index];
-                      return _buildItem(
-                        context,
-                        section,
-                        item,
-                        index,
-                        isSelected: item == selected,
-                        isRevealTarget:
-                            sectionIndex == location?.section &&
-                            index == location?.index,
-                      );
-                    },
+                for (final (sectionIndex, section) in sections.indexed) ...[
+                  SliverPadding(
+                    padding: context.listInsets.page(),
+                    sliver: SliverToBoxAdapter(child: _buildHeader(section)),
                   ),
+                  SliverPadding(
+                    padding: context.listInsets.page(),
+                    sliver: SliverPrismList(
+                      listController: sectionIndex == location?.section
+                          ? _revealController
+                          : null,
+                      itemCount: section.items.length,
+                      findChildIndexCallback: widget.removeOnSelect
+                          ? (key) => _indexOf(section, key)
+                          : null,
+                      itemBuilder: (context, index) {
+                        final item = section.items[index];
+                        return _buildItem(
+                          context,
+                          section,
+                          item,
+                          index,
+                          isSelected: item == selected,
+                          isRevealTarget:
+                              sectionIndex == location?.section &&
+                              index == location?.index,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+                SliverToBoxAdapter(
+                  child: SizedBox(height: 20 + context.bottomInset),
                 ),
               ],
-              SliverToBoxAdapter(
-                child: SizedBox(height: 20 + context.bottomInset),
-              ),
-            ],
+            ),
           ),
         ),
       ),

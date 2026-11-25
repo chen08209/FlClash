@@ -5,6 +5,7 @@ import 'package:code_forge/code_forge.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/nested_sheet.dart';
 import 'package:flutter/gestures.dart' show PointerDeviceKind, kSecondaryButton;
@@ -129,6 +130,7 @@ void main() {
     expect(find.byType(CodeForge), findsNothing);
     expect(find.byType(ActivityIndicator), findsOneWidget);
 
+    await tester.pump(minimumLoadingDuration);
     await settle(tester, 12);
     expect(find.byType(CodeForge), findsOneWidget);
     expect(find.byType(ActivityIndicator), findsNothing);
@@ -367,7 +369,7 @@ void main() {
     expect(await canSaveAfter(6, 12, 'rule'), isFalse);
   });
 
-  testWidgets('an edit handed to the page opens to save, and undoes', (
+  testWidgets('an edit handed to a pushed page opens to save, and undoes', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -375,15 +377,24 @@ void main() {
         overrides: [
           viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 1000)),
         ],
-        child: EditorPage(
-          title: 'Editor',
-          content: 'mode: rule',
-          edit: (text) => '$text\nipv6: true',
-          onSave: (_, _, _) {},
+        child: const SizedBox.shrink(),
+      ),
+    );
+    unawaited(
+      globalState.navigatorKey.currentState!.push(
+        CardPageRoute<void>(
+          builder: (_) => EditorPage(
+            title: 'Editor',
+            content: 'mode: rule',
+            edit: (text) => '$text\nipv6: true',
+            onSave: (_, _, _) {},
+          ),
         ),
       ),
     );
-    await settle(tester);
+    await settle(tester, 12);
+    await tester.pump(minimumLoadingDuration);
+    await settle(tester, 12);
     final controller = tester
         .widget<CodeForge>(find.byType(CodeForge))
         .controller;
@@ -478,6 +489,7 @@ void main() {
         ),
       ),
     );
+    await tester.pump(minimumLoadingDuration);
     await settle(tester, 12);
     final controller = tester
         .widget<CodeForge>(find.byType(CodeForge))
