@@ -3867,11 +3867,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'URL-REGEX and USER-AGENT rules run as URL rewrites, on HTTPS only for listed hosts.';
 
   @override
-  String mitmExtendedMatchingNote(Object count) {
-    return '$count use extended matching';
-  }
-
-  @override
   String mitmActionModule(Object module) {
     return 'From $module';
   }

@@ -416,9 +416,10 @@ Future<MitmModuleDetails> readMitmModule(
 }) async {
   final source =
       text ??
-      await File(
+      await compute<String, String>(
+        _readModuleText,
         join(await appPath.mitmModulesDirPath, module.fileName),
-      ).readAsString();
+      );
   return ref
       .read(coreHandlerProvider)
       .api
@@ -664,5 +665,13 @@ Future<MitmModuleDetails?> mitmModuleContent(Ref ref, int id) async {
   if (!await file.exists()) {
     return null;
   }
-  return readMitmModule(ref, module, text: await file.readAsString());
+  return readMitmModule(
+    ref,
+    module,
+    text: await compute(_readModuleText, file.path),
+  );
 }
+
+/// A module runs to hundreds of kilobytes, too long to decode on the UI isolate
+/// while a page that shows it moves in.
+String _readModuleText(String path) => File(path).readAsStringSync();

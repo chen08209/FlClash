@@ -3644,11 +3644,6 @@ class AppLocalizationsZh extends AppLocalizations {
       'URL-REGEX 和 USER-AGENT 规则改作 URL 重写，HTTPS 只对主机名中的主机生效。';
 
   @override
-  String mitmExtendedMatchingNote(Object count) {
-    return '其中 $count 条使用扩展匹配';
-  }
-
-  @override
   String mitmActionModule(Object module) {
     return '来自 $module';
   }

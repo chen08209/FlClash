@@ -3758,11 +3758,6 @@ class AppLocalizationsKo extends AppLocalizations {
       'URL-REGEX 및 USER-AGENT 규칙은 URL 재작성으로 동작하며, HTTPS는 목록의 호스트에만 적용됩니다.';
 
   @override
-  String mitmExtendedMatchingNote(Object count) {
-    return '이 중 $count개는 확장 매칭 사용';
-  }
-
-  @override
   String mitmActionModule(Object module) {
     return '$module에서';
   }

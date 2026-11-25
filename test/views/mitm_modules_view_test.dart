@@ -692,24 +692,26 @@ void main() {
     expect(invalid('USER-AGENT,refused*'), isTrue);
   });
 
-  testWidgets('routing rules say which ask for extended matching', (
-    tester,
-  ) async {
-    Future<void> show(List<JsonMap> rules) => pump(
+  testWidgets('the routing rules row gives only their count', (tester) async {
+    await pump(
       tester,
       MitmModuleView(id: _remote.id),
-      remoteContent: moduleDetails('', moduleRead(rules: rules)),
+      remoteContent: moduleDetails(
+        '',
+        moduleRead(
+          rules: [
+            moduleRule(1, 'DOMAIN-SUFFIX,ads.example.com', 'REJECT'),
+            moduleRule(
+              2,
+              'DOMAIN,a.example.com',
+              'REJECT',
+              extendedMatching: true,
+            ),
+          ],
+        ),
+      ),
     );
-    final note = currentAppLocalizations.mitmExtendedMatchingNote(1);
-
-    await show([
-      moduleRule(1, 'DOMAIN-SUFFIX,ads.example.com', 'REJECT'),
-      moduleRule(2, 'DOMAIN,a.example.com', 'REJECT', extendedMatching: true),
-    ]);
-    expect(find.textContaining(note), findsOneWidget);
-
-    await show([moduleRule(1, 'DOMAIN-SUFFIX,ads.example.com', 'REJECT')]);
-    expect(find.textContaining(note), findsNothing);
+    expect(find.text(currentAppLocalizations.itemsCount(2)), findsOneWidget);
   });
 
   testWidgets('a line the Core reads shows what it matches and what it does', (
