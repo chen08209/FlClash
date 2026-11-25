@@ -74,7 +74,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
   }
 
   void _updateVisible(AppLifecycleState? state) {
-    ref.read(appVisibleProvider.notifier).value = switch (state) {
+    ref.read(appVisibleProvider.notifier).shown = switch (state) {
       null || AppLifecycleState.resumed || AppLifecycleState.inactive => true,
       AppLifecycleState.hidden ||
       AppLifecycleState.paused ||

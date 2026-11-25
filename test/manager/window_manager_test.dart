@@ -205,6 +205,19 @@ void main() {
     expect(signals.hasListener, isFalse);
   });
 
+  testWidgets('the screens going dark and lighting up are recorded', (
+    tester,
+  ) async {
+    await pumpWindowManager(tester);
+    expect(container.read(screensSeenProvider), isTrue);
+
+    fakeWindow.emit(WindowEvent.screensUnseen);
+    expect(container.read(screensSeenProvider), isFalse);
+
+    fakeWindow.emit(WindowEvent.screensSeen);
+    expect(container.read(screensSeenProvider), isTrue);
+  });
+
   testWidgets('moving the window records its new position', (tester) async {
     final listener = await pumpWindowManager(tester);
     window.bounds = const Rect.fromLTWH(120, 64, 1000, 800);

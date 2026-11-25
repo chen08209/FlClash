@@ -59,6 +59,7 @@ objc2-service-management = { version = "0.3", default-features = false, features
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ksni = { version = "0.3", default-features = false, features = ["tokio"] }
+futures-util = { version = "0.3", default-features = false }
 gdk-sys = "0.18"
 gdk-pixbuf-sys = "0.18"
 gio-sys = "0.18"
@@ -114,4 +115,5 @@ opt-level = 0
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
 
 [dev-dependencies]
+futures-util = { version = "0.3", default-features = false }
 serde_json = "1"

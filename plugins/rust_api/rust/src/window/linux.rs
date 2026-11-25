@@ -1,8 +1,9 @@
-use super::{emit, GEOMETRY_SETTLE_MILLISECONDS};
+use super::{emit, screens, GEOMETRY_SETTLE_MILLISECONDS};
 use crate::api::window::{
     TitleBarStyle, WindowBounds, WindowBrightness, WindowDisplay, WindowEffect, WindowPoint,
     WindowSignal,
 };
+use futures_util::StreamExt;
 use gdk_sys::{
     GdkEvent, GdkEventWindowState, GdkRectangle, GdkScreen, GdkWindow, GDK_BUTTON_PRESS,
     GDK_BUTTON_PRIMARY, GDK_TOUCH_BEGIN, GDK_WINDOW_STATE_FOCUSED, GDK_WINDOW_STATE_FULLSCREEN,
@@ -23,6 +24,22 @@ const OPEN_LINK_ACTION: &CStr = c"open-link";
 const PENDING_LINKS: &CStr = c"flclash-pending-links";
 const MINIMIZE_FOCUS_LOSS_MICROSECONDS: i64 = 500_000;
 const MAX_RESTORE_CORRECTIONS: u32 = 5;
+const LOGIN1: &str = "org.freedesktop.login1";
+const UNSEEN_LOCKED: u8 = 1;
+const UNSEEN_SCREENSAVER: u8 = 1 << 1;
+// GNOME serves its own name; KDE and the rest serve the freedesktop one.
+const SCREENSAVERS: [(&str, &str, &str); 2] = [
+    (
+        "org.gnome.ScreenSaver",
+        "/org/gnome/ScreenSaver",
+        "org.gnome.ScreenSaver",
+    ),
+    (
+        "org.freedesktop.ScreenSaver",
+        "/ScreenSaver",
+        "org.freedesktop.ScreenSaver",
+    ),
+];
 
 #[link(name = "gdk-3")]
 extern "C" {
@@ -53,6 +70,7 @@ struct State {
     settled: Cell<Option<Geometry>>,
     settle_timeout: Cell<c_uint>,
     press: Cell<*mut GdkEvent>,
+    unseen: Cell<u8>,
 }
 
 thread_local! {
@@ -71,6 +89,7 @@ thread_local! {
             settled: Cell::new(None),
             settle_timeout: Cell::new(0),
             press: Cell::new(null_mut()),
+            unseen: Cell::new(0),
         }
     };
 }
@@ -129,6 +148,23 @@ unsafe fn connect(instance: *mut c_void, signal: &CStr, handler: *const (), afte
 }
 
 impl State {
+    fn set_unseen(&self, reason: u8, unseen: bool) {
+        let before = self.unseen.get();
+        let after = if unseen {
+            before | reason
+        } else {
+            before & !reason
+        };
+        self.unseen.set(after);
+        if (before == 0) != (after == 0) {
+            emit(if after == 0 {
+                WindowSignal::ScreensSeen
+            } else {
+                WindowSignal::ScreensUnseen
+            });
+        }
+    }
+
     fn require_window(&self) -> Result<*mut GtkWindow, String> {
         let window = self.window.get();
         if window.is_null() {
@@ -593,6 +629,7 @@ unsafe extern "C" fn on_activate_action(_: *mut c_void, _: *mut glib_sys::GVaria
 pub(super) fn observe() {
     static OBSERVE: Once = Once::new();
     OBSERVE.call_once(|| {
+        watch_screens();
         post(Box::new(|| unsafe {
             let application = gio_sys::g_application_get_default();
             if application.is_null() {
@@ -609,6 +646,83 @@ pub(super) fn observe() {
             gobject_sys::g_object_unref(action.cast());
         }));
     });
+}
+
+fn watch_screens() {
+    let Ok(runtime) = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+    else {
+        return;
+    };
+    let _ = std::thread::Builder::new()
+        .name("screens".into())
+        .spawn(move || {
+            runtime.block_on(async {
+                let _ = tokio::join!(follow_session_lock(), follow_screensaver());
+            })
+        });
+}
+
+// The app runs outside the login session, in its own scope or a service's, so
+// the session is the display of the user the uid names.
+async fn follow_session_lock() -> zbus::Result<()> {
+    let connection = zbus::Connection::system().await?;
+    let manager = zbus::Proxy::new(
+        &connection,
+        LOGIN1,
+        "/org/freedesktop/login1",
+        "org.freedesktop.login1.Manager",
+    )
+    .await?;
+    let user: zbus::zvariant::OwnedObjectPath = manager
+        .call("GetUser", &(unsafe { libc::getuid() }))
+        .await?;
+    let user = zbus::Proxy::new(&connection, LOGIN1, user, "org.freedesktop.login1.User").await?;
+    let (_, session): (String, zbus::zvariant::OwnedObjectPath) =
+        user.get_property("Display").await?;
+    let session = zbus::Proxy::new(
+        &connection,
+        LOGIN1,
+        session,
+        "org.freedesktop.login1.Session",
+    )
+    .await?;
+    let changes = session.receive_property_changed::<bool>("LockedHint").await;
+    let readings = changes.filter_map(|change| async move { change.get().await.ok() });
+    screens::follow(readings, |locked| post_unseen(UNSEEN_LOCKED, locked)).await;
+    Ok(())
+}
+
+// A blanked screen is unseen before any lock, and some desktops never set
+// logind's LockedHint at all.
+async fn follow_screensaver() -> zbus::Result<()> {
+    let connection = zbus::Connection::session().await?;
+    for (name, path, interface) in SCREENSAVERS {
+        let Ok(screensaver) = zbus::Proxy::new(&connection, name, path, interface).await else {
+            continue;
+        };
+        let Ok(changes) = screensaver.receive_signal("ActiveChanged").await else {
+            continue;
+        };
+        let Ok(active) = screensaver.call::<_, _, bool>("GetActive", &()).await else {
+            continue;
+        };
+        let readings =
+            futures_util::stream::once(std::future::ready(active))
+                .chain(changes.filter_map(|message| async move {
+                    message.body().deserialize::<bool>().ok()
+                }));
+        screens::follow(readings, |active| post_unseen(UNSEEN_SCREENSAVER, active)).await;
+        return Ok(());
+    }
+    Ok(())
+}
+
+fn post_unseen(reason: u8, unseen: bool) {
+    post(Box::new(move || {
+        STATE.with(|state| state.set_unseen(reason, unseen))
+    }));
 }
 
 unsafe extern "C" fn on_open_link_action(

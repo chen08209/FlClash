@@ -290,6 +290,26 @@ class RunningVpnOptions extends _$RunningVpnOptions
 /// background; work that only feeds the UI waits for it to come back.
 @Riverpod(keepAlive: true)
 class AppVisible extends _$AppVisible with AutoDisposeNotifierMixin {
+  var _shown = true;
+
+  @override
+  bool build() {
+    ref.listen(screensSeenProvider, (_, _) => _publish());
+    return _shown && ref.read(screensSeenProvider);
+  }
+
+  set shown(bool shown) {
+    _shown = shown;
+    _publish();
+  }
+
+  void _publish() {
+    value = _shown && ref.read(screensSeenProvider);
+  }
+}
+
+@Riverpod(keepAlive: true)
+class ScreensSeen extends _$ScreensSeen with AutoDisposeNotifierMixin {
   @override
   bool build() {
     return true;

@@ -3869,6 +3869,8 @@ impl SseDecode for crate::api::window::WindowSignal {
             10 => crate::api::window::WindowSignal::LifecycleHidden,
             11 => crate::api::window::WindowSignal::LifecycleInactive,
             12 => crate::api::window::WindowSignal::LifecycleResumed,
+            13 => crate::api::window::WindowSignal::ScreensUnseen,
+            14 => crate::api::window::WindowSignal::ScreensSeen,
             _ => unreachable!("Invalid variant for WindowSignal: {}", inner),
         };
     }
@@ -4641,6 +4643,8 @@ impl flutter_rust_bridge::IntoDart for crate::api::window::WindowSignal {
             Self::LifecycleHidden => 10.into_dart(),
             Self::LifecycleInactive => 11.into_dart(),
             Self::LifecycleResumed => 12.into_dart(),
+            Self::ScreensUnseen => 13.into_dart(),
+            Self::ScreensSeen => 14.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -5308,6 +5312,8 @@ impl SseEncode for crate::api::window::WindowSignal {
                 crate::api::window::WindowSignal::LifecycleHidden => 10,
                 crate::api::window::WindowSignal::LifecycleInactive => 11,
                 crate::api::window::WindowSignal::LifecycleResumed => 12,
+                crate::api::window::WindowSignal::ScreensUnseen => 13,
+                crate::api::window::WindowSignal::ScreensSeen => 14,
                 _ => {
                     unimplemented!("");
                 }

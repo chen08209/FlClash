@@ -21,6 +21,12 @@ class _RecordingListener with WindowListener {
 
   @override
   void onWindowActivate() => log.add('activate');
+
+  @override
+  void onWindowScreensUnseen() => log.add('screensUnseen');
+
+  @override
+  void onWindowScreensSeen() => log.add('screensSeen');
 }
 
 class _SelfRemovingListener with WindowListener {
@@ -65,7 +71,9 @@ void main() {
       ..emit(WindowEvent.close)
       ..emit(WindowEvent.geometryChanged)
       ..emit(WindowEvent.shouldTerminate)
-      ..emit(WindowEvent.activate);
+      ..emit(WindowEvent.activate)
+      ..emit(WindowEvent.screensUnseen)
+      ..emit(WindowEvent.screensSeen);
 
     expect(listener.log, [
       'event:close',
@@ -76,6 +84,10 @@ void main() {
       'shouldTerminate',
       'event:activate',
       'activate',
+      'event:screensUnseen',
+      'screensUnseen',
+      'event:screensSeen',
+      'screensSeen',
     ]);
   });
 

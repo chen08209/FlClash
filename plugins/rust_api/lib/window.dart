@@ -23,6 +23,11 @@ enum WindowEvent {
   leaveFullScreen,
   shouldTerminate,
   activate,
+
+  /// The screens went dark or the session locked, whether or not the window
+  /// is shown; a menu bar item can't be seen either.
+  screensUnseen,
+  screensSeen,
 }
 
 /// [bounds] and [workArea] are in the units of [DesktopWindow.getBounds]: on
@@ -66,6 +71,10 @@ abstract mixin class WindowListener {
   void onWindowShouldTerminate() {}
 
   void onWindowActivate() {}
+
+  void onWindowScreensUnseen() {}
+
+  void onWindowScreensSeen() {}
 
   void onWindowEvent(WindowEvent event) {}
 }
@@ -121,6 +130,10 @@ abstract class DesktopWindow {
           listener.onWindowShouldTerminate();
         case WindowEvent.activate:
           listener.onWindowActivate();
+        case WindowEvent.screensUnseen:
+          listener.onWindowScreensUnseen();
+        case WindowEvent.screensSeen:
+          listener.onWindowScreensSeen();
       }
     }
   }

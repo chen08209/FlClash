@@ -1167,12 +1167,63 @@ final class AppVisibleProvider extends $NotifierProvider<AppVisible, bool> {
   }
 }
 
-String _$appVisibleHash() => r'98f3d41169c74da3d8655695627c8e4a5413c73d';
+String _$appVisibleHash() => r'522938ff1950aa9c9707f6c6b67d7b94d3827c1f';
 
 /// False while the window is hidden or the Android activity is in the
 /// background; work that only feeds the UI waits for it to come back.
 
 abstract class _$AppVisible extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ScreensSeen)
+final screensSeenProvider = ScreensSeenProvider._();
+
+final class ScreensSeenProvider extends $NotifierProvider<ScreensSeen, bool> {
+  ScreensSeenProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'screensSeenProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$screensSeenHash();
+
+  @$internal
+  @override
+  ScreensSeen create() => ScreensSeen();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$screensSeenHash() => r'7f7e3b15b35e3f4b72428c060133e873444caa17';
+
+abstract class _$ScreensSeen extends $Notifier<bool> {
   bool build();
   @$mustCallSuper
   @override

@@ -60,6 +60,8 @@ pub enum WindowSignal {
     LifecycleHidden,
     LifecycleInactive,
     LifecycleResumed,
+    ScreensUnseen,
+    ScreensSeen,
 }
 
 #[frb]

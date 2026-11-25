@@ -95,6 +95,16 @@ class _WindowContainerState extends ConsumerState<WindowManager>
     super.onWindowClose();
   }
 
+  @override
+  void onWindowScreensUnseen() {
+    ref.read(screensSeenProvider.notifier).value = false;
+  }
+
+  @override
+  void onWindowScreensSeen() {
+    ref.read(screensSeenProvider.notifier).value = true;
+  }
+
   /// Another launch, or a Dock reopen, asked for the window.
   @override
   void onWindowActivate() {

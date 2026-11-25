@@ -209,4 +209,6 @@ enum WindowSignal {
   lifecycleHidden,
   lifecycleInactive,
   lifecycleResumed,
+  screensUnseen,
+  screensSeen,
 }

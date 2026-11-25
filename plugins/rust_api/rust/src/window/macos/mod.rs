@@ -18,10 +18,12 @@ use objc2_app_kit::{
     NSApplicationWillBecomeActiveNotification, NSApplicationWillResignActiveNotification, NSColor,
     NSEvent, NSFloatingWindowLevel, NSNormalWindowLevel, NSScreen, NSWindow,
     NSWindowCollectionBehavior, NSWindowDelegate, NSWindowStyleMask, NSWindowTitleVisibility,
+    NSWorkspace, NSWorkspaceScreensDidSleepNotification, NSWorkspaceScreensDidWakeNotification,
+    NSWorkspaceSessionDidBecomeActiveNotification, NSWorkspaceSessionDidResignActiveNotification,
 };
 use objc2_foundation::{
-    NSArray, NSNotification, NSNotificationCenter, NSNotificationName, NSObject, NSPoint, NSRect,
-    NSSize, NSString,
+    NSArray, NSDistributedNotificationCenter, NSNotification, NSNotificationCenter,
+    NSNotificationName, NSObject, NSPoint, NSRect, NSSize, NSString,
 };
 use std::cell::{Cell, RefCell};
 use std::sync::Once;
@@ -29,6 +31,9 @@ use std::sync::Once;
 const SHOULD_TERMINATE: &str = "FlClashApplicationShouldTerminate";
 const REOPEN: &str = "FlClashApplicationReopen";
 const OPEN_LINK: &str = "FlClashApplicationOpenLink";
+// Posted by loginwindow; AppKit declares no constant for them.
+const SCREEN_LOCKED: &str = "com.apple.screenIsLocked";
+const SCREEN_UNLOCKED: &str = "com.apple.screenIsUnlocked";
 const SHOW_ACTIVATION_WAIT_NANOSECONDS: i64 = 500_000_000;
 const SPACE_BEHAVIOR_RESTORE_NANOSECONDS: i64 = 200_000_000;
 
@@ -115,6 +120,36 @@ define_class!(
             });
         }
 
+        #[unsafe(method(screensSlept:))]
+        fn screens_slept(&self, _notification: &NSNotification) {
+            STATE.with(|state| state.set_unseen(UNSEEN_SCREENS_ASLEEP, true));
+        }
+
+        #[unsafe(method(screensWoke:))]
+        fn screens_woke(&self, _notification: &NSNotification) {
+            STATE.with(|state| state.set_unseen(UNSEEN_SCREENS_ASLEEP, false));
+        }
+
+        #[unsafe(method(sessionResigned:))]
+        fn session_resigned(&self, _notification: &NSNotification) {
+            STATE.with(|state| state.set_unseen(UNSEEN_SESSION_AWAY, true));
+        }
+
+        #[unsafe(method(sessionActivated:))]
+        fn session_activated(&self, _notification: &NSNotification) {
+            STATE.with(|state| state.set_unseen(UNSEEN_SESSION_AWAY, false));
+        }
+
+        #[unsafe(method(screenLocked:))]
+        fn screen_locked(&self, _notification: &NSNotification) {
+            STATE.with(|state| state.set_unseen(UNSEEN_SCREEN_LOCKED, true));
+        }
+
+        #[unsafe(method(screenUnlocked:))]
+        fn screen_unlocked(&self, _notification: &NSNotification) {
+            STATE.with(|state| state.set_unseen(UNSEEN_SCREEN_LOCKED, false));
+        }
+
         #[unsafe(method(applicationDidBecomeActive:))]
         fn application_did_become_active(&self, _notification: &NSNotification) {
             STATE.with(State::finish_show);
@@ -142,6 +177,10 @@ define_class!(
     }
 );
 
+const UNSEEN_SCREENS_ASLEEP: u8 = 1;
+const UNSEEN_SESSION_AWAY: u8 = 1 << 1;
+const UNSEEN_SCREEN_LOCKED: u8 = 1 << 2;
+
 #[derive(Clone, Copy)]
 struct Style {
     title_bar_hidden: bool,
@@ -162,6 +201,7 @@ struct State {
     show_pending: Cell<bool>,
     active: Cell<bool>,
     reported_hidden: Cell<bool>,
+    unseen: Cell<u8>,
     geometry_generation: Cell<u64>,
 }
 
@@ -184,6 +224,7 @@ thread_local! {
             show_pending: Cell::new(false),
             active: Cell::new(false),
             reported_hidden: Cell::new(false),
+            unseen: Cell::new(0),
             geometry_generation: Cell::new(0),
         }
     };
@@ -295,6 +336,26 @@ impl State {
                 }
             });
         });
+    }
+
+    // A sleeping display or a locked session leaves the window visible to
+    // AppKit, so the engine's lifecycle would report it shown; the app hears
+    // of the screens separately.
+    fn set_unseen(&self, reason: u8, unseen: bool) {
+        let before = self.unseen.get();
+        let after = if unseen {
+            before | reason
+        } else {
+            before & !reason
+        };
+        self.unseen.set(after);
+        if (before == 0) != (after == 0) {
+            emit(if after == 0 {
+                WindowSignal::ScreensSeen
+            } else {
+                WindowSignal::ScreensUnseen
+            });
+        }
     }
 
     // Back without another activation change, the window would wait on an
@@ -411,6 +472,42 @@ pub(super) fn observe() {
                     &NSString::from_str(SHOULD_TERMINATE),
                 );
                 observe(sel!(reopen:), &NSString::from_str(REOPEN));
+
+                let workspace = NSWorkspace::sharedWorkspace().notificationCenter();
+                let observe_workspace = |selector, name: &NSNotificationName| unsafe {
+                    workspace.addObserver_selector_name_object(
+                        &delegate,
+                        selector,
+                        Some(name),
+                        None,
+                    )
+                };
+                observe_workspace(sel!(screensSlept:), unsafe {
+                    NSWorkspaceScreensDidSleepNotification
+                });
+                observe_workspace(sel!(screensWoke:), unsafe {
+                    NSWorkspaceScreensDidWakeNotification
+                });
+                observe_workspace(sel!(sessionResigned:), unsafe {
+                    NSWorkspaceSessionDidResignActiveNotification
+                });
+                observe_workspace(sel!(sessionActivated:), unsafe {
+                    NSWorkspaceSessionDidBecomeActiveNotification
+                });
+                let distributed = NSDistributedNotificationCenter::defaultCenter();
+                for (selector, name) in [
+                    (sel!(screenLocked:), SCREEN_LOCKED),
+                    (sel!(screenUnlocked:), SCREEN_UNLOCKED),
+                ] {
+                    unsafe {
+                        distributed.addObserver_selector_name_object(
+                            &delegate,
+                            selector,
+                            Some(&NSString::from_str(name)),
+                            None,
+                        );
+                    }
+                }
             });
         });
     });

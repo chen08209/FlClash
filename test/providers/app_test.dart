@@ -168,6 +168,40 @@ void main() {
     });
   });
 
+  group('AppVisible provider', () {
+    bool visible() => container.read(appVisibleProvider);
+
+    void setShown(bool shown) =>
+        container.read(appVisibleProvider.notifier).shown = shown;
+
+    void setScreensSeen(bool seen) =>
+        container.read(screensSeenProvider.notifier).value = seen;
+
+    test('a shown window on lit screens is visible', () {
+      expect(visible(), isTrue);
+      setShown(false);
+      expect(visible(), isFalse);
+      setShown(true);
+      expect(visible(), isTrue);
+    });
+
+    test('dark screens hide a shown window until they light up', () {
+      setScreensSeen(false);
+      expect(visible(), isFalse);
+      setShown(true);
+      expect(visible(), isFalse, reason: 'the engine still calls it shown');
+      setScreensSeen(true);
+      expect(visible(), isTrue);
+    });
+
+    test('lit screens leave a hidden window hidden', () {
+      setShown(false);
+      setScreensSeen(false);
+      setScreensSeen(true);
+      expect(visible(), isFalse);
+    });
+  });
+
   group('ViewSize provider', () {
     test('default is zero', () {
       expect(container.read(viewSizeProvider), Size.zero);
