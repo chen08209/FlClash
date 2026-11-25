@@ -91,6 +91,37 @@ void main() {
     expect(find.text('Page'), findsNothing);
   });
 
+  testWidgets('ListItem.open builds its page only once it opens', (
+    tester,
+  ) async {
+    var built = 0;
+    await tester.pumpWidget(
+      TestApp(
+        overrides: [_viewSizeOverride],
+        child: HostScaffold(
+          body: generateSection(
+            items: [
+              ListItem.open(
+                title: const Text('Lazy'),
+                builder: (_) {
+                  built++;
+                  return const Text('Page');
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(built, 0);
+
+    await tester.tap(find.text('Lazy'));
+    await tester.pumpAndSettle();
+    expect(find.text('Page'), findsOneWidget);
+    expect(built, greaterThan(0));
+  });
+
   testWidgets('ListItem takes the grouped card inside a V3 section', (
     tester,
   ) async {

@@ -438,7 +438,7 @@ class MitmModuleView extends ConsumerWidget {
         return ListItem.open(
           title: Text(title),
           subtitle: Text([count, ?note].join('\n')),
-          widget: _MitmModuleLinesView(
+          builder: (_) => _MitmModuleLinesView(
             title: title,
             lines: [for (final line in lines) (line, issues[line])],
             views: views,
@@ -734,7 +734,7 @@ class MitmModuleView extends ConsumerWidget {
                                 content.skipped.length,
                               ),
                             ),
-                            widget: _MitmModuleLinesView(
+                            builder: (_) => _MitmModuleLinesView(
                               title: appLocalizations.mitmIgnoredLines,
                               notes: true,
                               lines: [

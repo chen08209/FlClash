@@ -28,18 +28,22 @@ final class _CheckboxAction extends _ListItemAction {
 }
 
 final class _OpenAction extends _ListItemAction {
-  final Widget widget;
+  final Widget? widget;
+  final WidgetBuilder? builder;
   final ValueChanged<dynamic>? onChanged;
 
   final bool forceFull;
   final bool enabled;
 
   const _OpenAction({
-    required this.widget,
+    this.widget,
+    this.builder,
     this.onChanged,
     required this.forceFull,
     required this.enabled,
-  });
+  }) : assert((widget == null) != (builder == null));
+
+  Widget buildPage(BuildContext context) => widget ?? builder!(context);
 }
 
 final class _OptionsAction<T> extends _ListItemAction {
@@ -114,7 +118,8 @@ class ListItem<T> extends StatelessWidget {
     this.leading,
     this.padding,
     this.trailing,
-    required Widget widget,
+    Widget? widget,
+    WidgetBuilder? builder,
     ValueChanged<dynamic>? onChanged,
     bool forceFull = true,
     bool enabled = true,
@@ -122,8 +127,10 @@ class ListItem<T> extends StatelessWidget {
     this.minTileHeight,
     this.minVerticalPadding,
     this.alignment = ListRowAlignment.center,
-  }) : _action = _OpenAction(
+  }) : assert((widget == null) != (builder == null)),
+       _action = _OpenAction(
          widget: widget,
+         builder: builder,
          onChanged: onChanged,
          forceFull: forceFull,
          enabled: enabled,
@@ -297,7 +304,6 @@ class ListItem<T> extends StatelessWidget {
     final position = ItemPositionProvider.of(context)?.position;
     switch (_action) {
       case final _OpenAction openDelegate:
-        final child = openDelegate.widget;
         final onChanged = openDelegate.onChanged;
         if (!openDelegate.enabled) {
           // Dimmed as a disabled Switch draws its thumb; the row's text stays as it is.
@@ -323,7 +329,7 @@ class ListItem<T> extends StatelessWidget {
               final result = await showNestedExtend<dynamic>(
                 context,
                 props: ExtendProps(forceFull: openDelegate.forceFull),
-                builder: (_) => child,
+                builder: openDelegate.buildPage,
               );
               onChanged?.call(result);
             },
@@ -344,8 +350,8 @@ class ListItem<T> extends StatelessWidget {
             );
           },
           onClosed: onChanged,
-          openBuilder: (_, action) {
-            return child;
+          openBuilder: (context, action) {
+            return openDelegate.buildPage(context);
           },
         );
       case final _OptionsAction options:
