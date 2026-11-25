@@ -806,52 +806,64 @@ class MitmModuleView extends ConsumerWidget {
                                 last: content == null && networkChanges.isEmpty,
                               ),
                             ),
-                          if (content != null)
-                            generateSliverSection(
-                              title: appLocalizations.arguments,
-                              items: content.read.arguments,
-                              itemBuilder: (argument) =>
-                                  _argumentItem(ref, module, argument),
-                              footer: _argumentsFooter(content),
-                            ),
-                          if (resources.isNotEmpty)
-                            generateSliverSection<MitmModuleResourceStatus?>(
-                              title: appLocalizations.mitmResources,
-                              items: [...resources, null],
-                              itemBuilder: (resource) => resource == null
-                                  ? _fetchResourcesItem(context, ref, module)
-                                  : _resourceItem(context, resource),
-                            ),
-                          generateSliverSection(
-                            title: appLocalizations.mitmNetworkChanges,
-                            items: networkChanges,
-                            itemBuilder: (state) =>
-                                _networkItem(context, state),
-                            footer: appLocalizations.mitmNetworkRisk,
-                            last: content == null,
-                          ),
-                          if (content != null)
-                            SliverToBoxAdapter(
-                              child: MemoBuilder(
-                                inputs: [
-                                  content,
-                                  module.enabled,
-                                  for (final rule
-                                      in status?.refusedRules ??
-                                          const <MitmRefusedRule>[]) ...[
-                                    rule.line,
-                                    rule.detail,
-                                  ],
-                                ],
-                                builder: (context) => _rulesSection(
-                                  context,
-                                  ref,
-                                  module,
-                                  content,
-                                  status,
+                          NextFrame.sliver(
+                            child: SliverMainAxisGroup(
+                              slivers: [
+                                if (content != null)
+                                  generateSliverSection(
+                                    title: appLocalizations.arguments,
+                                    items: content.read.arguments,
+                                    itemBuilder: (argument) =>
+                                        _argumentItem(ref, module, argument),
+                                    footer: _argumentsFooter(content),
+                                  ),
+                                if (resources.isNotEmpty)
+                                  generateSliverSection<
+                                    MitmModuleResourceStatus?
+                                  >(
+                                    title: appLocalizations.mitmResources,
+                                    items: [...resources, null],
+                                    itemBuilder: (resource) => resource == null
+                                        ? _fetchResourcesItem(
+                                            context,
+                                            ref,
+                                            module,
+                                          )
+                                        : _resourceItem(context, resource),
+                                  ),
+                                generateSliverSection(
+                                  title: appLocalizations.mitmNetworkChanges,
+                                  items: networkChanges,
+                                  itemBuilder: (state) =>
+                                      _networkItem(context, state),
+                                  footer: appLocalizations.mitmNetworkRisk,
+                                  last: content == null,
                                 ),
-                              ),
+                                if (content != null)
+                                  SliverToBoxAdapter(
+                                    child: MemoBuilder(
+                                      inputs: [
+                                        content,
+                                        module.enabled,
+                                        for (final rule
+                                            in status?.refusedRules ??
+                                                const <MitmRefusedRule>[]) ...[
+                                          rule.line,
+                                          rule.detail,
+                                        ],
+                                      ],
+                                      builder: (context) => _rulesSection(
+                                        context,
+                                        ref,
+                                        module,
+                                        content,
+                                        status,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
+                          ),
                         ],
                       ),
                     ),
