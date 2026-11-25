@@ -92,6 +92,7 @@ void main() {
         () => mocks.api.watchTraffic(
           intervalMs: any(named: 'intervalMs'),
           onlyProxy: any(named: 'onlyProxy'),
+          changesOnly: any(named: 'changesOnly'),
         ),
       ).thenAnswer((_) => feed.stream);
     }
@@ -109,7 +110,9 @@ void main() {
           .read(appSettingProvider.notifier)
           .update((state) => state.copyWith(onlyStatisticsProxy: true));
 
-      container.read(commonActionProvider.notifier).setTrafficFeed(true);
+      container
+          .read(commonActionProvider.notifier)
+          .setTrafficFeed(TrafficFeed.everySecond);
       feed.add(
         const TrafficSample(up: 10, down: 20, totalUp: 100, totalDown: 200),
       );
@@ -122,14 +125,20 @@ void main() {
         const Traffic(up: 100, down: 200),
       );
       verify(
-        () => mocks.api.watchTraffic(intervalMs: 1000, onlyProxy: true),
+        () => mocks.api.watchTraffic(
+          intervalMs: 1000,
+          onlyProxy: true,
+          changesOnly: false,
+        ),
       ).called(1);
     });
 
     test('does not subscribe while the core is not connected', () async {
       final container = buildFeedContainer(connected: false);
 
-      container.read(commonActionProvider.notifier).setTrafficFeed(true);
+      container
+          .read(commonActionProvider.notifier)
+          .setTrafficFeed(TrafficFeed.everySecond);
       await pumpEventQueue();
 
       expect(feed.hasListener, isFalse);
@@ -144,11 +153,11 @@ void main() {
       final container = buildFeedContainer();
       final action = container.read(commonActionProvider.notifier);
 
-      action.setTrafficFeed(true);
+      action.setTrafficFeed(TrafficFeed.everySecond);
       await pumpEventQueue();
       expect(feed.hasListener, isTrue);
 
-      action.setTrafficFeed(false);
+      action.setTrafficFeed(TrafficFeed.off);
       await pumpEventQueue();
       expect(feed.hasListener, isFalse);
     });
@@ -158,34 +167,69 @@ void main() {
       final action = container.read(commonActionProvider.notifier);
 
       action
-        ..setTrafficFeed(true)
-        ..setTrafficFeed(true);
+        ..setTrafficFeed(TrafficFeed.everySecond)
+        ..setTrafficFeed(TrafficFeed.everySecond);
 
       verify(
         () => mocks.api.watchTraffic(
           intervalMs: any(named: 'intervalMs'),
           onlyProxy: any(named: 'onlyProxy'),
+          changesOnly: any(named: 'changesOnly'),
         ),
       ).called(1);
     });
 
+    test('a feed of changes asks for changed samples only, and moving '
+        'between feeds subscribes again', () async {
+      final container = buildFeedContainer();
+      final action = container.read(commonActionProvider.notifier);
+
+      action.setTrafficFeed(TrafficFeed.changesOnly);
+      verify(
+        () => mocks.api.watchTraffic(
+          intervalMs: 1000,
+          onlyProxy: any(named: 'onlyProxy'),
+          changesOnly: true,
+        ),
+      ).called(1);
+
+      action.setTrafficFeed(TrafficFeed.everySecond);
+      verify(
+        () => mocks.api.watchTraffic(
+          intervalMs: 1000,
+          onlyProxy: any(named: 'onlyProxy'),
+          changesOnly: false,
+        ),
+      ).called(1);
+      await pumpEventQueue();
+      expect(feed.hasListener, isTrue);
+    });
+
     test('resubscribes with the new filter when it changes', () async {
       final container = buildFeedContainer();
-      container.read(commonActionProvider.notifier).setTrafficFeed(true);
+      container
+          .read(commonActionProvider.notifier)
+          .setTrafficFeed(TrafficFeed.everySecond);
 
       container
           .read(appSettingProvider.notifier)
           .update((state) => state.copyWith(onlyStatisticsProxy: true));
 
       verify(
-        () => mocks.api.watchTraffic(intervalMs: 1000, onlyProxy: true),
+        () => mocks.api.watchTraffic(
+          intervalMs: 1000,
+          onlyProxy: true,
+          changesOnly: false,
+        ),
       ).called(1);
     });
 
     test('keeps the total untouched when the feed fails', () async {
       final container = buildFeedContainer();
       final before = container.read(totalTrafficProvider);
-      container.read(commonActionProvider.notifier).setTrafficFeed(true);
+      container
+          .read(commonActionProvider.notifier)
+          .setTrafficFeed(TrafficFeed.everySecond);
 
       feed.addError(StateError('core down'));
       await pumpEventQueue();

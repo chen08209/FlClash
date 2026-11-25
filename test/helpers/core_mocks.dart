@@ -54,6 +54,7 @@ void stubSilentFeeds(MockCoreApi api) {
     () => api.watchTraffic(
       intervalMs: any(named: 'intervalMs'),
       onlyProxy: any(named: 'onlyProxy'),
+      changesOnly: any(named: 'changesOnly'),
     ),
   ).thenAnswer((_) => const Stream.empty());
 }

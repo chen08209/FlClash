@@ -675,14 +675,14 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 1100));
 
         expect(container.read(runTimeProvider), greaterThan(initialRunTime));
-        expect(commonAction.trafficFeeds.last, isTrue);
+        expect(commonAction.trafficFeeds.last, TrafficFeed.everySecond);
 
         startCompleter.complete(true);
         await startFuture;
 
         expect(action.transitions, [true]);
         await action.setRunning(false);
-        expect(commonAction.trafficFeeds.last, isFalse);
+        expect(commonAction.trafficFeeds.last, TrafficFeed.off);
       });
 
       test('serializes listener changes while latest start owns UI', () async {
@@ -1215,11 +1215,11 @@ class _InitializingSetupAction extends _RaceSetupAction {
 }
 
 class _RaceCommonAction extends CommonAction {
-  final trafficFeeds = <bool>[];
+  final trafficFeeds = <TrafficFeed>[];
 
   @override
-  void setTrafficFeed(bool wanted) {
-    trafficFeeds.add(wanted);
+  void setTrafficFeed(TrafficFeed feed) {
+    trafficFeeds.add(feed);
   }
 }
 

@@ -271,7 +271,11 @@ abstract interface class CoreApi {
 
   Future<void> updateGeo(String kind);
 
-  Stream<TrafficSample> watchTraffic({int? intervalMs, bool onlyProxy = false});
+  Stream<TrafficSample> watchTraffic({
+    int? intervalMs,
+    bool onlyProxy = false,
+    bool changesOnly = false,
+  });
 
   Future<void> resetTraffic();
 
@@ -293,7 +297,9 @@ abstract interface class CoreApi {
 
   Stream<List<LogEntry>> watchLogs({LogLevel level = LogLevel.debug});
 
-  Stream<List<DnsEntry>> watchDns();
+  /// Each batch with how many queries the Core dropped before it, which a
+  /// paused or slow reader loses past the Core's queue.
+  Stream<({List<DnsEntry> entries, int dropped})> watchDns();
 
   Stream<RouteStampDto> watchRoute();
 

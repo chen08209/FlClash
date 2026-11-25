@@ -209,6 +209,24 @@ class CoreClientTest {
     }
 
     @Test
+    fun `a traffic watch asks for changes only and starts from the snapshot`() {
+        val core =
+            FakeCore { method, _ ->
+                if (method == "traffic.watch") """"result":{"sub":7,"snapshot":{"up":5,"down":6}}""" else RESULT
+            }
+        val seen = mutableListOf<Pair<Long, Long>>()
+
+        CoreClient(core).watchTraffic(onlyProxy = true, onLost = {}) { up, down -> seen.add(up to down) }
+        core.push("""{"jsonrpc":"2.0","method":"${'$'}/event","params":{"sub":7,"seq":1,"data":[{"up":0,"down":0}]}}""")
+
+        assertEquals(listOf(5L to 6L, 0L to 0L), seen)
+        val params = core.sent.first { it.get("method").asString == "traffic.watch" }.getAsJsonObject("params")
+        assertTrue(params.get("changesOnly").asBoolean)
+        assertTrue(params.get("onlyProxy").asBoolean)
+        assertEquals(1000, params.get("intervalMs").asInt)
+    }
+
+    @Test
     fun `a snapshot cancels the subscription it opened`() {
         val core = FakeCore { _, _ -> OPENED }
         val client = CoreClient(core)

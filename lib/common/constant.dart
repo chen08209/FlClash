@@ -219,9 +219,9 @@ const profilesStoreKey = PageStorageKey<String>('profiles');
 
 const defaultPrimaryColor = 0xFF007AFF;
 
-const maxLogsLength = 5000;
+const maxLogsLength = 1024;
 const maxRequestsLength = 2000;
-const maxDnsQueriesLength = 3000;
+const maxDnsQueriesLength = 1024;
 const pausedMaxLogsLength = maxLogsLength * 2;
 const pausedMaxDnsQueriesLength = maxDnsQueriesLength * 2;
 

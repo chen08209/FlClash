@@ -123,8 +123,9 @@ final Map<String, _Call> _calls = {
   'rule.list': (api) => api.ruleList(),
   'ruleSet.compile': (api) => api.compileRuleSet('r', url: 'http://u'),
   'geo.update': (api) => api.updateGeo('geoip'),
-  'traffic.watch': (api) =>
-      _first(api.watchTraffic(intervalMs: 1000, onlyProxy: true)),
+  'traffic.watch': (api) => _first(
+    api.watchTraffic(intervalMs: 1000, onlyProxy: true, changesOnly: true),
+  ),
   'traffic.reset': (api) => api.resetTraffic(),
   'connection.watch': (api) => _first(api.watchConnections(maxBatchMs: 250)),
   'connection.close': (api) async {

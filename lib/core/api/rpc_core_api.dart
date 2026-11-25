@@ -359,13 +359,19 @@ final class RpcCoreApi implements CoreApi {
   Stream<TrafficSample> watchTraffic({
     int? intervalMs,
     bool onlyProxy = false,
+    bool changesOnly = false,
   }) {
     return client
         .watch<TrafficSample, TrafficSample>(
           'traffic.watch',
-          params: {'intervalMs': ?intervalMs, 'onlyProxy': onlyProxy},
+          params: {
+            'intervalMs': ?intervalMs,
+            'onlyProxy': onlyProxy,
+            if (changesOnly) 'changesOnly': true,
+          },
           decodeSnapshot: (r) => TrafficSample.fromJson(_object(r)),
           decodeEvent: TrafficSample.fromJson,
+          maxBatchMs: 0,
         )
         .expand((frame) => [?frame.snapshot, ...frame.events]);
   }
@@ -428,11 +434,11 @@ final class RpcCoreApi implements CoreApi {
   }
 
   @override
-  Stream<List<DnsEntry>> watchDns() {
+  Stream<({List<DnsEntry> entries, int dropped})> watchDns() {
     return client
         .watch<Object?, DnsEntry>('dns.watch', decodeEvent: DnsEntry.fromJson)
-        .map((frame) => frame.events)
-        .where((events) => events.isNotEmpty);
+        .where((frame) => frame.events.isNotEmpty || frame.dropped > 0)
+        .map((frame) => (entries: frame.events, dropped: frame.dropped));
   }
 
   @override

@@ -18,22 +18,13 @@ import 'package:prism_ui/banner.dart';
 class CoreManager extends ConsumerStatefulWidget {
   final Widget child;
 
-  /// Whether the connection feed stops being read while the app is out of
-  /// sight. The platform decides when this is null.
-  final bool? pausesInBackground;
-
-  const CoreManager({
-    super.key,
-    required this.child,
-    @visibleForTesting this.pausesInBackground,
-  });
+  const CoreManager({super.key, required this.child});
 
   @override
   ConsumerState<CoreManager> createState() => _CoreContainerState();
 }
 
-class _CoreContainerState extends ConsumerState<CoreManager>
-    with WidgetsBindingObserver {
+class _CoreContainerState extends ConsumerState<CoreManager> {
   CoreController get _core => ref.read(coreHandlerProvider);
 
   late final CounterDemand _demand = ref.read(connectionBookProvider).demand;
@@ -41,13 +32,13 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   final _feeds = <String, StreamSubscription<Object?>>{};
   StreamSubscription<String>? _crashes;
   bool _away = false;
+  var _shownSince = 0;
 
-  bool get _pausesInBackground => widget.pausesInBackground ?? system.isAndroid;
+  static const _pausedAway = ['connections', 'counters', 'dns', 'logs'];
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _demand.addListener(_syncConnectionCounters);
     _crashes = _core.crashes.listen(_onCrash);
     ref.read(updatingActionProvider.notifier);
@@ -101,6 +92,11 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         _syncLogFeed();
       }
     });
+    ref.listenManual(
+      appVisibleProvider,
+      (_, visible) => _setAway(!visible),
+      fireImmediately: true,
+    );
     ref.listenManual(coreStatusProvider, (prev, next) {
       if (next == CoreStatus.connected && prev != CoreStatus.connected) {
         _openFeeds();
@@ -126,6 +122,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         logLevel: coreFailureLogLevel(error),
       ),
     );
+    if (_away && _pausedAway.contains(name)) {
+      _feeds[name]!.pause();
+    }
   }
 
   void _openFeeds() {
@@ -134,13 +133,13 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     ref.read(connectionBookProvider).clear();
     ref.read(requestsProvider.notifier).startOver();
     ref.read(dnsQueriesProvider.notifier).startOver();
-    _feed('dns', api.watchDns(), (entries) {
+    _feed('dns', api.watchDns(), (batch) {
       ref
           .read(dnsQueriesProvider.notifier)
-          .addQueries(entries.map(dnsQueryOf).toList());
+          .addQueries(batch.entries.map(dnsQueryOf).toList());
       ref
           .read(dnsQueryCountProvider.notifier)
-          .update((count) => count + entries.length);
+          .update((count) => count + batch.entries.length + batch.dropped);
     });
     _sync
       ..reset()
@@ -165,9 +164,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       _core.api.watchConnections(maxBatchMs: 250, counters: false),
       _onConnections,
     );
-    if (_away) {
-      _feeds['connections']?.pause();
-    }
     _syncConnectionCounters();
   }
 
@@ -185,22 +181,17 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       _core.api.watchConnections(maxBatchMs: 250, counters: true),
       _onCounters,
     );
-    if (_away) {
-      _feeds['counters']?.pause();
-    }
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    final away =
-        _pausesInBackground &&
-        (state == AppLifecycleState.paused ||
-            state == AppLifecycleState.hidden);
+  void _setAway(bool away) {
     if (away == _away) {
       return;
     }
     _away = away;
-    for (final name in const ['connections', 'counters']) {
+    if (!away) {
+      _shownSince = DateTime.now().millisecondsSinceEpoch;
+    }
+    for (final name in _pausedAway) {
       if (away) {
         _feeds[name]?.pause();
       } else {
@@ -222,7 +213,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     }
     if (ref.read(appSettingProvider).openLogs) {
       _feed('logs', _core.api.watchLogs(), (entries) {
-        entries.map(logOf).forEach(_onLog);
+        for (final entry in entries) {
+          _onLog(logOf(entry), announce: entry.time >= _shownSince);
+        }
       });
     } else {
       unawaited(_feeds.remove('logs')?.cancel());
@@ -231,7 +224,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _demand.removeListener(_syncConnectionCounters);
     unawaited(_crashes?.cancel());
     _closeFeeds();
@@ -362,9 +354,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     ref.read(providersProvider.notifier).setProvider(provider);
   }
 
-  void _onLog(Log log) {
+  void _onLog(Log log, {required bool announce}) {
     ref.read(logsProvider.notifier).add(log);
-    if (log.logLevel == LogLevel.error) {
+    if (announce && log.logLevel == LogLevel.error) {
       throttler.call(
         FunctionTag.coreErrorNotifier,
         () => dialogs.showBanner(log.payload, level: BannerLevel.error),

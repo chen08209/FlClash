@@ -18,14 +18,15 @@ import com.follow.clash.common.startForeground
 import com.follow.clash.common.toPendingIntent
 import com.follow.clash.service.R
 import com.follow.clash.service.ServiceConfig
-import com.follow.clash.service.TrafficMeter
-import com.follow.clash.service.whileScreenOn
+import com.follow.clash.service.idleSpeedText
+import com.follow.clash.service.speedTexts
 import com.follow.clash.service.models.NotificationParams
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -37,22 +38,21 @@ private data class ExtendedNotificationParams(
     val contentText: String,
 )
 
-private fun NotificationParams.extended(meter: TrafficMeter) = ExtendedNotificationParams(
+private fun NotificationParams.extended(speedText: String) = ExtendedNotificationParams(
     title,
     stopText,
     showStopAction,
-    meter.speedText(onlyStatisticsProxy),
+    speedText,
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class NotificationModule(
     private val service: Service,
     private val scope: CoroutineScope,
 ) : ServiceModule {
-    private val meter = TrafficMeter()
-
     override fun start() {
         service.ensureNotificationChannel()
-        update(ServiceConfig.notificationParams.value.extended(meter))
+        update(ServiceConfig.notificationParams.value.extended(idleSpeedText))
         scope.launch {
             // Some ROMs, vivo's among them, drop updates posted behind the
             // keyguard, so unlocking restarts the loop to post once more.
@@ -66,18 +66,14 @@ internal class NotificationModule(
                 intent.action != Intent.ACTION_SCREEN_OFF
             }.onStart {
                 emit(isScreenOn())
-            }.whileScreenOn(meter) {
-                combine(
-                    flow {
-                        while (true) {
-                            delay(1_000)
-                            emit(Unit)
-                        }
-                    },
-                    ServiceConfig.notificationParams,
-                ) { _, params ->
-                    params.extended(meter)
-                }.distinctUntilChanged()
+            }.collectLatest { screenOn ->
+                if (!screenOn) return@collectLatest
+                val params = ServiceConfig.notificationParams
+                params.map { it.onlyStatisticsProxy }
+                    .distinctUntilChanged()
+                    .flatMapLatest(::speedTexts)
+                    .combine(params) { speedText, current -> current.extended(speedText) }
+                    .distinctUntilChanged()
                     .collect(::update)
             }
         }
@@ -125,7 +121,6 @@ internal class NotificationModule(
 
     @Suppress("DEPRECATION")
     override fun stop() {
-        meter.close()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             service.stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
