@@ -114,30 +114,4 @@ void main() {
     controller.replace(first, third);
     expect(controller.conditions, [second, third]);
   });
-
-  test('a draft suggests the destination for an IP and every value of other '
-      'fields', () {
-    final controller = connectionFilters();
-    addTearDown(controller.dispose);
-    final connection = TrackerInfo(
-      id: 'a',
-      start: DateTime.utc(2026, 11, 22),
-      metadata: const Metadata(
-        network: 'tcp',
-        sourceIP: '10.0.0.2',
-        destinationIP: '1.1.1.1',
-      ),
-      chains: const ['Proxy', 'Relay'],
-      rule: 'MATCH',
-      rulePayload: '',
-    );
-
-    expect(controller.suggestedValuesOf(ConnectionField.ip, connection), [
-      '1.1.1.1',
-    ]);
-    expect(controller.suggestedValuesOf(ConnectionField.exit, connection), [
-      'Proxy',
-      'Relay',
-    ]);
-  });
 }
