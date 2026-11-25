@@ -23,6 +23,8 @@ void main() {
     return path;
   }
 
+  Object macosOnly(String reason) => Platform.isMacOS ? false : reason;
+
   String? markerOf(String app) {
     final file = File(p.join(app, 'Contents', 'marker'));
     return file.existsSync() ? file.readAsStringSync() : null;
@@ -186,7 +188,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 100));
     }
     expect(markerOf(bundle), 'new');
-  });
+  }, skip: macosOnly('install runs the swap script on the inherited PATH'));
 
   group('swap script', () {
     late String folder;
@@ -196,6 +198,12 @@ void main() {
     late String opened;
     late String opener;
     late String fakeBin;
+
+    Future<void> fakeCommand(String name, String body) async {
+      final command = p.join(fakeBin, name);
+      await File(command).writeAsString('#!/bin/sh\n$body\n');
+      await Process.run('chmod', ['+x', command]);
+    }
 
     setUp(() async {
       folder = p.join(temp.path, 'Applications');
@@ -209,6 +217,9 @@ void main() {
       opener = await writeOpener(opened);
       fakeBin = p.join(temp.path, 'bin');
       await Directory(fakeBin).create();
+      if (!Platform.isMacOS) {
+        await fakeCommand('ditto', 'exec cp -R "\$1" "\$2"');
+      }
     });
 
     Future<int> exitedPid() async {
@@ -217,15 +228,11 @@ void main() {
       return process.pid;
     }
 
-    Future<void> refuseMv(String sources) async {
-      final mv = p.join(fakeBin, 'mv');
-      await File(mv).writeAsString(
-        '#!/bin/sh\n'
-        'case "\$1" in $sources) echo "mv: refused" >&2; exit 1 ;; esac\n'
-        'exec /bin/mv "\$@"\n',
-      );
-      await Process.run('chmod', ['+x', mv]);
-    }
+    Future<void> refuseMv(String sources) => fakeCommand(
+      'mv',
+      'case "\$1" in $sources) echo "mv: refused" >&2; exit 1 ;; esac\n'
+          'exec /bin/mv "\$@"',
+    );
 
     Future<ProcessResult> swap({int? pid, int ticks = 300}) async {
       return Process.run(
@@ -354,7 +361,7 @@ void main() {
         expect(openedApp(), app);
         final failure = await takeMacosInstallFailure(marker);
         expect(failure?.reason, 'the app did not exit');
-      });
+      }, skip: macosOnly('only macOS ps names a process by its executable'));
 
       test('swaps once its pid belongs to another program', () async {
         running = await Process.start('/bin/sleep', ['30']);
