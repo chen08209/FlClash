@@ -297,7 +297,7 @@ final class IconSetsProvider
   IconSets create() => IconSets();
 }
 
-String _$iconSetsHash() => r'fe06735ac9d8c8968278e163a3fcd5a3c0deb1d9';
+String _$iconSetsHash() => r'156404c618b212fea961e9e108b3db1d3e17e2d1';
 
 abstract class _$IconSets extends $StreamNotifier<List<IconSet>> {
   Stream<List<IconSet>> build();
@@ -341,7 +341,7 @@ final class GlobalRulesProvider
   GlobalRules create() => GlobalRules();
 }
 
-String _$globalRulesHash() => r'bde720c56b4914d6fc0190be3a80594840b21e47';
+String _$globalRulesHash() => r'44b89f90ca1499f7ea7a0344206fe16d38deeffb';
 
 abstract class _$GlobalRules extends $StreamNotifier<List<Rule>> {
   Stream<List<Rule>> build();
@@ -476,7 +476,7 @@ final class ProfileRulesProvider
   }
 }
 
-String _$profileRulesHash() => r'25bf8e4d02ca185036a27c951da9ca6b32422dc6';
+String _$profileRulesHash() => r'f13b77c76b86f66a99953b2854024acf33454f7b';
 
 /// What the standard extension adds to a profile, or a custom profile's rules.
 
@@ -571,7 +571,7 @@ final class ProxyGroupsProvider
   }
 }
 
-String _$proxyGroupsHash() => r'4bf2d9e4c3c1e56fa03b91fbef29c898f6f2b052';
+String _$proxyGroupsHash() => r'06c102cc212c13fce70b2e19d51250b230e9e54e';
 
 final class ProxyGroupsFamily extends $Family
     with
@@ -644,7 +644,7 @@ final class CustomProxiesProvider
   CustomProxies create() => CustomProxies();
 }
 
-String _$customProxiesHash() => r'77e62a3276ffd7ca1d05f656199049570fb0c73a';
+String _$customProxiesHash() => r'0bdcc748c64b67914741a6db78536296cadd9f84';
 
 abstract class _$CustomProxies extends $StreamNotifier<List<CustomProxy>> {
   Stream<List<CustomProxy>> build();
@@ -798,7 +798,7 @@ final class ProfileDisabledRuleIdsProvider
 }
 
 String _$profileDisabledRuleIdsHash() =>
-    r'e18d42c510b21493b28a73e88b2cbc91622d17a9';
+    r'2139a32175cef8468d940a4c3075ee61b212b2cf';
 
 final class ProfileDisabledRuleIdsFamily extends $Family
     with

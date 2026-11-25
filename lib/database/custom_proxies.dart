@@ -60,15 +60,16 @@ class CustomProxiesDao extends DatabaseAccessor<Database>
   }
 }
 
+final _proxyFields = ProxyField.values.asNameMap();
+
 extension RawCustomProxyExt on RawCustomProxy {
   CustomProxy toCustomProxy() {
-    final fields = ProxyField.values.asNameMap();
     return CustomProxy(
       id: id,
       definition: definition,
       order: order,
       emptyOptions: {
-        for (final name in emptyOptions ?? const {}) ?fields[name],
+        for (final name in emptyOptions ?? const {}) ?_proxyFields[name],
       },
     );
   }

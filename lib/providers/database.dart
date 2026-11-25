@@ -66,19 +66,24 @@ void _reportOptimisticFailure(Object error, StackTrace stackTrace) {
 class _Writes {
   final void Function() _reread;
   var _pending = 0;
+  var _started = 0;
   var _missed = false;
 
   _Writes(this._reread);
 
   bool get idle => _pending == 0;
 
-  bool admit() {
+  /// Counts the writes started, for a read to tell one that began after it.
+  int get started => _started;
+
+  bool admit({int? since}) {
     _missed |= !idle;
-    return idle;
+    return idle && (since == null || since == _started);
   }
 
   Future<void> track(Future<void> Function() write) async {
     _pending++;
+    _started++;
     try {
       await write();
     } finally {
@@ -100,10 +105,18 @@ mixin OptimisticMixin<T> on AsyncNotifierMixin<T> {
     return rows.where((_) => _writes.admit());
   }
 
+  // A read-back may run on its own connection, which can answer from before a
+  // write that started after it.
   void _reread() {
+    final since = _writes.started;
     _query?.call().then((rows) {
-      if (ref.mounted && _writes.admit()) {
+      if (!ref.mounted) {
+        return;
+      }
+      if (_writes.admit(since: since)) {
         value = rows;
+      } else if (_writes.idle) {
+        _reread();
       }
     }, onError: _reportReread);
   }
@@ -544,12 +557,32 @@ class ClashProviders extends _$ClashProviders
   }
 }
 
+Future<List<IconSet>> _readIconSets(Database db) =>
+    db.iconSetsDao.query().get();
+
+Future<List<Rule>> _readGlobalRules(Database db) =>
+    db.rulesDao.queryGlobalRules().get();
+
+Future<List<Rule>> Function(Database) _profileRulesReader(int profileId) =>
+    (db) => db.rulesDao.queryProfileRules(profileId).get();
+
+Future<List<ProxyGroup>> Function(Database) _proxyGroupsReader(int profileId) =>
+    (db) => db.proxyGroupsDao.query(profileId).get();
+
+Future<List<CustomProxy>> _readCustomProxies(Database db) =>
+    db.customProxiesDao.query().get();
+
+Future<List<int>> Function(Database) _disabledRuleIdsReader(int profileId) =>
+    (db) => db.rulesDao.queryDisabledRuleIds(profileId).get();
+
 @Riverpod(keepAlive: true)
 class IconSets extends _$IconSets with AsyncNotifierMixin, OptimisticMixin {
   @override
   Stream<List<IconSet>> build() {
-    final query = database.iconSetsDao.query();
-    return settled(query.watch(), query.get);
+    return settled(
+      database.watchApart([database.iconSets], _readIconSets),
+      () => database.readApart(_readIconSets),
+    );
   }
 
   @override
@@ -697,8 +730,10 @@ class GlobalRules extends _$GlobalRules
     with AsyncNotifierMixin, OptimisticMixin, RuleListMixin {
   @override
   Stream<List<Rule>> build() {
-    final query = database.rulesDao.queryGlobalRules();
-    return settled(query.watch(), query.get);
+    return settled(
+      database.watchApart([database.rules], _readGlobalRules),
+      () => database.readApart(_readGlobalRules),
+    );
   }
 
   @override
@@ -716,8 +751,11 @@ class ProfileRules extends _$ProfileRules
     with AsyncNotifierMixin, OptimisticMixin, RuleListMixin {
   @override
   Stream<List<Rule>> build(int profileId) {
-    final query = database.rulesDao.queryProfileRules(profileId);
-    return settled(query.watch(), query.get);
+    final read = _profileRulesReader(profileId);
+    return settled(
+      database.watchApart([database.rules], read),
+      () => database.readApart(read),
+    );
   }
 
   @override
@@ -779,8 +817,11 @@ class ProxyGroups extends _$ProxyGroups
     with AsyncNotifierMixin, OptimisticMixin {
   @override
   Stream<List<ProxyGroup>> build(int profileId) {
-    final query = database.proxyGroupsDao.query(profileId);
-    return settled(query.watch(), query.get);
+    final read = _proxyGroupsReader(profileId);
+    return settled(
+      database.watchApart([database.proxyGroups], read),
+      () => database.readApart(read),
+    );
   }
 
   @override
@@ -928,8 +969,10 @@ class CustomProxies extends _$CustomProxies
     with AsyncNotifierMixin, OptimisticMixin {
   @override
   Stream<List<CustomProxy>> build() {
-    final query = database.customProxiesDao.query();
-    return settled(query.watch(), query.get);
+    return settled(
+      database.watchApart([database.customProxies], _readCustomProxies),
+      () => database.readApart(_readCustomProxies),
+    );
   }
 
   @override
@@ -1110,8 +1153,11 @@ class ProfileDisabledRuleIds extends _$ProfileDisabledRuleIds
 
   @override
   Stream<List<int>> build(int profileId) {
-    final query = database.rulesDao.queryDisabledRuleIds(profileId);
-    return settled(query.watch(), query.get);
+    final read = _disabledRuleIdsReader(profileId);
+    return settled(
+      database.watchApart([database.disabledRules], read),
+      () => database.readApart(read),
+    );
   }
 
   @override

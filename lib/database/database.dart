@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:collection/collection.dart';
 import 'package:drift/drift.dart';
@@ -55,16 +56,114 @@ part 'scripts.dart';
   ],
 )
 class Database extends _$Database {
-  Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
+  Database([QueryExecutor? executor])
+    : _filePath = executor == null ? _appDatabasePath : null,
+      super(executor ?? _openConnection());
+
+  @visibleForTesting
+  Database.onFile(File file)
+    : _filePath = (() async => file.path),
+      super(_openFile(file));
+
+  final Future<String> Function()? _filePath;
+  Future<String?>? _resolvedPath;
+
+  static Future<String> _appDatabasePath() => appPath.databasePath;
 
   @override
   int get schemaVersion => 26;
 
+  static QueryExecutor _openFile(File file) {
+    return NativeDatabase.createInBackground(
+      file,
+      setup: (raw) {
+        raw.execute('PRAGMA journal_mode = WAL');
+        raw.execute('PRAGMA busy_timeout = 5000');
+      },
+    );
+  }
+
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
       final databaseFile = File(await appPath.databasePath);
-      return NativeDatabase.createInBackground(databaseFile);
+      return _openFile(databaseFile);
     });
+  }
+
+  /// Runs [read] on a short-lived read-only connection in a worker isolate
+  /// when backed by a file, keeping large row mappings off the UI isolate.
+  Future<T> readApart<T>(Future<T> Function(Database db) read) async {
+    final filePath = _filePath;
+    if (filePath == null) {
+      return read(this);
+    }
+    final path = await (_resolvedPath ??= _resolvePath(filePath));
+    if (path == null) {
+      return read(this);
+    }
+    return Isolate.run(() => _readFile(path, read));
+  }
+
+  Future<String?> _resolvePath(Future<String> Function() filePath) async {
+    await doWhenOpened((_) {});
+    return filePath();
+  }
+
+  /// Watches [tables] and reads again through [readApart] after each change,
+  /// one read at a time. A read that a change overtook is dropped for the next,
+  /// as its own connection may have read before the change landed.
+  Stream<T> watchApart<T>(
+    Iterable<ResultSetImplementation<dynamic, dynamic>> tables,
+    Future<T> Function(Database db) read,
+  ) {
+    late final StreamController<T> controller;
+    StreamSubscription<Set<TableUpdate>>? updates;
+    var running = false;
+    var pending = false;
+    var canceled = false;
+
+    Future<void> fetch() async {
+      if (running) {
+        pending = true;
+        return;
+      }
+      running = true;
+      try {
+        do {
+          pending = false;
+          try {
+            final value = await readApart(read);
+            if (!pending && !canceled && !controller.isClosed) {
+              controller.add(value);
+            }
+          } catch (error, stackTrace) {
+            if (!pending && !canceled && !controller.isClosed) {
+              controller.addError(error, stackTrace);
+            }
+          }
+        } while (pending && !canceled && !controller.isClosed);
+      } finally {
+        running = false;
+      }
+    }
+
+    controller = StreamController<T>(
+      onListen: () {
+        updates = tableUpdates(
+          TableUpdateQuery.onAllTables(tables),
+        ).listen((_) => unawaited(fetch()));
+        unawaited(fetch());
+      },
+      onCancel: () async {
+        canceled = true;
+        await updates?.cancel();
+        updates = null;
+        if (!controller.isClosed) {
+          await controller.close();
+        }
+      },
+    );
+    return controller.stream;
   }
 
   @override
@@ -710,6 +809,26 @@ extension JoinedSelectStatementExt<T extends HasResultSet, D>
     final countExp = countAll();
     addColumns([countExp]);
     return map((row) => row.read(countExp)!);
+  }
+}
+
+Future<T> _readFile<T>(
+  String path,
+  Future<T> Function(Database db) read,
+) async {
+  final db = Database(
+    NativeDatabase(
+      File(path),
+      setup: (raw) {
+        raw.execute('PRAGMA busy_timeout = 5000');
+        raw.execute('PRAGMA query_only = ON');
+      },
+    ),
+  );
+  try {
+    return await read(db);
+  } finally {
+    await db.close();
   }
 }
 

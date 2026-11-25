@@ -15,6 +15,9 @@ Future<void> clearAppData() async {
       logLevel: LogLevel.warning,
     );
   }
-  await File(await appPath.databasePath).safeDelete(recursive: true);
+  final databasePath = await appPath.databasePath;
+  await File(databasePath).safeDelete(recursive: true);
+  await File('$databasePath-wal').safeDelete(recursive: true);
+  await File('$databasePath-shm').safeDelete(recursive: true);
   await Directory(await appPath.profilesPath).safeDelete(recursive: true);
 }

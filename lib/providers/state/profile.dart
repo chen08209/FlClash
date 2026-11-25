@@ -128,21 +128,19 @@ Future<SetupState> setupState(Ref ref, int? profileId) async {
   Script? script;
   if (profileId != null) {
     if (profileType == ProfileType.custom) {
-      rules = await database.rulesDao.queryProfileRules(profileId).get();
-      proxyGroups = await database.proxyGroupsDao.query(profileId).get();
-      clashProviders = await database.clashProvidersDao.query().get();
+      final custom = await database.readApart(_customSetupReader(profileId));
+      rules = custom.rules;
+      proxyGroups = custom.proxyGroups;
+      clashProviders = custom.clashProviders;
       profileProviders = allProfileProviders;
-      appProxies = await database.customProxiesDao.query().get();
-      proxyDialers = {
-        for (final dialer
-            in await database.proxyDialersDao.query(profileId).get())
-          dialer.proxyId: dialer.target,
-      };
+      appProxies = custom.appProxies;
+      proxyDialers = custom.proxyDialers;
     } else {
-      addedRules = await database.rulesDao.queryAddedRules(profileId).get();
-      script = scriptId == null
-          ? null
-          : await database.scriptsDao.get(scriptId).getSingleOrNull();
+      final normal = await database.readApart(
+        _normalSetupReader(profileId, scriptId),
+      );
+      addedRules = normal.addedRules;
+      script = normal.script;
     }
   }
   return SetupState(
@@ -189,6 +187,35 @@ Future<List<MitmModuleSource>> mitmModuleSources(
   }
   return sources;
 }
+
+typedef _CustomSetupRead = ({
+  List<Rule> rules,
+  List<ProxyGroup> proxyGroups,
+  List<ClashProvider> clashProviders,
+  List<CustomProxy> appProxies,
+  Map<int, String> proxyDialers,
+});
+
+Future<_CustomSetupRead> Function(Database) _customSetupReader(int profileId) =>
+    (db) async => (
+      rules: await db.rulesDao.queryProfileRules(profileId).get(),
+      proxyGroups: await db.proxyGroupsDao.query(profileId).get(),
+      clashProviders: await db.clashProvidersDao.query().get(),
+      appProxies: await db.customProxiesDao.query().get(),
+      proxyDialers: {
+        for (final dialer in await db.proxyDialersDao.query(profileId).get())
+          dialer.proxyId: dialer.target,
+      },
+    );
+
+Future<({List<Rule> addedRules, Script? script})> Function(Database)
+_normalSetupReader(int profileId, int? scriptId) =>
+    (db) async => (
+      addedRules: await db.rulesDao.queryAddedRules(profileId).get(),
+      script: scriptId == null
+          ? null
+          : await db.scriptsDao.get(scriptId).getSingleOrNull(),
+    );
 
 /// Subscription profiles double as proxy providers for custom profiles.
 @riverpod
