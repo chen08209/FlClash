@@ -64,7 +64,7 @@ List<PopupMenuItem> trackerInfoMenuItems(
             : null,
         onPressed: () => hideHost(trackerInfo),
       ),
-    if (rsFeature && metadata.mitm)
+    if (metadata.mitm)
       PopupMenuItem(
         glyph: AppGlyphs.eye,
         label: appLocalizations.viewHttp,

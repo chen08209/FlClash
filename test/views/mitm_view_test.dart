@@ -190,128 +190,112 @@ void main() {
     );
   });
 
-  if (rsFeature) {
-    for (final isAndroid in [true, false]) {
-      testWidgets(
-        'the MITM group ${isAndroid ? 'says' : 'does not say'} what root adds '
-        '${isAndroid ? 'on' : 'off'} Android',
-        (tester) async {
-          await pumpView(
-            tester,
-            view: AdvancedConfigView(isAndroid: isAndroid),
-          );
-
-          expect(
-            find.text(currentAppLocalizations.mitmAndroidRootDesc),
-            isAndroid ? findsOneWidget : findsNothing,
-          );
-        },
-      );
-    }
-  }
-
-  if (rsFeature) {
-    testWidgets('turning on asks first and generates a missing certificate', (
-      tester,
-    ) async {
-      await pumpView(tester, view: const AdvancedConfigView());
-
-      await toggleEnable(tester);
-      expect(find.text(currentAppLocalizations.mitmEnableTip), findsOneWidget);
-      await tester.tap(button(currentAppLocalizations.cancel));
-      await tester.pumpAndSettle();
-      expect(saved().enable, isFalse);
-      verifyNever(() => core.generateMitmCertificate());
-
-      await toggleEnable(tester);
-      await tester.tap(button(currentAppLocalizations.confirm));
-      await tester.pumpAndSettle();
-
-      expect(saved().enable, isTrue);
-      verify(() => core.generateMitmCertificate()).called(1);
-    });
-  }
-
-  if (rsFeature) {
-    testWidgets('turning on keeps the certificate there is', (tester) async {
-      await pumpView(
-        tester,
-        certificate: _certificate,
-        view: const AdvancedConfigView(),
-      );
-
-      await toggleEnable(tester);
-      await tester.tap(button(currentAppLocalizations.confirm));
-      await tester.pumpAndSettle();
-
-      expect(saved().enable, isTrue);
-      verifyNever(() => core.generateMitmCertificate());
-    });
-  }
-
-  if (rsFeature) {
-    testWidgets('a certificate that fails to generate leaves it off', (
-      tester,
-    ) async {
-      await pumpView(tester, view: const AdvancedConfigView());
-      when(() => core.generateMitmCertificate()).thenAnswer(
-        (_) => Future.error(
-          const CoreMethodException(code: 'core_error', message: 'disk full'),
-        ),
-      );
-
-      await toggleEnable(tester);
-      await tester.tap(button(currentAppLocalizations.confirm));
-      await tester.pumpAndSettle();
-
-      expect(saved().enable, isFalse);
-      expect(find.textContaining('disk full'), findsOneWidget);
-    });
-  }
-
-  if (rsFeature) {
-    testWidgets('turning off asks nothing', (tester) async {
-      await pumpView(
-        tester,
-        certificate: _certificate,
-        mitm: const Mitm(enable: true),
-        view: const AdvancedConfigView(),
-      );
-
-      await toggleEnable(tester);
-
-      expect(saved().enable, isFalse);
-      expect(find.text(currentAppLocalizations.mitmEnableTip), findsNothing);
-    });
-  }
-
-  if (rsFeature) {
+  for (final isAndroid in [true, false]) {
     testWidgets(
-      'the advanced page lists MITM and opens the rest from options',
+      'the MITM group ${isAndroid ? 'says' : 'does not say'} what root adds '
+      '${isAndroid ? 'on' : 'off'} Android',
       (tester) async {
-        await pumpView(
-          tester,
-          certificate: _certificate,
-          view: const AdvancedConfigView(),
+        await pumpView(tester, view: AdvancedConfigView(isAndroid: isAndroid));
+
+        expect(
+          find.text(currentAppLocalizations.mitmAndroidRootDesc),
+          isAndroid ? findsOneWidget : findsNothing,
         );
-
-        for (final label in [
-          currentAppLocalizations.httpsDecryption,
-          currentAppLocalizations.mitmModules,
-          currentAppLocalizations.hostname,
-        ]) {
-          expect(find.text(label), findsOneWidget);
-        }
-        expect(find.text(currentAppLocalizations.httpCapture), findsNothing);
-
-        await tester.tap(find.text(currentAppLocalizations.options));
-        await tester.pumpAndSettle();
-
-        expect(find.text(currentAppLocalizations.httpCapture), findsNothing);
-        expect(find.text(_certificate.subject), findsOneWidget);
       },
     );
   }
+
+  testWidgets('turning on asks first and generates a missing certificate', (
+    tester,
+  ) async {
+    await pumpView(tester, view: const AdvancedConfigView());
+
+    await toggleEnable(tester);
+    expect(find.text(currentAppLocalizations.mitmEnableTip), findsOneWidget);
+    await tester.tap(button(currentAppLocalizations.cancel));
+    await tester.pumpAndSettle();
+    expect(saved().enable, isFalse);
+    verifyNever(() => core.generateMitmCertificate());
+
+    await toggleEnable(tester);
+    await tester.tap(button(currentAppLocalizations.confirm));
+    await tester.pumpAndSettle();
+
+    expect(saved().enable, isTrue);
+    verify(() => core.generateMitmCertificate()).called(1);
+  });
+
+  testWidgets('turning on keeps the certificate there is', (tester) async {
+    await pumpView(
+      tester,
+      certificate: _certificate,
+      view: const AdvancedConfigView(),
+    );
+
+    await toggleEnable(tester);
+    await tester.tap(button(currentAppLocalizations.confirm));
+    await tester.pumpAndSettle();
+
+    expect(saved().enable, isTrue);
+    verifyNever(() => core.generateMitmCertificate());
+  });
+
+  testWidgets('a certificate that fails to generate leaves it off', (
+    tester,
+  ) async {
+    await pumpView(tester, view: const AdvancedConfigView());
+    when(() => core.generateMitmCertificate()).thenAnswer(
+      (_) => Future.error(
+        const CoreMethodException(code: 'core_error', message: 'disk full'),
+      ),
+    );
+
+    await toggleEnable(tester);
+    await tester.tap(button(currentAppLocalizations.confirm));
+    await tester.pumpAndSettle();
+
+    expect(saved().enable, isFalse);
+    expect(find.textContaining('disk full'), findsOneWidget);
+  });
+
+  testWidgets('turning off asks nothing', (tester) async {
+    await pumpView(
+      tester,
+      certificate: _certificate,
+      mitm: const Mitm(enable: true),
+      view: const AdvancedConfigView(),
+    );
+
+    await toggleEnable(tester);
+
+    expect(saved().enable, isFalse);
+    expect(find.text(currentAppLocalizations.mitmEnableTip), findsNothing);
+  });
+
+  testWidgets('the advanced page lists MITM and opens the rest from options', (
+    tester,
+  ) async {
+    await pumpView(
+      tester,
+      certificate: _certificate,
+      view: const AdvancedConfigView(),
+    );
+
+    for (final label in [
+      currentAppLocalizations.httpsDecryption,
+      currentAppLocalizations.mitmModules,
+      currentAppLocalizations.hostname,
+    ]) {
+      expect(find.text(label), findsOneWidget);
+    }
+    expect(find.text(currentAppLocalizations.httpCapture), findsNothing);
+
+    await tester.tap(find.text(currentAppLocalizations.options));
+    await tester.pumpAndSettle();
+
+    expect(find.text(currentAppLocalizations.httpCapture), findsNothing);
+    expect(find.text(_certificate.subject), findsOneWidget);
+  });
 
   group('the certificate row', () {
     Finder row() => find.text(_certificate.subject);
@@ -654,57 +638,53 @@ void main() {
     );
   });
 
-  if (rsFeature) {
-    testWidgets('the hostname list counts and marks the lines the Core skips', (
+  testWidgets('the hostname list counts and marks the lines the Core skips', (
+    tester,
+  ) async {
+    await pumpView(
       tester,
-    ) async {
-      await pumpView(
-        tester,
-        mitm: const Mitm(hostname: ['a.test', 'bad host']),
-        view: const AdvancedConfigView(),
-      );
+      mitm: const Mitm(hostname: ['a.test', 'bad host']),
+      view: const AdvancedConfigView(),
+    );
 
-      expect(
-        find.text(currentAppLocalizations.invalidOfCount(1, 2)),
-        findsOneWidget,
-      );
-      expect(find.text(currentAppLocalizations.urlRewrite), findsNothing);
-      await tester.tap(find.text(currentAppLocalizations.hostname));
-      await tester.pumpAndSettle();
+    expect(
+      find.text(currentAppLocalizations.invalidOfCount(1, 2)),
+      findsOneWidget,
+    );
+    expect(find.text(currentAppLocalizations.urlRewrite), findsNothing);
+    await tester.tap(find.text(currentAppLocalizations.hostname));
+    await tester.pumpAndSettle();
 
-      expect(find.text('bad host'), findsOneWidget);
-      expect(find.text('unknown type'), findsOneWidget);
-    });
-  }
+    expect(find.text('bad host'), findsOneWidget);
+    expect(find.text('unknown type'), findsOneWidget);
+  });
 
-  if (rsFeature) {
-    testWidgets('a hostname entry takes one host', (tester) async {
-      await pumpView(tester, view: const AdvancedConfigView());
+  testWidgets('a hostname entry takes one host', (tester) async {
+    await pumpView(tester, view: const AdvancedConfigView());
 
-      await tester.tap(find.text(currentAppLocalizations.hostname));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip(currentAppLocalizations.add));
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.descendant(
-          of: find.byType(PopupMenu),
-          matching: find.text(currentAppLocalizations.add),
+    await tester.tap(find.text(currentAppLocalizations.hostname));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip(currentAppLocalizations.add));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(PopupMenu),
+        matching: find.text(currentAppLocalizations.add),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'a.test, b.test');
+    await tester.tap(button(currentAppLocalizations.confirm));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        currentAppLocalizations.singleValueTip(
+          currentAppLocalizations.hostname,
         ),
-      );
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextFormField), 'a.test, b.test');
-      await tester.tap(button(currentAppLocalizations.confirm));
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text(
-          currentAppLocalizations.singleValueTip(
-            currentAppLocalizations.hostname,
-          ),
-        ),
-        findsOneWidget,
-      );
-      expect(saved().hostname, isEmpty);
-    });
-  }
+      ),
+      findsOneWidget,
+    );
+    expect(saved().hostname, isEmpty);
+  });
 }

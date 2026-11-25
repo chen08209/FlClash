@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
@@ -282,37 +281,34 @@ void main() {
     await teardownView(tester);
   });
 
-  if (rsFeature) {
-    testWidgets('a row marks a decrypted connection', (tester) async {
-      whenConnections<ConnectionPoll>(
-        core,
-        () async => [
-          _tracker(id: 'a', host: 'alpha.test', mitm: true),
-          _tracker(id: 'b', host: 'beta.test'),
-        ],
-      );
+  testWidgets('a row marks a decrypted connection', (tester) async {
+    whenConnections<ConnectionPoll>(
+      core,
+      () async => [
+        _tracker(id: 'a', host: 'alpha.test', mitm: true),
+        _tracker(id: 'b', host: 'beta.test'),
+      ],
+    );
 
-      await pumpConnections(tester, width: 900);
-      await pumpSettled(tester);
+    await pumpConnections(tester, width: 900);
+    await pumpSettled(tester);
 
-      expect(find.byType(TrackerInfoItem), findsNWidgets(2));
-      final label = find.widgetWithText(RecordLabel, 'MITM');
-      expect(label, findsOneWidget);
-      expect(
-        find.ancestor(
-          of: label,
-          matching: find.byWidgetPredicate(
-            (widget) =>
-                widget is TrackerInfoItem && widget.trackerInfo.id == 'a',
-          ),
+    expect(find.byType(TrackerInfoItem), findsNWidgets(2));
+    final label = find.widgetWithText(RecordLabel, 'MITM');
+    expect(label, findsOneWidget);
+    expect(
+      find.ancestor(
+        of: label,
+        matching: find.byWidgetPredicate(
+          (widget) => widget is TrackerInfoItem && widget.trackerInfo.id == 'a',
         ),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), null);
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), null);
 
-      await teardownView(tester);
-    });
-  }
+    await teardownView(tester);
+  });
 
   testWidgets('the menu closes every open connection once that is confirmed', (
     tester,

@@ -71,7 +71,7 @@ class CoreAction extends _$CoreAction {
       await initCore();
       ref.read(coreStatusProvider.notifier).value = CoreStatus.connected;
     }
-    if (rsFeature && ref.read(patchClashConfigProvider).mitm.enable) {
+    if (ref.read(patchClashConfigProvider).mitm.enable) {
       unawaited(ref.read(mitmTrustStateProvider.notifier).refresh());
     }
     return true;

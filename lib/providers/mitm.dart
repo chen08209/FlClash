@@ -319,10 +319,9 @@ Future<_MitmLineCheck> _checkOf(Ref ref, MitmRules mitm) async {
 Future<List<({String name, MitmModuleContent content})>> enabledMitmModules(
   Ref ref,
 ) async {
-  if (!(rsFeature &&
-      ref.watch(
-        patchClashConfigProvider.select((state) => state.mitm.enable),
-      ))) {
+  if (!ref.watch(
+    patchClashConfigProvider.select((state) => state.mitm.enable),
+  )) {
     return const [];
   }
   final modules = await ref.watch(mitmModulesProvider.future);

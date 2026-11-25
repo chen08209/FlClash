@@ -78,33 +78,31 @@ void main() {
     fail('timed out waiting for $finder');
   }
 
-  if (rsFeature) {
-    testWidgets('only a subscribed module is listed among the resources', (
-      tester,
-    ) async {
-      final date = DateTime(2026);
-      final container = createContainer(
-        modules: [
-          MitmModule(
-            id: 1,
-            name: 'Subscribed',
-            url: 'https://example.com/a.sgmodule',
-            lastUpdateTime: date,
-          ),
-          MitmModule(id: 2, name: 'Written here', lastUpdateTime: date),
-        ],
-      );
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const TestApp(child: ResourcesView()),
+  testWidgets('only a subscribed module is listed among the resources', (
+    tester,
+  ) async {
+    final date = DateTime(2026);
+    final container = createContainer(
+      modules: [
+        MitmModule(
+          id: 1,
+          name: 'Subscribed',
+          url: 'https://example.com/a.sgmodule',
+          lastUpdateTime: date,
         ),
-      );
-      await pumpUntilFound(tester, find.text('Subscribed'));
+        MitmModule(id: 2, name: 'Written here', lastUpdateTime: date),
+      ],
+    );
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: ResourcesView()),
+      ),
+    );
+    await pumpUntilFound(tester, find.text('Subscribed'));
 
-      expect(find.text('Written here'), findsNothing);
-    });
-  }
+    expect(find.text('Written here'), findsNothing);
+  });
 
   testWidgets('a geo row opens its link editor without a per-row action', (
     tester,

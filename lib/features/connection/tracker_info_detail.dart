@@ -155,8 +155,7 @@ class TrackerInfoDetailView extends ConsumerWidget {
           TrackerPathSection(trackerInfo: trackerInfo, atTop: failure == null),
           ListHeader(title: appLocalizations.traffic),
           TrackerTrafficSummary(trackerInfo: trackerInfo),
-          if (rsFeature)
-            MitmHostSection(metadata: trackerInfo.metadata, last: columns),
+          MitmHostSection(metadata: trackerInfo.metadata, last: columns),
         ];
         final address = _buildAddress(
           context,
@@ -258,7 +257,6 @@ class TrackerInfoDetailView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final capturing =
-        rsFeature &&
         trackerInfo.metadata.mitm &&
         ref.watch(
           patchClashConfigProvider.select(

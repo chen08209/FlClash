@@ -93,7 +93,7 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
     modules: [
       for (final module
           in ref.read(mitmModulesProvider).value ?? <MitmModule>[])
-        if (rsFeature && module.isRemote) module,
+        if (module.isRemote) module,
     ],
   );
 
@@ -255,13 +255,12 @@ class _ResourcesViewState extends ConsumerState<ResourcesView> {
                       key: ValueKey(script.id),
                     ),
                   ),
-                  if (rsFeature)
-                    generateSliverSection(
-                      title: appLocalizations.mitmModules,
-                      items: modules,
-                      itemBuilder: (module) =>
-                          _ModuleItem(module, key: ValueKey(module.id)),
-                    ),
+                  generateSliverSection(
+                    title: appLocalizations.mitmModules,
+                    items: modules,
+                    itemBuilder: (module) =>
+                        _ModuleItem(module, key: ValueKey(module.id)),
+                  ),
                 ],
               ),
             ),

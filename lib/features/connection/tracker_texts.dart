@@ -272,7 +272,6 @@ List<Widget> trackerLabels(
       if (trackerInfo.failure case final failure?)
         RecordLabel(label: failure.kind.label, tone: RecordTone.error),
     if (repeats > 1) RecordLabel(label: '×$repeats'),
-    if (rsFeature && trackerInfo.metadata.mitm)
-      const RecordLabel(label: 'MITM'),
+    if (trackerInfo.metadata.mitm) const RecordLabel(label: 'MITM'),
   ];
 }
