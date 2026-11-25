@@ -993,9 +993,11 @@ String _ruleText(MitmModuleRule rule) => [
   if (rule.requiresResolve) 'requires-resolve',
 ].join(',');
 
+final _requestRulePattern = RegExp(r'(^|\()\s*(URL-REGEX|USER-AGENT),');
+
 /// A rule decided by the request a session decrypts.
 bool _isRequestRule(MitmModuleRule rule) =>
-    RegExp(r'(^|\()\s*(URL-REGEX|USER-AGENT),').hasMatch(rule.rule);
+    _requestRulePattern.hasMatch(rule.rule);
 
 /// A routing rule as the module's reader wrote it, or null for a line whose
 /// type, payload or target [Rule.parse] would have to guess.
