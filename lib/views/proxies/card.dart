@@ -332,7 +332,7 @@ class _DelayTextState extends ConsumerState<_DelayText> {
 
   @override
   Widget build(BuildContext context) {
-    final measure = globalState.measure;
+    final slot = globalState.measure.textHeight(AppTextStyle.footnote);
     final delay = ref.watch(
       delayProvider(proxyName: widget.proxy.name, testUrl: widget.testUrl),
     );
@@ -354,20 +354,18 @@ class _DelayTextState extends ConsumerState<_DelayText> {
       child: Focus(
         focusNode: _focusNode,
         child: SizedBox(
-          height: measure.textHeight(AppTextStyle.caption2),
+          height: slot,
           child: FadeBox(
             alignment: widget.alignment,
             child: phase != null || delay == null
                 ? SizedBox(
-                    height: measure.textHeight(AppTextStyle.caption2),
-                    width: measure.textHeight(AppTextStyle.caption2),
+                    height: slot,
+                    width: slot,
                     child: _withFocusRing(context, switch (phase) {
-                      DelayTestPhase.running => ActivityIndicator(
-                        size: measure.textHeight(AppTextStyle.caption2),
-                      ),
+                      DelayTestPhase.running => ActivityIndicator(size: slot),
                       DelayTestPhase.queued => GlyphIcon(
                         AppGlyphs.clock,
-                        size: measure.textHeight(AppTextStyle.caption2),
+                        size: slot,
                         color: context.colorScheme.onSurfaceVariant.opacity38,
                       ),
                       null => HoverTooltip(
@@ -375,10 +373,7 @@ class _DelayTextState extends ConsumerState<_DelayText> {
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onTap: _handleTestCurrentDelay,
-                          child: GlyphIcon(
-                            AppGlyphs.bolt,
-                            size: measure.textHeight(AppTextStyle.caption2),
-                          ),
+                          child: GlyphIcon(AppGlyphs.bolt, size: slot),
                         ),
                       ),
                     }),

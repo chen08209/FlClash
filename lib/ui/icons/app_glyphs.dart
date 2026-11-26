@@ -1055,12 +1055,13 @@ abstract final class AppGlyphs {
 
   static const bolt = Glyph([
     GlyphPolyline([
-      GlyphVertex(14.5, 2.8, 1),
-      GlyphVertex(5, 13.7, 1),
-      GlyphVertex(11.2, 13.7, 0.6),
-      GlyphVertex(9.5, 21.2, 1),
-      GlyphVertex(19, 10.3, 1),
-      GlyphVertex(12.8, 10.3, 0.6),
+      GlyphVertex(8.4, 2.8, 2),
+      GlyphVertex(16.8, 2.8, 2),
+      GlyphVertex(13.8, 9.4, 1.2),
+      GlyphVertex(19.2, 9.4, 2.2),
+      GlyphVertex(9.4, 21.2, 4.2),
+      GlyphVertex(11, 13.6, 1.2),
+      GlyphVertex(5.2, 13.6, 2.2),
     ], closed: true),
   ]);
 

@@ -308,6 +308,14 @@ void main() {
     final titleStart = tester.getRect(find.text(l10n.project)).left;
     expect(tester.getRect(find.text(l10n.autoCheckUpdate)).left, titleStart);
     expect(tester.getRect(find.text(l10n.updateChannel)).left, titleStart);
+    final linkRowHeight = tester
+        .getSize(find.widgetWithText(ListItem, l10n.project))
+        .height;
+    expect(tester.getSize(find.byType(ConfigToggleItem)).height, linkRowHeight);
+    expect(
+      tester.getSize(find.byType(ConfigOptionsItem<UpdateChannel>)).height,
+      linkRowHeight,
+    );
 
     expect(container.read(appSettingProvider).autoCheckUpdate, isTrue);
     await tester.tap(

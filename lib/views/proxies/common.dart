@@ -25,7 +25,7 @@ double getItemHeight(ProxyCardType proxyCardType) {
       4;
   return switch (proxyCardType) {
     ProxyCardType.loose =>
-      baseHeight + measure.textHeight(AppTextStyle.caption2) + 6,
+      baseHeight + measure.textHeight(AppTextStyle.footnote) + 6,
     ProxyCardType.standard => baseHeight,
     ProxyCardType.compact =>
       baseHeight - measure.textHeight(AppTextStyle.subheadline),

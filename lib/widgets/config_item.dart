@@ -87,6 +87,7 @@ abstract class _ConfigItem<T> extends ConsumerWidget {
     required this.onChanged,
     this.subtitle,
     this.leading,
+    this.minHeight,
   });
 
   final ProviderListenable<T> selector;
@@ -94,6 +95,7 @@ abstract class _ConfigItem<T> extends ConsumerWidget {
   final ConfigLabel? subtitle;
   final ConfigWriter<T> onChanged;
   final Widget? leading;
+  final double? minHeight;
 
   Widget buildItem(
     BuildContext context,
@@ -122,6 +124,7 @@ class ConfigToggleItem extends _ConfigItem<bool> {
     required super.onChanged,
     super.subtitle,
     super.leading,
+    super.minHeight,
     this.enabled = true,
   });
 
@@ -136,6 +139,7 @@ class ConfigToggleItem extends _ConfigItem<bool> {
   ) {
     return ListItem.toggle(
       leading: leading,
+      minTileHeight: minHeight,
       title: Text(title(appLocalizations)),
       subtitle: buildSubtitle(appLocalizations),
       value: value,
@@ -155,6 +159,7 @@ class ConfigOptionsItem<T> extends _ConfigItem<T> {
     this.available,
     super.subtitle,
     super.leading,
+    super.minHeight,
   });
 
   final List<T> options;
@@ -174,6 +179,7 @@ class ConfigOptionsItem<T> extends _ConfigItem<T> {
     final isAvailable = available == null ? null : ref.watch(available);
     return ListItem<T>.options(
       leading: leading,
+      minTileHeight: minHeight,
       title: Text(title(appLocalizations)),
       subtitle: buildSubtitle(appLocalizations),
       options: isAvailable == null
