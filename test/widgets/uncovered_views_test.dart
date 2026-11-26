@@ -303,6 +303,11 @@ void main() {
       tester.getRect(find.text(l10n.updateChannel)).bottom,
       lessThan(tester.getRect(find.widgetWithText(ListHeader, l10n.more)).top),
     );
+    expect(find.byGlyph(AppGlyphs.autoCheckUpdate), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.updateChannel), findsOneWidget);
+    final titleStart = tester.getRect(find.text(l10n.project)).left;
+    expect(tester.getRect(find.text(l10n.autoCheckUpdate)).left, titleStart);
+    expect(tester.getRect(find.text(l10n.updateChannel)).left, titleStart);
 
     expect(container.read(appSettingProvider).autoCheckUpdate, isTrue);
     await tester.tap(

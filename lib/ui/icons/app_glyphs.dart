@@ -317,6 +317,24 @@ abstract final class AppGlyphs {
     ], role: GlyphRole.line),
   ]);
 
+  static const autoCheckUpdate = Glyph([
+    GlyphArc(12, 12, 8.2, 0, math.pi * 1.75, role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(17.8, 6.2),
+      GlyphVertex(20.2, 8.4),
+    ], role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(20.2, 3.8),
+      GlyphVertex(20.2, 8.4, 0.4),
+      GlyphVertex(15.6, 8.4),
+    ], role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(12, 8),
+      GlyphVertex(12, 12, 0.6),
+      GlyphVertex(14.6, 13.6),
+    ], role: GlyphRole.line),
+  ]);
+
   static const export = Glyph([
     GlyphPolyline([
       GlyphVertex(8.4, 10.5),
@@ -1615,6 +1633,17 @@ abstract final class AppGlyphs {
       GlyphVertex(19.5, 4, 0.5),
       GlyphVertex(19.5, 9.5),
     ], role: GlyphRole.line),
+  ]);
+
+  static const updateChannel = Glyph([
+    GlyphCircle(7, 5.6, 2.2),
+    GlyphCircle(7, 18.4, 2.2),
+    GlyphCircle(17, 7.4, 2.2),
+    GlyphPolyline([
+      GlyphVertex(7, 7.8),
+      GlyphVertex(7, 16.2),
+    ], role: GlyphRole.line),
+    GlyphPath('M17 9.6C17 13.4 7 12 7 16.2', role: GlyphRole.line),
   ]);
 
   static const speed = Glyph([

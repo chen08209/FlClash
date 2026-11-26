@@ -47,7 +47,7 @@ class AboutView extends ConsumerWidget {
     required String label,
   }) {
     return ListItem(
-      leading: _LinkBadge(glyph: glyph),
+      leading: _GlyphBadge(glyph: glyph),
       title: Text(title),
       subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: const GlyphIcon(AppGlyphs.openExternal),
@@ -90,6 +90,7 @@ class AboutView extends ConsumerWidget {
             title: appLocalizations.update,
             items: [
               ConfigToggleItem(
+                leading: const _GlyphBadge(glyph: AppGlyphs.autoCheckUpdate),
                 title: (l) => l.autoCheckUpdate,
                 selector: appSettingProvider.select(
                   (state) => state.autoCheckUpdate,
@@ -99,6 +100,7 @@ class AboutView extends ConsumerWidget {
                     .update((state) => state.copyWith(autoCheckUpdate: value)),
               ),
               ConfigOptionsItem<UpdateChannel>(
+                leading: const _GlyphBadge(glyph: AppGlyphs.updateChannel),
                 title: (l) => l.updateChannel,
                 options: UpdateChannel.values,
                 textBuilder: (channel) => channel.label,
@@ -279,10 +281,10 @@ class _Pill extends StatelessWidget {
   }
 }
 
-class _LinkBadge extends StatelessWidget {
+class _GlyphBadge extends StatelessWidget {
   final Glyph glyph;
 
-  const _LinkBadge({required this.glyph});
+  const _GlyphBadge({required this.glyph});
 
   @override
   Widget build(BuildContext context) {
