@@ -1,5 +1,71 @@
 # Changelog
 
+## v0.9.5 (2026-11-26)
+
+**Features**
+
+- **about** Icons and even spacing for the update settings on the About page (1951468)
+- **window** Pause live updates on desktop while the screen is asleep or locked (0981835)
+- **update** Install macOS updates from inside the app (73a0182)
+- **proxies** Proxy groups unfold smoothly as one block (94288d7)
+- **connection** Connection, request, DNS, outbound IP and log details use smaller text with more room (a27fab5)
+- **prism_ui** List rows follow a smaller text size, as they already did a larger one (83214b6)
+- **prism_ui** The phone tab bar spaces five tabs and sets out icons and labels as iOS does (219bc95)
+- **about** The automatic update check and the update channel moved from General settings to the About page (7b97a68)
+- **logs** Filter logs from a button beside search (0db670d)
+- **logs** Set the log level from the Logs page (ef7dc6e)
+- **requests** Connections become Requests: connections by minute with All, Active and Failed counts, conditions on app, exit, rule or protocol, a timeline for each connection, DNS queries, segments that keep their place, and new rows held under a desktop pointer (9c931f7)
+- **update** Choose between stable and prerelease updates in the settings; the prerelease check finds the newest release and names the installed prerelease (562e11f)
+- **ui** Lists and cards share one set of margins, so rows line up across pages (8fc8909)
+- **dashboard** The dashboard's outbound mode card is titled Outbound, leaving its mode buttons more room (0eb1e11)
+- **ui** Grouped lists match iOS 27: row heights, margins, corners and section spacing (79d5a59)
+- **logs** On desktop, Logs moves from the sidebar into Tools (46522eb)
+- **connections** Connections on macOS, Windows and Linux show the icon of the app that made them (888a1df)
+- **navigation** Requests sits right after Proxies in the desktop sidebar (f18f92e)
+- **connections** Connections that failed to connect now show in the requests list, with the reason (8736f48)
+- **update** When an update has no file to download, the app opens the release page to download it by hand (afe7136)
+
+**Bug Fixes**
+
+- **proxies** A rounder, larger delay test icon on proxy cards (0105a4f)
+- **prism_ui** Navigation bar tabs fit their titles, and a tap near a tab's edge selects it (4abbd15)
+- **dashboard** Live connections on the dashboard open on the active ones (8682368)
+- **rules** The rule type picker and rule lists show rule types as profiles write them, such as DOMAIN-KEYWORD, and rule search finds a rule by that name (9b01010)
+- **core** A stop whose answer is lost with the connection to the core no longer turns the proxy back on when the core comes back (06643c3)
+- **setup** Restarting the core with TUN on no longer hangs when it has to ask for authorization again (932826b)
+- **core** On desktop, a restart asked for while the core is still starting, such as after installing the helper, now restarts it, and the core can start again after a start whose local connection setup hung (f95f0f1)
+- **core** On Android, stopping while the core is still starting no longer leaves it running, and a start that failed while sending settings to the core no longer blocks the next start (7a63bb4)
+- **probes** Recheck watched service failures with backoff (fee1b89)
+- **probes** Service checks recover automatically when a chain switches to a working front proxy (1a57072)
+- **setup** Dashboard checks wait for startup to finish when you tap Start as the app opens (fac7b07)
+- **l10n** Shorter descriptions in network, DNS and general settings (18eaaea)
+- **segmented-control** Segmented controls follow the system's reduce motion setting (a47cac5)
+- **connected-button** Screen readers can now switch the dashboard's outbound mode (d45da9d)
+- **scaffold** On wider phones the top bar buttons line up with the list cards below them (21846fc)
+- **scaffold** Opening search puts the cursor in its field even when something else on the page has the focus (e3b13e7)
+- **android** App icons in access control and connections load from the cache instead of being redrawn every day (e3ebcf1)
+- **core** On macOS, connections show the app that opened them again (30817b4)
+- **window** A hidden window no longer takes the foreground from a full-screen game on Windows (6611671)
+- **linux** The Linux window is no longer drawn shifted toward the bottom left on NVIDIA and other drivers without glBlitFramebuffer (0ff56e5)
+- **tray** When the menu bar or tray icon cannot be shown, the log says why (746f7b0)
+- **macos** Intel Macs render with Skia again, fixing the hang at launch on older GPUs (0d3a33f)
+- **dashboard** Service checks show the address Claude and ChatGPT actually saw, not only the node's exit address (b16e2db)
+- **core** Gemini check no longer reports Hong Kong and Macau nodes as unsupported (80a86bc)
+- **core** macOS no longer collects defunct dscacheutil processes each time TUN is turned on or off (e7b017e)
+- **config** The default bypass list no longer skips the proxy for public 172.2* addresses, and the default fake-ip filter names Windows' real connectivity check hosts (80cc61b)
+- **ui** Pages open and close again after the display sleeps or changes (ce13953)
+
+**Performance**
+
+- **code_forge** Large files open in the editor without a pause (c5c7ef0)
+- **db** Profiles with many rules, groups or proxies open and update without stalling the screen (c8d1e9d)
+- **route** Pages that load their data open at once with a spinner instead of pausing before they slide in (b2267cb)
+- **android** Use less battery on Android in the background (7393ea4)
+- **ui** Open list editors and pages over others more smoothly (8eb40a9)
+- **dashboard** Smoother dashboard and tab switches, with one redraw a second while connected (edc6709)
+- **proxies** Smoother proxy pages when switching groups, sorting and scrolling (e21abb4)
+- **prism_ui** Swiping back on phones drops fewer frames (49df9ea)
+
 ## v0.9.4 (2026-11-19)
 
 **Features**
